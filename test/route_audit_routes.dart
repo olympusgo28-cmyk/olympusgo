@@ -129,6 +129,8 @@ final auditRoutes = <(String, String)>[
   ('tournamentWithdraw', Routes.tournamentWithdraw('t-open')),
   ('tournamentResults', Routes.tournamentResults('t-open')),
   ('tournamentManage', Routes.tournamentManage('t-open')),
+  ('tournamentRun', Routes.tournamentRun('t-open')),
+  ('tournamentScore', Routes.tournamentScore('t-open', 'm-1')),
   ('tournamentEntries', Routes.tournamentEntries('t-open')),
   ('tournamentCheckIn', Routes.tournamentCheckIn('t-open')),
   ('tournamentMessage', Routes.tournamentMessage('t-open')),

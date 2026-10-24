@@ -432,73 +432,217 @@ class SupabaseTournamentRepository implements TournamentRepository {
       _play.cancel(id, message: message);
 }
 
-/// The event layer on the activity tables: a ticket is a participant.
-/// Programmes, the live court and multi-person tickets need the event
-/// tables, which come later.
+/// Events on Supabase: tickets for several people with a door code, the
+/// programme and live court from the tournament an event shows, reminders
+/// and cheers.
 class SupabaseEventRepository implements EventRepository {
-  SupabaseEventRepository(this._play);
+  SupabaseEventRepository(this._client, this._play);
+  final SupabaseClient _client;
   final PlayRepository _play;
 
+  /// The match on the live court per event, for cheers.
+  final _liveMatch = <String, String>{};
+
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      debugPrint('Event error: ${e.code} ${e.message}');
+      if (e.message == 'payment_required') {
+        throw const AuthFailure(
+          "Card payments aren't switched on yet. Free tickets work now.",
+        );
+      }
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (e) {
+      debugPrint('Event network error: $e');
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  Future<dynamic> _rpc(String fn, Map<String, dynamic> params) =>
+      _client.rpc(fn, params: params);
+
+  Future<Map<String, dynamic>?> _myTicket(String id) async =>
+      ((await _rpc('event_ticket_get', {'p_activity': id})) as Map?)
+          ?.cast<String, dynamic>();
+
+  DateTime _refundBy(Activity a) =>
+      a.startsAt.subtract(const Duration(days: 1));
+
   @override
-  Future<EventInfo> info(String id) async {
+  Future<EventInfo> info(String id) => _guard(() async {
     final a = await _play.activity(id);
-    final mine = a.myStatus == MyStatus.joined;
+    final state = ((await _rpc('event_state', {'p_activity': id})) as Map)
+        .cast<String, dynamic>();
+    final mine = await _myTicket(id);
+    final reminders = {
+      for (final r in (state['reminders'] as List?) ?? const []) r as String,
+    };
+    final cheers = ((state['cheers'] as Map?) ?? const {})
+        .cast<String, dynamic>();
+
+    // An event that shows a tournament follows its knockout.
+    var programme = const <ProgrammeItem>[];
+    LiveCourt? live;
+    String? partOfTitle;
+    if (a.linkedId case final t?) {
+      final tournament = await _play.activity(t);
+      partOfTitle = tournament.title;
+      final rows = (await _rpc('tournament_match_list', {
+        'p_activity': t,
+        'p_division': null,
+      })) as List;
+      final ms = [
+        for (final r in rows)
+          SupabaseTournamentRepository._match((r as Map).cast()),
+      ];
+      String division(String k) => k == 'main'
+          ? (tournament.gameType?.label ?? 'Draw')
+          : divisionNames[k] ?? k;
+      final shown =
+          ms
+              .where(
+                (m) => m.stage != DrawStage.group && !m.bye && m.at != null,
+              )
+              .toList()
+            ..sort((x, y) => x.at!.compareTo(y.at!));
+      final sizes = {
+        for (final k in {for (final m in ms) m.divisionId})
+          k: koRoundSizes(ms.where((m) => m.divisionId == k)),
+      };
+      String title(DrawMatch m) =>
+          '${division(m.divisionId)} '
+          '${drawStageName(m, sizes[m.divisionId]!).toLowerCase()}';
+      String side(DrawMatch m, bool a) =>
+          drawSideName(m, sideA: a, sizes: sizes[m.divisionId]);
+      programme = [
+        for (final m in shown)
+          ProgrammeItem(
+            id: m.id,
+            time: Fmt.time(m.at!),
+            title: title(m),
+            sub: m.done
+                ? '${m.winnerA! ? m.a : m.b} won ${gamesText(m.games, flip: !m.winnerA!)}'
+                : '${side(m, true)} vs ${side(m, false)}'
+                      '${m.court == null ? '' : ' · Court ${m.court}'}',
+            reminded: reminders.contains(m.id),
+          ),
+      ];
+      final on = ms
+          .where((m) => m.state == DrawMatchState.called && m.ready)
+          .firstOrNull;
+      if (on != null) {
+        _liveMatch[id] = on.id;
+        live = LiveCourt(
+          label: [
+            if (on.court != null) 'COURT ${on.court}',
+            title(on).toUpperCase(),
+          ].join(' · '),
+          sideA: on.a!,
+          sideB: on.b!,
+          gamesA: const [],
+          gamesB: const [],
+          cheersA: cheers['${on.id}:a'] as int? ?? 0,
+          cheersB: cheers['${on.id}:b'] as int? ?? 0,
+        );
+      }
+    }
+    final qty = mine?['qty'] as int? ?? 0;
     return EventInfo(
       activity: a,
       about: a.description ?? '',
-      programme: const [],
-      tickets: mine ? 1 : 0,
-      paidCents: mine ? a.totalCents : 0,
-      refundBy: a.startsAt.subtract(const Duration(days: 1)),
+      programme: programme,
+      programmeDay: programme.isEmpty ? '' : Fmt.day(a.startsAt),
+      partOfId: a.linkedId,
+      partOfTitle: partOfTitle,
+      live: live,
+      tickets: qty,
+      paidCents: a.totalCents * qty,
+      refundBy: _refundBy(a),
+      scannedIn: state['scanned'] as int? ?? 0,
     );
-  }
+  });
 
   @override
   Future<Ticket> buy(String id, {required int qty}) async {
-    final a = await _play.activity(id);
-    if (!a.isFree) {
-      throw const AuthFailure(
-        "Card payments aren't switched on yet. Free tickets work now.",
-      );
-    }
-    if (qty > 1) {
-      throw const AuthFailure(
-        'For now each person gets their own free ticket in the app.',
-      );
-    }
-    await _play.join(id);
+    await _guard(
+      () => _rpc('event_ticket_buy', {'p_activity': id, 'p_qty': qty}),
+    );
     return (await ticket(id))!;
   }
 
   @override
-  Future<Ticket?> ticket(String id) async {
+  Future<Ticket?> ticket(String id) => _guard(() async {
+    final t = await _myTicket(id);
+    if (t == null) return null;
     final a = await _play.activity(id);
-    if (a.myStatus != MyStatus.joined) return null;
+    final qty = t['qty'] as int;
     return Ticket(
       eventId: a.id,
       title: a.title,
       startsAt: a.startsAt,
       endsAt: a.endsAt,
       venue: '${a.venue.name}, ${a.venue.address}',
-      qty: 1,
-      paidCents: a.totalCents,
-      code: a.id.substring(0, 8).toUpperCase(),
-      refundBy: a.startsAt.subtract(const Duration(days: 1)),
+      qty: qty,
+      paidCents: a.totalCents * qty,
+      code: t['code'] as String,
+      refundBy: _refundBy(a),
+    );
+  });
+
+  @override
+  Future<int> release(String id, {required int qty}) => _guard(
+    () async =>
+        await _rpc('event_ticket_release', {'p_activity': id, 'p_qty': qty})
+            as int,
+  );
+
+  @override
+  Future<void> cheer(String id, {required bool sideA}) async {
+    final match = _liveMatch[id];
+    if (match == null) return;
+    await _guard(
+      () => _rpc('event_cheer', {
+        'p_activity': id,
+        'p_match': match,
+        'p_side': sideA ? 'a' : 'b',
+      }),
     );
   }
 
   @override
-  Future<int> release(String id, {required int qty}) => _play.leave(id);
+  Future<void> remind(String id, String itemId, bool on) => _guard(() async {
+    await _rpc('event_remind', {
+      'p_activity': id,
+      'p_item': itemId,
+      'p_on': on,
+    });
+  });
 
   @override
-  Future<void> cheer(String id, {required bool sideA}) async {}
-
-  @override
-  Future<void> remind(String id, String itemId, bool on) async {}
-
-  @override
-  Future<ScanResult> scan(String id, String code) =>
-      throw const AuthFailure("Ticket scanning isn't switched on yet.");
+  Future<ScanResult> scan(String id, String code) => _guard(() async {
+    final r = ((await _rpc('event_scan', {
+      'p_activity': id,
+      'p_code': code,
+    })) as Map).cast<String, dynamic>();
+    return ScanResult(
+      valid: r['valid'] as bool,
+      qty: r['qty'] as int? ?? 0,
+      bookedBy: r['booked_by'] as String? ?? '',
+      title: r['title'] as String? ?? '',
+      scanned: r['scanned'] as int? ?? 0,
+      capacity: r['capacity'] as int? ?? 0,
+      usedAt: r['used_at'] == null
+          ? null
+          : DateTime.parse(r['used_at'] as String).toLocal(),
+    );
+  });
 
   @override
   Future<void> cancel(String id, {String message = ''}) =>

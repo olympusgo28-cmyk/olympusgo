@@ -61,17 +61,18 @@ void main() {
     'a tournament from entries to results, against local Supabase',
     () async {
       final (hostClient, host) = await player('host', 5);
-      final clubId = await SupabaseClubRepository(
-        hostClient,
-        SupabasePlayRepository(hostClient),
-      ).createClub(
-        const ClubDraft(
-          name: 'Draw Club',
-          area: 'Tampines',
-          sports: [ClubSport.badminton],
-          ranges: {ClubSport.badminton: LevelRange(1, 8)},
-        ),
-      );
+      final clubId =
+          await SupabaseClubRepository(
+            hostClient,
+            SupabasePlayRepository(hostClient),
+          ).createClub(
+            const ClubDraft(
+              name: 'Draw Club',
+              area: 'Tampines',
+              sports: [ClubSport.badminton],
+              ranges: {ClubSport.badminton: LevelRange(1, 8)},
+            ),
+          );
       final venue = await hostClient.from('venues').select('id').limit(1);
       final start = DateTime.now().add(const Duration(days: 5)).toUtc();
       final row = await hostClient
@@ -107,10 +108,7 @@ void main() {
       final before = await host.info(id);
       expect(before.divisions.single.entries, 8);
       expect(before.divisions.single.drawn, isFalse);
-      await expectLater(
-        top.makeDraw(id, 'main'),
-        throwsA(isA<Object>()),
-      );
+      await expectLater(top.makeDraw(id, 'main'), throwsA(isA<Object>()));
       expect(await host.makeDraw(id, 'main'), 8);
 
       final groups = await host.groups(id, 'main');
@@ -183,17 +181,18 @@ void main() {
     'doubles partners invite, accept and withdraw',
     () async {
       final (hostClient, host) = await player('dhost', 5);
-      final clubId = await SupabaseClubRepository(
-        hostClient,
-        SupabasePlayRepository(hostClient),
-      ).createClub(
-        const ClubDraft(
-          name: 'Pairs Club',
-          area: 'Bishan',
-          sports: [ClubSport.badminton],
-          ranges: {ClubSport.badminton: LevelRange(1, 8)},
-        ),
-      );
+      final clubId =
+          await SupabaseClubRepository(
+            hostClient,
+            SupabasePlayRepository(hostClient),
+          ).createClub(
+            const ClubDraft(
+              name: 'Pairs Club',
+              area: 'Bishan',
+              sports: [ClubSport.badminton],
+              ranges: {ClubSport.badminton: LevelRange(1, 8)},
+            ),
+          );
       final venue = await hostClient.from('venues').select('id').limit(1);
       final start = DateTime.now().add(const Duration(days: 5)).toUtc();
       final row = await hostClient
@@ -240,7 +239,10 @@ void main() {
       expect(entries.single.status, EntryStatus.paid);
       expect(entries.single.names, 'pa and pb');
       expect(entries.single.rating, 5.0);
-      expect((await b.info(id)).mine?.partner?.id, aClient.auth.currentUser!.id);
+      expect(
+        (await b.info(id)).mine?.partner?.id,
+        aClient.auth.currentUser!.id,
+      );
 
       await host.setCheckedIn(id, entries.single.id, true);
       expect((await host.info(id)).checkedIn, 1);
@@ -252,6 +254,123 @@ void main() {
       await b.withdraw(id, toWallet: true, injury: false);
       expect(await host.entries(id, 'XD'), isEmpty);
       expect((await a.info(id)).mine, isNull);
+    },
+    skip: skip,
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
+  test(
+    'event tickets, the door and the live court, against local Supabase',
+    () async {
+      final (hostClient, host) = await player('ehost', 5);
+      final events = SupabaseEventRepository(
+        hostClient,
+        SupabasePlayRepository(hostClient),
+      );
+      final clubId =
+          await SupabaseClubRepository(
+            hostClient,
+            SupabasePlayRepository(hostClient),
+          ).createClub(
+            const ClubDraft(
+              name: 'Finals Club',
+              area: 'Kallang',
+              sports: [ClubSport.badminton],
+              ranges: {ClubSport.badminton: LevelRange(1, 8)},
+            ),
+          );
+      final venue = await hostClient.from('venues').select('id').limit(1);
+      final start = DateTime.now().add(const Duration(days: 5)).toUtc();
+      Future<String> make(Map<String, dynamic> extra) async {
+        final row = await hostClient
+            .from('activities')
+            .insert({
+              'host_id': hostClient.auth.currentUser!.id,
+              'club_id': clubId,
+              'sports': ['badminton'],
+              'starts_at': start.toIso8601String(),
+              'ends_at': start.add(const Duration(hours: 8)).toIso8601String(),
+              'venue_id': venue.first['id'],
+              ...extra,
+            })
+            .select('id')
+            .single();
+        return row['id'] as String;
+      }
+
+      final cup = await make({
+        'kind': 'tournament',
+        'title': 'Finals Cup',
+        'cover_title': 'Finals Cup',
+        'format': 'knockout',
+        'game_type': 'singles',
+        'capacity': 8,
+      });
+      final day = await make({
+        'kind': 'event',
+        'title': 'Finals Day',
+        'cover_title': 'Finals Day',
+        'format': 'festival',
+        'capacity': 5,
+        'linked_id': cup,
+      });
+
+      final ps = [for (var i = 0; i < 4; i++) await player('f$i', 2.0 + i)];
+      for (final (_, p) in ps) {
+        await p.register(cup, divisionIds: ['main']);
+      }
+      await host.makeDraw(cup, 'main');
+      final semi = (await host.matches(cup))
+          .firstWhere((m) => m.stage == DrawStage.knockout && m.round == 1);
+      await host.callMatch(semi.id);
+
+      // A fan takes 3 tickets, then 2 more: only 2 seats are left after.
+      final (fanClient, _) = await player('fan', 3);
+      final fan = SupabaseEventRepository(
+        fanClient,
+        SupabasePlayRepository(fanClient),
+      );
+      final t = await fan.buy(day, qty: 3);
+      expect(t.qty, 3);
+      expect(t.code, startsWith('OG-'));
+      await expectLater(fan.buy(day, qty: 3), throwsA(isA<Object>()));
+      expect((await fan.buy(day, qty: 2)).qty, 5);
+      expect(await fan.release(day, qty: 1), 0);
+      expect((await fan.ticket(day))!.qty, 4);
+
+      final info = await fan.info(day);
+      expect(info.tickets, 4);
+      expect(info.partOfTitle, 'Finals Cup');
+      expect(info.programme.map((p) => p.title), [
+        'Singles semi-final',
+        'Singles semi-final',
+        'Singles final',
+        'Singles 3rd place',
+      ]);
+      expect(info.programme[2].sub, startsWith('SF1 winner vs SF2 winner'));
+      expect(info.live, isNotNull);
+      expect(info.live!.label, contains('SEMI-FINAL'));
+
+      await fan.cheer(day, sideA: true);
+      await fan.cheer(day, sideA: true);
+      await fan.remind(day, info.programme[2].id, true);
+      final again = await fan.info(day);
+      expect(again.live!.cheersA, 2);
+      expect(again.programme[2].reminded, isTrue);
+
+      // At the door.
+      final bad = await events.scan(day, 'OG-ZZZZZZ');
+      expect(bad.valid, isFalse);
+      final ok = await events.scan(day, t.code.toLowerCase());
+      expect(ok.valid, isTrue);
+      expect(ok.qty, 4);
+      expect(ok.usedAt, isNull);
+      expect(ok.scanned, 4);
+      final twice = await events.scan(day, t.code);
+      expect(twice.usedAt, isNotNull);
+      expect((await events.info(day)).scannedIn, 4);
+      await expectLater(fan.scan(day, t.code), throwsA(isA<Object>()));
+      await expectLater(fan.release(day, qty: 1), throwsA(isA<Object>()));
     },
     skip: skip,
     timeout: const Timeout(Duration(minutes: 2)),

@@ -84,7 +84,10 @@ TournamentRepository tournamentRepository(Ref ref) => Env.hasSupabase
 
 @Riverpod(keepAlive: true)
 EventRepository eventRepository(Ref ref) => Env.hasSupabase
-    ? SupabaseEventRepository(ref.watch(playRepositoryProvider))
+    ? SupabaseEventRepository(
+        Supabase.instance.client,
+        ref.watch(playRepositoryProvider),
+      )
     : DemoEventRepository(
         ref.watch(playRepositoryProvider) as DemoPlayRepository,
       );
