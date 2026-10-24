@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:olympus_go/features/clubs/data/supabase_club_repository.dart';
 import 'package:olympus_go/features/clubs/domain/club_models.dart';
 import 'package:olympus_go/features/clubs/domain/club_sport.dart';
+import 'package:olympus_go/features/game/data/game_repository.dart';
+import 'package:olympus_go/features/game/domain/game_models.dart';
 import 'package:olympus_go/features/play/data/competition_repository.dart';
 import 'package:olympus_go/features/play/data/play_repository.dart';
 import 'package:olympus_go/features/play/domain/tournament_models.dart';
@@ -375,4 +377,55 @@ void main() {
     skip: skip,
     timeout: const Timeout(Duration(minutes: 2)),
   );
+
+  test('my gear and the leaderboards, against local Supabase', () async {
+    final (client, _) = await player('gear', 4);
+    final game = SupabaseGameRepository(client);
+    final saved = await game.saveGear(
+      const Gear(
+        id: '',
+        type: GearType.badmintonRacquet,
+        brand: 'Yonex',
+        model: 'Astrox 99',
+        specs: [('Weight', '4U'), ('String', '')],
+        priceCents: 28900,
+      ),
+    );
+    expect(saved.id, isNotEmpty);
+    expect(saved.specs, [('Weight', '4U')]);
+    await game.saveGear(
+      Gear(
+        id: saved.id,
+        type: saved.type,
+        brand: 'Yonex',
+        model: 'Astrox 100',
+        specs: saved.specs,
+      ),
+    );
+    final mine = await game.gear();
+    expect(mine.single.name, 'Yonex Astrox 100');
+    expect(mine.single.priceCents, isNull);
+    // Someone else's gear stays private.
+    final (other, _) = await player('other', 4);
+    expect(await SupabaseGameRepository(other).gear(), isEmpty);
+
+    final points = await game.leaderboard(
+      local: false,
+      sport: 'Badminton',
+      area: 'All Singapore',
+    );
+    expect(points.first.sub, startsWith('Champion, '));
+    expect(points.first.score, '100');
+    final rating = await game.leaderboard(
+      local: true,
+      sport: 'Badminton',
+      area: 'All Singapore',
+    );
+    expect(rating, isNotEmpty);
+    expect(rating.first.sub, contains('match'));
+    expect(
+      await game.leaderboard(local: true, sport: 'Badminton', area: 'East'),
+      isEmpty,
+    );
+  }, skip: skip);
 }

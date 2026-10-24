@@ -120,8 +120,9 @@ VenueRepository venueRepository(Ref ref) => Env.hasSupabase
     : DemoVenueRepository();
 
 @Riverpod(keepAlive: true)
-GameRepository gameRepository(Ref ref) =>
-    Env.hasSupabase ? SupabaseGameRepository() : DemoGameRepository();
+GameRepository gameRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseGameRepository(Supabase.instance.client)
+    : DemoGameRepository();
 
 @Riverpod(keepAlive: true)
 SafetyRepository safetyRepository(Ref ref) => Env.hasSupabase

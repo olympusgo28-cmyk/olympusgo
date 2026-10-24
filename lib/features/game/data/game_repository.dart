@@ -1,4 +1,9 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../auth/data/auth_repository.dart';
+import '../../clubs/domain/club_sport.dart';
+import '../../onboarding/domain/sport.dart';
 import '../domain/game_models.dart';
 
 /// Campaigns, workout and creator challenges, leaderboards and gear.
@@ -42,8 +47,53 @@ const _soon = AuthFailure(
   'Game campaigns open with the next release. Your Meets already count.',
 );
 
-/// No game tables yet: lists are empty and actions explain why.
+/// Gear and leaderboards are real. Campaigns and creator challenges have no
+/// tables yet: lists are empty and actions explain why.
 class SupabaseGameRepository implements GameRepository {
+  SupabaseGameRepository(this._client);
+  final SupabaseClient _client;
+
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      debugPrint('Game error: ${e.code} ${e.message}');
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      if (e.code == '23514') {
+        throw const AuthFailure('Check the brand, model and price.');
+      }
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (e) {
+      debugPrint('Game network error: $e');
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  /// Club areas that count as each leaderboard area.
+  static const _areas = {
+    'Tampines': ['%Tampines%'],
+    'East': [
+      '%Tampines%',
+      '%Bedok%',
+      '%Pasir Ris%',
+      '%Simei%',
+      '%Changi%',
+      '%Tanah Merah%',
+      '%Paya Lebar%',
+      '%Eunos%',
+      '%Kembangan%',
+      '%Loyang%',
+      '%Marine Parade%',
+      '%East Coast%',
+      '%Siglap%',
+      '%East%',
+    ],
+  };
+
   @override
   Future<List<Campaign>> campaigns() async => const [];
   @override
@@ -81,11 +131,84 @@ class SupabaseGameRepository implements GameRepository {
     required bool local,
     required String sport,
     required String area,
-  }) async => const [];
+  }) => _guard(() async {
+    final id = Sport.values
+        .firstWhere((s) => s.label == sport, orElse: () => Sport.badminton)
+        .id;
+    final rows = (await _client.rpc(
+      local ? 'leaderboard_rating' : 'leaderboard_points',
+      params: {
+        'p_sport': id,
+        if (local) 'p_areas': _areas[area] ?? const <String>[],
+      },
+    )) as List;
+    return [
+      for (final (i, r) in rows.cast<Map>().indexed)
+        local
+            ? Standing(
+                rank: i + 1,
+                name: r['name'] as String,
+                score: (r['level'] as num).toStringAsFixed(1),
+                sub:
+                    '${r['games']} ${r['games'] == 1 ? 'match' : 'matches'} · '
+                    '${SkillBand.forLevel((r['level'] as num).toDouble()).code}',
+                mine: r['mine'] == true,
+              )
+            : Standing(
+                rank: i + 1,
+                name: r['name'] as String,
+                score: _thousands(r['points'] as int),
+                sub: r['best'] as String? ?? '',
+                mine: r['mine'] == true,
+              ),
+    ];
+  });
+
+  static String _thousands(int n) => n.toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => ',',
+  );
+
+  static Gear _gear(Map<String, dynamic> r) => Gear(
+    id: r['id'] as String,
+    type: GearType.values.byName(r['type'] as String),
+    brand: r['brand'] as String,
+    model: r['model'] as String,
+    specs: [
+      for (final s in (r['specs'] as List?) ?? const [])
+        ((s as List)[0] as String, s[1] as String),
+    ],
+    priceCents: r['price_cents'] as int?,
+  );
+
   @override
-  Future<List<Gear>> gear() async => const [];
+  Future<List<Gear>> gear() => _guard(() async {
+    final rows = await _client.from('player_gear').select().order('created_at');
+    return [for (final r in rows) _gear(r)];
+  });
+
   @override
-  Future<Gear> saveGear(Gear gear) => throw _soon;
+  Future<Gear> saveGear(Gear gear) => _guard(() async {
+    final row = {
+      'type': gear.type.name,
+      'brand': gear.brand.trim(),
+      'model': gear.model.trim(),
+      'specs': [
+        for (final (k, v) in gear.specs)
+          if (v.trim().isNotEmpty) [k, v.trim()],
+      ],
+      'price_cents': gear.priceCents,
+    };
+    final saved = gear.id.isEmpty || gear.id.startsWith('new')
+        ? await _client.from('player_gear').insert(row).select().single()
+        : await _client
+              .from('player_gear')
+              .update(row)
+              .eq('id', gear.id)
+              .select()
+              .single();
+    return _gear(saved);
+  });
 }
 
 class DemoGameRepository implements GameRepository {
