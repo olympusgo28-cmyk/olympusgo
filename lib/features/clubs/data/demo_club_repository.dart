@@ -1457,6 +1457,26 @@ class DemoClubRepository implements ClubRepository {
   }
 
   @override
+  Future<void> rateClub(String clubId, int stars, String review) async {
+    await _tick();
+    final c = _clubs[clubId]!;
+    final spread = [...c.ratingSpread];
+    if (c.myStars case final old?) spread[5 - old] -= 1;
+    spread[5 - stars] += 1;
+    final count = spread.fold(0, (a, b) => a + b);
+    var total = 0;
+    for (var i = 0; i < 5; i++) {
+      total += spread[i] * (5 - i);
+    }
+    _clubs[clubId] = c.copyWith(
+      ratingSpread: spread,
+      ratingCount: count,
+      rating: count == 0 ? null : (total / count * 10).round() / 10,
+      myStars: stars,
+    );
+  }
+
+  @override
   Future<void> transfer(String clubId, String toUserId) async {
     await _tick();
     _log(
@@ -1589,6 +1609,66 @@ class DemoClubRepository implements ClubRepository {
   Future<List<TeamMember>> teamMembers(String teamId) async {
     await _tick();
     return [...?_teamMembers[teamId]];
+  }
+
+  @override
+  Future<String> createFixture(
+    String teamId, {
+    required String opponent,
+    required DateTime startsAt,
+    String competition = '',
+    String venue = '',
+    DateTime? lineupLocksAt,
+    List<String> notes = const [],
+  }) async {
+    await _tick();
+    final team = _teams[teamId]!;
+    final id = _id('fx');
+    _fixtures[id] = Fixture(
+      id: id,
+      teamId: teamId,
+      teamName: team.name,
+      opponent: opponent.trim(),
+      startsAt: startsAt,
+      competition: competition,
+      venue: venue,
+      lineupLocksAt: lineupLocksAt,
+      notes: notes,
+      slots: lineupSlotsFor(team.sport),
+    );
+    (_teamSessions[teamId] ??= []).add(
+      TeamSession(
+        id: id,
+        title: 'vs ${opponent.trim()}',
+        startsAt: startsAt,
+        venue: venue,
+        fixture: true,
+        squad: team.playerCount,
+      ),
+    );
+    _teamSessions[teamId]!.sort((a, b) => a.startsAt.compareTo(b.startsAt));
+    return id;
+  }
+
+  @override
+  Future<void> recordResult(
+    String fixtureId, {
+    required String score,
+    required bool won,
+  }) async {
+    await _tick();
+    final f = _fixtures[fixtureId]!;
+    (_results[f.teamId] ??= []).insert(
+      0,
+      TeamResult(
+        opponent: f.opponent,
+        at: f.startsAt,
+        competition: f.competition,
+        won: won,
+        score: score,
+      ),
+    );
+    _teamSessions[f.teamId]?.removeWhere((x) => x.id == fixtureId);
   }
 
   @override

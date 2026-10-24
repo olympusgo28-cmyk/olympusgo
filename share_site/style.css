@@ -182,3 +182,11 @@ footer {
   font-size: 13px;
   padding: 0 16px 24px;
 }
+
+/* Long documents: terms and privacy. */
+.doc h2 { font: 800 22px/1.2 "Archivo", sans-serif; margin: 28px 0 8px; }
+.doc p, .doc li { color: var(--text); line-height: 1.55; }
+.doc ul { padding-left: 20px; margin: 8px 0; }
+.doc li { margin: 4px 0; }
+.doc .updated { color: var(--muted); font-size: 14px; }
+.doc a { color: var(--accent-text); font-weight: 700; }

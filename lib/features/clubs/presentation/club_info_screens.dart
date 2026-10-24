@@ -12,6 +12,9 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_screen.dart';
+import '../../../core/providers.dart';
+import '../../../core/widgets/og_toast.dart';
+import '../../auth/data/auth_repository.dart';
 import '../application/club_providers.dart';
 import '../domain/club_models.dart';
 import '../domain/club_sport.dart';
@@ -286,8 +289,95 @@ class _Details extends StatelessWidget {
   }
 }
 
-class _Rating extends StatelessWidget {
+/// The rating panel, and for members a way to rate the club.
+class _Rating extends ConsumerWidget {
   const _Rating({required this.club});
+
+  final Club club;
+
+  Future<void> _rate(BuildContext context, WidgetRef ref) async {
+    var stars = club.myStars ?? 0;
+    final review = TextEditingController();
+    var busy = false;
+    await showKitSheet<void>(
+      context,
+      builder: (sheet) => StatefulBuilder(
+        builder: (sheet, setSheet) {
+          final t = sheet.tones;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: kitSpaced([
+              Text('Rate ${club.name}', style: OgText.heading(22)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 1; i <= 5; i++)
+                    KitIconButton(
+                      icon: OgIcons.star,
+                      label: '$i ${i == 1 ? 'star' : 'stars'}',
+                      size: 32,
+                      fill: i <= stars,
+                      color: i <= stars ? t.gold : sheet.og.textMuted,
+                      onPressed: () => setSheet(() => stars = i),
+                    ),
+                ],
+              ),
+              KitTextArea(
+                label: 'What is it like to play here?',
+                optional: true,
+                controller: review,
+              ),
+              KitButton(
+                label: stars == 0 ? 'Pick the stars' : 'Save rating',
+                loading: busy,
+                onPressed: stars == 0
+                    ? null
+                    : () async {
+                        setSheet(() => busy = true);
+                        try {
+                          await ref
+                              .read(clubRepositoryProvider)
+                              .rateClub(club.id, stars, review.text.trim());
+                          ref.invalidate(clubProvider(club.id));
+                          if (sheet.mounted) Navigator.of(sheet).pop();
+                        } on AuthFailure catch (e) {
+                          if (sheet.mounted) {
+                            showOgToast(sheet, e.message, error: true);
+                          }
+                          setSheet(() => busy = false);
+                        }
+                      },
+              ),
+              const SizedBox(height: 8),
+            ], 14),
+          );
+        },
+      ),
+    );
+    review.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: kitSpaced([
+        _RatingPanel(club: club),
+        if (club.isMember && !club.isOwner)
+          KitButton.outline(
+            label: club.myStars == null
+                ? 'Rate this club'
+                : 'Your rating: ${club.myStars} stars · Change',
+            onPressed: () => _rate(context, ref),
+          ),
+      ], 12),
+    );
+  }
+}
+
+class _RatingPanel extends StatelessWidget {
+  const _RatingPanel({required this.club});
 
   final Club club;
 
@@ -298,7 +388,7 @@ class _Rating extends StatelessWidget {
     if (club.rating == null || club.ratingCount < 10) {
       return const _Panel(
         child: Text(
-          'Only players who checked in to a Meet can rate it. Clubs show a rating once they have at least 10 reviews.',
+          'Members rate the club they play in. Clubs show a rating once they have at least 10 reviews.',
         ),
       );
     }

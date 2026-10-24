@@ -12,6 +12,7 @@ import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_text.dart';
 import '../../../core/theme/og_tones.dart';
+import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -518,6 +519,12 @@ class TeamSettingsScreen extends StatelessWidget {
                   title: 'Add players',
                   subtitle: 'From linked clubs or by invite link',
                   onTap: () => context.push(Routes.teamAdd(id)),
+                ),
+                KitNavTile(
+                  icon: OgIcons.calendarBox,
+                  title: 'Add a fixture',
+                  subtitle: 'A match: who, when and where',
+                  onTap: () => context.push(Routes.teamNewFixture(id)),
                 ),
                 if (fixture != null)
                   KitNavTile(
@@ -1285,6 +1292,12 @@ class TeamFixtureScreen extends ConsumerWidget {
             '${f.setBy} set the lineup. Tell them in team chat if anything changes.',
             style: OgText.body(13, height: 1.4, color: c.textMuted),
           ),
+        if ((ref.watch(teamProvider(teamId)).value?.isStaff ?? false) &&
+            f.startsAt.isBefore(DateTime.now()))
+          KitButton(
+            label: 'Record result',
+            onPressed: () => showRecordResult(context, ref, f),
+          ),
         KitCard(
           children: [
             KitNavTile(
@@ -1704,4 +1717,219 @@ class _TeamDeleteScreenState extends ConsumerState<TeamDeleteScreen> {
       );
     },
   );
+}
+
+/// Staff add a match: opponent, when, where and lineup lock.
+class NewFixtureScreen extends ConsumerStatefulWidget {
+  const NewFixtureScreen({super.key, required this.teamId});
+
+  final String teamId;
+
+  @override
+  ConsumerState<NewFixtureScreen> createState() => _NewFixtureScreenState();
+}
+
+class _NewFixtureScreenState extends ConsumerState<NewFixtureScreen> {
+  final _opponent = TextEditingController();
+  final _competition = TextEditingController();
+  final _venue = TextEditingController();
+  final _notes = TextEditingController();
+  DateTime? _at;
+  var _lock = true;
+  var _busy = false;
+
+  @override
+  void dispose() {
+    for (final c in [_opponent, _competition, _venue, _notes]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _pickWhen() async {
+    final now = DateTime.now();
+    final start =
+        _at ?? DateTime(now.year, now.month, now.day + 7, 9).copyWith();
+    final picked = await showOgPickerSheet<DateTime>(
+      context: context,
+      title: 'Match time',
+      initial: start,
+      picker: (onChanged) => CupertinoDatePicker(
+        initialDateTime: start,
+        minimumDate: now.subtract(const Duration(minutes: 1)),
+        minuteInterval: 15,
+        onDateTimeChanged: onChanged,
+      ),
+    );
+    if (picked != null) setState(() => _at = picked);
+  }
+
+  Future<void> _save() async {
+    if (_opponent.text.trim().isEmpty) {
+      showOgToast(context, 'Add who you are playing.', error: true);
+      return;
+    }
+    final at = _at;
+    if (at == null) {
+      showOgToast(context, 'Pick the match time.', error: true);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final id = await ref
+          .read(clubRepositoryProvider)
+          .createFixture(
+            widget.teamId,
+            opponent: _opponent.text.trim(),
+            startsAt: at,
+            competition: _competition.text.trim(),
+            venue: _venue.text.trim(),
+            lineupLocksAt: _lock ? at.subtract(const Duration(days: 1)) : null,
+            notes: [
+              for (final l in _notes.text.split('\n'))
+                if (l.trim().isNotEmpty) l.trim(),
+            ],
+          );
+      HapticFeedback.mediumImpact();
+      ref
+        ..invalidate(teamSessionsProvider(widget.teamId))
+        ..invalidate(nextFixtureIdProvider(widget.teamId));
+      if (mounted) {
+        context.pushReplacement(Routes.teamFixture(widget.teamId, id));
+      }
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final at = _at;
+    return KitScaffold(
+      header: const KitHeader(title: 'Add a fixture'),
+      bottom: [
+        KitButton(label: 'Add fixture', loading: _busy, onPressed: _save),
+      ],
+      children: [
+        Text(
+          'Players are told and asked if they can play.',
+          style: OgText.body(14, color: c.textMuted),
+        ),
+        KitInput(
+          label: 'Opponent',
+          controller: _opponent,
+          hint: 'Bedok Green Secondary',
+        ),
+        Pressable(
+          semanticLabel: 'Match time',
+          onPressed: _pickWhen,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: c.borderControl, width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                OgIcon(OgIcons.calendarBox, size: 22, color: c.text),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Match time',
+                        style: OgText.body(13, color: c.textMuted),
+                      ),
+                      Text(
+                        at == null ? 'Choose a date and time' : Fmt.dayTime(at),
+                        style: OgText.body(16, weight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                OgIcon(OgIcons.chevronRight, size: 20, color: c.textMuted),
+              ],
+            ),
+          ),
+        ),
+        KitInput(
+          label: 'Competition',
+          controller: _competition,
+          hint: 'National School Games, Zone',
+        ),
+        KitInput(label: 'Venue', controller: _venue, hint: 'Tampines Hub'),
+        KitConfirmBox(
+          label: 'Lock the lineup the day before',
+          checked: _lock,
+          onChanged: (v) => setState(() => _lock = v),
+        ),
+        KitTextArea(
+          label: 'Before the day',
+          optional: true,
+          controller: _notes,
+          hint: 'One per line, such as "Bring your school jersey"',
+        ),
+      ],
+    );
+  }
+}
+
+/// Staff record the final score once the match is played.
+Future<void> showRecordResult(
+  BuildContext context,
+  WidgetRef ref,
+  Fixture f,
+) async {
+  final score = TextEditingController();
+  var won = true;
+  var busy = false;
+  await showKitSheet<void>(
+    context,
+    builder: (sheet) => StatefulBuilder(
+      builder: (sheet, setSheet) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: kitSpaced([
+          Text('Result vs ${f.opponent}', style: OgText.heading(22)),
+          KitSegments(
+            labels: const ['We won', 'We lost'],
+            selected: won ? 0 : 1,
+            onSelect: (i) => setSheet(() => won = i == 0),
+          ),
+          KitInput(label: 'Score', controller: score, hint: '3–2'),
+          KitButton(
+            label: 'Save result',
+            loading: busy,
+            onPressed: () async {
+              if (score.text.trim().isEmpty) {
+                showOgToast(sheet, 'Add the score.', error: true);
+                return;
+              }
+              setSheet(() => busy = true);
+              try {
+                await ref
+                    .read(clubRepositoryProvider)
+                    .recordResult(f.id, score: score.text.trim(), won: won);
+                HapticFeedback.mediumImpact();
+                ref
+                  ..invalidate(teamResultsProvider(f.teamId))
+                  ..invalidate(teamSessionsProvider(f.teamId))
+                  ..invalidate(nextFixtureIdProvider(f.teamId));
+                if (sheet.mounted) Navigator.of(sheet).pop();
+              } on AuthFailure catch (e) {
+                if (sheet.mounted) showOgToast(sheet, e.message, error: true);
+                setSheet(() => busy = false);
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+        ], 14),
+      ),
+    ),
+  );
+  score.dispose();
 }

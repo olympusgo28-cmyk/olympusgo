@@ -14,6 +14,9 @@ abstract interface class ProfileRepository {
   /// Session count, ranks and badges for the Profile tab.
   Future<ProfileSummary> summary(String userId);
 
+  /// Your past sessions in [sport], newest first.
+  Future<PassportHistory> history(String sport);
+
   /// Replaces the player's Passport sports and their own levels.
   Future<void> saveSports(String userId, List<PlayerSport> sports);
 
@@ -109,6 +112,32 @@ class SupabaseProfileRepository implements ProfileRepository {
   });
 
   @override
+  Future<PassportHistory> history(String sport) => _guard(() async {
+    final j = Map<String, dynamic>.from(
+      await _client.rpc('passport_history', params: {'p_sport': sport}) as Map,
+    );
+    int n(String k) => (j[k] as num?)?.toInt() ?? 0;
+    return PassportHistory(
+      sessions: n('sessions'),
+      rankedGames: n('ranked_games'),
+      gamesPlayed: n('games_played'),
+      gamesWon: n('games_won'),
+      items: [
+        for (final r in j['items'] as List? ?? const [])
+          HistoryItem(
+            id: r['id'] as String,
+            kind: r['kind'] as String,
+            title: r['title'] as String,
+            at: DateTime.parse(r['starts_at'] as String).toLocal(),
+            ranked: r['ranked'] as bool? ?? false,
+            played: (r['played'] as num?)?.toInt() ?? 0,
+            won: (r['won'] as num?)?.toInt() ?? 0,
+          ),
+      ],
+    );
+  });
+
+  @override
   Future<bool> usernameAvailable(String username) => _guard(() async {
     final res = await _client.rpc(
       'username_available',
@@ -201,6 +230,64 @@ class DemoProfileRepository implements ProfileRepository {
           ),
         ]
       : const [];
+
+  @override
+  Future<PassportHistory> history(String sport) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (sport != 'badminton') return const PassportHistory();
+    final now = DateTime.now();
+    DateTime ago(int d) => DateTime(now.year, now.month, now.day - d, 19, 30);
+    return PassportHistory(
+      sessions: 43,
+      rankedGames: 38,
+      gamesPlayed: 38,
+      gamesWon: 23,
+      items: [
+        HistoryItem(
+          id: 'h1',
+          kind: 'meet',
+          title: 'Doubles Social',
+          at: ago(2),
+          ranked: true,
+          played: 5,
+          won: 3,
+        ),
+        HistoryItem(
+          id: 'h2',
+          kind: 'class',
+          title: 'Adult Improvers',
+          at: ago(4),
+        ),
+        HistoryItem(
+          id: 'h3',
+          kind: 'meet',
+          title: 'Morning Singles',
+          at: ago(8),
+          ranked: true,
+          played: 3,
+          won: 1,
+        ),
+        HistoryItem(
+          id: 'h4',
+          kind: 'tournament',
+          title: 'Bedok Open',
+          at: ago(21),
+          ranked: true,
+          played: 4,
+          won: 3,
+        ),
+        HistoryItem(
+          id: 'h5',
+          kind: 'meet',
+          title: 'Friday Night Doubles',
+          at: ago(29),
+          ranked: true,
+          played: 4,
+          won: 2,
+        ),
+      ],
+    );
+  }
 
   @override
   Future<Profile?> fetch(String userId) async =>

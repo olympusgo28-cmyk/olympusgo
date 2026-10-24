@@ -60,10 +60,40 @@ class WelcomeScreen extends StatelessWidget {
           onPressed: () => context.push(Routes.logIn),
         ),
         const SizedBox(height: 20),
-        Text(
-          'By continuing you agree to the Terms of use and the Privacy policy.',
-          textAlign: TextAlign.center,
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+        Semantics(
+          button: true,
+          label: 'Read the Terms of use and the Privacy policy',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => context.push(Routes.legal),
+            child: Text.rich(
+              TextSpan(
+                text: 'By continuing you agree to the ',
+                children: [
+                  TextSpan(
+                    text: 'Terms of use',
+                    style: OgText.body(
+                      13,
+                      weight: FontWeight.w700,
+                      color: c.link,
+                    ),
+                  ),
+                  const TextSpan(text: ' and the '),
+                  TextSpan(
+                    text: 'Privacy policy',
+                    style: OgText.body(
+                      13,
+                      weight: FontWeight.w700,
+                      color: c.link,
+                    ),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: OgText.body(13, height: 1.4, color: c.textMuted),
+            ),
+          ),
         ),
       ],
     );

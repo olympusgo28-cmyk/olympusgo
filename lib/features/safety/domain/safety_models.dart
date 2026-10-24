@@ -1,3 +1,5 @@
+import '../../../core/domain/country.dart';
+
 /// Where a report stands.
 enum ReportState {
   inReview('In review'),
@@ -104,4 +106,28 @@ class RemovalNotice {
     next: next,
     reviewAsked: true,
   );
+}
+
+/// A legal notice from someone harmed by content, or acting for them.
+class LegalNotice {
+  const LegalNotice({
+    required this.role,
+    required this.name,
+    required this.email,
+    required this.country,
+    required this.location,
+    required this.reasons,
+    required this.details,
+  });
+
+  /// "The person affected", "Parent or guardian", and so on.
+  final String role;
+  final String name;
+  final String email;
+  final Country country;
+
+  /// A link, or the club, chat, video or shop name.
+  final String location;
+  final List<String> reasons;
+  final String details;
 }

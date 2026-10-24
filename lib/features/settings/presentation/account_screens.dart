@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/format.dart';
+import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -22,6 +23,7 @@ import '../../play/domain/activity.dart';
 import '../../profile/domain/profile.dart';
 import '../../wallet/application/wallet_providers.dart';
 import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../safety/presentation/legal_screens.dart' show CountryRules;
 import '../application/settings_providers.dart';
 
 /// Account Centre: sign-in, payments, family and account, behind Face ID.
@@ -162,7 +164,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
               icon: OgIcons.shieldTick,
               title: 'Under-18 protection',
               subtitle: 'Settings that stay on for children',
-              onTap: () => context.push(Routes.privacy),
+              onTap: () => context.push(Routes.under18),
             ),
           ]),
         section('Account', [
@@ -170,13 +172,14 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
             icon: OgIcons.idCard,
             title: 'Identity check',
             subtitle: 'Needed to run tournaments and receive payouts',
-            trailing: KitTag(
-              'Done',
-              background: t.successFill,
-              foreground: t.onSuccessFill,
-            ),
-            onTap: () {},
-            chevron: false,
+            trailing: (info?.identityVerified ?? false)
+                ? KitTag(
+                    'Done',
+                    background: t.successFill,
+                    foreground: t.onSuccessFill,
+                  )
+                : KitTag('Not yet', background: t.soft, foreground: c.text),
+            onTap: () => context.push(Routes.identityCheck),
           ),
           KitNavTile(
             icon: OgIcons.trash,
@@ -208,10 +211,13 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
           KitNavTile(
             icon: OgIcons.location,
             title: 'Country',
-            subtitle:
-                '${info?.country.name ?? 'Singapore'} · S\$ · emergency 999',
-            chevron: false,
-            onTap: () {},
+            subtitle: () {
+              final country = info?.country ?? Country.singapore;
+              final rules = CountryRules.of(country);
+              return '${country.name} · ${rules.currency.split(' ').first} · '
+                  'emergency ${rules.emergency.split(' ').first}';
+            }(),
+            onTap: () => context.push(Routes.country),
           ),
           KitNavTile(
             icon: OgIcons.chatLines,
@@ -635,6 +641,63 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 onTap: () => setState(() => _why = r),
               ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Where the player's identity check stands, and why it is needed.
+class IdentityCheckScreen extends ConsumerWidget {
+  const IdentityCheckScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tones;
+    final done = ref.watch(privateInfoProvider).value?.identityVerified;
+    return KitScaffold(
+      header: const KitHeader(title: 'Identity check'),
+      bottom: [
+        if (done == false)
+          KitButton(
+            label: 'Set up payouts',
+            onPressed: () => context.push(Routes.payoutAccount),
+          ),
+      ],
+      children: [
+        if (done == null)
+          const CupertinoActivityIndicator()
+        else if (done)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: t.successFill,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              'Your identity is checked. You can run paid tournaments and receive payouts.',
+              style: OgText.body(14, height: 1.45, color: t.onSuccessFill),
+            ),
+          )
+        else
+          const KitNote(
+            'Not checked yet. You only need it to run paid tournaments or to receive money from Meets, classes and sales.',
+          ),
+        const KitBlock(
+          title: 'Why we check',
+          child: KitCheckList([
+            'Players know who is taking their money',
+            'Payouts go only to the person who earned them',
+            'It keeps fake organizers and sellers out',
+          ]),
+        ),
+        const KitBlock(
+          title: 'How it works',
+          child: KitCheckList([
+            'Start it when you set up payouts or create a paid tournament',
+            'Our review team checks your details, usually within 2 working days',
+            'Your documents are never shown to other players',
+          ]),
         ),
       ],
     );

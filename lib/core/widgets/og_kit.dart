@@ -1500,6 +1500,8 @@ class KitNavTile extends StatelessWidget {
     return Pressable(
       semanticLabel: [title, ?subtitle].join(', '),
       onPressed: onTap,
+      // Information rows (no action) look like rows, not faded buttons.
+      dimWhenDisabled: false,
       child: Container(
         constraints: BoxConstraints(minHeight: minHeight),
         padding: padding,

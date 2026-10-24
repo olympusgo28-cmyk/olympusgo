@@ -49,6 +49,15 @@ abstract final class Routes {
   static const blocked = '/settings/blocked';
   static const help = '/settings/help';
   static const communityRules = '/settings/help/rules';
+  static const country = '/settings/country';
+  static const identityCheck = '/settings/identity';
+
+  // Open to everyone, signed in or not.
+  static const legal = '/legal';
+  static const refundRules = '/legal/refunds';
+  static const under18 = '/legal/under-18';
+  static const legalNotice = '/legal/notice';
+  static const openPrefixes = [legal];
   static const myReports = '/settings/reports';
   static String reportStatus(String id) => '/settings/reports/$id';
   static String removalNotice(String id) => '/notices/$id';
@@ -56,6 +65,8 @@ abstract final class Routes {
 
   // Profile and social.
   static const passport = '/profile/passport';
+  static String passportHistory(String sport) =>
+      '/profile/passport/history/$sport';
   static const shareProfile = '/profile/share';
   static const saved = '/profile/saved';
   static String connections({bool followers = false}) =>
@@ -80,6 +91,8 @@ abstract final class Routes {
   static String waitlist(String id) => '/activities/$id/waitlist';
   static String meetPlayers(String id) => '/activities/$id/players';
   static String reportActivity(String id) => '/activities/$id/report';
+  static String reportVideo(String id, {bool live = false}) =>
+      live ? '/shop/live/$id/report' : '/shop/videos/$id/report';
   static String meetWalkIn(String id) => '/activities/$id/walk-in';
   static String meetAttendance(String id) => '/activities/$id/attendance';
   static String meetRecap(String id) => '/activities/$id/recap';
@@ -228,6 +241,7 @@ abstract final class Routes {
   static String teamChat(String id) => '/teams/$id/chat';
   static String teamFixture(String id, String fixtureId) =>
       '/teams/$id/fixtures/$fixtureId';
+  static String teamNewFixture(String id) => '/teams/$id/new-fixture';
   static String teamLineup(String id, String fixtureId) =>
       '/teams/$id/fixtures/$fixtureId/lineup';
   static String teamSettings(String id) => '/teams/$id/settings';

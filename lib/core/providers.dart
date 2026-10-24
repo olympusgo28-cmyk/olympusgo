@@ -118,8 +118,9 @@ GameRepository gameRepository(Ref ref) =>
     Env.hasSupabase ? SupabaseGameRepository() : DemoGameRepository();
 
 @Riverpod(keepAlive: true)
-SafetyRepository safetyRepository(Ref ref) =>
-    Env.hasSupabase ? SupabaseSafetyRepository() : DemoSafetyRepository();
+SafetyRepository safetyRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseSafetyRepository(Supabase.instance.client)
+    : DemoSafetyRepository();
 
 @Riverpod(keepAlive: true)
 UpdatesRepository updatesRepository(Ref ref) => Env.hasSupabase

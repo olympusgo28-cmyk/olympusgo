@@ -1160,7 +1160,17 @@ class _ShopVideoScreenState extends ConsumerState<ShopVideoScreen> {
     return KitScaffold(
       header: KitHeader(
         title: '${i + 1} of ${videos.length}',
-        trailing: const CartButton(),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            KitIconButton(
+              icon: OgIcons.flag,
+              label: 'Report this video',
+              onPressed: () => context.push(Routes.reportVideo(v.id)),
+            ),
+            const CartButton(),
+          ],
+        ),
       ),
       background: OgColors.ink,
       children: [
@@ -1356,7 +1366,18 @@ class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
       header: KitHeader(
         title: l.shop,
         subtitle: 'with ${l.host}',
-        trailing: const CartButton(),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            KitIconButton(
+              icon: OgIcons.flag,
+              label: 'Report this live',
+              onPressed: () =>
+                  context.push(Routes.reportVideo(l.id, live: true)),
+            ),
+            const CartButton(),
+          ],
+        ),
       ),
       background: OgColors.ink,
       children: [

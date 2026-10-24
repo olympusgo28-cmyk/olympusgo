@@ -64,6 +64,18 @@ class CommunityRulesScreen extends StatelessWidget {
         KitCard(
           children: [
             KitNavTile(
+              icon: OgIcons.flag,
+              title: 'Send a legal notice',
+              subtitle: 'For victims, lawyers, police and regulators. No account needed',
+              onTap: () => context.push(Routes.legalNotice),
+            ),
+            KitNavTile(
+              icon: OgIcons.globe,
+              title: 'Country and regulators',
+              subtitle: 'Emergency number, age rules, who to go to next',
+              onTap: () => context.push(Routes.country),
+            ),
+            KitNavTile(
               icon: OgIcons.shield,
               title: 'My reports',
               subtitle: 'Status and result of what you reported',

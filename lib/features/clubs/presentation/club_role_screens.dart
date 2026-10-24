@@ -277,8 +277,31 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
               icon: OgIcons.people,
               title: 'Everyone',
               subtitle: 'Default permissions for all members',
-              chevron: false,
-              onTap: () {},
+              onTap: () => showKitSheet<void>(
+                context,
+                builder: (sheet) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: kitSpaced([
+                    Text('Everyone', style: OgText.heading(22)),
+                    const Text('Every member can already:'),
+                    const KitCheckList([
+                      'Join the club’s Meets, tournaments and events',
+                      'Invite friends to the club',
+                      'Rate Meets they attended',
+                      'Read and write in the club chat',
+                    ]),
+                    const KitNote(
+                      'To let members do more, give them a role such as Organizer or Admin.',
+                    ),
+                    KitButton(
+                      label: 'Done',
+                      onPressed: () => Navigator.of(sheet).pop(),
+                    ),
+                    const SizedBox(height: 8),
+                  ], 14),
+                ),
+              ),
             ),
           ],
         ),

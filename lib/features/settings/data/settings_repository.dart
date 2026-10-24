@@ -17,6 +17,9 @@ abstract interface class SettingsRepository {
 
   Future<PrivateInfo> privateInfo();
 
+  /// Sets the country for currency, emergency number and local rules.
+  Future<void> saveCountry(Country country);
+
   /// Starts an email change; Supabase emails a confirmation link.
   Future<void> changeEmail(String email);
 
@@ -90,6 +93,14 @@ class SupabaseSettingsRepository implements SettingsRepository {
   );
 
   @override
+  Future<void> saveCountry(Country country) => _guard(
+    () => _client
+        .from('account_private')
+        .update({'country_code': country.code})
+        .eq('id', _me),
+  );
+
+  @override
   Future<String> uploadAvatar(
     Uint8List bytes,
     String extension,
@@ -117,7 +128,7 @@ class SupabaseSettingsRepository implements SettingsRepository {
     final user = _client.auth.currentUser!;
     final r = await _client
         .from('account_private')
-        .select('birthday, country_code')
+        .select('birthday, country_code, identity_verified_at')
         .eq('id', _me)
         .single();
     final birthday = r['birthday'] as String?;
@@ -126,6 +137,7 @@ class SupabaseSettingsRepository implements SettingsRepository {
       phone: user.phone ?? '',
       birthday: birthday == null ? null : DateTime.parse(birthday),
       country: Country.fromCode(r['country_code'] as String?),
+      identityVerified: r['identity_verified_at'] != null,
     );
   });
 
@@ -241,7 +253,17 @@ class DemoSettingsRepository implements SettingsRepository {
     email: 'aaron@example.com',
     phone: '+6591234567',
     birthday: DateTime(1996, 3, 14),
+    country: _country,
+    identityVerified: true,
   );
+
+  Country _country = Country.singapore;
+
+  @override
+  Future<void> saveCountry(Country country) async {
+    await _tick();
+    _country = country;
+  }
 
   @override
   Future<void> changeEmail(String email) => _tick();

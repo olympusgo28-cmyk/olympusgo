@@ -700,7 +700,7 @@ final class SafetyRepositoryProvider
   }
 }
 
-String _$safetyRepositoryHash() => r'7ddaa459aab80da1fdb737251c1cc3eca6b5c581';
+String _$safetyRepositoryHash() => r'1451487f0c3e01ecd51a160a9e31f06d54d99fb1';
 
 @ProviderFor(updatesRepository)
 final updatesRepositoryProvider = UpdatesRepositoryProvider._();

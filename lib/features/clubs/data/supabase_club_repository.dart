@@ -111,6 +111,13 @@ class SupabaseClubRepository implements ClubRepository {
         '${e.key}': '${e.value}',
     },
     inviteCode: j['invite_code'] as String?,
+    rating: _num(j['rating']),
+    ratingCount: _int(j['rating_count']),
+    ratingSpread: [
+      for (final n in j['rating_spread'] as List? ?? const [0, 0, 0, 0, 0])
+        _int(n),
+    ],
+    myStars: (j['my_stars'] as num?)?.toInt(),
   );
 
   static ClubRole _role(Map<String, dynamic> j) => ClubRole(
@@ -464,6 +471,8 @@ class SupabaseClubRepository implements ClubRepository {
     }).catchError((Object _) {});
     final people = <String, PlayerSummary>{};
     final meets = <String, SharedMeet>{};
+    // Private photo paths and their short-lived links.
+    final photos = <String, String>{};
     Map<String, (String, int)>? badges;
 
     Future<Map<String, (String, int)>> roleBadges() async {
@@ -524,6 +533,23 @@ class SupabaseClubRepository implements ClubRepository {
           } on AuthFailure {
             badges = const {};
           }
+          final paths = {
+            for (final r in rows)
+              if (r['photo_url'] case final String p when !p.startsWith('http'))
+                p,
+          }.difference(photos.keys.toSet());
+          if (paths.isNotEmpty) {
+            try {
+              final signed = await _client.storage
+                  .from('chat-photos')
+                  .createSignedUrlsResult(paths.toList(), 60 * 60 * 12);
+              for (final s in signed.whereType<SignedUrlSuccess>()) {
+                photos[s.path] = s.signedUrl;
+              }
+            } on StorageException {
+              // Shown as a removed photo until the next update.
+            }
+          }
           return [
             for (final r in rows)
               () {
@@ -538,7 +564,11 @@ class SupabaseClubRepository implements ClubRepository {
                   roleName: badge?.$1,
                   roleColor: badge?.$2,
                   meet: meets[r['activity_id']],
-                  photo: r['photo_url'] as String?,
+                  photo: switch (r['photo_url'] as String?) {
+                    final String p when p.startsWith('http') => p,
+                    final String p => photos[p],
+                    null => null,
+                  },
                   removed: r['removed'] as bool? ?? false,
                   removedBy: removedBy == null
                       ? null
@@ -569,13 +599,15 @@ class SupabaseClubRepository implements ClubRepository {
   @override
   Future<void> sendPhoto(ChatScope scope, String filePath) => _guard(() async {
     final ext = filePath.split('.').last.toLowerCase();
+    // Private to the club or team: club/<id>/<sender>/<file>.
     final path =
-        '$_me/${DateTime.now().microsecondsSinceEpoch}.${ext.length <= 4 ? ext : 'jpg'}';
+        '${scope.isTeam ? 'team' : 'club'}/${scope.id}/$_me/'
+        '${DateTime.now().microsecondsSinceEpoch}.${ext.length <= 4 ? ext : 'jpg'}';
     await _client.storage.from('chat-photos').upload(path, File(filePath));
     await _client.from('group_messages').insert({
       ..._scope(scope),
       'kind': 'photo',
-      'photo_url': _client.storage.from('chat-photos').getPublicUrl(path),
+      'photo_url': path,
     });
   });
 
@@ -592,11 +624,13 @@ class SupabaseClubRepository implements ClubRepository {
   Future<void> report(ReportTarget target, ContentReport reason, String note) =>
       _guard(
         () => _client.from('content_reports').insert({
-          'target_kind': target.isActivity
-              ? 'activity'
-              : target.isClub
-              ? 'club'
-              : 'message',
+          'target_kind':
+              target.video ??
+              (target.isActivity
+                  ? 'activity'
+                  : target.isClub
+                  ? 'club'
+                  : 'message'),
           'target_id': target.id,
           'reason': reason.id,
           'note': note,
@@ -670,6 +704,15 @@ class SupabaseClubRepository implements ClubRepository {
         'logo_ink': club.logoInk,
         'cover_color': club.coverColor,
       },
+    }),
+  );
+
+  @override
+  Future<void> rateClub(String clubId, int stars, String review) => _guard(
+    () => _rpc('club_rate', {
+      'p_club': clubId,
+      'p_stars': stars,
+      'p_review': review,
     }),
   );
 
@@ -790,17 +833,6 @@ class SupabaseClubRepository implements ClubRepository {
   Future<String?> nextFixtureId(String teamId) async =>
       (await teamSessions(teamId)).firstOrNull?.id;
 
-  /// Positions for a team match. Badminton's school format; other sports
-  /// use the same until their own formats are set up.
-  static const _slots = [
-    LineupSlot(key: 'S1', label: 'Singles 1'),
-    LineupSlot(key: 'S2', label: 'Singles 2'),
-    LineupSlot(key: 'S3', label: 'Singles 3'),
-    LineupSlot(key: 'D1', label: 'Doubles 1', size: 2),
-    LineupSlot(key: 'D2', label: 'Doubles 2', size: 2),
-    LineupSlot(key: 'R', label: 'Reserve', size: 2),
-  ];
-
   @override
   Future<Fixture> fixture(String fixtureId) => _guard(() async {
     final j = Map<String, dynamic>.from(
@@ -820,7 +852,12 @@ class SupabaseClubRepository implements ClubRepository {
       notes: [for (final n in j['notes'] as List? ?? const []) n as String],
       setBy: j['set_by'] as String? ?? '',
       myAvailability: _availability(j['my_availability']),
-      slots: _slots,
+      slots: lineupSlotsFor(
+        ClubSport.values.firstWhere(
+          (s) => s.id == j['sport'],
+          orElse: () => ClubSport.badminton,
+        ),
+      ),
       lineup: {
         for (final e in (j['lineup'] as Map? ?? const {}).entries)
           '${e.key}': [for (final p in e.value as List) p as String?],
@@ -828,6 +865,40 @@ class SupabaseClubRepository implements ClubRepository {
       published: j['published'] as bool? ?? false,
     );
   });
+
+  @override
+  Future<String> createFixture(
+    String teamId, {
+    required String opponent,
+    required DateTime startsAt,
+    String competition = '',
+    String venue = '',
+    DateTime? lineupLocksAt,
+    List<String> notes = const [],
+  }) => _guard(
+    () async => await _rpc('team_fixture_create', {
+      'p_team': teamId,
+      'p_opponent': opponent,
+      'p_starts_at': startsAt.toUtc().toIso8601String(),
+      'p_competition': competition,
+      'p_venue': venue,
+      'p_locks_at': lineupLocksAt?.toUtc().toIso8601String(),
+      'p_notes': notes,
+    }) as String,
+  );
+
+  @override
+  Future<void> recordResult(
+    String fixtureId, {
+    required String score,
+    required bool won,
+  }) => _guard(
+    () => _rpc('team_fixture_result', {
+      'p_fixture': fixtureId,
+      'p_score': score,
+      'p_won': won,
+    }),
+  );
 
   @override
   Future<void> setAvailability(String fixtureId, Availability availability) =>

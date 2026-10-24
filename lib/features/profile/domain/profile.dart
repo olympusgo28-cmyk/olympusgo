@@ -83,3 +83,47 @@ abstract class ProfileSummary with _$ProfileSummary {
     @Default('Followers') String sessionsShownTo,
   }) = _ProfileSummary;
 }
+
+/// One past session on the Passport, with game results from confirmed scores.
+class HistoryItem {
+  const HistoryItem({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.at,
+    this.ranked = false,
+    this.played = 0,
+    this.won = 0,
+  });
+
+  final String id;
+
+  /// "meet", "tournament", "event" or "class".
+  final String kind;
+  final String title;
+  final DateTime at;
+  final bool ranked;
+  final int played;
+  final int won;
+}
+
+/// Sessions and results in one sport.
+class PassportHistory {
+  const PassportHistory({
+    this.sessions = 0,
+    this.rankedGames = 0,
+    this.gamesPlayed = 0,
+    this.gamesWon = 0,
+    this.items = const [],
+  });
+
+  final int sessions;
+  final int rankedGames;
+  final int gamesPlayed;
+  final int gamesWon;
+  final List<HistoryItem> items;
+
+  /// Whole percent, or null before any scored game.
+  int? get winRate =>
+      gamesPlayed == 0 ? null : (gamesWon * 100 / gamesPlayed).round();
+}

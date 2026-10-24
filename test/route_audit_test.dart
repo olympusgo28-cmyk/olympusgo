@@ -46,7 +46,11 @@ void main() {
           ? auditRoutes
           : [
               for (final r in auditRoutes)
-                if (Routes.publicPrefixes.any(r.$2.startsWith)) r,
+                if ([
+                  ...Routes.publicPrefixes,
+                  ...Routes.openPrefixes,
+                ].any(r.$2.startsWith))
+                  r,
             ];
       // iPhone 17: 402 × 874 points.
       tester.view.physicalSize = const Size(1206, 2622);

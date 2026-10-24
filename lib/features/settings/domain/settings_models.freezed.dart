@@ -291,7 +291,9 @@ as String?,
 /// @nodoc
 mixin _$PrivateInfo {
 
- String get email; String get phone; DateTime? get birthday; Country get country;
+ String get email; String get phone; DateTime? get birthday; Country get country;/// Checked by the review team; needed to run paid tournaments and
+/// receive payouts.
+ bool get identityVerified;
 /// Create a copy of PrivateInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -303,20 +305,20 @@ $PrivateInfoCopyWith<PrivateInfo> get copyWith => _$PrivateInfoCopyWithImpl<Priv
 @override
 bool operator ==(Object other) {
   final _this = this as PrivateInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrivateInfo&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.phone, _this.phone) || other.phone == _this.phone)&&(identical(other.birthday, _this.birthday) || other.birthday == _this.birthday)&&(identical(other.country, _this.country) || other.country == _this.country));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrivateInfo&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.phone, _this.phone) || other.phone == _this.phone)&&(identical(other.birthday, _this.birthday) || other.birthday == _this.birthday)&&(identical(other.country, _this.country) || other.country == _this.country)&&(identical(other.identityVerified, _this.identityVerified) || other.identityVerified == _this.identityVerified));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PrivateInfo;
-  return Object.hash(runtimeType,_this.email,_this.phone,_this.birthday,_this.country);
+  return Object.hash(runtimeType,_this.email,_this.phone,_this.birthday,_this.country,_this.identityVerified);
 }
 
 @override
 String toString() {
   final _this = this as PrivateInfo;
-  return 'PrivateInfo(email: ${_this.email}, phone: ${_this.phone}, birthday: ${_this.birthday}, country: ${_this.country})';
+  return 'PrivateInfo(email: ${_this.email}, phone: ${_this.phone}, birthday: ${_this.birthday}, country: ${_this.country}, identityVerified: ${_this.identityVerified})';
 }
 
 
@@ -327,7 +329,7 @@ abstract mixin class $PrivateInfoCopyWith<$Res>  {
   factory $PrivateInfoCopyWith(PrivateInfo value, $Res Function(PrivateInfo) _then) = _$PrivateInfoCopyWithImpl;
 @useResult
 $Res call({
- String email, String phone, DateTime? birthday, Country country
+ String email, String phone, DateTime? birthday, Country country, bool identityVerified
 });
 
 
@@ -344,13 +346,14 @@ class _$PrivateInfoCopyWithImpl<$Res>
 
 /// Create a copy of PrivateInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? phone = null,Object? birthday = freezed,Object? country = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? phone = null,Object? birthday = freezed,Object? country = null,Object? identityVerified = null,}) {
   return _then(PrivateInfo(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,birthday: freezed == birthday ? _self.birthday : birthday // ignore: cast_nullable_to_non_nullable
 as DateTime?,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
-as Country,
+as Country,identityVerified: null == identityVerified ? _self.identityVerified : identityVerified // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -435,10 +438,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String phone,  DateTime? birthday,  Country country)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String phone,  DateTime? birthday,  Country country,  bool identityVerified)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PrivateInfo() when $default != null:
-return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
+return $default(_that.email,_that.phone,_that.birthday,_that.country,_that.identityVerified);case _:
   return orElse();
 
 }
@@ -456,10 +459,10 @@ return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String phone,  DateTime? birthday,  Country country)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String phone,  DateTime? birthday,  Country country,  bool identityVerified)  $default,) {final _that = this;
 switch (_that) {
 case _PrivateInfo():
-return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
+return $default(_that.email,_that.phone,_that.birthday,_that.country,_that.identityVerified);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -476,10 +479,10 @@ return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String phone,  DateTime? birthday,  Country country)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String phone,  DateTime? birthday,  Country country,  bool identityVerified)?  $default,) {final _that = this;
 switch (_that) {
 case _PrivateInfo() when $default != null:
-return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
+return $default(_that.email,_that.phone,_that.birthday,_that.country,_that.identityVerified);case _:
   return null;
 
 }
@@ -491,13 +494,16 @@ return $default(_that.email,_that.phone,_that.birthday,_that.country);case _:
 
 
 class _PrivateInfo implements PrivateInfo {
-  const _PrivateInfo({this.email = '', this.phone = '', this.birthday, this.country = Country.singapore});
+  const _PrivateInfo({this.email = '', this.phone = '', this.birthday, this.country = Country.singapore, this.identityVerified = false});
   
 
 @override@JsonKey() final  String email;
 @override@JsonKey() final  String phone;
 @override final  DateTime? birthday;
 @override@JsonKey() final  Country country;
+/// Checked by the review team; needed to run paid tournaments and
+/// receive payouts.
+@override@JsonKey() final  bool identityVerified;
 
 /// Create a copy of PrivateInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -509,18 +515,18 @@ _$PrivateInfoCopyWith<_PrivateInfo> get copyWith => __$PrivateInfoCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PrivateInfo&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.birthday, birthday) || other.birthday == birthday)&&(identical(other.country, country) || other.country == country));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PrivateInfo&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.birthday, birthday) || other.birthday == birthday)&&(identical(other.country, country) || other.country == country)&&(identical(other.identityVerified, identityVerified) || other.identityVerified == identityVerified));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,email,phone,birthday,country);
+    return Object.hash(runtimeType,email,phone,birthday,country,identityVerified);
 }
 
 @override
 String toString() {
-    return 'PrivateInfo(email: $email, phone: $phone, birthday: $birthday, country: $country)';
+    return 'PrivateInfo(email: $email, phone: $phone, birthday: $birthday, country: $country, identityVerified: $identityVerified)';
 }
 
 
@@ -531,7 +537,7 @@ abstract mixin class _$PrivateInfoCopyWith<$Res> implements $PrivateInfoCopyWith
   factory _$PrivateInfoCopyWith(_PrivateInfo value, $Res Function(_PrivateInfo) _then) = __$PrivateInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String email, String phone, DateTime? birthday, Country country
+ String email, String phone, DateTime? birthday, Country country, bool identityVerified
 });
 
 
@@ -548,13 +554,14 @@ class __$PrivateInfoCopyWithImpl<$Res>
 
 /// Create a copy of PrivateInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? phone = null,Object? birthday = freezed,Object? country = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? phone = null,Object? birthday = freezed,Object? country = null,Object? identityVerified = null,}) {
   return _then(_PrivateInfo(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,birthday: freezed == birthday ? _self.birthday : birthday // ignore: cast_nullable_to_non_nullable
 as DateTime?,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
-as Country,
+as Country,identityVerified: null == identityVerified ? _self.identityVerified : identityVerified // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

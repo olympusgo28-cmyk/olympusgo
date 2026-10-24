@@ -140,6 +140,43 @@ void main() {
       expect((await member.teams(ClubTab.mine)).single.team.id, team);
       expect(await owner.teamMembers(team), hasLength(2));
 
+      // Ratings: members only, not the owner.
+      await expectLater(owner.rateClub(id, 5, ''), throwsA(isA<Exception>()));
+      await member.rateClub(id, 4, 'Good courts');
+      final rated = await member.club(id);
+      expect(rated.ratingCount, 1);
+      expect(rated.myStars, 4);
+      expect(rated.ratingSpread, [0, 1, 0, 0, 0]);
+
+      // A private chat photo: members get a link, the message stores a path.
+      final photo = File('${Directory.systemTemp.path}/og_test_photo.png')
+        ..writeAsBytesSync([137, 80, 78, 71, 13, 10, 26, 10]);
+      await member.sendPhoto(ChatScope.club(id), photo.path);
+      final withPhoto = await owner
+          .chat(ChatScope.club(id))
+          .firstWhere((m) => m.any((x) => x.kind == MessageKind.photo))
+          .timeout(const Duration(seconds: 15));
+      expect(
+        withPhoto.firstWhere((x) => x.kind == MessageKind.photo).photo,
+        contains('/storage/v1/object/sign/chat-photos/club/'),
+      );
+
+      // Fixtures and results, staff only.
+      final fixture = await owner.createFixture(
+        team,
+        opponent: 'Rival School',
+        startsAt: DateTime.now().add(const Duration(days: 3)),
+        venue: 'Hall',
+      );
+      await expectLater(
+        member.createFixture(team, opponent: 'Nope', startsAt: DateTime.now()),
+        throwsA(isA<Exception>()),
+      );
+      expect((await member.teamSessions(team)).single.id, fixture);
+      expect((await member.fixture(fixture)).slots.first.label, 'Singles 1');
+      await owner.recordResult(fixture, score: '3–2', won: true);
+      expect((await member.teamResults(team)).single.score, '3–2');
+
       // Hand over and delete.
       await owner.transfer(id, memberId);
       expect((await member.club(id)).isOwner, isTrue);

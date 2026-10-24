@@ -15,6 +15,7 @@ import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/og_kit.dart';
 import '../../../core/format.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
@@ -200,6 +201,19 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
   ) {
     final c = context.og;
     return [
+      const SizedBox(height: 12),
+      KitCard(
+        children: [
+          KitNavTile(
+            icon: OgIcons.clipboardList,
+            title: 'Sessions and rating history',
+            subtitle: 'Every Meet, tournament and class, with results',
+            onTap: () => context.push(
+              Routes.passportHistory(level?.sport ?? 'badminton'),
+            ),
+          ),
+        ],
+      ),
       if (s != null) ...[
         _title('This season', top: 16),
         const SizedBox(height: 10),

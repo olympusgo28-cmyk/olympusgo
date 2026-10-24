@@ -25,22 +25,35 @@ class ChatScope {
 class ReportTarget {
   const ReportTarget.message(this.id, {required this.scope})
     : isClub = false,
-      isActivity = false;
+      isActivity = false,
+      video = null;
   const ReportTarget.club(this.id)
     : isClub = true,
       isActivity = false,
-      scope = null;
+      scope = null,
+      video = null;
 
   /// A tournament or event.
   const ReportTarget.activity(this.id)
     : isClub = false,
       isActivity = true,
-      scope = null;
+      scope = null,
+      video = null;
+
+  /// A shop video, or a live stream when [live] is true.
+  const ReportTarget.video(this.id, {bool live = false})
+    : isClub = false,
+      isActivity = false,
+      scope = null,
+      video = live ? 'live' : 'video';
 
   final String id;
   final bool isClub;
   final bool isActivity;
   final ChatScope? scope;
+
+  /// "video" or "live" for a video report.
+  final String? video;
 }
 
 /// Clubs, their members and roles, club and team chat, and teams.
@@ -109,6 +122,9 @@ abstract interface class ClubRepository {
   Future<ClubLeaderboard> leaderboard(String clubId, ClubSport sport);
   Future<ClubReward> reward(String clubId);
   Future<void> updateClub(Club club);
+
+  /// A member's 1 to 5 stars and a short review. Rating again replaces it.
+  Future<void> rateClub(String clubId, int stars, String review);
   Future<void> transfer(String clubId, String toUserId);
   Future<void> deleteClub(String clubId);
   Future<String> createClub(ClubDraft draft);
@@ -124,6 +140,24 @@ abstract interface class ClubRepository {
   /// The next fixture's id, or null when none is scheduled.
   Future<String?> nextFixtureId(String teamId);
   Future<Fixture> fixture(String fixtureId);
+
+  /// Adds a match to the team's calendar. Staff only.
+  Future<String> createFixture(
+    String teamId, {
+    required String opponent,
+    required DateTime startsAt,
+    String competition = '',
+    String venue = '',
+    DateTime? lineupLocksAt,
+    List<String> notes = const [],
+  });
+
+  /// Records the final score once the match is played. Staff only.
+  Future<void> recordResult(
+    String fixtureId, {
+    required String score,
+    required bool won,
+  });
   Future<void> setAvailability(String fixtureId, Availability availability);
   Future<void> saveLineup(
     String fixtureId,

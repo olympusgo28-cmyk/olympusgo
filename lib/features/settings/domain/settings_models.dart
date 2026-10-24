@@ -51,6 +51,10 @@ abstract class PrivateInfo with _$PrivateInfo {
     @Default('') String phone,
     DateTime? birthday,
     @Default(Country.singapore) Country country,
+
+    /// Checked by the review team; needed to run paid tournaments and
+    /// receive payouts.
+    @Default(false) bool identityVerified,
   }) = _PrivateInfo;
 }
 

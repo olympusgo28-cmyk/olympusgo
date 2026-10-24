@@ -54,7 +54,7 @@ final class AcademyRepositoryProvider
   }
 }
 
-String _$academyRepositoryHash() => r'587a9b9c6fd79a115e9762d453abf3c8884da76a';
+String _$academyRepositoryHash() => r'13dfb2eb3599d945d63765611705bd22dd102968';
 
 @ProviderFor(academyList)
 final academyListProvider = AcademyListProvider._();

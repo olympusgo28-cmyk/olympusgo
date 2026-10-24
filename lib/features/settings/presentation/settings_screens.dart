@@ -971,6 +971,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           'Read the community rules',
           onPressed: () => context.push(Routes.communityRules),
         ),
+        KitLink(
+          'Terms and privacy',
+          onPressed: () => context.push(Routes.legal),
+        ),
       ],
       bottom: [
         OgButton.outline(

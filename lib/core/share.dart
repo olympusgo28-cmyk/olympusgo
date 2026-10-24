@@ -25,6 +25,9 @@ abstract final class Links {
 
   static final _username = RegExp(r'^[A-Za-z0-9_]{3,30}$');
 
+  /// Website pages that aren't player profiles.
+  static const _pages = {'terms', 'privacy'};
+
   /// The screen a share link opens, or null when [uri] isn't one.
   static String? route(Uri uri) {
     final s = uri.pathSegments.where((p) => p.isNotEmpty).toList();
@@ -36,7 +39,8 @@ abstract final class Links {
       ['team', final id] => Routes.team(id),
       ['join', final code] => Routes.joinClub(code),
       ['meet' || 'event' || 'tournament', final id] => Routes.activity(id),
-      [final name] when _username.hasMatch(name) => Routes.scannedPlayer(name),
+      [final name] when _username.hasMatch(name) && !_pages.contains(name) =>
+        Routes.scannedPlayer(name),
       _ => null,
     };
   }

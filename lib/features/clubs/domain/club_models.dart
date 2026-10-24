@@ -122,6 +122,9 @@ abstract class Club with _$Club {
     double? rating,
     @Default(0) int ratingCount,
     @Default([0, 0, 0, 0, 0]) List<int> ratingSpread,
+
+    /// The viewer's own stars, once they have rated the club.
+    int? myStars,
     @Default(0xFF1C1F23) int logoColor,
     @Default(0xFFF2C14E) int logoInk,
     @Default(0xFFE8590C) int coverColor,
@@ -494,6 +497,42 @@ abstract class LineupSlot with _$LineupSlot {
   String get kind => key.substring(0, 1);
 }
 
+/// Lineup positions for a team match in [sport].
+List<LineupSlot> lineupSlotsFor(ClubSport sport) => switch (sport) {
+  ClubSport.badminton || ClubSport.tableTennis => const [
+    LineupSlot(key: 'S1', label: 'Singles 1'),
+    LineupSlot(key: 'S2', label: 'Singles 2'),
+    LineupSlot(key: 'S3', label: 'Singles 3'),
+    LineupSlot(key: 'D1', label: 'Doubles 1', size: 2),
+    LineupSlot(key: 'D2', label: 'Doubles 2', size: 2),
+    LineupSlot(key: 'R', label: 'Reserve', size: 2),
+  ],
+  ClubSport.tennis => const [
+    LineupSlot(key: 'S1', label: 'Singles 1'),
+    LineupSlot(key: 'S2', label: 'Singles 2'),
+    LineupSlot(key: 'D1', label: 'Doubles 1', size: 2),
+    LineupSlot(key: 'R', label: 'Reserve', size: 2),
+  ],
+  ClubSport.pickleball || ClubSport.padel => const [
+    LineupSlot(key: 'D1', label: 'Doubles 1', size: 2),
+    LineupSlot(key: 'D2', label: 'Doubles 2', size: 2),
+    LineupSlot(key: 'D3', label: 'Doubles 3', size: 2),
+    LineupSlot(key: 'R', label: 'Reserve', size: 2),
+  ],
+  ClubSport.squash => const [
+    LineupSlot(key: 'S1', label: 'Seed 1'),
+    LineupSlot(key: 'S2', label: 'Seed 2'),
+    LineupSlot(key: 'S3', label: 'Seed 3'),
+    LineupSlot(key: 'S4', label: 'Seed 4'),
+    LineupSlot(key: 'S5', label: 'Seed 5'),
+    LineupSlot(key: 'R', label: 'Reserve', size: 2),
+  ],
+  ClubSport.running || ClubSport.hyrox => const [
+    LineupSlot(key: 'T', label: 'Team', size: 6),
+    LineupSlot(key: 'R', label: 'Reserve', size: 2),
+  ],
+};
+
 @freezed
 abstract class Fixture with _$Fixture {
   const factory Fixture({
@@ -563,6 +602,12 @@ enum ContentReport {
     false,
   ),
   scam('scam', 'Scam or fraud', 'Fake offer, asks for money or codes', false),
+  copyright(
+    'copyright',
+    'Copyright',
+    'Uses my photo, video or music without permission',
+    false,
+  ),
   other('other', 'Something else', 'Tell us in your own words', false);
 
   const ContentReport(this.id, this.label, this.hint, this.urgent);
@@ -579,6 +624,17 @@ enum ContentReport {
     childSafety,
     hate,
     scam,
+    other,
+  ];
+
+  static const forVideo = [
+    harassment,
+    personalDetails,
+    intimateImage,
+    childSafety,
+    hate,
+    scam,
+    copyright,
     other,
   ];
 

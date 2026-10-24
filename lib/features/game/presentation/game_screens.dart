@@ -413,7 +413,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                   title: title,
                   subtitle: sub,
                   chevron: false,
-                  onTap: () {},
+                  onTap: null,
                 ),
               if (x.target > x.counted.length)
                 KitNavTile(

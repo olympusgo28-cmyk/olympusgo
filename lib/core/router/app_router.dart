@@ -63,6 +63,8 @@ import '../../features/social/presentation/other_profile_screens.dart';
 import '../../features/social/presentation/search_screens.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/venues/presentation/venue_screens.dart';
+import '../../features/profile/presentation/passport_history_screen.dart';
+import '../../features/safety/presentation/legal_screens.dart';
 import '../../features/safety/presentation/safety_screens.dart';
 import '../../features/home/edit_categories_screen.dart';
 import '../navigation/breadcrumbs.dart';
@@ -102,6 +104,7 @@ GoRouter appRouter(Ref ref) {
     }
     final loc = state.matchedLocation;
     if (loc == Routes.splash) return null;
+    if (Routes.openPrefixes.any(loc.startsWith)) return null;
 
     final isPublic = Routes.publicPrefixes.any(loc.startsWith);
     if (userId == null) {
@@ -326,6 +329,16 @@ GoRouter appRouter(Ref ref) {
       page(Routes.blocked, (_) => const BlockedPlayersScreen()),
       page(Routes.help, (_) => const HelpScreen()),
       page(Routes.communityRules, (_) => const CommunityRulesScreen()),
+      page(
+        '/profile/passport/history/:sport',
+        (s) => PassportHistoryScreen(sport: s.pathParameters['sport']!),
+      ),
+      page(Routes.country, (_) => const CountryScreen()),
+      page(Routes.identityCheck, (_) => const IdentityCheckScreen()),
+      page(Routes.legal, (_) => const TermsPrivacyScreen()),
+      page(Routes.refundRules, (_) => const RefundRulesScreen()),
+      page(Routes.under18, (_) => const Under18ProtectionScreen()),
+      page(Routes.legalNotice, (_) => const LegalNoticeScreen()),
       page(Routes.editCategories, (_) => const EditCategoriesScreen()),
       page(Routes.myReports, (_) => const MyReportsScreen()),
       page(
@@ -534,6 +547,14 @@ GoRouter appRouter(Ref ref) {
         '/activities/:id/report',
         (s) => ReportContentScreen.activity(activityId: id(s)),
       ),
+      page(
+        '/shop/videos/:id/report',
+        (s) => ReportContentScreen.video(videoId: id(s)),
+      ),
+      page(
+        '/shop/live/:id/report',
+        (s) => ReportContentScreen.video(videoId: id(s), live: true),
+      ),
       page('/clubs/:id/members', (s) => ClubMembersScreen(id: id(s))),
       page(
         '/clubs/:id/members/:user',
@@ -596,6 +617,7 @@ GoRouter appRouter(Ref ref) {
           tab: s.uri.queryParameters['tab'] ?? 'lineup',
         ),
       ),
+      page('/teams/:id/new-fixture', (s) => NewFixtureScreen(teamId: id(s))),
       page(
         '/teams/:id/fixtures/:fixture',
         (s) => TeamFixtureScreen(
