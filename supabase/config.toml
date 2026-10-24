@@ -1,0 +1,15 @@
+# Only the settings OlympusGO needs. `supabase config push` changes only the
+# values declared here, so everything else in the hosted project is left alone.
+
+[auth.email]
+otp_length = 6
+enable_signup = true
+enable_confirmations = false
+
+[auth.email.template.magic_link]
+subject = "Your OlympusGO code"
+content_path = "./supabase/templates/code_email.html"
+
+[auth.email.template.confirmation]
+subject = "Your OlympusGO code"
+content_path = "./supabase/templates/code_email.html"

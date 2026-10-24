@@ -1,0 +1,184 @@
+:root {
+  --bg: #f3f2ec;
+  --card: #ffffff;
+  --text: #16181b;
+  --muted: #5b6168;
+  --line: #e2e0d8;
+  --primary: #f28500;
+  --on-primary: #1b1206;
+  --accent-text: #a85200;
+  --tint: #ffe8cc;
+  --hero: #16181b;
+  --on-hero: #ffffff;
+  --lime: #c6ff00;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1113;
+    --card: #1a1d21;
+    --text: #f2f3f0;
+    --muted: #a3a9b0;
+    --line: #2e333a;
+    --primary: #c6ff00;
+    --on-primary: #0f1113;
+    --accent-text: #c6ff00;
+    --tint: #2a3600;
+    --hero: #1a1d21;
+  }
+
+  .hero { border: 1px solid var(--line); }
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 "Figtree", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 18px/1 "Archivo", sans-serif;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f28500;
+  color: #1b1206;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+.hero {
+  background: var(--hero);
+  color: var(--on-hero);
+  border-radius: 24px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Court lines, like the app's banners. */
+.hero::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: 24px;
+  width: 110px;
+  height: 70%;
+  border: 2px solid rgba(255, 255, 255, 0.07);
+  border-top: 0;
+  pointer-events: none;
+}
+
+.kicker {
+  font: 700 12px/1.4 "Figtree", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lime);
+  margin: 0 0 12px;
+}
+
+h1 {
+  font: 800 32px/1.05 "Archivo", sans-serif;
+  letter-spacing: -0.02em;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  overflow-wrap: anywhere;
+}
+
+.hero p { margin: 12px 0 0; color: rgba(255, 255, 255, 0.78); position: relative; z-index: 1; }
+
+.code {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font: 700 18px/1 "Archivo", sans-serif;
+  letter-spacing: 0.12em;
+}
+
+.code[hidden] { display: none; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.card h2 { font: 800 20px/1.2 "Archivo", sans-serif; margin: 0 0 8px; }
+
+.card p { margin: 0; color: var(--muted); }
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font: 700 17px/1 "Figtree", sans-serif;
+  text-decoration: none;
+  border: 0;
+  width: 100%;
+}
+
+.button[aria-disabled="true"] {
+  background: var(--tint);
+  color: var(--accent-text);
+  cursor: default;
+}
+
+.steps { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+
+.steps li { display: flex; gap: 12px; align-items: baseline; color: var(--muted); }
+
+.steps b {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--accent-text);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 0 16px 24px;
+}

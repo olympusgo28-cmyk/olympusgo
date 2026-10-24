@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>OlympusGO</title>
+  <meta property="og:title" content="Open in OlympusGO">
+  <meta property="og:description" content="Clubs, Meets, tournaments and academies for racquet sports.">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=Figtree:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <a class="brand" href="/"><span class="mark" aria-hidden="true">OG</span>OlympusGO</a>
+
+    <section class="hero">
+      <p class="kicker" id="kicker">Shared with you</p>
+      <h1 id="title">Open this in OlympusGO</h1>
+      <p id="lead">This link opens in the OlympusGO app.</p>
+      <span class="code" id="code" hidden></span>
+    </section>
+
+    <span class="button" aria-disabled="true">Coming soon to the App Store</span>
+
+    <section class="card">
+      <h2>Already have the app?</h2>
+      <p>Links like this open the app straight away when you tap them in Messages, WhatsApp or Mail.</p>
+      <ol class="steps">
+        <li><b>1</b><span>Install OlympusGO and sign in.</span></li>
+        <li><b>2</b><span>Tap the link again from where it was shared.</span></li>
+      </ol>
+    </section>
+  </main>
+  <footer>OlympusGO · Play racquet sports together</footer>
+
+  <script>
+    // Each kind of share link gets its own heading. Ids stay out of the page.
+    const parts = location.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const [kind, , extra, classId] = parts;
+    const pages = {
+      club: extra === 'ranks'
+        ? ['Club leaderboard', 'See the club’s rankings', 'Open the app to see who’s on top this season.']
+        : ['Club', 'You’re invited to a club', 'Open the app to see the club, its members and upcoming games.'],
+      join: ['Club invite', 'You’re invited to join a club', 'Use this code in the app to join.'],
+      team: ['Team invite', 'You’re invited to a team', 'Open the app to see the roster and fixtures.'],
+      academy: extra === 'join' && classId
+        ? ['Class invite', 'You’re invited to join a class', 'Open the app to see the class times and fees, then accept.']
+        : ['Academy', 'Train with this academy', 'Open the app to see classes, coaches and fees.'],
+      meet: ['Meet', 'Come and play', 'Open the app to see who’s playing and grab a spot.'],
+      event: ['Event', 'You’re invited to an event', 'Open the app to see the programme and get tickets.'],
+      tournament: ['Tournament', 'Enter this tournament', 'Open the app to see the divisions and register.'],
+    };
+    let page = pages[kind];
+    if (!page && parts.length === 1 && /^[A-Za-z0-9_]{3,30}$/.test(kind)) {
+      page = ['Player', '@' + kind, 'Open the app to see their player profile and connect.'];
+    }
+    if (page) {
+      document.getElementById('kicker').textContent = page[0];
+      document.getElementById('title').textContent = page[1];
+      document.getElementById('lead').textContent = page[2];
+      document.title = page[1] + ' · OlympusGO';
+    }
+    if (kind === 'join' && parts[1]) {
+      const code = document.getElementById('code');
+      code.textContent = parts[1].toUpperCase();
+      code.hidden = false;
+    }
+  </script>
+</body>
+</html>

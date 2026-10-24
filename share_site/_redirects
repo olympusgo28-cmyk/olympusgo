@@ -1,0 +1,11 @@
+# Every share link from the app shows the same preview page.
+# The app's Links class (lib/core/share.dart) makes these paths.
+/club/*        /link.html  200
+/join/*        /link.html  200
+/team/*        /link.html  200
+/academy/*     /link.html  200
+/meet/*        /link.html  200
+/event/*       /link.html  200
+/tournament/*  /link.html  200
+# Player profiles: /<username>
+/:username     /link.html  200

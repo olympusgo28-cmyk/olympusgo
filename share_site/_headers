@@ -1,0 +1,7 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# iOS reads this file to open share links in the app. It must be JSON.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
