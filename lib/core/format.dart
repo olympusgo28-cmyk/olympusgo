@@ -81,3 +81,7 @@ abstract final class Fmt {
     return '$n hour${h == 1 ? '' : 's'}';
   }
 }
+
+/// "1 student", "3 students".
+String plural(int n, String one, [String? many]) =>
+    '$n ${n == 1 ? one : (many ?? '${one}s')}';

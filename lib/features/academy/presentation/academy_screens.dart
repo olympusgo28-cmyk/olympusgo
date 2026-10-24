@@ -105,6 +105,13 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                ref.invalidate(academyListProvider);
+                ref.invalidate(myStudentsProvider);
+                await ref.read(academyListProvider.future);
+              },
+            ),
             SliverToBoxAdapter(
               child: Column(
                 children: [
@@ -297,7 +304,7 @@ class _AcademyRow extends StatelessWidget {
     final sub = [
       if (a.rating != null)
         '${a.rating!.toStringAsFixed(1)} (${a.ratingCount})',
-      '${a.coaches.length} NROC coaches',
+      _coachCount(a),
       a.audience,
     ].join(', ');
     return Pressable(
@@ -490,8 +497,8 @@ class AcademyPageScreen extends ConsumerWidget {
           ),
           link(
             OgIcons.group,
-            '${a.students > 0 ? a.students : students} students',
-            '${a.classes.length} classes · ${a.coaches.length} NROC coaches',
+            plural(a.students > 0 ? a.students : students, 'student'),
+            '${a.classes.length} ${a.classes.length == 1 ? 'class' : 'classes'} · ${_coachCount(a)}',
             null,
           ),
           for (final k in kids)
@@ -528,8 +535,17 @@ class AcademyPageScreen extends ConsumerWidget {
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                ref.invalidate(academyProvider(id));
+                ref.invalidate(myStudentsProvider);
+                await ref.read(academyProvider(id).future);
+              },
+            ),
             // The card overlaps the banner by 64. It sits in the same Stack,
             // so its real height sizes the box and nothing paints over it.
             SliverToBoxAdapter(
@@ -823,8 +839,8 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           'Who is joining?',
           size: 28,
           lead:
-              '${a.name} replies within 2 working days. You pay only after '
-              'they accept.',
+              '${a.name} replies within 2 working days. '
+              '${Env.hasSupabase ? 'If they accept, you pay the academy directly' : 'You pay only after they accept'}.',
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1043,4 +1059,11 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
       ],
     );
   }
+}
+
+/// "2 coaches", or "2 NROC coaches" once their licences are checked.
+String _coachCount(Academy a) {
+  final n = a.coaches.length;
+  final nroc = n > 0 && a.coaches.every((k) => k.nroc);
+  return '$n ${nroc ? 'NROC ' : ''}${n == 1 ? 'coach' : 'coaches'}';
 }

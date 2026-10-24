@@ -35,9 +35,10 @@ class Division {
   int get left => (capacity - entries).clamp(0, capacity);
 
   /// "S$15 · MB–AD", "S$30 per pair · LI–AD".
-  String get priceLine =>
-      'S\$${money(feeCents, decimals: feeCents % 100 != 0)}'
-      '${doubles ? ' per pair' : ''} · $bands';
+  String get priceLine => feeCents == 0
+      ? 'Free · $bands'
+      : 'S\$${money(feeCents, decimals: feeCents % 100 != 0)}'
+            '${doubles ? ' per pair' : ''} · $bands';
 }
 
 enum EntryStatus { paid, waitlist, partnerPending }

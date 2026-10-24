@@ -13,6 +13,9 @@ abstract class Mall with _$Mall {
     @Default(0xFFFBE7B0) int color,
     @Default(0xFF5A4300) int ink,
     @Default(true) bool pointsAccepted,
+
+    /// The player who runs it, for chat.
+    @Default('') String ownerId,
   }) = _Mall;
 }
 
@@ -57,9 +60,13 @@ abstract class Product with _$Product {
       ? null
       : '${((1 - priceCents / oldPriceCents!) * 100).round()}% off';
 
-  /// "4.8, 1.2k sold".
-  String get soldLine =>
-      '${rating.toStringAsFixed(1)}, ${sold >= 1000 ? '${(sold / 1000).toStringAsFixed(1)}k' : sold} sold';
+  /// "4.8, 1.2k sold", or "New" before anyone has bought or rated it.
+  String get soldLine => sold == 0 && rating == 0
+      ? 'New'
+      : [
+          if (rating > 0) rating.toStringAsFixed(1),
+          '${sold >= 1000 ? '${(sold / 1000).toStringAsFixed(1)}k' : sold} sold',
+        ].join(', ');
 
   /// Two letters for the product tile: "CR" for Carbon racket.
   String get mark {

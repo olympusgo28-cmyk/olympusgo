@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
@@ -201,8 +203,16 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
           children: [
             Expanded(
               child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 slivers: [
+                  CupertinoSliverRefreshControl(
+                    onRefresh: () async {
+                      refreshCompetition(ref.invalidate);
+                      await ref.read(tournamentInfoProvider(a.id).future);
+                    },
+                  ),
                   SliverToBoxAdapter(
                     child: Stack(
                       children: [
@@ -317,11 +327,15 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)}',
+                    t.fromCents == 0
+                        ? 'Free'
+                        : 'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)}',
                     style: OgText.heading(20),
                   ),
                   Text(
-                    'per entry · plus platform fee',
+                    t.fromCents == 0
+                        ? 'No entry fee'
+                        : 'per entry · plus platform fee',
                     style: OgText.body(12, color: c.textMuted),
                   ),
                 ],
@@ -377,14 +391,16 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)} per entry',
+                  t.fromCents == 0
+                      ? 'Free to enter'
+                      : 'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)} per entry',
                   style: OgText.heading(22),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Plus a platform fee of 10% (minimum S\$2) per entry. Enter '
-                  'up to ${t.maxEvents} events. Doubles need a partner who '
-                  'accepts before the close date.',
+                  '${t.fromCents == 0 ? '' : 'Plus a platform fee of 10% (minimum S\$2) per entry. '}'
+                  'Enter up to ${t.maxEvents} events. Doubles need a partner '
+                  'who accepts before the close date.',
                   style: OgText.body(14, height: 1.45, color: c.textMuted),
                 ),
                 const SizedBox(height: 12),
@@ -472,13 +488,17 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
           KitKeyValue('Draw', t.drawFormat),
           KitKeyValue('Seeding', t.seeding),
           KitKeyValue('Divisions', t.divisionsText),
-          KitKeyValue('Entry', t.entryRule),
+          KitKeyValue('Entry', Env.hasSupabase ? 'Everyone' : t.entryRule),
         ],
       ),
-      const KitCheckList([
+      KitCheckList([
         'Check in at the desk or by QR 30 minutes before your first match.',
-        'Scores are confirmed by the umpire or both sides, then update ratings.',
-        'Counts for the Tournament leaderboard once 16+ entries are confirmed.',
+        Env.hasSupabase
+            ? 'The umpire enters each score, and it counts for ratings.'
+            : 'Scores are confirmed by the umpire or both sides, then update ratings.',
+        Env.hasSupabase
+            ? 'Finishes earn points on the Tournament leaderboard.'
+            : 'Counts for the Tournament leaderboard once 16+ entries are confirmed.',
       ]),
       KitCard(
         children: [
@@ -487,7 +507,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
             tile: OgColors.ink,
             ink: const Color(0xFFF2C14E),
             title: t.host,
-            subtitle: 'Organizer · Verified',
+            subtitle: Env.hasSupabase ? 'Organizer' : 'Organizer · Verified',
             trailing: Text(
               'Contact',
               style: OgText.body(14, weight: FontWeight.w700, color: c.link),
@@ -902,7 +922,16 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
               ),
             ),
           if (!_knockout)
-            for (final g in groups ?? const <DrawGroup>[]) _GroupTable(group: g)
+            for (final g in groups ?? const <DrawGroup>[])
+              _GroupTable(
+                group: g,
+                doubles:
+                    info.divisions
+                        .where((d) => d.id == _division)
+                        .firstOrNull
+                        ?.doubles ??
+                    true,
+              )
           else if (rounds != null) ...[
             Text(
               'Swipe to see the final',
@@ -938,7 +967,9 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
             ),
           ],
           Text(
-            'Scores update live once the umpire or both sides confirm.',
+            Env.hasSupabase
+                ? 'Scores show as soon as the umpire enters them. Pull down to refresh.'
+                : 'Scores update live once the umpire or both sides confirm.',
             style: OgText.body(13, height: 1.4, color: c.textMuted),
           ),
         ],
@@ -948,9 +979,10 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
 }
 
 class _GroupTable extends StatelessWidget {
-  const _GroupTable({required this.group});
+  const _GroupTable({required this.group, this.doubles = true});
 
   final DrawGroup group;
+  final bool doubles;
 
   @override
   Widget build(BuildContext context) {
@@ -989,7 +1021,9 @@ class _GroupTable extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(width: 22, child: Text('#', style: head())),
-                Expanded(child: Text('Pair', style: head())),
+                Expanded(
+                  child: Text(doubles ? 'Pair' : 'Player', style: head()),
+                ),
                 SizedBox(
                   width: 44,
                   child: Text(
@@ -1602,7 +1636,12 @@ class _TournamentRegisterScreenState
           children: [
             Text('Eligibility', style: OgText.heading(20)),
             const SizedBox(height: 4),
-            const KitKeyValue('Verified account', 'Mobile verified'),
+            KitKeyValue(
+              'Verified account',
+              _mobileVerified
+                  ? 'Mobile verified'
+                  : 'Add your mobile in Account Centre',
+            ),
             KitKeyValue(
               'Level in range',
               info.myLevel == null
@@ -1649,10 +1688,13 @@ class _TournamentRegisterScreenState
             ],
           ),
         Text(
-          'Withdraw before registration closes: all of it back to your Wallet, '
-          'or the entry fee to your card. If your partner declines, you get '
-          'all of it back. Nothing is charged until you confirm on the next '
-          'step.',
+          entry == 0
+              ? 'Free to enter. Withdraw any time before registration closes. '
+                    'Doubles entries are confirmed when your partner says yes.'
+              : 'Withdraw before registration closes: all of it back to your Wallet, '
+                    'or the entry fee to your card. If your partner declines, you get '
+                    'all of it back. Nothing is charged until you confirm on the next '
+                    'step.',
           style: OgText.body(13, height: 1.45, color: c.textMuted),
         ),
       ],
@@ -1957,3 +1999,8 @@ class TournamentResultsScreen extends ConsumerWidget {
     );
   }
 }
+
+/// Whether the player has a verified mobile number. Demo players have one.
+bool get _mobileVerified =>
+    !Env.hasSupabase ||
+    (Supabase.instance.client.auth.currentUser?.phone ?? '').isNotEmpty;

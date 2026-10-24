@@ -51,7 +51,7 @@ enum HubTab {
     tournament => const [
       HubFilterGroup('when', 'Dates', ['Upcoming', 'This month', 'Next month']),
       HubFilterGroup('tier', 'Tier', ['All', 'Club', 'Regional', 'National']),
-      HubFilterGroup('reg', 'Registration', [
+      HubFilterGroup('reg', 'Entries', [
         'Any',
         'Open now',
         'Closing this week',

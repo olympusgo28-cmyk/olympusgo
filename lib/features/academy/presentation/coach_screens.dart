@@ -87,7 +87,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                     style: OgText.body(13, color: c.textMuted),
                   ),
                   Text(
-                    '${a.students} students · ${a.classes.length} classes · ${a.coaches.length} coaches',
+                    '${plural(a.students, 'student')} · ${plural(a.classes.length, 'class', 'classes')} · ${plural(a.coaches.length, 'coach', 'coaches')}',
                     style: OgText.body(13, color: c.textMuted),
                   ),
                 ],
@@ -108,7 +108,8 @@ class AcademyTodayScreen extends ConsumerWidget {
             KitNavTile(
               icon: OgIcons.calendarBox,
               title: 'All classes',
-              subtitle: '${a.classes.length} classes a week',
+              subtitle:
+                  '${plural(a.classes.length, 'class', 'classes')} a week',
               onTap: () => context.push(Routes.academyClasses(a.id)),
             ),
             if (!Env.hasSupabase)
@@ -259,7 +260,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                               [
                                 x.coach,
                                 if (x.court.isNotEmpty) x.court,
-                                '${x.enrolled} of ${x.capacity} students',
+                                '${x.enrolled} of ${plural(x.capacity, 'student')}',
                               ].join(' · '),
                               style: OgText.body(13, color: c.textMuted),
                             ),
@@ -332,7 +333,7 @@ class AcademyClassesScreen extends ConsumerWidget {
       ],
       children: [
         Text(
-          '${a.classes.length} classes a week · $students students',
+          '${plural(a.classes.length, 'class', 'classes')} a week · ${plural(students, 'student')}',
           style: OgText.body(14, weight: FontWeight.w600, color: c.textMuted),
         ),
         for (final e in byDay.entries)
@@ -368,7 +369,7 @@ class AcademyClassesScreen extends ConsumerWidget {
                                 style: OgText.body(15, weight: FontWeight.w700),
                               ),
                               Text(
-                                '${x.coach}, ${x.enrolled} students',
+                                '${x.coach}, ${plural(x.enrolled, 'student')}',
                                 style: OgText.body(13, color: c.textMuted),
                               ),
                             ],
@@ -685,7 +686,7 @@ class ClassRosterScreen extends ConsumerWidget {
           x.name,
           size: 26,
           lead:
-              '${roster.length} students · ${classDays(x)} ${Fmt.clock(x.hour, x.minute)}',
+              '${plural(roster.length, 'student')} · ${classDays(x)} ${Fmt.clock(x.hour, x.minute)}',
         ),
         if (roster.isEmpty) const KitNote('No students yet.'),
         for (final s in roster)

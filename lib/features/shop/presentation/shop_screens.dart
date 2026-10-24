@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -112,6 +113,7 @@ class ProductTile extends StatelessWidget {
           border: Border.all(color: c.border),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
@@ -506,16 +508,17 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
             0 => [
               if (deals.isNotEmpty) ...[
                 Text('Flash deals', style: OgText.heading(20)),
-                SizedBox(
-                  height: 300,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: deals.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 10),
-                    itemBuilder: (_, i) => SizedBox(
-                      width: 160,
-                      child: ProductTile(product: deals[i]),
-                    ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final (i, d) in deals.indexed) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        SizedBox(width: 160, child: ProductTile(product: d)),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -834,8 +837,9 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                 label: 'Chat',
                 style: KitButtonStyle.outline,
                 height: 46,
-                onPressed: () =>
-                    showOgToast(context, 'Shop chat opens with the Shop.'),
+                onPressed: () => m.ownerId.isEmpty
+                    ? showOgToast(context, 'Shop chat opens with the Shop.')
+                    : context.push(Routes.messagePlayer(m.ownerId)),
               ),
             ),
           ],
@@ -1024,10 +1028,14 @@ class ProductPageScreen extends ConsumerWidget {
         ),
         Text(value.headline, style: OgText.heading(20, height: 1.2)),
         Text(
-          '${p.rating.toStringAsFixed(1)} · from ${compact(value.ratings)} ratings, ${compact(p.sold)} sold',
+          value.ratings == 0 && p.sold == 0
+              ? 'New in the Shop'
+              : value.ratings == 0
+              ? '${compact(p.sold)} sold'
+              : '${p.rating.toStringAsFixed(1)} · from ${compact(value.ratings)} ${value.ratings == 1 ? 'rating' : 'ratings'}, ${compact(p.sold)} sold',
           style: OgText.body(14, color: c.textMuted),
         ),
-        if (p.maxPoints > 0)
+        if (p.maxPoints > 0 && !Env.hasSupabase)
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(

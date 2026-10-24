@@ -294,14 +294,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 children: [
                   Text(cash(items + delivery.cents), style: OgText.heading(22)),
                   Text(
-                    'Total before points',
+                    Env.hasSupabase
+                        ? 'Pay the shop on delivery or pickup'
+                        : 'Total before points',
                     style: OgText.body(12, color: c.textMuted),
                   ),
                 ],
               ),
             ),
             KitButton(
-              label: 'Continue to pay',
+              label: Env.hasSupabase ? 'Review order' : 'Continue to pay',
               expand: false,
               loading: _busy,
               onPressed: lines.isEmpty || address == null
@@ -429,21 +431,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           'Delivery',
           delivery.cents == 0 ? 'Free' : cash(delivery.cents),
         ),
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(text: 'You have '),
-              TextSpan(
-                text: '${points.toStringAsFixed(1)} points',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const TextSpan(
-                text: '. Choose to use them, and how to pay, on the next step.',
-              ),
-            ],
+        if (!Env.hasSupabase)
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'You have '),
+                TextSpan(
+                  text: '${points.toStringAsFixed(1)} points',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const TextSpan(
+                  text:
+                      '. Choose to use them, and how to pay, on the next step.',
+                ),
+              ],
+            ),
+            style: OgText.body(14, height: 1.4, color: c.textMuted),
           ),
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
-        ),
       ],
     );
   }
@@ -1079,8 +1083,9 @@ class OrderDetailScreen extends ConsumerWidget {
             KitNavTile(
               icon: OgIcons.chatRound,
               title: 'Chat with ${o.mallName}',
-              onTap: () =>
-                  showOgToast(context, 'Shop chat opens with the Shop.'),
+              onTap: () => o.ownerId.isEmpty
+                  ? showOgToast(context, 'Shop chat opens with the Shop.')
+                  : context.push(Routes.messagePlayer(o.ownerId)),
             ),
             if (o.step == OrderStep.delivered && !o.reviewed)
               KitNavTile(
@@ -1655,6 +1660,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     mallId: o.mallId,
                     mallName: o.mallName,
                     priceCents: o.lines.first.priceCents,
+                    art: o.lines.first.art,
                   ),
                 ),
               ),
@@ -1809,9 +1815,11 @@ class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
         ],
       );
     }
-    final deadline = o?.placedAt == null
+    final deadline = o == null
         ? null
-        : (o!.arrives ?? o.placedAt).add(const Duration(days: 7));
+        : (o.deliveredAt ?? o.arrives ?? o.placedAt).add(
+            const Duration(days: 7),
+          );
     return KitScaffold(
       header: const KitHeader(title: 'Return an item'),
       bottom: [
@@ -1835,6 +1843,7 @@ class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
                     mallId: o.mallId,
                     mallName: o.mallName,
                     priceCents: o.lines.first.priceCents,
+                    art: o.lines.first.art,
                   ),
                 ),
               ),

@@ -315,11 +315,7 @@ class _StudentHome extends ConsumerWidget {
                   children: [
                     SolidAvatar.forId(
                       note.coach,
-                      initials: note.coach
-                          .split(' ')
-                          .last
-                          .substring(0, 2)
-                          .toUpperCase(),
+                      initials: coachInitials(note.coach),
                       size: 36,
                       fontSize: 12,
                     ),
@@ -387,7 +383,7 @@ class _StudentHome extends ConsumerWidget {
               icon: OgIcons.clipboardList,
               title: 'Attendance',
               subtitle:
-                  '${s.attended} of ${s.held} classes · ${s.makeupCredits} make-up ${s.makeupCredits == 1 ? 'credit' : 'credits'}',
+                  '${s.attended} of ${s.held} ${s.held == 1 ? 'class' : 'classes'} · ${s.makeupCredits} make-up ${s.makeupCredits == 1 ? 'credit' : 'credits'}',
               onTap: () => context.push(Routes.studentAttendance(s.id)),
             ),
             KitNavTile(
@@ -1063,4 +1059,17 @@ class StudentProgressScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+/// "RA" for "Coach Ravi", "MW" for "Mei Wong".
+String coachInitials(String name) {
+  final words = name.split(' ').where((w) => w.isNotEmpty).toList();
+  if (words.isEmpty) return '?';
+  if (words.first == 'Coach' && words.length > 1) {
+    final w = words[1];
+    return w.substring(0, w.length < 2 ? 1 : 2).toUpperCase();
+  }
+  return words.length == 1
+      ? words.first.substring(0, 1).toUpperCase()
+      : '${words.first[0]}${words.last[0]}'.toUpperCase();
 }

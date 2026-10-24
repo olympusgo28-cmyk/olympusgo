@@ -200,11 +200,20 @@ enum OrderStep {
 }
 
 class OrderLine {
-  const OrderLine(this.name, this.variant, this.qty, this.priceCents);
+  const OrderLine(
+    this.name,
+    this.variant,
+    this.qty,
+    this.priceCents, {
+    this.art = ProductArt.bag,
+  });
   final String name;
   final String variant;
   final int qty;
   final int priceCents;
+
+  /// The product's picture.
+  final ProductArt art;
 }
 
 /// One shop's part of an order.
@@ -231,6 +240,9 @@ class Order {
     this.service = false,
     this.booking,
     this.received = false,
+    this.deliveredAt,
+    this.buyerId = '',
+    this.ownerId = '',
     this.reviewed = false,
     this.returnState,
     this.returnReason,
@@ -263,6 +275,11 @@ class Order {
   /// "Sat 10 Oct, 10:00 AM" for a booked service.
   final String? booking;
   final bool received;
+  final DateTime? deliveredAt;
+
+  /// Who to message: the buyer (for the seller) and the shop's owner.
+  final String buyerId;
+  final String ownerId;
   final bool reviewed;
 
   /// 'requested', 'accepted' or 'declined' once a return is asked for.
@@ -311,6 +328,9 @@ class Order {
     service: service,
     booking: booking,
     received: received ?? this.received,
+    deliveredAt: deliveredAt,
+    buyerId: buyerId,
+    ownerId: ownerId,
     reviewed: reviewed ?? this.reviewed,
     returnState: returnState ?? this.returnState,
     returnReason: returnReason ?? this.returnReason,

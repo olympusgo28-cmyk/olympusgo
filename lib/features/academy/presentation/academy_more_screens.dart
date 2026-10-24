@@ -116,7 +116,7 @@ class AcademySettingsScreen extends ConsumerWidget {
                       ],
                     ),
                     Text(
-                      '${a.coaches.length} coaches · ${a.students} students · ${a.classes.length} classes',
+                      '${plural(a.coaches.length, 'coach', 'coaches')} · ${plural(a.students, 'student')} · ${plural(a.classes.length, 'class', 'classes')}',
                       style: OgText.body(13, color: c.textMuted),
                     ),
                   ],
@@ -424,8 +424,8 @@ class _AcademyCloseScreenState extends ConsumerState<AcademyCloseScreen> {
           ),
           Text('What happens', style: OgText.heading(20)),
           KitCheckList([
-            '${a.classes.length} classes stop after today',
-            '${a.students} students and their parents are told',
+            '${plural(a.classes.length, 'class', 'classes')} stop after today',
+            '${plural(a.students, 'student')} and their parents are told',
             'Unused lessons this month are refunded, about ${cash(refund)}',
             'Coaches lose access to class tools',
           ]),
@@ -594,7 +594,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                   children: [
                     Text(x.name, style: OgText.heading(18)),
                     Text(
-                      '${Fmt.timeRange(at, x.endOf(at))}${x.court.isEmpty ? '' : ' · ${x.court}'} · ${x.enrolled} students',
+                      '${Fmt.timeRange(at, x.endOf(at))}${x.court.isEmpty ? '' : ' · ${x.court}'} · ${plural(x.enrolled, 'student')}',
                       style: OgText.body(13, color: c.textMuted),
                     ),
                   ],

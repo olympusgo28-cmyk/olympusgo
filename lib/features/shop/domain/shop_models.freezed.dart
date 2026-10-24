@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Mall {
 
- String get id; String get name; String get initials; String get blurb; int get color; int get ink; bool get pointsAccepted;
+ String get id; String get name; String get initials; String get blurb; int get color; int get ink; bool get pointsAccepted;/// The player who runs it, for chat.
+ String get ownerId;
 /// Create a copy of Mall
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +28,20 @@ $MallCopyWith<Mall> get copyWith => _$MallCopyWithImpl<Mall>(this as Mall, _$ide
 @override
 bool operator ==(Object other) {
   final _this = this as Mall;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Mall&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.initials, _this.initials) || other.initials == _this.initials)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.pointsAccepted, _this.pointsAccepted) || other.pointsAccepted == _this.pointsAccepted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Mall&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.initials, _this.initials) || other.initials == _this.initials)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.pointsAccepted, _this.pointsAccepted) || other.pointsAccepted == _this.pointsAccepted)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Mall;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.initials,_this.blurb,_this.color,_this.ink,_this.pointsAccepted);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.initials,_this.blurb,_this.color,_this.ink,_this.pointsAccepted,_this.ownerId);
 }
 
 @override
 String toString() {
   final _this = this as Mall;
-  return 'Mall(id: ${_this.id}, name: ${_this.name}, initials: ${_this.initials}, blurb: ${_this.blurb}, color: ${_this.color}, ink: ${_this.ink}, pointsAccepted: ${_this.pointsAccepted})';
+  return 'Mall(id: ${_this.id}, name: ${_this.name}, initials: ${_this.initials}, blurb: ${_this.blurb}, color: ${_this.color}, ink: ${_this.ink}, pointsAccepted: ${_this.pointsAccepted}, ownerId: ${_this.ownerId})';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $MallCopyWith<$Res>  {
   factory $MallCopyWith(Mall value, $Res Function(Mall) _then) = _$MallCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String initials, String blurb, int color, int ink, bool pointsAccepted
+ String id, String name, String initials, String blurb, int color, int ink, bool pointsAccepted, String ownerId
 });
 
 
@@ -68,7 +69,7 @@ class _$MallCopyWithImpl<$Res>
 
 /// Create a copy of Mall
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? initials = null,Object? blurb = null,Object? color = null,Object? ink = null,Object? pointsAccepted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? initials = null,Object? blurb = null,Object? color = null,Object? ink = null,Object? pointsAccepted = null,Object? ownerId = null,}) {
   return _then(Mall(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -77,7 +78,8 @@ as String,blurb: null == blurb ? _self.blurb : blurb // ignore: cast_nullable_to
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as int,ink: null == ink ? _self.ink : ink // ignore: cast_nullable_to_non_nullable
 as int,pointsAccepted: null == pointsAccepted ? _self.pointsAccepted : pointsAccepted // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted,  String ownerId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Mall() when $default != null:
-return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted);case _:
+return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted,_that.ownerId);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted,  String ownerId)  $default,) {final _that = this;
 switch (_that) {
 case _Mall():
-return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted);case _:
+return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted,_that.ownerId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String initials,  String blurb,  int color,  int ink,  bool pointsAccepted,  String ownerId)?  $default,) {final _that = this;
 switch (_that) {
 case _Mall() when $default != null:
-return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted);case _:
+return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that.ink,_that.pointsAccepted,_that.ownerId);case _:
   return null;
 
 }
@@ -218,7 +220,7 @@ return $default(_that.id,_that.name,_that.initials,_that.blurb,_that.color,_that
 
 
 class _Mall implements Mall {
-  const _Mall({required this.id, required this.name, required this.initials, this.blurb = '', this.color = 0xFFFBE7B0, this.ink = 0xFF5A4300, this.pointsAccepted = true});
+  const _Mall({required this.id, required this.name, required this.initials, this.blurb = '', this.color = 0xFFFBE7B0, this.ink = 0xFF5A4300, this.pointsAccepted = true, this.ownerId = ''});
   
 
 @override final  String id;
@@ -228,6 +230,8 @@ class _Mall implements Mall {
 @override@JsonKey() final  int color;
 @override@JsonKey() final  int ink;
 @override@JsonKey() final  bool pointsAccepted;
+/// The player who runs it, for chat.
+@override@JsonKey() final  String ownerId;
 
 /// Create a copy of Mall
 /// with the given fields replaced by the non-null parameter values.
@@ -239,18 +243,18 @@ _$MallCopyWith<_Mall> get copyWith => __$MallCopyWithImpl<_Mall>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Mall&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.initials, initials) || other.initials == initials)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.pointsAccepted, pointsAccepted) || other.pointsAccepted == pointsAccepted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Mall&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.initials, initials) || other.initials == initials)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.pointsAccepted, pointsAccepted) || other.pointsAccepted == pointsAccepted)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,initials,blurb,color,ink,pointsAccepted);
+    return Object.hash(runtimeType,id,name,initials,blurb,color,ink,pointsAccepted,ownerId);
 }
 
 @override
 String toString() {
-    return 'Mall(id: $id, name: $name, initials: $initials, blurb: $blurb, color: $color, ink: $ink, pointsAccepted: $pointsAccepted)';
+    return 'Mall(id: $id, name: $name, initials: $initials, blurb: $blurb, color: $color, ink: $ink, pointsAccepted: $pointsAccepted, ownerId: $ownerId)';
 }
 
 
@@ -261,7 +265,7 @@ abstract mixin class _$MallCopyWith<$Res> implements $MallCopyWith<$Res> {
   factory _$MallCopyWith(_Mall value, $Res Function(_Mall) _then) = __$MallCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String initials, String blurb, int color, int ink, bool pointsAccepted
+ String id, String name, String initials, String blurb, int color, int ink, bool pointsAccepted, String ownerId
 });
 
 
@@ -278,7 +282,7 @@ class __$MallCopyWithImpl<$Res>
 
 /// Create a copy of Mall
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? initials = null,Object? blurb = null,Object? color = null,Object? ink = null,Object? pointsAccepted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? initials = null,Object? blurb = null,Object? color = null,Object? ink = null,Object? pointsAccepted = null,Object? ownerId = null,}) {
   return _then(_Mall(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -287,7 +291,8 @@ as String,blurb: null == blurb ? _self.blurb : blurb // ignore: cast_nullable_to
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as int,ink: null == ink ? _self.ink : ink // ignore: cast_nullable_to_non_nullable
 as int,pointsAccepted: null == pointsAccepted ? _self.pointsAccepted : pointsAccepted // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

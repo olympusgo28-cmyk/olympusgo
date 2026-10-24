@@ -195,6 +195,8 @@ class SupabaseAcademyRepository implements AcademyRepository {
           initials: _initials(k['name'] as String),
           role: k['role'] as String? ?? 'Coach',
           head: k['head'] as bool? ?? false,
+          // Licences aren't checked in the app yet.
+          nroc: false,
         ),
     ],
     invitedCoaches: [for (final e in r['invited'] as List? ?? []) e as String],

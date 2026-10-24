@@ -140,7 +140,9 @@ class SellerHomeScreen extends ConsumerWidget {
             KitNavTile(
               icon: OgIcons.plus,
               title: 'Add a product',
-              subtitle: 'Photos, price, stock, points',
+              subtitle: Env.hasSupabase
+                  ? 'Name, price and stock'
+                  : 'Photos, price, stock, points',
               onTap: () => context.push(Routes.sellerProduct('new')),
             ),
             if (!Env.hasSupabase) ...[
@@ -543,28 +545,40 @@ class _SellerOrderDetailScreenState
         ],
         if (shipped && o.tracking != null)
           KitNote(
-            '$first is told. They see ${o.courier ?? 'the'} tracking number ${o.tracking} in My orders. You are paid when they confirm, or 7 days after delivery.',
+            Env.hasSupabase
+                ? '$first is told. They see ${o.courier ?? 'the'} tracking number ${o.tracking} in My orders, and pay you when it arrives.'
+                : '$first is told. They see ${o.courier ?? 'the'} tracking number ${o.tracking} in My orders. You are paid when they confirm, or 7 days after delivery.',
             tone: KitTone.info,
           ),
         Column(
           children: [
-            KitKeyValue(
-              'Buyer paid',
-              o.pointsCents > 0
-                  ? '${cash(o.itemsCents + o.deliveryCents - o.pointsCents)} with ${(o.pointsCents / 100).toStringAsFixed(1)} points'
-                  : cash(o.itemsCents + o.deliveryCents),
-            ),
-            KitKeyValue(
-              'You receive',
-              '${cash(receive)} after delivery is confirmed',
-            ),
+            if (Env.hasSupabase)
+              KitKeyValue(
+                o.step == OrderStep.delivered
+                    ? 'Buyer paid you'
+                    : 'Collect from $first',
+                cash(o.itemsCents + o.deliveryCents),
+              )
+            else ...[
+              KitKeyValue(
+                'Buyer paid',
+                o.pointsCents > 0
+                    ? '${cash(o.itemsCents + o.deliveryCents - o.pointsCents)} with ${(o.pointsCents / 100).toStringAsFixed(1)} points'
+                    : cash(o.itemsCents + o.deliveryCents),
+              ),
+              KitKeyValue(
+                'You receive',
+                '${cash(receive)} after delivery is confirmed',
+              ),
+            ],
           ],
         ),
         KitButton(
           label: 'Message $first',
           style: KitButtonStyle.outline,
-          onPressed: () =>
-              showOgToast(context, 'Shop chat opens with the Shop.'),
+          onPressed: () => o.buyerId.isEmpty
+              ? showOgToast(context, 'Shop chat opens with the Shop.')
+              : context.push(Routes.messagePlayer(o.buyerId)),
         ),
       ],
     );
@@ -748,6 +762,15 @@ class _SellerProductEditScreenState
           .saveProduct(
             base.copyWith(
               name: _name.text.trim(),
+              // No photos yet: rackets, paddles and bats get a racket
+              // picture, everything else a bag.
+              art:
+                  RegExp(
+                    r'rac?quet|racket|paddle|\bbat\b',
+                    caseSensitive: false,
+                  ).hasMatch(_name.text)
+                  ? ProductArt.racquet
+                  : ProductArt.bag,
               description: _desc.text.trim(),
               priceCents: _priceCents,
               stock: int.tryParse(_stock.text) ?? 0,
@@ -793,13 +816,16 @@ class _SellerProductEditScreenState
         header: const KitHeader(title: 'Product'),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
-          KitButton(
-            label: 'Post a video for it',
-            onPressed: () => context.pushReplacement(Routes.sellerVideo),
-          ),
+          if (!Env.hasSupabase)
+            KitButton(
+              label: 'Post a video for it',
+              onPressed: () => context.pushReplacement(Routes.sellerVideo),
+            ),
           KitButton(
             label: 'Back to products',
-            style: KitButtonStyle.outline,
+            style: Env.hasSupabase
+                ? KitButtonStyle.primary
+                : KitButtonStyle.outline,
             onPressed: () => context.pop(),
           ),
         ],
@@ -809,7 +835,7 @@ class _SellerProductEditScreenState
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               p.published
-                  ? '${p.name} is live. It shows in your shop now. Tag it in a video to reach more players.'
+                  ? '${p.name} is live. It shows in your shop now.${Env.hasSupabase ? '' : ' Tag it in a video to reach more players.'}'
                   : '${p.name} is saved as a draft.',
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
@@ -886,21 +912,23 @@ class _SellerProductEditScreenState
             ],
           ],
         ),
-        Text(
-          'Points buyers can use',
-          style: OgText.body(15, weight: FontWeight.w700),
-        ),
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final p in const [0, 5, 10, 20])
-              KitChip(
-                label: p == 0 ? 'None' : 'Up to $p%',
-                selected: _points == p,
-                onTap: () => setState(() => _points = p),
-              ),
-          ],
-        ),
+        if (!Env.hasSupabase) ...[
+          Text(
+            'Points buyers can use',
+            style: OgText.body(15, weight: FontWeight.w700),
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final p in const [0, 5, 10, 20])
+                KitChip(
+                  label: p == 0 ? 'None' : 'Up to $p%',
+                  selected: _points == p,
+                  onTap: () => setState(() => _points = p),
+                ),
+            ],
+          ),
+        ],
         if (!_service) ...[
           Text('Delivery', style: OgText.body(15, weight: FontWeight.w700)),
           Wrap(
@@ -928,8 +956,12 @@ class _SellerProductEditScreenState
                   'Buyer pays',
                   '${cash(_priceCents)}, no platform fee',
                 ),
-                KitKeyValue('Olympus commission', '8% · ${cash(commission)}'),
-                KitKeyValue('You receive', cash(_priceCents - commission)),
+                if (Env.hasSupabase)
+                  KitKeyValue('Paid', 'To you, on delivery or pickup')
+                else ...[
+                  KitKeyValue('Olympus commission', '8% · ${cash(commission)}'),
+                  KitKeyValue('You receive', cash(_priceCents - commission)),
+                ],
               ],
             ),
           ],

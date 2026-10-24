@@ -169,6 +169,7 @@ class SupabaseShopRepository implements ShopRepository {
     color: (r['color'] as num).toInt(),
     ink: (r['ink'] as num).toInt(),
     pointsAccepted: false,
+    ownerId: r['owner_id'] as String? ?? '',
   );
 
   static Address _address(Map<String, dynamic> r) => Address(
@@ -200,6 +201,7 @@ class SupabaseShopRepository implements ShopRepository {
             l['variant'] as String? ?? '',
             l['qty'] as int,
             l['price_cents'] as int,
+            art: l['art'] == 'racquet' ? ProductArt.racquet : ProductArt.bag,
           ),
       ],
       placedAt: DateTime.parse(r['placed_at'] as String).toLocal(),
@@ -217,6 +219,11 @@ class SupabaseShopRepository implements ShopRepository {
       service: r['service'] as bool? ?? false,
       booking: r['booking'] as String?,
       received: step == OrderStep.delivered,
+      deliveredAt: r['delivered_at'] == null
+          ? null
+          : DateTime.parse(r['delivered_at'] as String).toLocal(),
+      buyerId: r['buyer_id'] as String? ?? '',
+      ownerId: r['owner_id'] as String? ?? '',
       reviewed: r['reviewed'] as bool? ?? false,
       returnState: ret?['status'] as String?,
       returnReason: ret == null ? null : '${ret['reason']} · ${ret['want']}',
