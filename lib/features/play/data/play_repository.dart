@@ -220,9 +220,10 @@ class SupabasePlayRepository implements PlayRepository {
     if (filters.gameType != null) q = q.eq('game_type', filters.gameType!.id);
     if (filters.format != null) q = q.eq('format', filters.format!.id);
     if (kind != ActivityKind.event) {
+      // Open to all levels (no range) always matches.
       q = q
-          .lte('level_min', filters.levelMax)
-          .gte('level_max', filters.levelMin);
+          .or('level_min.is.null,level_min.lte.${filters.levelMax}')
+          .or('level_max.is.null,level_max.gte.${filters.levelMin}');
     }
     q = switch (filters.fee) {
       'free' => q.eq('fee_cents', 0),
