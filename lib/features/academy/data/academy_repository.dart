@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/domain/activity.dart' show platformFee;
@@ -22,6 +26,7 @@ abstract interface class AcademyRepository {
     required String academyId,
     required String classId,
     required String student,
+    int? age,
     String note,
   });
 
@@ -36,6 +41,18 @@ abstract interface class AcademyRepository {
   Future<List<Student>> roster(String classId);
   Future<void> saveSession(SessionRecord record);
   Future<String> createAcademy(AcademyDraft draft);
+
+  /// Adds a class, or edits it when [cls] has an id.
+  Future<String> saveClass(String academyId, AcademyClass cls);
+  Future<void> updateAcademy(
+    String id, {
+    Billing? billing,
+    int? makeups,
+    Set<String>? documents,
+  });
+
+  /// Adds a coach by username, or removes them.
+  Future<void> setCoach(String academyId, String username, {required bool add});
 
   // Running the academy.
   Future<List<MessageThread>> messages(String academyId);
@@ -79,64 +96,449 @@ abstract interface class AcademyRepository {
   Future<List<AttendanceLine>> attendance(String studentId);
 }
 
-const _soon = AuthFailure(
-  'Academies open with the next release. Classes you join will show here.',
-);
-
-/// No academy tables yet: real players see empty lists, never sample
-/// academies, and actions explain why.
+/// Academies on Supabase, with payments switched off: fees are paid to the
+/// academy directly, and coach pay and the inbox aren't tracked yet.
 class SupabaseAcademyRepository implements AcademyRepository {
+  SupabaseAcademyRepository(this._client);
+  final SupabaseClient _client;
+
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      debugPrint('Academy error: ${e.code} ${e.message}');
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      if (e.code == '23514') {
+        throw const AuthFailure('Check the details and try again.');
+      }
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (e) {
+      debugPrint('Academy network error: $e');
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  Future<dynamic> _rpc(String fn, [Map<String, dynamic>? params]) =>
+      _client.rpc(fn, params: params);
+
+  Future<List<Map<String, dynamic>>> _list(
+    String fn, [
+    Map<String, dynamic>? params,
+  ]) async => [
+    for (final r in (await _rpc(fn, params)) as List? ?? const [])
+      (r as Map).cast<String, dynamic>(),
+  ];
+
+  static Map<String, dynamic> _m(Object? v) =>
+      (v as Map).cast<String, dynamic>();
+
+  static String _initials(String name) => name
+      .replaceFirst(RegExp(r'^Coach\s+'), '')
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .take(2)
+      .map((w) => w[0].toUpperCase())
+      .join();
+
+  static AcademyClass _class(Map<String, dynamic> r) => AcademyClass(
+    id: r['id'] as String,
+    academyId: r['academy_id'] as String,
+    name: r['name'] as String,
+    level: r['level'] as int,
+    levelName: r['level_name'] as String? ?? '',
+    weekdays: [for (final d in r['weekdays'] as List) d as int],
+    hour: r['hour'] as int,
+    minute: r['minute'] as int? ?? 0,
+    minutes: r['minutes'] as int? ?? 90,
+    ages: r['ages'] as String? ?? '',
+    feeCents: r['fee_cents'] as int? ?? 0,
+    capacity: r['capacity'] as int,
+    enrolled: r['enrolled'] as int? ?? 0,
+    coach: r['coach'] as String? ?? '',
+    coachId: r['coach_id'] as String? ?? '',
+    court: r['court'] as String? ?? '',
+    week: r['week'] as int? ?? 1,
+    termWeeks: r['term_weeks'] as int? ?? 10,
+    lesson: r['lesson'] as String? ?? '',
+    focusSkill: r['focus_skill'] as String? ?? '',
+  );
+
+  static Academy _academy(Map<String, dynamic> r) => Academy(
+    id: r['id'] as String,
+    name: r['name'] as String,
+    sport: Sport.values.firstWhere(
+      (s) => s.id == r['sport'],
+      orElse: () => Sport.badminton,
+    ),
+    area: r['area'] as String? ?? '',
+    blurb: r['blurb'] as String? ?? '',
+    audience: r['audience'] as String? ?? '',
+    students: r['students'] as int? ?? 0,
+    verified: r['verification'] == 'verified',
+    verification: r['verification'] as String? ?? 'none',
+    billing: Billing.values.byName(r['billing'] as String? ?? 'month'),
+    makeupsPerMonth: r['makeups_per_month'] as int? ?? 2,
+    color: (r['color'] as num).toInt(),
+    ink: (r['ink'] as num).toInt(),
+    coverColor: (r['cover_color'] as num).toInt(),
+    myRole: AcademyRole.values.byName(r['my_role'] as String? ?? 'none'),
+    pendingRequests: r['pending_requests'] as int? ?? 0,
+    coaches: [
+      for (final k in (r['coaches'] as List).cast<Map>())
+        AcademyCoach(
+          id: k['id'] as String,
+          name: k['name'] as String,
+          initials: _initials(k['name'] as String),
+          role: k['role'] as String? ?? 'Coach',
+          head: k['head'] as bool? ?? false,
+        ),
+    ],
+    invitedCoaches: [for (final e in r['invited'] as List? ?? []) e as String],
+    classes: [
+      for (final c in (r['classes'] as List).cast<Map>())
+        _class(c.cast<String, dynamic>()),
+    ],
+  );
+
+  static Student _student(Map<String, dynamic> r) {
+    final attended = r['attended'] as int? ?? 0;
+    final held = r['held'] as int? ?? 0;
+    return Student(
+      id: r['id'] as String,
+      name: r['name'] as String,
+      age: r['age'] as int?,
+      academyId: r['academy_id'] as String,
+      classId: r['class_id'] as String,
+      parent: r['parent'] as String? ?? '',
+      skills: [
+        for (final k in (r['skills'] as List? ?? const []).cast<Map>())
+          Skill(
+            id: k['id'] as String,
+            group: k['group'] as String,
+            name: k['name'] as String,
+            status: SkillStatus.values.byName(k['status'] as String),
+            week: k['week'] as String? ?? '',
+          ),
+      ],
+      attended: attended,
+      held: held,
+      attendancePct: held == 0 ? 100 : (attended * 100 / held).round(),
+      makeupCredits: r['makeup_credits'] as int? ?? 0,
+      creditUseBy: r['credit_use_by'] == null
+          ? null
+          : DateTime.parse(r['credit_use_by'] as String),
+      flag: (r['missed_in_a_row'] as int? ?? 0) >= 2 ? 'Missed 2 in a row' : '',
+      filmingConsent: r['filming_consent'] as bool? ?? false,
+      notice: r['notice'] as String?,
+      noticeComing: r['notice_coming'] as bool?,
+      notes: [
+        for (final n in (r['notes'] as List? ?? const []).cast<Map>())
+          CoachNote(
+            coach: n['coach'] as String,
+            at: DateTime.parse(n['at'] as String).toLocal(),
+            text: n['text'] as String,
+            lesson: n['lesson'] as String? ?? '',
+            present: n['present'] as bool? ?? true,
+            got: n['got'] as String?,
+            practising: n['practising'] as String?,
+          ),
+      ],
+    );
+  }
+
+  static MakeupSlot _slot(Map<String, dynamic> r) => MakeupSlot(
+    classId: r['class_id'] as String,
+    className: r['class_name'] as String,
+    at: DateTime.parse(r['at'] as String).toLocal(),
+    coach: r['coach'] as String? ?? '',
+    lesson: r['lesson'] as String? ?? '',
+    spots: r['spots'] as int? ?? 0,
+  );
+
   @override
-  Future<List<Academy>> academies() async => const [];
+  Future<List<Academy>> academies() => _guard(() async {
+    // Coaches invited by email join once they have an account.
+    await _rpc('academy_claim_invites');
+    return [for (final r in await _list('academy_list')) _academy(r)];
+  });
+
   @override
-  Future<Academy> academy(String id) => throw _soon;
+  Future<Academy> academy(String id) => _guard(
+    () async => _academy(_m(await _rpc('academy_get', {'p_academy': id}))),
+  );
+
   @override
-  Future<List<Student>> myStudents() async => const [];
+  Future<List<Student>> myStudents() => _guard(() async {
+    return [for (final r in await _list('academy_my_students')) _student(r)];
+  });
+
   @override
-  Future<Student> student(String id) => throw _soon;
+  Future<Student> student(String id) => _guard(
+    () async => _student(_m(await _rpc('academy_student', {'p_student': id}))),
+  );
+
   @override
-  Future<List<LessonWeek>> lessons(String studentId) async => const [];
+  Future<List<LessonWeek>> lessons(String studentId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_lessons', {'p_student': studentId}))
+        LessonWeek(
+          week: r['week'] as int,
+          title: r['title'] as String,
+          attended: r['attended'] as bool? ?? false,
+        ),
+    ];
+  });
+
+  // Fees are paid to the academy directly for now.
   @override
   Future<List<Invoice>> invoices(String studentId) async => const [];
+
   @override
-  Future<void> payInvoice(String invoiceId, String methodId) => throw _soon;
+  Future<void> payInvoice(String invoiceId, String methodId) =>
+      throw const AuthFailure(
+        "Payments aren't switched on yet. Pay the academy directly.",
+      );
+
   @override
-  Future<List<MakeupSlot>> makeupSlots(String studentId) async => const [];
+  Future<List<MakeupSlot>> makeupSlots(String studentId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_makeup_slots', {
+        'p_student': studentId,
+      }))
+        _slot(r),
+    ];
+  });
+
   @override
-  Future<void> bookMakeup(String studentId, MakeupSlot slot) => throw _soon;
+  Future<void> bookMakeup(String studentId, MakeupSlot slot) =>
+      _guard(() async {
+        await _rpc('academy_book_makeup', {
+          'p_student': studentId,
+          'p_class': slot.classId,
+          'p_at': slot.at.toUtc().toIso8601String(),
+        });
+      });
+
   @override
   Future<void> answerNotice(String studentId, {required bool coming}) =>
-      throw _soon;
+      _guard(() async {
+        await _rpc('academy_answer_notice', {
+          'p_student': studentId,
+          'p_coming': coming,
+        });
+      });
+
   @override
   Future<void> requestEnrol({
     required String academyId,
     required String classId,
     required String student,
+    int? age,
     String note = '',
-  }) => throw _soon;
+  }) => _guard(() async {
+    await _rpc('academy_request', {
+      'p_class': classId,
+      'p_student': student == 'Myself' ? _myName() : student,
+      'p_age': age,
+      'p_note': note,
+      'p_trial_at': null,
+    });
+  });
+
+  String _myName() {
+    final meta = _client.auth.currentUser?.userMetadata;
+    return (meta?['full_name'] as String?) ?? 'Myself';
+  }
+
   @override
-  Future<List<MakeupSlot>> trialSlots(String academyId) async => const [];
+  Future<List<MakeupSlot>> trialSlots(String academyId) => _guard(() async {
+    final a = await academy(academyId);
+    final now = DateTime.now().add(const Duration(hours: 24));
+    return [
+      for (final c in a.classes.where((c) => !c.full))
+        MakeupSlot(
+          classId: c.id,
+          className: c.name,
+          at: c.nextAt(now),
+          coach: c.coach,
+          lesson: c.lesson,
+          spots: c.spotsLeft,
+        ),
+    ]..sort((x, y) => x.at.compareTo(y.at));
+  });
+
   @override
   Future<void> bookTrial(String academyId, MakeupSlot slot, String student) =>
-      throw _soon;
+      _guard(() async {
+        await _rpc('academy_request', {
+          'p_class': slot.classId,
+          'p_student': student == 'Myself' ? _myName() : student,
+          'p_age': null,
+          'p_note': '',
+          'p_trial_at': slot.at.toUtc().toIso8601String(),
+        });
+      });
+
   @override
-  Future<List<CoachAlert>> alerts(String academyId) async => const [];
+  Future<List<CoachAlert>> alerts(String academyId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_alerts', {'p_academy': academyId}))
+        CoachAlert(
+          title: r['title'] as String,
+          body: r['body'] as String,
+          tone: r['tone'] as String? ?? 'navy',
+          action: r['action'] as String?,
+        ),
+    ];
+  });
+
   @override
-  Future<List<EnrolRequest>> requests(String academyId) async => const [];
+  Future<List<EnrolRequest>> requests(String academyId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_request_list', {
+        'p_academy': academyId,
+      }))
+        EnrolRequest(
+          id: r['id'] as String,
+          academyId: r['academy_id'] as String,
+          student: r['student'] as String,
+          age: r['age'] as int?,
+          parent: r['parent'] as String? ?? '',
+          classId: r['class_id'] as String,
+          className: r['class_name'] as String,
+          note: r['note'] as String? ?? '',
+          state: RequestState.values.byName(r['state'] as String),
+        ),
+    ];
+  });
+
   @override
-  Future<void> decide(String requestId, RequestState state) => throw _soon;
+  Future<void> decide(String requestId, RequestState state) => _guard(() async {
+    await _rpc('academy_decide', {
+      'p_request': requestId,
+      'p_state': state.name,
+    });
+  });
+
   @override
-  Future<List<Student>> roster(String classId) async => const [];
+  Future<List<Student>> roster(String classId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_roster', {'p_class': classId}))
+        _student(r),
+    ];
+  });
+
   @override
-  Future<void> saveSession(SessionRecord record) => throw _soon;
+  Future<void> saveSession(SessionRecord record) => _guard(() async {
+    await _rpc('academy_save_session', {
+      'p_class': record.classId,
+      'p_absent': record.absent.toList(),
+      'p_skills': {
+        for (final e in record.focusSkill.entries) e.key: e.value.name,
+      },
+      'p_note': record.note,
+    });
+  });
+
   @override
-  Future<String> createAcademy(AcademyDraft draft) => throw _soon;
+  Future<String> createAcademy(AcademyDraft draft) => _guard(
+    () async => await _rpc('academy_create', {
+      'p': {
+        'name': draft.name.trim(),
+        'sport': draft.sport.id,
+        'area': draft.venues.isEmpty
+            ? ''
+            : draft.venues.first.split(',').last.trim(),
+        'blurb': draft.blurb.trim(),
+        'audience': draft.audience.join(', ').toLowerCase(),
+        'venues': draft.venues,
+        'billing': draft.billing.name,
+        'makeups': draft.makeups,
+        'documents': draft.documents.toList(),
+        'coaches': draft.coachEmails,
+      },
+    }) as String,
+  );
+
+  @override
+  Future<String> saveClass(String academyId, AcademyClass cls) => _guard(
+    () async => await _rpc('academy_save_class', {
+      'p_academy': academyId,
+      'p': {
+        'id': cls.id,
+        'name': cls.name,
+        'level': cls.level,
+        'level_name': cls.levelName,
+        'weekdays': cls.weekdays,
+        'hour': cls.hour,
+        'minute': cls.minute,
+        'minutes': cls.minutes,
+        'ages': cls.ages,
+        'fee_cents': cls.feeCents,
+        'capacity': cls.capacity,
+        'coach_id': cls.coachId,
+        'court': cls.court,
+        'term_weeks': cls.termWeeks,
+      },
+    }) as String,
+  );
+
+  @override
+  Future<void> updateAcademy(
+    String id, {
+    Billing? billing,
+    int? makeups,
+    Set<String>? documents,
+  }) => _guard(() async {
+    await _rpc('academy_update', {
+      'p_academy': id,
+      'p': {
+        'billing': ?billing?.name,
+        'makeups': ?makeups,
+        if (documents != null) 'documents': documents.toList(),
+      },
+    });
+  });
+
+  @override
+  Future<void> setCoach(
+    String academyId,
+    String username, {
+    required bool add,
+  }) => _guard(() async {
+    await _rpc('academy_set_coach', {
+      'p_academy': academyId,
+      'p_username': username,
+      'p_add': add,
+    });
+  });
+
+  // Parents message coaches in Inbox for now.
   @override
   Future<List<MessageThread>> messages(String academyId) async => const [];
+
   @override
-  Future<void> closeAcademy(String id) => throw _soon;
+  Future<void> closeAcademy(String id) => _guard(() async {
+    await _rpc('academy_close', {'p_academy': id});
+  });
+
   @override
-  Future<List<CoverCoach>> coverCoaches(String classId) async => const [];
+  Future<List<CoverCoach>> coverCoaches(String classId) => _guard(() async {
+    final a = (await academies()).firstWhere(
+      (a) => a.classes.any((c) => c.id == classId),
+      orElse: () => throw const AuthFailure('This class no longer runs.'),
+    );
+    final cls = a.classes.firstWhere((c) => c.id == classId);
+    return [
+      for (final k in a.coaches.where((k) => k.id != cls.coachId))
+        CoverCoach(k.name, k.initials, k.head ? 'Head coach' : k.role),
+    ];
+  });
+
   @override
   Future<int> changeClass(
     String classId, {
@@ -144,17 +546,69 @@ class SupabaseAcademyRepository implements AcademyRepository {
     required String notice,
     String? coach,
     DateTime? at,
-  }) => throw _soon;
+  }) => _guard(() async {
+    String? coachId;
+    if (mode == 'cover' && coach != null) {
+      final a = (await academies()).firstWhere(
+        (a) => a.classes.any((c) => c.id == classId),
+      );
+      coachId = a.coaches.where((k) => k.name == coach).firstOrNull?.id;
+    }
+    return await _rpc('academy_change_class', {
+      'p_class': classId,
+      'p_mode': mode,
+      'p_notice': notice,
+      'p_coach': coachId,
+    }) as int;
+  });
+
   @override
-  Future<CoachPay> coachPay() => throw _soon;
+  Future<CoachPay> coachPay() => throw const AuthFailure(
+    "Coach pay isn't tracked in the app yet. Your academy pays you directly.",
+  );
+
   @override
-  Future<List<ClassProgress>> curriculumClasses(
-    String academyId,
-    int level,
-  ) async => const [];
+  Future<List<ClassProgress>> curriculumClasses(String academyId, int level) =>
+      _guard(() async {
+        final a = await academy(academyId);
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        return [
+          for (final c in a.classes.where((c) => c.level == level))
+            ClassProgress(
+              '${days[c.weekdays.first - 1]} L${c.level}'
+                  '${c.coach.isEmpty ? '' : ' · ${c.coach}'}',
+              _initials(c.coach.isEmpty ? c.name : c.coach),
+              'Week ${c.week} of ${c.termWeeks} · ${c.lesson}',
+            ),
+        ];
+      });
+
   @override
-  Future<List<CurriculumWeek>> curriculum(String academyId, int level) async =>
-      const [];
+  Future<List<CurriculumWeek>> curriculum(String academyId, int level) =>
+      _guard(() async {
+        return [
+          for (final r in await _list('academy_curriculum', {
+            'p_academy': academyId,
+            'p_level': level,
+          }))
+            CurriculumWeek(
+              week: r['week'] as int,
+              topic: r['topic'] as String,
+              skills: r['skills'] as String,
+              drills: [
+                for (final d in (r['drills'] as List).cast<Map>())
+                  Drill(
+                    d['name'] as String,
+                    d['minutes'] as int,
+                    tag: d['tag'] as String? ?? '',
+                    video: d['video'] as String? ?? '',
+                  ),
+              ],
+              version: r['version'] as String? ?? '',
+            ),
+        ];
+      });
+
   @override
   Future<void> saveLessonPlan(
     String academyId,
@@ -162,28 +616,93 @@ class SupabaseAcademyRepository implements AcademyRepository {
     int week, {
     required List<Drill> drills,
     String note = '',
-  }) => throw _soon;
+  }) => _guard(() async {
+    await _rpc('academy_save_plan', {
+      'p_academy': academyId,
+      'p_level': level,
+      'p_week': week,
+      'p_drills': [
+        for (final d in drills)
+          {
+            'name': d.name,
+            'minutes': d.minutes,
+            'tag': d.tag,
+            'video': d.video,
+          },
+      ],
+      'p_note': note,
+    });
+  });
+
+  // Common drills to build plans from. Videos come later.
   @override
-  Future<List<Drill>> drillVideos() async => const [];
+  Future<List<Drill>> drillVideos() async => const [
+    Drill('Shadow footwork to the net', 10, tag: 'Footwork'),
+    Drill('Split-step timing', 10, tag: 'Footwork'),
+    Drill('Six-corner footwork', 15, tag: 'Footwork'),
+    Drill('High serve, step by step', 15, tag: 'Serve'),
+    Drill('Low serve for doubles', 15, tag: 'Serve'),
+    Drill('Smash: full swing', 20, tag: 'Smash'),
+    Drill('Smash and recover', 20, tag: 'Smash'),
+    Drill('Net kill feed', 15, tag: 'Net'),
+    Drill('Tight net shot in pairs', 15, tag: 'Net'),
+    Drill('Half-court games', 30, tag: 'Games'),
+  ];
+
   @override
-  Future<List<(String, String)>> pendingInvites(String classId) async =>
-      const [];
+  Future<List<(String, String)>> pendingInvites(String classId) =>
+      _guard(() async {
+        return [
+          for (final r in await _list('academy_invite_list', {
+            'p_class': classId,
+          }))
+            (
+              'Parent at ${r['mobile']}',
+              'Sent ${Fmt.day(DateTime.parse(r['at'] as String).toLocal())}',
+            ),
+        ];
+      });
+
   @override
-  Future<void> inviteParent(String classId, String mobile) => throw _soon;
+  Future<void> inviteParent(String classId, String mobile) => _guard(() async {
+    await _rpc('academy_invite', {'p_class': classId, 'p_mobile': mobile});
+  });
+
   @override
   Future<void> sendParentNote(
     String studentId, {
     required Map<String, SkillStatus> skills,
     required String note,
-  }) => throw _soon;
+  }) => _guard(() async {
+    await _rpc('academy_parent_note', {
+      'p_student': studentId,
+      'p_skills': {for (final e in skills.entries) e.key: e.value.name},
+      'p_note': note,
+    });
+  });
+
   @override
   Future<void> setFilmingConsent(
     String studentId, {
     required bool own,
     required bool train,
-  }) => throw _soon;
+  }) => _guard(() async {
+    await _rpc('academy_filming', {'p_student': studentId, 'p_own': own});
+  });
+
   @override
-  Future<List<AttendanceLine>> attendance(String studentId) async => const [];
+  Future<List<AttendanceLine>> attendance(String studentId) => _guard(() async {
+    return [
+      for (final r in await _list('academy_attendance_list', {
+        'p_student': studentId,
+      }))
+        AttendanceLine(
+          DateTime.parse(r['at'] as String).toLocal(),
+          r['lesson'] as String? ?? '',
+          r['state'] as String,
+        ),
+    ];
+  });
 }
 
 /// The trial fee: one paid trial per child.
@@ -696,6 +1215,7 @@ class DemoAcademyRepository implements AcademyRepository {
     required String academyId,
     required String classId,
     required String student,
+    int? age,
     String note = '',
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
@@ -1113,6 +1633,66 @@ class DemoAcademyRepository implements AcademyRepository {
       AttendanceLine(sat(4), 'Clears from the back', 'Present'),
       AttendanceLine(sat(5), 'Grip and ready position', 'Present'),
     ];
+  }
+
+  @override
+  Future<String> saveClass(String academyId, AcademyClass cls) async {
+    await _tick();
+    final a = _find(academyId);
+    final id = cls.id.isEmpty ? 'c-new-${++_n}' : cls.id;
+    final saved = cls.copyWith(id: id, academyId: academyId);
+    _academies[academyId] = a.copyWith(
+      classes: [
+        for (final c in a.classes)
+          if (c.id != id) c,
+        saved,
+      ],
+    );
+    return id;
+  }
+
+  @override
+  Future<void> updateAcademy(
+    String id, {
+    Billing? billing,
+    int? makeups,
+    Set<String>? documents,
+  }) async {
+    await _tick();
+    final a = _find(id);
+    _academies[id] = a.copyWith(
+      billing: billing ?? a.billing,
+      makeupsPerMonth: makeups ?? a.makeupsPerMonth,
+      verification: documents != null && documents.isNotEmpty
+          ? (a.verified ? 'verified' : 'submitted')
+          : a.verification,
+    );
+  }
+
+  @override
+  Future<void> setCoach(
+    String academyId,
+    String username, {
+    required bool add,
+  }) async {
+    await _tick();
+    final a = _find(academyId);
+    final name = username.replaceFirst('@', '');
+    _academies[academyId] = a.copyWith(
+      coaches: add
+          ? [
+              ...a.coaches,
+              AcademyCoach(
+                name: name,
+                initials: name.substring(0, 2).toUpperCase(),
+                role: 'Coach',
+              ),
+            ]
+          : [
+              for (final k in a.coaches)
+                if (k.name != name) k,
+            ],
+    );
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -652,7 +653,14 @@ class _StudentFeesScreenState extends ConsumerState<StudentFeesScreen> {
                 selected: _auto,
                 onTap: () => setState(() => _auto = !_auto),
               ),
-            ] else
+            ] else if (Env.hasSupabase)
+              KitNote(
+                'Pay ${a.name} directly for now: S\$${money(cls.feeCents)} '
+                '${a.billing == Billing.perClass ? 'a class' : 'a ${a.billing.unit}'}. '
+                'Paying in the app is coming.',
+                tone: KitTone.info,
+              )
+            else
               const KitNote('Nothing to pay right now.', tone: KitTone.success),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

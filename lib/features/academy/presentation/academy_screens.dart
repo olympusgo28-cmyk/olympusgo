@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/navigation/breadcrumbs.dart';
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/share.dart';
 import '../../../core/router/routes.dart';
@@ -735,9 +736,12 @@ class AcademyEnrolScreen extends ConsumerStatefulWidget {
 }
 
 class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
+  static const _other = 'Someone else';
   String? _who;
   String? _classId;
   String _note = '';
+  String _otherName = '';
+  int? _otherAge;
   bool _busy = false;
   bool _sent = false;
 
@@ -749,7 +753,8 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           .requestEnrol(
             academyId: a.id,
             classId: _classId!,
-            student: _who!,
+            student: _who == _other ? _otherName.trim() : _who!,
+            age: _who == _other ? _otherAge : null,
             note: _note,
           );
       HapticFeedback.mediumImpact();
@@ -789,22 +794,27 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              'For $_who, ${cls!.name}. ${a.name} answers within 2 working '
-              'days. You pay the first ${a.billing.unit} only after they accept.',
+              'For ${_who == _other ? _otherName.trim() : _who}, ${cls!.name}. '
+              '${a.name} answers within 2 working days. '
+              '${Env.hasSupabase ? 'If they accept, you pay the academy directly.' : 'You pay the first ${a.billing.unit} only after they accept.'}',
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
           ),
         ],
       );
     }
-    final names = <String>{for (final k in kids) k.name, 'Myself'};
+    final names = <String>{for (final k in kids) k.name, 'Myself', _other};
+    final ready =
+        _who != null &&
+        _classId != null &&
+        (_who != _other || _otherName.trim().isNotEmpty);
     return KitScaffold(
       header: const KitHeader(title: 'Ask to enrol'),
       bottom: [
         KitButton(
           label: 'Send request',
           loading: _busy,
-          onPressed: _who == null || _classId == null ? null : () => _send(a),
+          onPressed: ready ? () => _send(a) : null,
         ),
         KitButton.outline(label: 'Cancel', onPressed: () => kitPop(context)),
       ],
@@ -825,10 +835,26 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
                 title: n,
                 subtitle: n == 'Myself'
                     ? 'Adult'
+                    : n == _other
+                    ? 'A child or someone you look after'
                     : 'Your child${kids.firstWhere((k) => k.name == n).age == null ? '' : ' · age ${kids.firstWhere((k) => k.name == n).age}'}',
                 selected: _who == n,
                 onTap: () => setState(() => _who = n),
               ),
+            if (_who == _other) ...[
+              const SizedBox(height: 8),
+              KitInput(
+                label: 'Their name',
+                onChanged: (v) => setState(() => _otherName = v),
+                maxLength: 80,
+              ),
+              const SizedBox(height: 8),
+              KitInput(
+                label: 'Age',
+                keyboardType: TextInputType.number,
+                onChanged: (v) => _otherAge = int.tryParse(v.trim()),
+              ),
+            ],
           ],
         ),
         Column(
@@ -876,22 +902,25 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
   Future<void> _pay(Academy a) async {
     final s = _slot!;
     final fee = academyFee(trialCents);
-    final method = await showPaySheet(
-      context,
-      kicker: 'Trial class',
-      title: s.className,
-      subtitle: '${Fmt.dayTimeComma(s.at)} · ${s.coach} · for $_who',
-      lines: [
-        ('Trial class', 'S\$${money(trialCents)}'),
-        ('Platform fee', 'S\$${money(fee)}'),
-      ],
-      totalCents: trialCents + fee,
-      payee: a.name,
-      notes: [
-        'Full refund if you cancel 24 hours before the class.',
-        'The S\$${money(trialCents)} comes off the first ${a.billing.unit} if you enrol within 7 days.',
-      ],
-    );
+    // Payments are off: the trial is booked and paid at the class.
+    final Object? method = Env.hasSupabase
+        ? true
+        : await showPaySheet(
+            context,
+            kicker: 'Trial class',
+            title: s.className,
+            subtitle: '${Fmt.dayTimeComma(s.at)} · ${s.coach} · for $_who',
+            lines: [
+              ('Trial class', 'S\$${money(trialCents)}'),
+              ('Platform fee', 'S\$${money(fee)}'),
+            ],
+            totalCents: trialCents + fee,
+            payee: a.name,
+            notes: [
+              'Full refund if you cancel 24 hours before the class.',
+              'The S\$${money(trialCents)} comes off the first ${a.billing.unit} if you enrol within 7 days.',
+            ],
+          );
     if (method == null || !mounted) return;
     setState(() => _busy = true);
     try {

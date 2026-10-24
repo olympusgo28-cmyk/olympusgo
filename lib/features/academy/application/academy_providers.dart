@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
 
@@ -9,11 +10,10 @@ import '../domain/academy_more.dart';
 
 part 'academy_providers.g.dart';
 
-// shortcut: demo data only, like clubs; add a Supabase repository with the
-// academy tables.
 @Riverpod(keepAlive: true)
-AcademyRepository academyRepository(Ref ref) =>
-    Env.hasSupabase ? SupabaseAcademyRepository() : DemoAcademyRepository();
+AcademyRepository academyRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseAcademyRepository(Supabase.instance.client)
+    : DemoAcademyRepository();
 
 @riverpod
 Future<List<Academy>> academyList(Ref ref) =>

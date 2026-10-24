@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/academy/presentation/academy_admin_screens.dart';
 import '../../features/academy/presentation/academy_screens.dart';
 import '../../features/academy/presentation/coach_screens.dart';
 import '../../features/academy/presentation/create_academy_screens.dart';
@@ -185,6 +186,18 @@ GoRouter appRouter(Ref ref) {
       page('/academies/:id/settings', (s) => AcademySettingsScreen(id: id(s))),
       page('/academies/:id/messages', (s) => AcademyMessagesScreen(id: id(s))),
       page('/academies/:id/close', (s) => AcademyCloseScreen(id: id(s))),
+      page('/academies/:id/coaches', (s) => AcademyCoachesScreen(id: id(s))),
+      page(
+        '/academies/:id/classes/new',
+        (s) => AcademyClassEditScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/classes/:cid/edit',
+        (s) => AcademyClassEditScreen(
+          academyId: id(s),
+          classId: s.pathParameters['cid'],
+        ),
+      ),
       page(
         '/academies/:id/classes/:class/change',
         (s) =>

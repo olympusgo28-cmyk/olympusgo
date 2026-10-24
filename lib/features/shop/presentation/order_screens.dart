@@ -1883,9 +1883,9 @@ class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
           ],
         ),
         KitNote(
-          '${o?.mallName ?? 'Shops'} accept returns within 7 days if the item '
-          'is unused${deadline == null ? '' : '. You have until ${Fmt.day(deadline)}'}. '
-          'You paid the shop directly, so it refunds you directly.',
+          '${o?.mallName ?? 'The shop'} accepts returns within 7 days if the '
+          'item is unused${deadline == null ? '' : '. You have until ${Fmt.day(deadline)}'}. '
+          '${Env.hasSupabase ? 'You paid the shop directly, so it refunds you directly.' : 'Points you used come back to your wallet.'}',
           tone: KitTone.warn,
         ),
       ],

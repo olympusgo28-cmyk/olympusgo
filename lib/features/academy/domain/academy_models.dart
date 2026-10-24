@@ -23,6 +23,8 @@ abstract class AcademyCoach with _$AcademyCoach {
     required String initials,
     required String role,
     @Default(true) bool nroc,
+    @Default('') String id,
+    @Default(false) bool head,
   }) = _AcademyCoach;
 }
 
@@ -48,6 +50,7 @@ abstract class AcademyClass with _$AcademyClass {
     required int capacity,
     @Default(0) int enrolled,
     required String coach,
+    @Default('') String coachId,
     @Default('') String court,
     @Default(1) int week,
     @Default(10) int termWeeks,
@@ -99,6 +102,12 @@ abstract class Academy with _$Academy {
     @Default(0xFFE8590C) int coverColor,
     @Default(AcademyRole.none) AcademyRole myRole,
     @Default(0) int pendingRequests,
+
+    /// 'none', 'submitted' or 'verified'.
+    @Default('none') String verification,
+
+    /// Coaches invited by email who haven't signed up yet.
+    @Default([]) List<String> invitedCoaches,
   }) = _Academy;
 
   const Academy._();

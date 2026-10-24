@@ -3,8 +3,10 @@
 // it for the welcome and log-in screens.
 
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,12 +67,23 @@ void main() {
         ..listen(currentUserIdProvider, (_, _) {})
         ..listen(sessionProfileProvider, (_, _) {});
       final router = container.read(appRouterProvider);
+      // AUDIT_SHOTS=<dir> saves a picture of the screens named in
+      // AUDIT_ONLY (comma-separated), or of every screen.
+      final shots = Platform.environment['AUDIT_SHOTS'];
+      final only = (Platform.environment['AUDIT_ONLY'] ?? '')
+          .split(',')
+          .where((n) => n.isNotEmpty)
+          .toSet();
+      final shotKey = GlobalKey();
       await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            theme: OgTheme.light(),
-            routerConfig: router,
+        RepaintBoundary(
+          key: shotKey,
+          child: UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(
+              theme: OgTheme.light(),
+              routerConfig: router,
+            ),
           ),
         ),
       );
@@ -108,6 +121,25 @@ void main() {
             find.textContaining('isn\'t available').evaluate().isNotEmpty ||
             find.textContaining('no longer').evaluate().isNotEmpty ||
             find.textContaining('not found').evaluate().isNotEmpty;
+        if (shots != null && (only.isEmpty || only.contains(name))) {
+          // Font loading finishes here; its warnings aren't screen errors.
+          final before = {...errors};
+          await tester.runAsync(() async {
+            final boundary =
+                shotKey.currentContext!.findRenderObject()!
+                    as RenderRepaintBoundary;
+            final image = await boundary.toImage(pixelRatio: 1);
+            final bytes = await image.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            File('$shots/$name.png')
+              ..createSync(recursive: true)
+              ..writeAsBytesSync(bytes!.buffer.asUint8List());
+          });
+          errors
+            ..clear()
+            ..addAll(before);
+        }
         FlutterError.onError = original;
         final status = errors.isNotEmpty
             ? 'ERROR'

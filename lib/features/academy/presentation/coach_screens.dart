@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -110,24 +111,26 @@ class AcademyTodayScreen extends ConsumerWidget {
               subtitle: '${a.classes.length} classes a week',
               onTap: () => context.push(Routes.academyClasses(a.id)),
             ),
-            KitNavTile(
-              icon: OgIcons.chatLines,
-              title: 'Messages',
-              subtitle: 'Parents and students',
-              onTap: () => context.push(Routes.academyMessages(a.id)),
-            ),
+            if (!Env.hasSupabase)
+              KitNavTile(
+                icon: OgIcons.chatLines,
+                title: 'Messages',
+                subtitle: 'Parents and students',
+                onTap: () => context.push(Routes.academyMessages(a.id)),
+              ),
             KitNavTile(
               icon: OgIcons.clipboardList,
               title: 'Curriculum',
               subtitle: 'Lesson plans shared by all coaches',
               onTap: () => context.push(Routes.curriculum(a.id)),
             ),
-            KitNavTile(
-              icon: OgIcons.wallet,
-              title: 'Coach pay',
-              subtitle: 'Your classes and what you are paid',
-              onTap: () => context.push(Routes.coachPay),
-            ),
+            if (!Env.hasSupabase)
+              KitNavTile(
+                icon: OgIcons.wallet,
+                title: 'Coach pay',
+                subtitle: 'Your classes and what you are paid',
+                onTap: () => context.push(Routes.coachPay),
+              ),
             KitNavTile(
               icon: OgIcons.paperPlane,
               title: 'Invite students and parents',
@@ -315,11 +318,17 @@ class AcademyClassesScreen extends ConsumerWidget {
     return KitScaffold(
       header: const KitHeader(title: 'Classes'),
       bottom: [
-        KitButton.outline(
-          label: 'Change a class',
-          onPressed: () =>
-              context.push(Routes.changeClass(a.id, a.classes.first.id)),
-        ),
+        if (a.myRole == AcademyRole.headCoach)
+          KitButton(
+            label: 'Add a class',
+            onPressed: () => context.push(Routes.classNew(a.id)),
+          ),
+        if (a.classes.isNotEmpty)
+          KitButton.outline(
+            label: 'Change a class',
+            onPressed: () =>
+                context.push(Routes.changeClass(a.id, a.classes.first.id)),
+          ),
       ],
       children: [
         Text(
@@ -651,7 +660,15 @@ class ClassRosterScreen extends ConsumerWidget {
     if (a == null || roster == null) return _loading('Students');
     final x = a.classes.firstWhere((k) => k.id == classId);
     return KitScaffold(
-      header: const KitHeader(title: 'Students'),
+      header: KitHeader(
+        title: 'Students',
+        trailing: a.myRole == AcademyRole.headCoach
+            ? KitLink(
+                'Edit class',
+                onPressed: () => context.push(Routes.classEdit(a.id, x.id)),
+              )
+            : null,
+      ),
       bottom: [
         KitButton(
           label: 'Take attendance',

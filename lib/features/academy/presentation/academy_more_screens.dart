@@ -21,6 +21,7 @@ import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
 import '../application/academy_providers.dart';
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';
+import 'academy_admin_screens.dart';
 import 'academy_screens.dart' show classDays;
 
 /// Loads the academy, then builds [body].
@@ -50,14 +51,31 @@ class _WithAcademy extends ConsumerWidget {
       };
 }
 
+/// Shown when the academy has no classes yet.
+class _NoClasses extends StatelessWidget {
+  const _NoClasses(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => KitScaffold(
+    header: KitHeader(title: title),
+    children: const [
+      KitNote(
+        'Add a class first. The head coach adds classes from All classes.',
+      ),
+    ],
+  );
+}
+
 /// The head coach's settings for the academy.
-class AcademySettingsScreen extends StatelessWidget {
+class AcademySettingsScreen extends ConsumerWidget {
   const AcademySettingsScreen({super.key, required this.id});
 
   final String id;
 
   @override
-  Widget build(BuildContext context) => _WithAcademy(
+  Widget build(BuildContext context, WidgetRef ref) => _WithAcademy(
     id: id,
     title: 'Academy settings',
     body: (a) {
@@ -126,25 +144,32 @@ class AcademySettingsScreen extends StatelessWidget {
                 title: 'Billing and make-ups',
                 subtitle:
                     '${a.billing.label}, ${a.makeupsPerMonth} make-ups each month',
-                chevron: false,
-                onTap: () {},
+                chevron: head,
+                onTap: head ? () => showAcademyBilling(context, ref, a) : () {},
               ),
               KitNavTile(
                 icon: OgIcons.shieldTick,
                 title: 'Verification',
-                subtitle: a.verified
-                    ? 'Business licence checked'
-                    : 'Not verified yet',
-                chevron: false,
-                onTap: () {},
+                subtitle: switch (a.verification) {
+                  'verified' => 'Business licence checked',
+                  'submitted' => 'Sent for review',
+                  _ => 'Not verified yet',
+                },
+                chevron: head,
+                onTap: head
+                    ? () => showAcademyVerification(context, ref, a)
+                    : () {},
               ),
               KitNavTile(
                 icon: OgIcons.people,
                 title: 'Coaches',
                 subtitle:
-                    '${a.coaches.length} coaches${a.coaches.every((x) => x.nroc) ? ', all NROC licensed' : ''}',
-                chevron: false,
-                onTap: () {},
+                    '${a.coaches.length} ${a.coaches.length == 1 ? 'coach' : 'coaches'}${Env.hasSupabase
+                        ? ''
+                        : a.coaches.every((x) => x.nroc)
+                        ? ', all NROC licensed'
+                        : ''}',
+                onTap: () => context.push(Routes.academyCoaches(a.id)),
               ),
               KitNavTile(
                 icon: OgIcons.personRequest,
@@ -160,12 +185,13 @@ class AcademySettingsScreen extends StatelessWidget {
                 subtitle: 'What parents and players see',
                 onTap: () => context.push(Routes.academy(a.id)),
               ),
-              KitNavTile(
-                icon: OgIcons.wallet,
-                title: 'Coach pay',
-                subtitle: 'Your classes and what you are paid',
-                onTap: () => context.push(Routes.coachPay),
-              ),
+              if (!Env.hasSupabase)
+                KitNavTile(
+                  icon: OgIcons.wallet,
+                  title: 'Coach pay',
+                  subtitle: 'Your classes and what you are paid',
+                  onTap: () => context.push(Routes.coachPay),
+                ),
             ],
           ),
           if (head)
@@ -490,6 +516,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
     body: (a) {
       final c = context.og;
       final t = context.tones;
+      if (a.classes.isEmpty) return const _NoClasses('Change a class');
       final x =
           a.classes.where((x) => x.id == widget.classId).firstOrNull ??
           a.classes.first;
@@ -679,11 +706,17 @@ class CoachPayScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final t = context.tones;
-    final p = ref.watch(coachPayProvider).value;
+    final pay = ref.watch(coachPayProvider);
+    final p = pay.value;
     if (p == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Coach pay'),
-        children: [CupertinoActivityIndicator()],
+      return KitScaffold(
+        header: const KitHeader(title: 'Coach pay'),
+        children: [
+          if (pay.error case AuthFailure(:final message))
+            KitNote(message)
+          else
+            const CupertinoActivityIndicator(),
+        ],
       );
     }
     Widget tile(String big, String small) => Expanded(
@@ -1302,6 +1335,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
     title: 'Invite students',
     body: (a) {
       final c = context.og;
+      if (a.classes.isEmpty) return const _NoClasses('Invite students');
       final cls =
           a.classes.where((x) => x.id == _class).firstOrNull ?? a.classes.first;
       final pending =

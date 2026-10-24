@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AcademyCoach {
 
- String get name; String get initials; String get role; bool get nroc;
+ String get name; String get initials; String get role; bool get nroc; String get id; bool get head;
 /// Create a copy of AcademyCoach
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $AcademyCoachCopyWith<AcademyCoach> get copyWith => _$AcademyCoachCopyWithImpl<A
 @override
 bool operator ==(Object other) {
   final _this = this as AcademyCoach;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AcademyCoach&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.initials, _this.initials) || other.initials == _this.initials)&&(identical(other.role, _this.role) || other.role == _this.role)&&(identical(other.nroc, _this.nroc) || other.nroc == _this.nroc));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AcademyCoach&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.initials, _this.initials) || other.initials == _this.initials)&&(identical(other.role, _this.role) || other.role == _this.role)&&(identical(other.nroc, _this.nroc) || other.nroc == _this.nroc)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.head, _this.head) || other.head == _this.head));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AcademyCoach;
-  return Object.hash(runtimeType,_this.name,_this.initials,_this.role,_this.nroc);
+  return Object.hash(runtimeType,_this.name,_this.initials,_this.role,_this.nroc,_this.id,_this.head);
 }
 
 @override
 String toString() {
   final _this = this as AcademyCoach;
-  return 'AcademyCoach(name: ${_this.name}, initials: ${_this.initials}, role: ${_this.role}, nroc: ${_this.nroc})';
+  return 'AcademyCoach(name: ${_this.name}, initials: ${_this.initials}, role: ${_this.role}, nroc: ${_this.nroc}, id: ${_this.id}, head: ${_this.head})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $AcademyCoachCopyWith<$Res>  {
   factory $AcademyCoachCopyWith(AcademyCoach value, $Res Function(AcademyCoach) _then) = _$AcademyCoachCopyWithImpl;
 @useResult
 $Res call({
- String name, String initials, String role, bool nroc
+ String name, String initials, String role, bool nroc, String id, bool head
 });
 
 
@@ -68,12 +68,14 @@ class _$AcademyCoachCopyWithImpl<$Res>
 
 /// Create a copy of AcademyCoach
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? initials = null,Object? role = null,Object? nroc = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? initials = null,Object? role = null,Object? nroc = null,Object? id = null,Object? head = null,}) {
   return _then(AcademyCoach(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,initials: null == initials ? _self.initials : initials // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,nroc: null == nroc ? _self.nroc : nroc // ignore: cast_nullable_to_non_nullable
+as bool,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,head: null == head ? _self.head : head // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -159,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String initials,  String role,  bool nroc)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String initials,  String role,  bool nroc,  String id,  bool head)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AcademyCoach() when $default != null:
-return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
+return $default(_that.name,_that.initials,_that.role,_that.nroc,_that.id,_that.head);case _:
   return orElse();
 
 }
@@ -180,10 +182,10 @@ return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String initials,  String role,  bool nroc)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String initials,  String role,  bool nroc,  String id,  bool head)  $default,) {final _that = this;
 switch (_that) {
 case _AcademyCoach():
-return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
+return $default(_that.name,_that.initials,_that.role,_that.nroc,_that.id,_that.head);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +202,10 @@ return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String initials,  String role,  bool nroc)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String initials,  String role,  bool nroc,  String id,  bool head)?  $default,) {final _that = this;
 switch (_that) {
 case _AcademyCoach() when $default != null:
-return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
+return $default(_that.name,_that.initials,_that.role,_that.nroc,_that.id,_that.head);case _:
   return null;
 
 }
@@ -215,13 +217,15 @@ return $default(_that.name,_that.initials,_that.role,_that.nroc);case _:
 
 
 class _AcademyCoach implements AcademyCoach {
-  const _AcademyCoach({required this.name, required this.initials, required this.role, this.nroc = true});
+  const _AcademyCoach({required this.name, required this.initials, required this.role, this.nroc = true, this.id = '', this.head = false});
   
 
 @override final  String name;
 @override final  String initials;
 @override final  String role;
 @override@JsonKey() final  bool nroc;
+@override@JsonKey() final  String id;
+@override@JsonKey() final  bool head;
 
 /// Create a copy of AcademyCoach
 /// with the given fields replaced by the non-null parameter values.
@@ -233,18 +237,18 @@ _$AcademyCoachCopyWith<_AcademyCoach> get copyWith => __$AcademyCoachCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AcademyCoach&&(identical(other.name, name) || other.name == name)&&(identical(other.initials, initials) || other.initials == initials)&&(identical(other.role, role) || other.role == role)&&(identical(other.nroc, nroc) || other.nroc == nroc));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AcademyCoach&&(identical(other.name, name) || other.name == name)&&(identical(other.initials, initials) || other.initials == initials)&&(identical(other.role, role) || other.role == role)&&(identical(other.nroc, nroc) || other.nroc == nroc)&&(identical(other.id, id) || other.id == id)&&(identical(other.head, head) || other.head == head));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,initials,role,nroc);
+    return Object.hash(runtimeType,name,initials,role,nroc,id,head);
 }
 
 @override
 String toString() {
-    return 'AcademyCoach(name: $name, initials: $initials, role: $role, nroc: $nroc)';
+    return 'AcademyCoach(name: $name, initials: $initials, role: $role, nroc: $nroc, id: $id, head: $head)';
 }
 
 
@@ -255,7 +259,7 @@ abstract mixin class _$AcademyCoachCopyWith<$Res> implements $AcademyCoachCopyWi
   factory _$AcademyCoachCopyWith(_AcademyCoach value, $Res Function(_AcademyCoach) _then) = __$AcademyCoachCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String initials, String role, bool nroc
+ String name, String initials, String role, bool nroc, String id, bool head
 });
 
 
@@ -272,12 +276,14 @@ class __$AcademyCoachCopyWithImpl<$Res>
 
 /// Create a copy of AcademyCoach
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? initials = null,Object? role = null,Object? nroc = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? initials = null,Object? role = null,Object? nroc = null,Object? id = null,Object? head = null,}) {
   return _then(_AcademyCoach(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,initials: null == initials ? _self.initials : initials // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,nroc: null == nroc ? _self.nroc : nroc // ignore: cast_nullable_to_non_nullable
+as bool,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,head: null == head ? _self.head : head // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -290,7 +296,7 @@ mixin _$AcademyClass {
 
  String get id; String get academyId; String get name;/// 1, 2, 3; "Rally Builders".
  int get level; String get levelName;/// DateTime.monday … DateTime.sunday.
- List<int> get weekdays; int get hour; int get minute; int get minutes; String get ages; int get feeCents; int get capacity; int get enrolled; String get coach; String get court; int get week; int get termWeeks;/// This week's lesson, and the skill it works on (a [Skill.id]).
+ List<int> get weekdays; int get hour; int get minute; int get minutes; String get ages; int get feeCents; int get capacity; int get enrolled; String get coach; String get coachId; String get court; int get week; int get termWeeks;/// This week's lesson, and the skill it works on (a [Skill.id]).
  String get lesson; String get focusSkill;
 /// Create a copy of AcademyClass
 /// with the given fields replaced by the non-null parameter values.
@@ -303,20 +309,20 @@ $AcademyClassCopyWith<AcademyClass> get copyWith => _$AcademyClassCopyWithImpl<A
 @override
 bool operator ==(Object other) {
   final _this = this as AcademyClass;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AcademyClass&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.academyId, _this.academyId) || other.academyId == _this.academyId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.level, _this.level) || other.level == _this.level)&&(identical(other.levelName, _this.levelName) || other.levelName == _this.levelName)&&const DeepCollectionEquality().equals(other.weekdays, _this.weekdays)&&(identical(other.hour, _this.hour) || other.hour == _this.hour)&&(identical(other.minute, _this.minute) || other.minute == _this.minute)&&(identical(other.minutes, _this.minutes) || other.minutes == _this.minutes)&&(identical(other.ages, _this.ages) || other.ages == _this.ages)&&(identical(other.feeCents, _this.feeCents) || other.feeCents == _this.feeCents)&&(identical(other.capacity, _this.capacity) || other.capacity == _this.capacity)&&(identical(other.enrolled, _this.enrolled) || other.enrolled == _this.enrolled)&&(identical(other.coach, _this.coach) || other.coach == _this.coach)&&(identical(other.court, _this.court) || other.court == _this.court)&&(identical(other.week, _this.week) || other.week == _this.week)&&(identical(other.termWeeks, _this.termWeeks) || other.termWeeks == _this.termWeeks)&&(identical(other.lesson, _this.lesson) || other.lesson == _this.lesson)&&(identical(other.focusSkill, _this.focusSkill) || other.focusSkill == _this.focusSkill));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AcademyClass&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.academyId, _this.academyId) || other.academyId == _this.academyId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.level, _this.level) || other.level == _this.level)&&(identical(other.levelName, _this.levelName) || other.levelName == _this.levelName)&&const DeepCollectionEquality().equals(other.weekdays, _this.weekdays)&&(identical(other.hour, _this.hour) || other.hour == _this.hour)&&(identical(other.minute, _this.minute) || other.minute == _this.minute)&&(identical(other.minutes, _this.minutes) || other.minutes == _this.minutes)&&(identical(other.ages, _this.ages) || other.ages == _this.ages)&&(identical(other.feeCents, _this.feeCents) || other.feeCents == _this.feeCents)&&(identical(other.capacity, _this.capacity) || other.capacity == _this.capacity)&&(identical(other.enrolled, _this.enrolled) || other.enrolled == _this.enrolled)&&(identical(other.coach, _this.coach) || other.coach == _this.coach)&&(identical(other.coachId, _this.coachId) || other.coachId == _this.coachId)&&(identical(other.court, _this.court) || other.court == _this.court)&&(identical(other.week, _this.week) || other.week == _this.week)&&(identical(other.termWeeks, _this.termWeeks) || other.termWeeks == _this.termWeeks)&&(identical(other.lesson, _this.lesson) || other.lesson == _this.lesson)&&(identical(other.focusSkill, _this.focusSkill) || other.focusSkill == _this.focusSkill));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AcademyClass;
-  return Object.hashAll([runtimeType,_this.id,_this.academyId,_this.name,_this.level,_this.levelName,const DeepCollectionEquality().hash(_this.weekdays),_this.hour,_this.minute,_this.minutes,_this.ages,_this.feeCents,_this.capacity,_this.enrolled,_this.coach,_this.court,_this.week,_this.termWeeks,_this.lesson,_this.focusSkill]);
+  return Object.hashAll([runtimeType,_this.id,_this.academyId,_this.name,_this.level,_this.levelName,const DeepCollectionEquality().hash(_this.weekdays),_this.hour,_this.minute,_this.minutes,_this.ages,_this.feeCents,_this.capacity,_this.enrolled,_this.coach,_this.coachId,_this.court,_this.week,_this.termWeeks,_this.lesson,_this.focusSkill]);
 }
 
 @override
 String toString() {
   final _this = this as AcademyClass;
-  return 'AcademyClass(id: ${_this.id}, academyId: ${_this.academyId}, name: ${_this.name}, level: ${_this.level}, levelName: ${_this.levelName}, weekdays: ${_this.weekdays}, hour: ${_this.hour}, minute: ${_this.minute}, minutes: ${_this.minutes}, ages: ${_this.ages}, feeCents: ${_this.feeCents}, capacity: ${_this.capacity}, enrolled: ${_this.enrolled}, coach: ${_this.coach}, court: ${_this.court}, week: ${_this.week}, termWeeks: ${_this.termWeeks}, lesson: ${_this.lesson}, focusSkill: ${_this.focusSkill})';
+  return 'AcademyClass(id: ${_this.id}, academyId: ${_this.academyId}, name: ${_this.name}, level: ${_this.level}, levelName: ${_this.levelName}, weekdays: ${_this.weekdays}, hour: ${_this.hour}, minute: ${_this.minute}, minutes: ${_this.minutes}, ages: ${_this.ages}, feeCents: ${_this.feeCents}, capacity: ${_this.capacity}, enrolled: ${_this.enrolled}, coach: ${_this.coach}, coachId: ${_this.coachId}, court: ${_this.court}, week: ${_this.week}, termWeeks: ${_this.termWeeks}, lesson: ${_this.lesson}, focusSkill: ${_this.focusSkill})';
 }
 
 
@@ -327,7 +333,7 @@ abstract mixin class $AcademyClassCopyWith<$Res>  {
   factory $AcademyClassCopyWith(AcademyClass value, $Res Function(AcademyClass) _then) = _$AcademyClassCopyWithImpl;
 @useResult
 $Res call({
- String id, String academyId, String name, int level, String levelName, List<int> weekdays, int hour, int minute, int minutes, String ages, int feeCents, int capacity, int enrolled, String coach, String court, int week, int termWeeks, String lesson, String focusSkill
+ String id, String academyId, String name, int level, String levelName, List<int> weekdays, int hour, int minute, int minutes, String ages, int feeCents, int capacity, int enrolled, String coach, String coachId, String court, int week, int termWeeks, String lesson, String focusSkill
 });
 
 
@@ -344,7 +350,7 @@ class _$AcademyClassCopyWithImpl<$Res>
 
 /// Create a copy of AcademyClass
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? academyId = null,Object? name = null,Object? level = null,Object? levelName = null,Object? weekdays = null,Object? hour = null,Object? minute = null,Object? minutes = null,Object? ages = null,Object? feeCents = null,Object? capacity = null,Object? enrolled = null,Object? coach = null,Object? court = null,Object? week = null,Object? termWeeks = null,Object? lesson = null,Object? focusSkill = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? academyId = null,Object? name = null,Object? level = null,Object? levelName = null,Object? weekdays = null,Object? hour = null,Object? minute = null,Object? minutes = null,Object? ages = null,Object? feeCents = null,Object? capacity = null,Object? enrolled = null,Object? coach = null,Object? coachId = null,Object? court = null,Object? week = null,Object? termWeeks = null,Object? lesson = null,Object? focusSkill = null,}) {
   return _then(AcademyClass(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,academyId: null == academyId ? _self.academyId : academyId // ignore: cast_nullable_to_non_nullable
@@ -360,6 +366,7 @@ as String,feeCents: null == feeCents ? _self.feeCents : feeCents // ignore: cast
 as int,capacity: null == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
 as int,enrolled: null == enrolled ? _self.enrolled : enrolled // ignore: cast_nullable_to_non_nullable
 as int,coach: null == coach ? _self.coach : coach // ignore: cast_nullable_to_non_nullable
+as String,coachId: null == coachId ? _self.coachId : coachId // ignore: cast_nullable_to_non_nullable
 as String,court: null == court ? _self.court : court // ignore: cast_nullable_to_non_nullable
 as String,week: null == week ? _self.week : week // ignore: cast_nullable_to_non_nullable
 as int,termWeeks: null == termWeeks ? _self.termWeeks : termWeeks // ignore: cast_nullable_to_non_nullable
@@ -450,10 +457,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String coachId,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AcademyClass() when $default != null:
-return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
+return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.coachId,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
   return orElse();
 
 }
@@ -471,10 +478,10 @@ return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String coachId,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)  $default,) {final _that = this;
 switch (_that) {
 case _AcademyClass():
-return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
+return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.coachId,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -491,10 +498,10 @@ return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String academyId,  String name,  int level,  String levelName,  List<int> weekdays,  int hour,  int minute,  int minutes,  String ages,  int feeCents,  int capacity,  int enrolled,  String coach,  String coachId,  String court,  int week,  int termWeeks,  String lesson,  String focusSkill)?  $default,) {final _that = this;
 switch (_that) {
 case _AcademyClass() when $default != null:
-return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
+return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,_that.weekdays,_that.hour,_that.minute,_that.minutes,_that.ages,_that.feeCents,_that.capacity,_that.enrolled,_that.coach,_that.coachId,_that.court,_that.week,_that.termWeeks,_that.lesson,_that.focusSkill);case _:
   return null;
 
 }
@@ -506,7 +513,7 @@ return $default(_that.id,_that.academyId,_that.name,_that.level,_that.levelName,
 
 
 class _AcademyClass extends AcademyClass {
-  const _AcademyClass({required this.id, required this.academyId, required this.name, required this.level, this.levelName = '', required  List<int> weekdays, required this.hour, this.minute = 0, this.minutes = 90, this.ages = '', required this.feeCents, required this.capacity, this.enrolled = 0, required this.coach, this.court = '', this.week = 1, this.termWeeks = 10, this.lesson = '', this.focusSkill = ''}): _weekdays = weekdays,super._();
+  const _AcademyClass({required this.id, required this.academyId, required this.name, required this.level, this.levelName = '', required  List<int> weekdays, required this.hour, this.minute = 0, this.minutes = 90, this.ages = '', required this.feeCents, required this.capacity, this.enrolled = 0, required this.coach, this.coachId = '', this.court = '', this.week = 1, this.termWeeks = 10, this.lesson = '', this.focusSkill = ''}): _weekdays = weekdays,super._();
   
 
 @override final  String id;
@@ -532,6 +539,7 @@ class _AcademyClass extends AcademyClass {
 @override final  int capacity;
 @override@JsonKey() final  int enrolled;
 @override final  String coach;
+@override@JsonKey() final  String coachId;
 @override@JsonKey() final  String court;
 @override@JsonKey() final  int week;
 @override@JsonKey() final  int termWeeks;
@@ -549,18 +557,18 @@ _$AcademyClassCopyWith<_AcademyClass> get copyWith => __$AcademyClassCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AcademyClass&&(identical(other.id, id) || other.id == id)&&(identical(other.academyId, academyId) || other.academyId == academyId)&&(identical(other.name, name) || other.name == name)&&(identical(other.level, level) || other.level == level)&&(identical(other.levelName, levelName) || other.levelName == levelName)&&const DeepCollectionEquality().equals(other.weekdays, _weekdays)&&(identical(other.hour, hour) || other.hour == hour)&&(identical(other.minute, minute) || other.minute == minute)&&(identical(other.minutes, minutes) || other.minutes == minutes)&&(identical(other.ages, ages) || other.ages == ages)&&(identical(other.feeCents, feeCents) || other.feeCents == feeCents)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.enrolled, enrolled) || other.enrolled == enrolled)&&(identical(other.coach, coach) || other.coach == coach)&&(identical(other.court, court) || other.court == court)&&(identical(other.week, week) || other.week == week)&&(identical(other.termWeeks, termWeeks) || other.termWeeks == termWeeks)&&(identical(other.lesson, lesson) || other.lesson == lesson)&&(identical(other.focusSkill, focusSkill) || other.focusSkill == focusSkill));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AcademyClass&&(identical(other.id, id) || other.id == id)&&(identical(other.academyId, academyId) || other.academyId == academyId)&&(identical(other.name, name) || other.name == name)&&(identical(other.level, level) || other.level == level)&&(identical(other.levelName, levelName) || other.levelName == levelName)&&const DeepCollectionEquality().equals(other.weekdays, _weekdays)&&(identical(other.hour, hour) || other.hour == hour)&&(identical(other.minute, minute) || other.minute == minute)&&(identical(other.minutes, minutes) || other.minutes == minutes)&&(identical(other.ages, ages) || other.ages == ages)&&(identical(other.feeCents, feeCents) || other.feeCents == feeCents)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.enrolled, enrolled) || other.enrolled == enrolled)&&(identical(other.coach, coach) || other.coach == coach)&&(identical(other.coachId, coachId) || other.coachId == coachId)&&(identical(other.court, court) || other.court == court)&&(identical(other.week, week) || other.week == week)&&(identical(other.termWeeks, termWeeks) || other.termWeeks == termWeeks)&&(identical(other.lesson, lesson) || other.lesson == lesson)&&(identical(other.focusSkill, focusSkill) || other.focusSkill == focusSkill));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,academyId,name,level,levelName,const DeepCollectionEquality().hash(_weekdays),hour,minute,minutes,ages,feeCents,capacity,enrolled,coach,court,week,termWeeks,lesson,focusSkill]);
+    return Object.hashAll([runtimeType,id,academyId,name,level,levelName,const DeepCollectionEquality().hash(_weekdays),hour,minute,minutes,ages,feeCents,capacity,enrolled,coach,coachId,court,week,termWeeks,lesson,focusSkill]);
 }
 
 @override
 String toString() {
-    return 'AcademyClass(id: $id, academyId: $academyId, name: $name, level: $level, levelName: $levelName, weekdays: $weekdays, hour: $hour, minute: $minute, minutes: $minutes, ages: $ages, feeCents: $feeCents, capacity: $capacity, enrolled: $enrolled, coach: $coach, court: $court, week: $week, termWeeks: $termWeeks, lesson: $lesson, focusSkill: $focusSkill)';
+    return 'AcademyClass(id: $id, academyId: $academyId, name: $name, level: $level, levelName: $levelName, weekdays: $weekdays, hour: $hour, minute: $minute, minutes: $minutes, ages: $ages, feeCents: $feeCents, capacity: $capacity, enrolled: $enrolled, coach: $coach, coachId: $coachId, court: $court, week: $week, termWeeks: $termWeeks, lesson: $lesson, focusSkill: $focusSkill)';
 }
 
 
@@ -571,7 +579,7 @@ abstract mixin class _$AcademyClassCopyWith<$Res> implements $AcademyClassCopyWi
   factory _$AcademyClassCopyWith(_AcademyClass value, $Res Function(_AcademyClass) _then) = __$AcademyClassCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String academyId, String name, int level, String levelName, List<int> weekdays, int hour, int minute, int minutes, String ages, int feeCents, int capacity, int enrolled, String coach, String court, int week, int termWeeks, String lesson, String focusSkill
+ String id, String academyId, String name, int level, String levelName, List<int> weekdays, int hour, int minute, int minutes, String ages, int feeCents, int capacity, int enrolled, String coach, String coachId, String court, int week, int termWeeks, String lesson, String focusSkill
 });
 
 
@@ -588,7 +596,7 @@ class __$AcademyClassCopyWithImpl<$Res>
 
 /// Create a copy of AcademyClass
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? academyId = null,Object? name = null,Object? level = null,Object? levelName = null,Object? weekdays = null,Object? hour = null,Object? minute = null,Object? minutes = null,Object? ages = null,Object? feeCents = null,Object? capacity = null,Object? enrolled = null,Object? coach = null,Object? court = null,Object? week = null,Object? termWeeks = null,Object? lesson = null,Object? focusSkill = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? academyId = null,Object? name = null,Object? level = null,Object? levelName = null,Object? weekdays = null,Object? hour = null,Object? minute = null,Object? minutes = null,Object? ages = null,Object? feeCents = null,Object? capacity = null,Object? enrolled = null,Object? coach = null,Object? coachId = null,Object? court = null,Object? week = null,Object? termWeeks = null,Object? lesson = null,Object? focusSkill = null,}) {
   return _then(_AcademyClass(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,academyId: null == academyId ? _self.academyId : academyId // ignore: cast_nullable_to_non_nullable
@@ -604,6 +612,7 @@ as String,feeCents: null == feeCents ? _self.feeCents : feeCents // ignore: cast
 as int,capacity: null == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
 as int,enrolled: null == enrolled ? _self.enrolled : enrolled // ignore: cast_nullable_to_non_nullable
 as int,coach: null == coach ? _self.coach : coach // ignore: cast_nullable_to_non_nullable
+as String,coachId: null == coachId ? _self.coachId : coachId // ignore: cast_nullable_to_non_nullable
 as String,court: null == court ? _self.court : court // ignore: cast_nullable_to_non_nullable
 as String,week: null == week ? _self.week : week // ignore: cast_nullable_to_non_nullable
 as int,termWeeks: null == termWeeks ? _self.termWeeks : termWeeks // ignore: cast_nullable_to_non_nullable
@@ -620,7 +629,9 @@ as String,
 mixin _$Academy {
 
  String get id; String get name; Sport get sport; String get area; String get blurb; String get audience; double? get rating; int get ratingCount; int get students; bool get verified; Billing get billing; int get makeupsPerMonth; List<AcademyCoach> get coaches; List<AcademyClass> get classes; int get color; int get ink;/// The banner on the academy page, like a club's cover colour.
- int get coverColor; AcademyRole get myRole; int get pendingRequests;
+ int get coverColor; AcademyRole get myRole; int get pendingRequests;/// 'none', 'submitted' or 'verified'.
+ String get verification;/// Coaches invited by email who haven't signed up yet.
+ List<String> get invitedCoaches;
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -632,20 +643,20 @@ $AcademyCopyWith<Academy> get copyWith => _$AcademyCopyWithImpl<Academy>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Academy;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Academy&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.ratingCount, _this.ratingCount) || other.ratingCount == _this.ratingCount)&&(identical(other.students, _this.students) || other.students == _this.students)&&(identical(other.verified, _this.verified) || other.verified == _this.verified)&&(identical(other.billing, _this.billing) || other.billing == _this.billing)&&(identical(other.makeupsPerMonth, _this.makeupsPerMonth) || other.makeupsPerMonth == _this.makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _this.coaches)&&const DeepCollectionEquality().equals(other.classes, _this.classes)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.coverColor, _this.coverColor) || other.coverColor == _this.coverColor)&&(identical(other.myRole, _this.myRole) || other.myRole == _this.myRole)&&(identical(other.pendingRequests, _this.pendingRequests) || other.pendingRequests == _this.pendingRequests));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Academy&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.ratingCount, _this.ratingCount) || other.ratingCount == _this.ratingCount)&&(identical(other.students, _this.students) || other.students == _this.students)&&(identical(other.verified, _this.verified) || other.verified == _this.verified)&&(identical(other.billing, _this.billing) || other.billing == _this.billing)&&(identical(other.makeupsPerMonth, _this.makeupsPerMonth) || other.makeupsPerMonth == _this.makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _this.coaches)&&const DeepCollectionEquality().equals(other.classes, _this.classes)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.coverColor, _this.coverColor) || other.coverColor == _this.coverColor)&&(identical(other.myRole, _this.myRole) || other.myRole == _this.myRole)&&(identical(other.pendingRequests, _this.pendingRequests) || other.pendingRequests == _this.pendingRequests)&&(identical(other.verification, _this.verification) || other.verification == _this.verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _this.invitedCoaches));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Academy;
-  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.area,_this.blurb,_this.audience,_this.rating,_this.ratingCount,_this.students,_this.verified,_this.billing,_this.makeupsPerMonth,const DeepCollectionEquality().hash(_this.coaches),const DeepCollectionEquality().hash(_this.classes),_this.color,_this.ink,_this.coverColor,_this.myRole,_this.pendingRequests]);
+  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.area,_this.blurb,_this.audience,_this.rating,_this.ratingCount,_this.students,_this.verified,_this.billing,_this.makeupsPerMonth,const DeepCollectionEquality().hash(_this.coaches),const DeepCollectionEquality().hash(_this.classes),_this.color,_this.ink,_this.coverColor,_this.myRole,_this.pendingRequests,_this.verification,const DeepCollectionEquality().hash(_this.invitedCoaches)]);
 }
 
 @override
 String toString() {
   final _this = this as Academy;
-  return 'Academy(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, area: ${_this.area}, blurb: ${_this.blurb}, audience: ${_this.audience}, rating: ${_this.rating}, ratingCount: ${_this.ratingCount}, students: ${_this.students}, verified: ${_this.verified}, billing: ${_this.billing}, makeupsPerMonth: ${_this.makeupsPerMonth}, coaches: ${_this.coaches}, classes: ${_this.classes}, color: ${_this.color}, ink: ${_this.ink}, coverColor: ${_this.coverColor}, myRole: ${_this.myRole}, pendingRequests: ${_this.pendingRequests})';
+  return 'Academy(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, area: ${_this.area}, blurb: ${_this.blurb}, audience: ${_this.audience}, rating: ${_this.rating}, ratingCount: ${_this.ratingCount}, students: ${_this.students}, verified: ${_this.verified}, billing: ${_this.billing}, makeupsPerMonth: ${_this.makeupsPerMonth}, coaches: ${_this.coaches}, classes: ${_this.classes}, color: ${_this.color}, ink: ${_this.ink}, coverColor: ${_this.coverColor}, myRole: ${_this.myRole}, pendingRequests: ${_this.pendingRequests}, verification: ${_this.verification}, invitedCoaches: ${_this.invitedCoaches})';
 }
 
 
@@ -656,7 +667,7 @@ abstract mixin class $AcademyCopyWith<$Res>  {
   factory $AcademyCopyWith(Academy value, $Res Function(Academy) _then) = _$AcademyCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests
+ String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches
 });
 
 
@@ -673,7 +684,7 @@ class _$AcademyCopyWithImpl<$Res>
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,}) {
   return _then(Academy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -694,7 +705,9 @@ as int,ink: null == ink ? _self.ink : ink // ignore: cast_nullable_to_non_nullab
 as int,coverColor: null == coverColor ? _self.coverColor : coverColor // ignore: cast_nullable_to_non_nullable
 as int,myRole: null == myRole ? _self.myRole : myRole // ignore: cast_nullable_to_non_nullable
 as AcademyRole,pendingRequests: null == pendingRequests ? _self.pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
-as int,
+as int,verification: null == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
+as String,invitedCoaches: null == invitedCoaches ? _self.invitedCoaches : invitedCoaches // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
@@ -779,10 +792,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Academy() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
   return orElse();
 
 }
@@ -800,10 +813,10 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)  $default,) {final _that = this;
 switch (_that) {
 case _Academy():
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -820,10 +833,10 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)?  $default,) {final _that = this;
 switch (_that) {
 case _Academy() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
   return null;
 
 }
@@ -835,7 +848,7 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 
 
 class _Academy extends Academy {
-  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF16181B, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0}): _coaches = coaches,_classes = classes,super._();
+  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF16181B, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0, this.verification = 'none',  List<String> invitedCoaches = const []}): _coaches = coaches,_classes = classes,_invitedCoaches = invitedCoaches,super._();
   
 
 @override final  String id;
@@ -870,6 +883,17 @@ class _Academy extends Academy {
 @override@JsonKey() final  int coverColor;
 @override@JsonKey() final  AcademyRole myRole;
 @override@JsonKey() final  int pendingRequests;
+/// 'none', 'submitted' or 'verified'.
+@override@JsonKey() final  String verification;
+/// Coaches invited by email who haven't signed up yet.
+ final  List<String> _invitedCoaches;
+/// Coaches invited by email who haven't signed up yet.
+@override@JsonKey() List<String> get invitedCoaches {
+  if (_invitedCoaches is EqualUnmodifiableListView) return _invitedCoaches;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_invitedCoaches);
+}
+
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
@@ -881,18 +905,18 @@ _$AcademyCopyWith<_Academy> get copyWith => __$AcademyCopyWithImpl<_Academy>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Academy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.area, area) || other.area == area)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.students, students) || other.students == students)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.billing, billing) || other.billing == billing)&&(identical(other.makeupsPerMonth, makeupsPerMonth) || other.makeupsPerMonth == makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _coaches)&&const DeepCollectionEquality().equals(other.classes, _classes)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.coverColor, coverColor) || other.coverColor == coverColor)&&(identical(other.myRole, myRole) || other.myRole == myRole)&&(identical(other.pendingRequests, pendingRequests) || other.pendingRequests == pendingRequests));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Academy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.area, area) || other.area == area)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.students, students) || other.students == students)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.billing, billing) || other.billing == billing)&&(identical(other.makeupsPerMonth, makeupsPerMonth) || other.makeupsPerMonth == makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _coaches)&&const DeepCollectionEquality().equals(other.classes, _classes)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.coverColor, coverColor) || other.coverColor == coverColor)&&(identical(other.myRole, myRole) || other.myRole == myRole)&&(identical(other.pendingRequests, pendingRequests) || other.pendingRequests == pendingRequests)&&(identical(other.verification, verification) || other.verification == verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _invitedCoaches));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,name,sport,area,blurb,audience,rating,ratingCount,students,verified,billing,makeupsPerMonth,const DeepCollectionEquality().hash(_coaches),const DeepCollectionEquality().hash(_classes),color,ink,coverColor,myRole,pendingRequests]);
+    return Object.hashAll([runtimeType,id,name,sport,area,blurb,audience,rating,ratingCount,students,verified,billing,makeupsPerMonth,const DeepCollectionEquality().hash(_coaches),const DeepCollectionEquality().hash(_classes),color,ink,coverColor,myRole,pendingRequests,verification,const DeepCollectionEquality().hash(_invitedCoaches)]);
 }
 
 @override
 String toString() {
-    return 'Academy(id: $id, name: $name, sport: $sport, area: $area, blurb: $blurb, audience: $audience, rating: $rating, ratingCount: $ratingCount, students: $students, verified: $verified, billing: $billing, makeupsPerMonth: $makeupsPerMonth, coaches: $coaches, classes: $classes, color: $color, ink: $ink, coverColor: $coverColor, myRole: $myRole, pendingRequests: $pendingRequests)';
+    return 'Academy(id: $id, name: $name, sport: $sport, area: $area, blurb: $blurb, audience: $audience, rating: $rating, ratingCount: $ratingCount, students: $students, verified: $verified, billing: $billing, makeupsPerMonth: $makeupsPerMonth, coaches: $coaches, classes: $classes, color: $color, ink: $ink, coverColor: $coverColor, myRole: $myRole, pendingRequests: $pendingRequests, verification: $verification, invitedCoaches: $invitedCoaches)';
 }
 
 
@@ -903,7 +927,7 @@ abstract mixin class _$AcademyCopyWith<$Res> implements $AcademyCopyWith<$Res> {
   factory _$AcademyCopyWith(_Academy value, $Res Function(_Academy) _then) = __$AcademyCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests
+ String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches
 });
 
 
@@ -920,7 +944,7 @@ class __$AcademyCopyWithImpl<$Res>
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,}) {
   return _then(_Academy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -941,7 +965,9 @@ as int,ink: null == ink ? _self.ink : ink // ignore: cast_nullable_to_non_nullab
 as int,coverColor: null == coverColor ? _self.coverColor : coverColor // ignore: cast_nullable_to_non_nullable
 as int,myRole: null == myRole ? _self.myRole : myRole // ignore: cast_nullable_to_non_nullable
 as AcademyRole,pendingRequests: null == pendingRequests ? _self.pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
-as int,
+as int,verification: null == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
+as String,invitedCoaches: null == invitedCoaches ? _self._invitedCoaches : invitedCoaches // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

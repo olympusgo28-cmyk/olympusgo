@@ -276,6 +276,10 @@ abstract final class Routes {
   static String academySettings(String id) => '/academies/$id/settings';
   static String academyMessages(String id) => '/academies/$id/messages';
   static String academyClose(String id) => '/academies/$id/close';
+  static String academyCoaches(String id) => '/academies/$id/coaches';
+  static String classNew(String id) => '/academies/$id/classes/new';
+  static String classEdit(String id, String classId) =>
+      '/academies/$id/classes/$classId/edit';
   static String changeClass(String id, String classId) =>
       '/academies/$id/classes/$classId/change';
   static String inviteStudents(String id) => '/academies/$id/invite';
