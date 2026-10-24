@@ -385,8 +385,16 @@ GoRouter appRouter(Ref ref) {
         ('check-in', (id) => TournamentCheckInScreen(activityId: id)),
         ('message', (id) => TournamentMessageScreen(activityId: id)),
         ('cancel', (id) => TournamentCancelScreen(activityId: id)),
+        ('run', (id) => TournamentRunScreen(activityId: id)),
       ])
         page('/tournaments/:id/$path', (s) => build(s.pathParameters['id']!)),
+      page(
+        '/tournaments/:id/score/:match',
+        (s) => TournamentUmpireScreen(
+          activityId: s.pathParameters['id']!,
+          matchId: s.pathParameters['match']!,
+        ),
+      ),
       for (final (path, build) in <(String, Widget Function(String))>[
         ('ticket', (id) => EventTicketScreen(activityId: id)),
         ('release', (id) => EventReleaseScreen(activityId: id)),

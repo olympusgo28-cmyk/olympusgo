@@ -12,6 +12,7 @@ class Division {
     this.entries = 0,
     this.waiting = 0,
     this.bands = 'All levels',
+    this.drawn = false,
   });
 
   final String id;
@@ -26,6 +27,9 @@ class Division {
 
   /// "MB–AD".
   final String bands;
+
+  /// The draw for this event is made.
+  final bool drawn;
 
   bool get full => entries >= capacity;
   int get left => (capacity - entries).clamp(0, capacity);
@@ -224,6 +228,86 @@ class PartnerPick {
   final String meta;
 }
 
+/// Someone asked the viewer to be their doubles partner.
+class PartnerInvite {
+  const PartnerInvite({
+    required this.entryId,
+    required this.divisionId,
+    required this.divisionName,
+    required this.from,
+  });
+
+  final String entryId;
+  final String divisionId;
+  final String divisionName;
+  final PlayerSummary from;
+}
+
+enum DrawStage { group, knockout, third }
+
+enum DrawMatchState { waiting, called, done }
+
+/// One match in the draw, as the organizer runs it.
+class DrawMatch {
+  const DrawMatch({
+    required this.id,
+    required this.divisionId,
+    required this.stage,
+    required this.round,
+    required this.slot,
+    this.group,
+    this.a,
+    this.b,
+    this.srcA,
+    this.srcB,
+    this.at,
+    this.court,
+    this.games = const [],
+    this.winnerA,
+    this.walkover = false,
+    this.state = DrawMatchState.waiting,
+    this.mineA,
+  });
+
+  final String id;
+  final String divisionId;
+  final DrawStage stage;
+  final int round;
+  final int slot;
+
+  /// "Group B", for group matches.
+  final String? group;
+
+  /// Entry names once known.
+  final String? a;
+  final String? b;
+
+  /// Where a first-round knockout side comes from: "A1", "B2" or "bye".
+  final String? srcA;
+  final String? srcB;
+  final DateTime? at;
+  final int? court;
+
+  /// Side A first.
+  final List<(int, int)> games;
+
+  /// Null until there is a winner.
+  final bool? winnerA;
+  final bool walkover;
+  final DrawMatchState state;
+
+  /// True when the viewer is side A, false for side B, null otherwise.
+  final bool? mineA;
+
+  bool get done => state == DrawMatchState.done;
+  bool get bye => srcB == 'bye';
+  bool get ready => a != null && b != null;
+  bool get mine => mineA != null;
+
+  int get gamesA => games.where((g) => g.$1 > g.$2).length;
+  int get gamesB => games.where((g) => g.$2 > g.$1).length;
+}
+
 /// Everything the tournament page shows beyond the activity itself.
 class TournamentInfo {
   const TournamentInfo({
@@ -243,6 +327,7 @@ class TournamentInfo {
     this.checkedIn = 0,
     this.finished = false,
     this.myLevel,
+    this.invite,
   });
 
   final Activity activity;
@@ -269,6 +354,9 @@ class TournamentInfo {
 
   /// The viewer's level in this sport, for the eligibility check.
   final double? myLevel;
+
+  /// A partner invite waiting for the viewer's answer.
+  final PartnerInvite? invite;
 
   int get entries => divisions.fold(0, (a, d) => a + d.entries);
 

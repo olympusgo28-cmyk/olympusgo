@@ -22,6 +22,16 @@ Future<List<DrawGroup>> drawGroups(Ref ref, String id, String division) =>
 Future<List<KnockoutRound>> drawKnockout(Ref ref, String id, String division) =>
     ref.watch(tournamentRepositoryProvider).knockout(id, division);
 
+/// One event's matches, for the organizer running the draw.
+@riverpod
+Future<List<DrawMatch>> drawMatches(Ref ref, String id, String division) =>
+    ref.watch(tournamentRepositoryProvider).matches(id, divisionId: division);
+
+/// Every match in the tournament.
+@riverpod
+Future<List<DrawMatch>> allDrawMatches(Ref ref, String id) =>
+    ref.watch(tournamentRepositoryProvider).matches(id);
+
 @riverpod
 Future<List<MyMatch>> myTournamentMatches(Ref ref, String id) =>
     ref.watch(tournamentRepositoryProvider).myMatches(id);
@@ -46,6 +56,10 @@ Future<Ticket?> eventTicket(Ref ref, String id) =>
 void refreshCompetition(void Function(ProviderOrFamily provider) invalidate) {
   invalidate(tournamentInfoProvider);
   invalidate(tournamentEntriesProvider);
+  invalidate(drawGroupsProvider);
+  invalidate(drawKnockoutProvider);
+  invalidate(drawMatchesProvider);
+  invalidate(allDrawMatchesProvider);
   invalidate(myTournamentMatchesProvider);
   invalidate(tournamentResultProvider);
   invalidate(eventInfoProvider);

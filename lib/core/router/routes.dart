@@ -107,6 +107,9 @@ abstract final class Routes {
   static String tournamentCheckIn(String id) => '/tournaments/$id/check-in';
   static String tournamentMessage(String id) => '/tournaments/$id/message';
   static String tournamentCancel(String id) => '/tournaments/$id/cancel';
+  static String tournamentRun(String id) => '/tournaments/$id/run';
+  static String tournamentScore(String id, String match) =>
+      '/tournaments/$id/score/$match';
   static String tournamentTab(String id, String tab) =>
       '/activities/$id?tab=$tab';
   static String eventTicket(String id) => '/events/$id/ticket';

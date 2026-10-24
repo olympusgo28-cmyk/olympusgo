@@ -15,8 +15,11 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/domain/social_models.dart';
+import '../../onboarding/domain/sport.dart';
+import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
+import '../domain/draw_logic.dart';
 import '../domain/meet_ops.dart';
 import 'meet_action_screens.dart';
 
@@ -343,6 +346,286 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
       );
     },
   );
+}
+
+/// The umpire's score for a tournament match. It is final once saved, and
+/// moves the winner on in the draw.
+class TournamentUmpireScreen extends ConsumerStatefulWidget {
+  const TournamentUmpireScreen({
+    super.key,
+    required this.activityId,
+    required this.matchId,
+  });
+
+  final String activityId;
+  final String matchId;
+
+  @override
+  ConsumerState<TournamentUmpireScreen> createState() =>
+      _TournamentUmpireScreenState();
+}
+
+class _TournamentUmpireScreenState
+    extends ConsumerState<TournamentUmpireScreen> {
+  final _cells = List<String>.filled(6, '');
+  int _cur = 0;
+  bool _fresh = true;
+  bool _busy = false;
+  bool _saved = false;
+  bool _filled = false;
+
+  /// Badminton games go to 21 with 2 clear, or 30. Other sports just need
+  /// a winner.
+  bool _strict = true;
+
+  int? _n(String v) => v.isEmpty ? null : int.parse(v);
+  List<(int?, int?)> get _games => [
+    for (var g = 0; g < 3; g++) (_n(_cells[g * 2]), _n(_cells[g * 2 + 1])),
+  ];
+  int _win(int? a, int? b) {
+    if (_strict) return gameWinner(a, b);
+    if (a == null || b == null) return 0;
+    if (a == b) return -1;
+    return a > b ? 1 : 2;
+  }
+
+  List<int> get _results => [for (final g in _games) _win(g.$1, g.$2)];
+  bool get _showThird {
+    final r = _results;
+    return r[0] > 0 && r[1] > 0 && r[0] != r[1] ||
+        _cells[4].isNotEmpty ||
+        _cells[5].isNotEmpty;
+  }
+
+  bool get _decided {
+    final r = _results;
+    if (r[0] <= 0 || r[1] <= 0) return false;
+    final third = _cells[4].isNotEmpty || _cells[5].isNotEmpty;
+    if (r[0] == r[1]) return !third;
+    return third && r[2] > 0;
+  }
+
+  void _put(String v, {required bool advance}) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _cells[_cur] = v;
+      _fresh = false;
+      final last = _showThird ? 5 : 3;
+      if (advance && _cur < last) {
+        _cur++;
+        _fresh = true;
+      }
+    });
+  }
+
+  void _digit(int d) {
+    var v = _fresh ? '' : _cells[_cur];
+    if (v.length >= 2) v = '';
+    v = '$v$d';
+    if (_strict && v.length == 2 && int.parse(v) > 30) v = '$d';
+    _put(v, advance: v.length == 2);
+  }
+
+  void _delete() {
+    final v = _cells[_cur];
+    _put(
+      _fresh || v.isEmpty ? '' : v.substring(0, v.length - 1),
+      advance: false,
+    );
+  }
+
+  void _next() {
+    final last = _showThird ? 5 : 3;
+    if (_cur < last) {
+      setState(() {
+        _cur++;
+        _fresh = true;
+      });
+    }
+  }
+
+  Future<void> _save() async {
+    final games = [
+      for (final g in _games)
+        if (g.$1 != null && g.$2 != null) (g.$1!, g.$2!),
+    ];
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(tournamentRepositoryProvider)
+          .saveScore(widget.matchId, games);
+      HapticFeedback.mediumImpact();
+      refreshCompetition(ref.invalidate);
+      if (mounted) setState(() => _saved = true);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final info = ref.watch(tournamentInfoProvider(widget.activityId)).value;
+    final all = ref.watch(allDrawMatchesProvider(widget.activityId)).value;
+    final m = all?.where((m) => m.id == widget.matchId).firstOrNull;
+    if (info == null || all == null) {
+      return const KitScaffold(
+        header: KitHeader(title: 'Umpire score'),
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 80),
+            child: CupertinoActivityIndicator(),
+          ),
+        ],
+      );
+    }
+    if (m == null || !m.ready) {
+      return const KitScaffold(
+        header: KitHeader(title: 'Umpire score'),
+        children: [
+          KitNote(
+            "This match isn't ready to score. Both sides need to be known "
+            'first.',
+          ),
+        ],
+      );
+    }
+    _strict = info.activity.sports.firstOrNull == Sport.badminton;
+    if (!_filled) {
+      // Correcting a score starts from the one saved.
+      _filled = true;
+      for (final (i, g) in m.games.take(3).indexed) {
+        _cells[i * 2] = '${g.$1}';
+        _cells[i * 2 + 1] = '${g.$2}';
+      }
+    }
+    final sizes = koRoundSizes(all.where((x) => x.divisionId == m.divisionId));
+    final division = info.divisions
+        .where((d) => d.id == m.divisionId)
+        .firstOrNull
+        ?.name;
+    final where = [
+      info.activity.title,
+      if (info.divisions.length > 1) ?division,
+      drawStageName(m, sizes),
+      if (m.court != null) 'Court ${m.court}',
+    ].join(', ');
+
+    if (_saved) {
+      return KitScaffold(
+        header: const KitHeader(title: 'Umpire score'),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+        bottom: [
+          KitButton(label: 'Back to the draw', onPressed: () => context.pop()),
+        ],
+        children: [
+          const KitDoneBanner(title: 'Final score saved'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'The draw is updated and both sides can see the result. The '
+              'winner moves on to their next match.',
+              style: OgText.body(15, height: 1.45, color: c.textMuted),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final r = _results;
+    final winsA = r.where((x) => x == 1).length;
+    final winsB = r.where((x) => x == 2).length;
+    final decided = _decided;
+    final bad = r.indexOf(-1);
+    final head = decided
+        ? '${winsA > winsB ? m.a : m.b} won ${winsA > winsB ? '$winsA–$winsB' : '$winsB–$winsA'}'
+        : bad >= 0
+        ? 'Check game ${bad + 1}'
+        : 'Type each game';
+    final hint = bad >= 0
+        ? (_strict
+              ? 'A game is won at 21 with 2 clear, or at 30.'
+              : "A game can't end level.")
+        : decided
+        ? 'The score is final once saved. Ratings update for everyone in '
+              'the match.'
+        : 'Tap a box to change it. Game 3 appears if it is 1 game each.';
+
+    return KitScaffold(
+      header: KitHeader(title: 'Umpire score', subtitle: where),
+      gap: 12,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      bottom: [
+        _Keypad(onDigit: _digit, onNext: _next, onDelete: _delete),
+        KitButton(
+          label: 'Save final score',
+          loading: _busy,
+          onPressed: decided ? _save : null,
+        ),
+      ],
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: OgColors.ink,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: [
+              _TeamLine(name: m.a!, wins: winsA),
+              const SizedBox(height: 6),
+              _TeamLine(name: m.b!, wins: winsB),
+              const SizedBox(height: 14),
+              for (var g = 0; g < 3; g++)
+                if (g < 2 || _showThird)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        for (final side in [0, 1]) ...[
+                          if (side == 1)
+                            Expanded(
+                              child: Text(
+                                'Game ${g + 1}',
+                                textAlign: TextAlign.center,
+                                style: OgText.body(
+                                  13,
+                                  weight: FontWeight.w700,
+                                  color: _muted,
+                                ),
+                              ),
+                            ),
+                          _ScoreBox(
+                            text: _cells[g * 2 + side],
+                            label: 'Game ${g + 1}, ${side == 0 ? m.a : m.b}',
+                            active: _cur == g * 2 + side,
+                            won: r[g] == side + 1,
+                            done: r[g] > 0,
+                            onTap: () => setState(() {
+                              _cur = g * 2 + side;
+                              _fresh = true;
+                            }),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+            ],
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(head, style: OgText.heading(22)),
+            const SizedBox(height: 4),
+            Text(hint, style: OgText.body(14, height: 1.4, color: c.textMuted)),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _TeamLine extends StatelessWidget {

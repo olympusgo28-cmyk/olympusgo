@@ -74,7 +74,10 @@ PaymentGateway paymentGateway(Ref ref) => Env.hasSupabase
 
 @Riverpod(keepAlive: true)
 TournamentRepository tournamentRepository(Ref ref) => Env.hasSupabase
-    ? SupabaseTournamentRepository(ref.watch(playRepositoryProvider))
+    ? SupabaseTournamentRepository(
+        Supabase.instance.client,
+        ref.watch(playRepositoryProvider),
+      )
     : DemoTournamentRepository(
         ref.watch(playRepositoryProvider) as DemoPlayRepository,
       );

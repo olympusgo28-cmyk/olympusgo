@@ -352,7 +352,8 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
     final mine = t.mine;
     final closes = a.registrationClosesAt;
     return [
-      if (mine == null && !a.iAmHost)
+      if (t.invite case final inv?) _InviteCard(activityId: a.id, invite: inv),
+      if (mine == null && !a.iAmHost && t.invite == null)
         KitCard(
           padding: const EdgeInsets.all(16),
           children: [
@@ -611,6 +612,105 @@ class _Line extends StatelessWidget {
           ),
         ),
         if (link) OgIcon(OgIcons.chevronRight, size: 16, color: c.link),
+      ],
+    );
+  }
+}
+
+/// "Priya asked you to partner them", with yes and no.
+class _InviteCard extends ConsumerStatefulWidget {
+  const _InviteCard({required this.activityId, required this.invite});
+
+  final String activityId;
+  final PartnerInvite invite;
+
+  @override
+  ConsumerState<_InviteCard> createState() => _InviteCardState();
+}
+
+class _InviteCardState extends ConsumerState<_InviteCard> {
+  bool? _busy;
+
+  Future<void> _answer(bool accept) async {
+    setState(() => _busy = accept);
+    try {
+      await ref
+          .read(tournamentRepositoryProvider)
+          .answerInvite(
+            widget.activityId,
+            widget.invite.entryId,
+            accept: accept,
+          );
+      HapticFeedback.mediumImpact();
+      refreshCompetition(ref.invalidate);
+      refreshPlay(ref.invalidate);
+      if (mounted) {
+        showOgToast(
+          context,
+          accept ? "You're partners. See you on court" : 'Invite turned down',
+        );
+      }
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final inv = widget.invite;
+    return KitCard(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            SolidAvatar.forId(
+              inv.from.id,
+              initials: inv.from.initials,
+              size: 44,
+              fontSize: 15,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${inv.from.displayName} asked you to partner them',
+                    style: OgText.body(15, weight: FontWeight.w700),
+                  ),
+                  Text(
+                    inv.divisionName,
+                    style: OgText.body(13, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: KitButton(
+                label: 'Not this time',
+                style: KitButtonStyle.outline,
+                loading: _busy == false,
+                onPressed: _busy == null ? () => _answer(false) : null,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: KitButton(
+                label: 'Partner up',
+                loading: _busy == true,
+                onPressed: _busy == null ? () => _answer(true) : null,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -1353,7 +1453,9 @@ class _TournamentRegisterScreenState
                     : 'Pick a doubles partner')
               : entry > 0
               ? 'Continue to pay'
-              : 'Join waitlist',
+              : picked.every((d) => d.full)
+              ? 'Join waitlist'
+              : 'Register',
           loading: _busy,
           onPressed: ready ? () => _pay(info, entry, fee) : null,
         ),

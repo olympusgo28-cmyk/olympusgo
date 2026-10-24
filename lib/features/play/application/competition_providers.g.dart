@@ -316,6 +316,175 @@ final class DrawKnockoutFamily extends $Family
   String toString() => r'drawKnockoutProvider';
 }
 
+/// One event's matches, for the organizer running the draw.
+
+@ProviderFor(drawMatches)
+final drawMatchesProvider = DrawMatchesFamily._();
+
+/// One event's matches, for the organizer running the draw.
+
+final class DrawMatchesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<DrawMatch>>,
+          List<DrawMatch>,
+          FutureOr<List<DrawMatch>>
+        >
+    with $FutureModifier<List<DrawMatch>>, $FutureProvider<List<DrawMatch>> {
+  /// One event's matches, for the organizer running the draw.
+  DrawMatchesProvider._({
+    required DrawMatchesFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'drawMatchesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$drawMatchesHash();
+
+  @override
+  String toString() {
+    return r'drawMatchesProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<DrawMatch>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<DrawMatch>> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return drawMatches(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DrawMatchesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$drawMatchesHash() => r'6c644a78e7e7e70f1277c7c1642bc171a7ae5822';
+
+/// One event's matches, for the organizer running the draw.
+
+final class DrawMatchesFamily extends $Family
+    with
+        $FunctionalFamilyOverride<FutureOr<List<DrawMatch>>, (String, String)> {
+  DrawMatchesFamily._()
+    : super(
+        retry: null,
+        name: r'drawMatchesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One event's matches, for the organizer running the draw.
+
+  DrawMatchesProvider call(String id, String division) =>
+      DrawMatchesProvider._(argument: (id, division), from: this);
+
+  @override
+  String toString() => r'drawMatchesProvider';
+}
+
+/// Every match in the tournament.
+
+@ProviderFor(allDrawMatches)
+final allDrawMatchesProvider = AllDrawMatchesFamily._();
+
+/// Every match in the tournament.
+
+final class AllDrawMatchesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<DrawMatch>>,
+          List<DrawMatch>,
+          FutureOr<List<DrawMatch>>
+        >
+    with $FutureModifier<List<DrawMatch>>, $FutureProvider<List<DrawMatch>> {
+  /// Every match in the tournament.
+  AllDrawMatchesProvider._({
+    required AllDrawMatchesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'allDrawMatchesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$allDrawMatchesHash();
+
+  @override
+  String toString() {
+    return r'allDrawMatchesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<DrawMatch>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<DrawMatch>> create(Ref ref) {
+    final argument = this.argument as String;
+    return allDrawMatches(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AllDrawMatchesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$allDrawMatchesHash() => r'5f3fd692f14185be8f64bcfc745a1db34cbd1522';
+
+/// Every match in the tournament.
+
+final class AllDrawMatchesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<DrawMatch>>, String> {
+  AllDrawMatchesFamily._()
+    : super(
+        retry: null,
+        name: r'allDrawMatchesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every match in the tournament.
+
+  AllDrawMatchesProvider call(String id) =>
+      AllDrawMatchesProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'allDrawMatchesProvider';
+}
+
 @ProviderFor(myTournamentMatches)
 final myTournamentMatchesProvider = MyTournamentMatchesFamily._();
 

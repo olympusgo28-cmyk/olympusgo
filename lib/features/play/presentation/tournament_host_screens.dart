@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -12,10 +13,12 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
+import '../domain/draw_logic.dart';
 import '../domain/tournament_models.dart';
 import 'tournament_screens.dart' show tournamentDates;
 import 'create_meet_screens.dart' show editActivity;
@@ -117,9 +120,17 @@ class TournamentManageScreen extends ConsumerWidget {
                 () => context.push(Routes.tournamentCheckIn(a.id)),
               ),
               tile(
+                OgIcons.clipboardList,
+                'Run the draw',
+                t.divisions.any((d) => d.drawn)
+                    ? 'Call matches and enter scores'
+                    : 'Make the draw when registration closes',
+                () => context.push(Routes.tournamentRun(a.id)),
+              ),
+              tile(
                 OgIcons.trophyCup,
                 'Draw and results',
-                'Groups and knockout',
+                'Groups and knockout, as players see them',
                 () => context.push(Routes.tournamentTab(a.id, 'draw')),
               ),
               tile(
@@ -748,4 +759,359 @@ class _TournamentCancelScreenState
       );
     },
   );
+}
+
+/// The organizer's desk on the day: make each event's draw, call matches to
+/// court and enter scores.
+class TournamentRunScreen extends ConsumerStatefulWidget {
+  const TournamentRunScreen({super.key, required this.activityId});
+
+  final String activityId;
+
+  @override
+  ConsumerState<TournamentRunScreen> createState() =>
+      _TournamentRunScreenState();
+}
+
+class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
+  String? _division;
+  bool _busy = false;
+
+  Future<void> _makeDraw(
+    TournamentInfo t,
+    Division d, {
+    bool again = false,
+  }) async {
+    final ok = await showKitSheet<bool>(
+      context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            again ? 'Make the draw again?' : 'Make the ${d.name} draw?',
+            style: OgText.heading(22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${again ? 'The current draw and times are replaced. ' : ''}'
+            'Entries are seeded by rating and given a time and court. '
+            'Everyone in the draw is told their ${t.activity.format == ActivityFormat.knockout ? 'first match' : 'group and first match'}. '
+            '${d.doubles ? 'Pairs still waiting on a partner are left out. ' : ''}'
+            'Registration for this event closes.',
+            style: OgText.body(15, height: 1.45, color: context.og.textMuted),
+          ),
+          const SizedBox(height: 18),
+          KitButton(
+            label: again ? 'Make it again' : 'Make the draw',
+            onPressed: () => Navigator.pop(context, true),
+          ),
+          const SizedBox(height: 8),
+          KitButton(
+            label: 'Not yet',
+            style: KitButtonStyle.outline,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final n = await ref
+          .read(tournamentRepositoryProvider)
+          .makeDraw(t.activity.id, d.id);
+      HapticFeedback.mediumImpact();
+      refreshCompetition(ref.invalidate);
+      if (mounted) {
+        showOgToast(context, 'Draw made with $n entries. Everyone is told');
+      }
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _call(DrawMatch m) async {
+    try {
+      await ref.read(tournamentRepositoryProvider).callMatch(m.id);
+      HapticFeedback.selectionClick();
+      refreshCompetition(ref.invalidate);
+      if (mounted) showOgToast(context, 'Called to Court ${m.court ?? ''}');
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _open(String id, DrawMatch m, Map<int, int> sizes) =>
+      showKitSheet<void>(
+        context,
+        builder: (sheet) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('${m.a} vs ${m.b}', style: OgText.heading(22)),
+            const SizedBox(height: 4),
+            Text(
+              [
+                drawStageName(m, sizes),
+                if (m.at != null) Fmt.dayTimeComma(m.at!),
+                if (m.court != null) 'Court ${m.court}',
+              ].join(' · '),
+              style: OgText.body(14, color: sheet.og.textMuted),
+            ),
+            if (m.done && m.games.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                gamesText(m.games),
+                style: OgText.body(15, weight: FontWeight.w700),
+              ),
+            ],
+            const SizedBox(height: 18),
+            if (!m.done && m.state != DrawMatchState.called) ...[
+              KitButton(
+                label: 'Call to court',
+                icon: OgIcons.megaphone,
+                style: KitButtonStyle.dark,
+                onPressed: () {
+                  Navigator.pop(sheet);
+                  _call(m);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+            KitButton(
+              label: m.done ? 'Change the score' : 'Enter the score',
+              style: m.done ? KitButtonStyle.outline : KitButtonStyle.primary,
+              onPressed: () {
+                Navigator.pop(sheet);
+                context.push(Routes.tournamentScore(id, m.id));
+              },
+            ),
+          ],
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => _WithTournament(
+    id: widget.activityId,
+    title: 'Run the draw',
+    body: (t) {
+      final c = context.og;
+      final id = t.activity.id;
+      final d = t.divisions.firstWhere(
+        (d) => d.id == _division,
+        orElse: () => t.divisions.first,
+      );
+      final all = ref.watch(drawMatchesProvider(id, d.id)).value;
+      final unit = d.doubles ? 'pairs' : 'players';
+      final ms = (all ?? const <DrawMatch>[]).where((m) => !m.bye).toList();
+      final sizes = koRoundSizes(ms);
+      final next = ms.where((m) => m.ready && !m.done).toList();
+      final waiting = ms.where((m) => !m.ready && !m.done).length;
+      final played = ms.where((m) => m.done).toList().reversed.toList();
+      final scored = ms.any((m) => m.done && !m.walkover);
+      final chips = [
+        if (t.divisions.length > 1)
+          _DivisionChips(
+            divisions: t.divisions,
+            selected: d.id,
+            onSelect: (id) => setState(() => _division = id),
+          ),
+      ];
+      if (all == null) {
+        return KitScaffold(
+          header: KitHeader(title: 'Run the draw', subtitle: t.activity.title),
+          children: [
+            ...chips,
+            const Padding(
+              padding: EdgeInsets.only(top: 40),
+              child: CupertinoActivityIndicator(),
+            ),
+          ],
+        );
+      }
+      if (all.isEmpty) {
+        return KitScaffold(
+          header: KitHeader(title: 'Run the draw', subtitle: t.activity.title),
+          bottom: [
+            KitButton(
+              label: d.entries < 2 ? 'Not enough entries yet' : 'Make the draw',
+              loading: _busy,
+              onPressed: d.entries < 2 ? null : () => _makeDraw(t, d),
+            ),
+          ],
+          children: [
+            ...chips,
+            DashedBox(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '${d.entries} $unit entered',
+                      style: OgText.heading(22),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      switch (t.activity.format) {
+                        ActivityFormat.knockout =>
+                          'A straight knockout, seeded by rating. Top seeds '
+                              'get a bye if the numbers are uneven.',
+                        ActivityFormat.roundRobin =>
+                          'Everyone plays everyone. The table decides the '
+                              'winner.',
+                        _ =>
+                          'Groups of about four, seeded by rating. The top 2 '
+                              'in each group go through to the knockout.',
+                      },
+                      style: OgText.body(15, height: 1.45, color: c.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const KitNote(
+              'Make the draw once registration closes. Matches are 20 '
+              'minutes apart on each court, and nobody is booked on two '
+              'courts at once.',
+            ),
+          ],
+        );
+      }
+      Widget row(DrawMatch m) => _RunMatchRow(
+        match: m,
+        stage: drawStageName(m, sizes),
+        onTap: () => _open(id, m, sizes),
+      );
+      return KitScaffold(
+        header: KitHeader(title: 'Run the draw', subtitle: t.activity.title),
+        children: [
+          ...chips,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('${played.length}', style: OgText.heading(44)),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'of ${ms.length} matches played',
+                  style: OgText.body(15, weight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          if (next.isNotEmpty) ...[
+            Text('Up next', style: OgText.heading(20)),
+            KitCard(children: [for (final m in next) row(m)]),
+          ],
+          if (waiting > 0)
+            Text(
+              '$waiting ${waiting == 1 ? 'match waits' : 'matches wait'} on '
+              'earlier results.',
+              style: OgText.body(14, color: c.textMuted),
+            ),
+          if (next.isEmpty && waiting == 0)
+            const KitNote('Every match is played. Results are out.'),
+          if (played.isNotEmpty) ...[
+            Text('Played', style: OgText.heading(20)),
+            KitCard(children: [for (final m in played) row(m)]),
+          ],
+          if (!scored)
+            KitLink(
+              'Make the draw again',
+              onPressed: _busy ? null : () => _makeDraw(t, d, again: true),
+            ),
+        ],
+      );
+    },
+  );
+}
+
+class _RunMatchRow extends StatelessWidget {
+  const _RunMatchRow({
+    required this.match,
+    required this.stage,
+    required this.onTap,
+  });
+
+  final DrawMatch match;
+  final String stage;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final tones = context.tones;
+    final m = match;
+    TextStyle name(bool? win) => OgText.body(
+      15,
+      weight: win == false ? FontWeight.w500 : FontWeight.w700,
+      color: win == false ? c.textMuted : c.text,
+    );
+    return Pressable(
+      semanticLabel: '${m.a} vs ${m.b}, $stage',
+      onPressed: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 70,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    m.at == null ? '–' : Fmt.time(m.at!),
+                    style: OgText.body(14, weight: FontWeight.w700),
+                  ),
+                  Text(
+                    m.court == null ? '' : 'Court ${m.court}',
+                    style: OgText.body(12, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    m.a ?? '–',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: name(m.winnerA),
+                  ),
+                  Text(
+                    m.b ?? '–',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: name(m.winnerA == null ? null : !m.winnerA!),
+                  ),
+                  Text(stage, style: OgText.body(12, color: c.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (m.done)
+              Text(
+                m.walkover ? 'W/O' : '${m.gamesA}–${m.gamesB}',
+                style: OgText.body(15, weight: FontWeight.w800),
+              )
+            else if (m.state == DrawMatchState.called)
+              KitTag(
+                'On court',
+                background: tones.gold,
+                foreground: tones.onGold,
+              )
+            else
+              OgIcon(OgIcons.chevronRight, size: 18, color: c.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
 }

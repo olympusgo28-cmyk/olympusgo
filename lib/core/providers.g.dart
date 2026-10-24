@@ -401,7 +401,7 @@ final class TournamentRepositoryProvider
 }
 
 String _$tournamentRepositoryHash() =>
-    r'f4568afa900702298af0741b858af58b4fdb5283';
+    r'7714d0c5586989a60bc794f294c6faf46d134ace';
 
 @ProviderFor(eventRepository)
 final eventRepositoryProvider = EventRepositoryProvider._();

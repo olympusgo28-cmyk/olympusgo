@@ -1,8 +1,13 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/demo/demo_world.dart';
 import '../../../core/format.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../clubs/domain/club_sport.dart';
 import '../../social/domain/social_models.dart';
 import '../domain/activity.dart';
+import '../domain/draw_logic.dart';
 import '../domain/event_models.dart';
 import '../domain/tournament_models.dart';
 import 'play_repository.dart';
@@ -31,10 +36,23 @@ abstract interface class TournamentRepository {
     required bool injury,
   });
 
+  /// The invited partner says yes or no.
+  Future<void> answerInvite(String id, String entryId, {required bool accept});
+
+  /// Every match in the draw, or one event's.
+  Future<List<DrawMatch>> matches(String id, {String? divisionId});
+
   // Organizer.
   Future<void> setCheckedIn(String id, String entryId, bool here);
   Future<int> message(String id, {required String to, required String text});
   Future<void> cancel(String id, {String message = ''});
+
+  /// Makes the draw for one event. Returns how many entries are in it.
+  Future<int> makeDraw(String id, String divisionId);
+  Future<void> callMatch(String matchId);
+
+  /// The umpire's final score, side A first.
+  Future<void> saveScore(String matchId, List<(int, int)> games);
 }
 
 /// Event pages: the programme, the live court and tickets.
@@ -53,127 +71,361 @@ abstract interface class EventRepository {
   Future<void> cancel(String id, {String message = ''});
 }
 
-/// The tournament layer on the activity tables. Divisions, the draw and
-/// matches arrive with the competition engine; until then a tournament is
-/// one division, and entries are its participants.
+/// Tournaments on Supabase: entries per event, partner invites, the draw,
+/// scores and results.
 class SupabaseTournamentRepository implements TournamentRepository {
-  SupabaseTournamentRepository(this._play);
+  SupabaseTournamentRepository(this._client, this._play);
+  final SupabaseClient _client;
   final PlayRepository _play;
 
-  static const _soon =
-      'The draw and match schedule open after registration closes.';
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      debugPrint('Tournament error: ${e.code} ${e.message}');
+      if (e.message == 'payment_required') {
+        throw const AuthFailure(
+          "Card payments aren't switched on yet, so paid entries open once "
+          'payments are connected.',
+        );
+      }
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (e) {
+      debugPrint('Tournament network error: $e');
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
 
-  Division _division(Activity a) => Division(
-    id: 'main',
-    name: a.gameType?.label ?? a.format.label,
-    doubles: a.gameType != GameType.singles,
-    feeCents: a.feeCents,
-    capacity: a.capacity,
-    entries: a.spotsTaken,
-    waiting: a.waitlistCount,
-    bands: a.bands,
-  );
+  Future<dynamic> _rpc(String fn, Map<String, dynamic> params) =>
+      _client.rpc(fn, params: params);
+
+  Future<List<Map<String, dynamic>>> _list(
+    String fn,
+    Map<String, dynamic> params,
+  ) async => [
+    for (final r in (await _rpc(fn, params)) as List? ?? const [])
+      (r as Map).cast<String, dynamic>(),
+  ];
+
+  static double? _num(Object? v) => (v as num?)?.toDouble();
+
+  static DrawMatch _match(Map<String, dynamic> r) {
+    final mine = r['mine'] as String?;
+    final winner = r['winner'] as String?;
+    return DrawMatch(
+      id: r['id'] as String,
+      divisionId: r['division'] as String,
+      stage: DrawStage.values.byName(r['stage'] as String),
+      round: r['round'] as int,
+      slot: r['slot'] as int,
+      group: r['group'] as String?,
+      a: r['a_name'] as String?,
+      b: r['b_name'] as String?,
+      srcA: r['src_a'] as String?,
+      srcB: r['src_b'] as String?,
+      at: r['at'] == null ? null : DateTime.parse(r['at'] as String).toLocal(),
+      court: r['court'] as int?,
+      games: [
+        for (final g in (r['games'] as List?) ?? const [])
+          ((g as List)[0] as int, g[1] as int),
+      ],
+      winnerA: winner == null ? null : winner == 'a',
+      walkover: r['walkover'] as bool? ?? false,
+      state: DrawMatchState.values.byName(r['state'] as String),
+      mineA: mine == null ? null : mine == 'a',
+    );
+  }
 
   @override
-  Future<TournamentInfo> info(String id) async {
+  Future<TournamentInfo> info(String id) => _guard(() async {
     final a = await _play.activity(id);
-    final d = _division(a);
-    // Entries per event come with the competition engine; until then the
-    // events show their size and price.
-    final divisions = a.divisionKeys.isEmpty
-        ? [d]
-        : [
-            for (final k in a.divisionKeys)
-              Division(
-                id: k,
-                name: divisionNames[k] ?? k,
-                doubles: k.endsWith('D'),
-                feeCents: a.feeCents * (k.endsWith('D') ? 2 : 1),
-                capacity: a.capacity,
-                bands: a.bands,
-              ),
-          ];
+    final t = ((await _rpc('tournament_info', {'p_activity': id})) as Map)
+        .cast<String, dynamic>();
+    final divisions = [
+      for (final d in (t['divisions'] as List).cast<Map>())
+        () {
+          final k = d['key'] as String;
+          final doubles = k == 'main'
+              ? a.gameType != GameType.singles
+              : k.endsWith('D');
+          return Division(
+            id: k,
+            name: k == 'main'
+                ? (a.gameType?.label ?? a.format.label)
+                : divisionNames[k] ?? k,
+            doubles: doubles,
+            feeCents: k != 'main' && doubles ? a.feeCents * 2 : a.feeCents,
+            capacity: a.capacity,
+            entries: d['entries'] as int,
+            waiting: d['waiting'] as int,
+            bands: a.bands,
+            drawn: d['drawn'] as bool? ?? false,
+          );
+        }(),
+    ];
+    String nameOf(String k) =>
+        divisions.where((d) => d.id == k).firstOrNull?.name ?? k;
+    final m = (t['mine'] as Map?)?.cast<String, dynamic>();
+    final inv = (t['invite'] as Map?)?.cast<String, dynamic>();
+    final mineDivision = m == null
+        ? null
+        : divisions.where((d) => d.id == m['division']).firstOrNull;
     return TournamentInfo(
       activity: a,
       divisions: divisions,
       host: a.host.displayName,
       hostMark: a.host.initials,
       drawFormat: a.format.label,
-      mine: a.myStatus == MyStatus.joined
-          ? MyEntry(
-              divisionId: divisions.first.id,
-              divisionName: divisions.first.name,
-              paidCents: a.totalCents,
-              entryCents: a.feeCents,
-            )
-          : null,
+      mine: m == null
+          ? null
+          : MyEntry(
+              divisionId: m['division'] as String,
+              divisionName: nameOf(m['division'] as String),
+              partner: m['partner'] == null
+                  ? null
+                  : PlayerSummary.fromRow(
+                      (m['partner'] as Map).cast<String, dynamic>(),
+                    ),
+              group: m['group'] as String?,
+              seed: m['seed'] as int?,
+              firstMatchAt: m['first_match_at'] == null
+                  ? null
+                  : DateTime.parse(m['first_match_at'] as String).toLocal(),
+              firstCourt: m['first_court'] == null
+                  ? null
+                  : 'Court ${m['first_court']}',
+              paidCents: a.isFree ? 0 : a.totalCents,
+              entryCents: mineDivision?.feeCents ?? a.feeCents,
+            ),
+      invite: inv == null
+          ? null
+          : PartnerInvite(
+              entryId: inv['entry'] as String,
+              divisionId: inv['division'] as String,
+              divisionName: nameOf(inv['division'] as String),
+              from: PlayerSummary.fromRow(
+                (inv['from'] as Map).cast<String, dynamic>(),
+              ),
+            ),
+      checkedIn: t['checked_in'] as int? ?? 0,
+      finished: t['finished'] as bool? ?? false,
+      myLevel: _num(t['level']),
+    );
+  });
+
+  @override
+  Future<List<Entry>> entries(String id, String divisionId) => _guard(() async {
+    final rows = await _list('tournament_entry_list', {
+      'p_activity': id,
+      'p_division': divisionId,
+    });
+    return [
+      for (final r in rows)
+        () {
+          final first = r['first_match_at'] == null
+              ? null
+              : DateTime.parse(r['first_match_at'] as String).toLocal();
+          final group = r['group'] as String?;
+          return Entry(
+            id: r['id'] as String,
+            divisionId: divisionId,
+            names: r['names'] as String,
+            rating: _num(r['rating']),
+            seed: r['seed'] as int?,
+            status: r['status'] == 'waitlist'
+                ? EntryStatus.waitlist
+                : (r['partner_pending'] == true || r['needs_partner'] == true)
+                ? EntryStatus.partnerPending
+                : EntryStatus.paid,
+            mine: r['mine'] as bool? ?? false,
+            checkedIn: r['checked_in'] as bool? ?? false,
+            group: group,
+            firstMatch: first == null
+                ? null
+                : [?group, 'first match ${Fmt.time(first)}'].join(', '),
+          );
+        }(),
+    ];
+  });
+
+  @override
+  Future<List<DrawGroup>> groups(String id, String divisionId) =>
+      _guard(() async {
+        final rows = await _list('tournament_groups', {
+          'p_activity': id,
+          'p_division': divisionId,
+        });
+        return [
+          for (final g in rows)
+            DrawGroup(g['name'] as String, [
+              for (final (i, r)
+                  in ((g['rows'] as List?) ?? const []).cast<Map>().indexed)
+                GroupRow(
+                  pos: i + 1,
+                  names: r['names'] as String,
+                  seed: r['seed'] as int? ?? 0,
+                  rating: _num(r['rating']) ?? 0,
+                  wins: r['wins'] as int? ?? 0,
+                  losses: r['losses'] as int? ?? 0,
+                  points: r['points'] as int? ?? 0,
+                  mine: r['mine'] as bool? ?? false,
+                ),
+            ]),
+        ];
+      });
+
+  @override
+  Future<List<DrawMatch>> matches(String id, {String? divisionId}) =>
+      _guard(() async {
+        final rows = await _list('tournament_match_list', {
+          'p_activity': id,
+          'p_division': divisionId,
+        });
+        return [for (final r in rows) _match(r)];
+      });
+
+  @override
+  Future<List<KnockoutRound>> knockout(String id, String divisionId) async =>
+      knockoutRounds(await matches(id, divisionId: divisionId));
+
+  @override
+  Future<List<MyMatch>> myMatches(String id) async =>
+      myMatchesFrom(await matches(id));
+
+  @override
+  Future<TournamentResult?> result(String id) async {
+    final t = await info(id);
+    final mine = t.mine;
+    if (mine == null) return null;
+    final ms = await matches(id, divisionId: mine.divisionId);
+    final hasKo = ms.any((m) => m.stage != DrawStage.group);
+    return resultFrom(
+      division: mine.divisionName,
+      ms: ms,
+      entries:
+          t.divisions
+              .where((d) => d.id == mine.divisionId)
+              .firstOrNull
+              ?.entries ??
+          0,
+      table: hasKo ? const [] : await groups(id, mine.divisionId),
     );
   }
 
   @override
-  Future<List<Entry>> entries(String id, String divisionId) async => [
-    for (final (i, p) in (await _play.players(id)).indexed)
-      Entry(
-        id: p.player.id,
-        divisionId: divisionId,
-        names: p.player.displayName,
-        rating: p.rating,
-        seed: p.waitlistAt == null ? i + 1 : null,
-        status: p.waitlistAt == null ? EntryStatus.paid : EntryStatus.waitlist,
-        checkedIn: p.checkedInAt != null,
-      ),
-  ];
-
-  @override
-  Future<List<DrawGroup>> groups(String id, String divisionId) async =>
-      const [];
-
-  @override
-  Future<List<KnockoutRound>> knockout(String id, String divisionId) async =>
-      const [];
-
-  @override
-  Future<List<MyMatch>> myMatches(String id) async => const [];
-
-  @override
-  Future<TournamentResult?> result(String id) async => null;
-
-  @override
-  Future<List<PartnerPick>> partners(String id) async => const [];
+  Future<List<PartnerPick>> partners(String id) => _guard(() async {
+    final rows = await _list('tournament_partner_picks', {'p_activity': id});
+    return [
+      for (final r in rows)
+        () {
+          final n = r['together'] as int? ?? 0;
+          final level = _num(r['level']);
+          return PartnerPick(
+            PlayerSummary.fromRow((r['player'] as Map).cast<String, dynamic>()),
+            [
+              if (level != null) SkillBand.forLevel(level).code,
+              n == 0
+                  ? 'You follow them'
+                  : '$n ${n == 1 ? 'Meet' : 'Meets'} together',
+            ].join(' · '),
+          );
+        }(),
+    ];
+  });
 
   @override
   Future<void> register(
     String id, {
     required List<String> divisionIds,
     String? partnerId,
-  }) async {
-    final a = await _play.activity(id);
-    if (!a.isFree) {
-      throw const AuthFailure(
-        "Card payments aren't switched on yet, so paid entries open once "
-        'payments are connected.',
-      );
-    }
-    await _play.join(id);
-  }
+  }) => _guard(() async {
+    await _rpc('tournament_register', {
+      'p_activity': id,
+      'p_divisions': divisionIds,
+      'p_partner': partnerId,
+    });
+  });
+
+  @override
+  Future<void> answerInvite(
+    String id,
+    String entryId, {
+    required bool accept,
+  }) => _guard(() async {
+    await _rpc('tournament_partner_answer', {
+      'p_entry': entryId,
+      'p_accept': accept,
+    });
+  });
 
   @override
   Future<int> withdraw(
     String id, {
     required bool toWallet,
     required bool injury,
-  }) => _play.leave(id, toWallet: toWallet);
+  }) async {
+    await _guard(() => _rpc('tournament_withdraw', {'p_activity': id}));
+    return _play.leave(id, toWallet: toWallet);
+  }
 
   @override
   Future<void> setCheckedIn(String id, String entryId, bool here) =>
-      throw const AuthFailure(_soon);
+      _guard(() async {
+        await _rpc('tournament_check_in', {'p_entry': entryId, 'p_here': here});
+      });
 
   @override
   Future<int> message(String id, {required String to, required String text}) =>
-      throw const AuthFailure(
-        "Messaging entrants isn't switched on yet. Post in the club chat for "
-        'now.',
-      );
+      _guard(() async {
+        // [to] is what the organizer picked: everyone, one event, or players
+        // not checked in yet.
+        var key = 'all';
+        if (to.startsWith('Not checked')) {
+          key = 'unchecked';
+        } else if (!to.startsWith('All')) {
+          final t = await info(id);
+          key =
+              t.divisions
+                  .where((d) => to == '${d.name} only')
+                  .firstOrNull
+                  ?.id ??
+              'all';
+        }
+        return await _rpc('tournament_message', {
+          'p_activity': id,
+          'p_to': key,
+          'p_text': text,
+        }) as int;
+      });
+
+  @override
+  Future<int> makeDraw(String id, String divisionId) => _guard(
+    () async => await _rpc('tournament_make_draw', {
+      'p_activity': id,
+      'p_division': divisionId,
+    }) as int,
+  );
+
+  @override
+  Future<void> callMatch(String matchId) => _guard(() async {
+    await _rpc('tournament_call', {'p_match': matchId});
+  });
+
+  @override
+  Future<void> saveScore(String matchId, List<(int, int)> games) =>
+      _guard(() async {
+        await _rpc('tournament_score', {
+          'p_match': matchId,
+          'p_games': [
+            for (final g in games) [g.$1, g.$2],
+          ],
+        });
+      });
 
   @override
   Future<void> cancel(String id, {String message = ''}) =>
@@ -836,6 +1088,30 @@ class DemoTournamentRepository implements TournamentRepository {
     await _tick();
     _play.remove(id);
   }
+
+  @override
+  Future<void> answerInvite(
+    String id,
+    String entryId, {
+    required bool accept,
+  }) => _tick();
+
+  // The demo draw is fixed, so there's nothing to run.
+  @override
+  Future<List<DrawMatch>> matches(String id, {String? divisionId}) async =>
+      const [];
+
+  @override
+  Future<int> makeDraw(String id, String divisionId) async {
+    await _tick();
+    throw const AuthFailure('The sample draw is already made.');
+  }
+
+  @override
+  Future<void> callMatch(String matchId) => _tick();
+
+  @override
+  Future<void> saveScore(String matchId, List<(int, int)> games) => _tick();
 }
 
 class DemoEventRepository implements EventRepository {
