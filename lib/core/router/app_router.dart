@@ -260,6 +260,14 @@ GoRouter appRouter(Ref ref) {
         (s) => RefundStatusScreen(id: s.pathParameters['id']!),
       ),
       page(
+        '/shop/orders/:id/review',
+        (s) => WriteReviewScreen(id: s.pathParameters['id']!),
+      ),
+      page(
+        '/shop/orders/:id/return',
+        (s) => ReturnRequestScreen(id: s.pathParameters['id']!),
+      ),
+      page(
         '/shop/report',
         (s) => ReportListingScreen(what: s.uri.queryParameters['what'] ?? ''),
       ),

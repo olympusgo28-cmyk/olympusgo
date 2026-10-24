@@ -522,10 +522,25 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
               Text('For you', style: OgText.heading(20)),
               if (products == null)
                 const CupertinoActivityIndicator()
+              else if (products.where((p) => !p.service).isEmpty)
+                _ShopEmpty(
+                  'Nothing for sale yet. Players and clubs can open a shop '
+                  'from Profile, then My shop.',
+                )
               else
                 ProductGrid(
                   products: products.where((p) => !p.service).toList(),
                 ),
+            ],
+            1 when videos.isEmpty => [
+              const _ShopEmpty(
+                'Shoppable videos come later. Browse For you in the meantime.',
+              ),
+            ],
+            2 when lives.isEmpty => [
+              const _ShopEmpty(
+                'Live selling comes later. Browse For you in the meantime.',
+              ),
             ],
             1 => [
               for (final v in videos)
@@ -1736,4 +1751,18 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
       ],
     );
   }
+}
+
+class _ShopEmpty extends StatelessWidget {
+  const _ShopEmpty(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => DashedBox(
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Text(text, style: OgText.body(14, color: context.og.textMuted)),
+    ),
+  );
 }

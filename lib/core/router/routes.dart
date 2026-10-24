@@ -223,6 +223,8 @@ abstract final class Routes {
   static String order(String id) => '/shop/orders/$id';
   static String orderCancel(String id) => '/shop/orders/$id/cancel';
   static String refund(String id) => '/shop/orders/$id/refund';
+  static String orderReview(String id) => '/shop/orders/$id/review';
+  static String orderReturn(String id) => '/shop/orders/$id/return';
   static String reportListing(String what) =>
       '/shop/report?what=${Uri.encodeQueryComponent(what)}';
   static String serviceBook(String id) => '/shop/services/$id';

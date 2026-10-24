@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -31,6 +32,7 @@ class SellerHomeScreen extends ConsumerWidget {
     final t = context.tones;
     final s = ref.watch(sellerSummaryProvider);
     final v = s.value;
+    if (s.hasValue && v == null) return const _OpenShop();
     if (v == null) {
       return KitScaffold(
         header: const KitHeader(title: 'My shop'),
@@ -81,7 +83,9 @@ class SellerHomeScreen extends ConsumerWidget {
                 children: [
                   Text(m.name, style: OgText.heading(22)),
                   Text(
-                    'Verified shop · 4.8 from 1.2k reviews',
+                    Env.hasSupabase
+                        ? 'Buyers pay you on delivery or pickup'
+                        : 'Verified shop · 4.8 from 1.2k reviews',
                     style: OgText.body(13, color: c.textMuted),
                   ),
                 ],
@@ -98,25 +102,26 @@ class SellerHomeScreen extends ConsumerWidget {
             stat('${v.returns}', 'returns'),
           ],
         ),
-        Row(
-          children: [
-            Expanded(
-              child: KitButton(
-                label: 'Go live',
-                icon: OgIcons.megaphone,
-                onPressed: () => context.push(Routes.sellerLive),
+        if (!Env.hasSupabase)
+          Row(
+            children: [
+              Expanded(
+                child: KitButton(
+                  label: 'Go live',
+                  icon: OgIcons.megaphone,
+                  onPressed: () => context.push(Routes.sellerLive),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: KitButton(
-                label: 'Post a video',
-                style: KitButtonStyle.outline,
-                onPressed: () => context.push(Routes.sellerVideo),
+              const SizedBox(width: 10),
+              Expanded(
+                child: KitButton(
+                  label: 'Post a video',
+                  style: KitButtonStyle.outline,
+                  onPressed: () => context.push(Routes.sellerVideo),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         KitCard(
           children: [
             KitNavTile(
@@ -138,28 +143,126 @@ class SellerHomeScreen extends ConsumerWidget {
               subtitle: 'Photos, price, stock, points',
               onTap: () => context.push(Routes.sellerProduct('new')),
             ),
-            KitNavTile(
-              icon: OgIcons.ticket,
-              title: 'Vouchers',
-              subtitle: '1 running: ${v.voucher}',
-              onTap: () => showOgToast(context, 'Voucher editing comes next.'),
-            ),
-            KitNavTile(
-              icon: OgIcons.walletCard,
-              title: 'Earnings and payouts',
-              subtitle: '${cashShort(v.readyCents)} ready',
-              onTap: () => context.push(Routes.earnings),
-            ),
+            if (!Env.hasSupabase) ...[
+              KitNavTile(
+                icon: OgIcons.ticket,
+                title: 'Vouchers',
+                subtitle: '1 running: ${v.voucher}',
+                onTap: () =>
+                    showOgToast(context, 'Voucher editing comes next.'),
+              ),
+              KitNavTile(
+                icon: OgIcons.walletCard,
+                title: 'Earnings and payouts',
+                subtitle: '${cashShort(v.readyCents)} ready',
+                onTap: () => context.push(Routes.earnings),
+              ),
+            ],
           ],
         ),
-        const KitNote(
-          'Shoppable videos bring 62% of your sales. Shops that go live weekly '
-          'sell about twice as much.',
-          tone: KitTone.info,
-        ),
+        Env.hasSupabase
+            ? const KitNote(
+                'Card payments are off for now. Buyers pay you directly when '
+                'their order arrives or when they collect it. Mark each order '
+                'shipped so they know it is coming.',
+                tone: KitTone.info,
+              )
+            : const KitNote(
+                'Shoppable videos bring 62% of your sales. Shops that go live '
+                'weekly sell about twice as much.',
+                tone: KitTone.info,
+              ),
       ],
     );
   }
+}
+
+/// Opens the player's shop: a name, a line about it and where it ships
+/// from.
+class _OpenShop extends ConsumerStatefulWidget {
+  const _OpenShop();
+
+  @override
+  ConsumerState<_OpenShop> createState() => _OpenShopState();
+}
+
+class _OpenShopState extends ConsumerState<_OpenShop> {
+  final _name = TextEditingController();
+  final _blurb = TextEditingController();
+  final _about = TextEditingController();
+  final _from = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    for (final c in [_name, _blurb, _about, _from]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _open() async {
+    if (_name.text.trim().length < 2) {
+      showOgToast(context, 'Give your shop a name.', error: true);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(shopRepositoryProvider)
+          .openShop(
+            name: _name.text.trim(),
+            blurb: _blurb.text.trim(),
+            about: _about.text.trim(),
+            shipsFrom: _from.text.trim(),
+          );
+      HapticFeedback.mediumImpact();
+      refreshShop(ref.invalidate);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => KitScaffold(
+    header: const KitHeader(title: 'Open a shop'),
+    bottom: [
+      KitButton(label: 'Open my shop', loading: _busy, onPressed: _open),
+    ],
+    children: [
+      const KitTitle(
+        'Sell to players',
+        lead:
+            'List gear or services like restringing. Buyers order in the app '
+            'and pay you directly on delivery or pickup.',
+      ),
+      KitInput(label: 'Shop name', controller: _name, maxLength: 40),
+      KitInput(
+        label: 'What you sell',
+        hint: 'Rackets and restringing',
+        controller: _blurb,
+        maxLength: 80,
+      ),
+      KitInput(
+        label: 'Ships from',
+        hint: 'Tampines, Singapore',
+        controller: _from,
+        maxLength: 80,
+      ),
+      KitTextArea(
+        label: 'About your shop',
+        optional: true,
+        controller: _about,
+        lines: 4,
+      ),
+      const KitNote(
+        'Sell only things you own and can deliver. Shops that break the '
+        'community rules are closed.',
+      ),
+    ],
+  );
 }
 
 /// Orders by step.
@@ -270,15 +373,30 @@ class _SellerOrderDetailScreenState
     super.dispose();
   }
 
-  Future<void> _ship() async {
+  Future<void> _decide(bool accept) async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(shopRepositoryProvider)
+          .decideReturn(widget.id, accept: accept);
+      HapticFeedback.mediumImpact();
+      refreshShop(ref.invalidate);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _ship({bool ready = false}) async {
     setState(() => _busy = true);
     try {
       await ref
           .read(shopRepositoryProvider)
           .markShipped(
             widget.id,
-            courier: _courier!,
-            tracking: _tracking.text.trim(),
+            courier: ready ? '' : _courier!,
+            tracking: ready ? '' : _tracking.text.trim(),
           );
       HapticFeedback.mediumImpact();
       refreshShop(ref.invalidate);
@@ -300,12 +418,50 @@ class _SellerOrderDetailScreenState
       );
     }
     final first = o.buyer.split(' ').first;
-    final receive = o.itemsCents - shopCommission(o.itemsCents);
+    // Card payments are off, so buyers pay the shop in full.
+    final receive = Env.hasSupabase
+        ? o.itemsCents
+        : o.itemsCents - shopCommission(o.itemsCents);
     final shipped = o.step != OrderStep.packing;
+    final handOver = o.service || o.delivery == 'Pick up';
     return KitScaffold(
       header: const KitHeader(title: 'Order'),
-      bottom: shipped || o.service
+      bottom: o.returnState == 'requested'
+          ? [
+              Text(
+                'Return asked: ${o.returnReason ?? ''}',
+                style: OgText.body(14, weight: FontWeight.w700),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: KitButton(
+                      label: 'Decline',
+                      style: KitButtonStyle.outline,
+                      onPressed: _busy ? null : () => _decide(false),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: KitButton(
+                      label: 'Accept return',
+                      loading: _busy,
+                      onPressed: () => _decide(true),
+                    ),
+                  ),
+                ],
+              ),
+            ]
+          : shipped || (o.service && !Env.hasSupabase)
           ? [KitButton(label: 'Back to orders', onPressed: () => context.pop())]
+          : handOver
+          ? [
+              KitButton(
+                label: o.service ? 'Mark as ready' : 'Ready to collect',
+                loading: _busy,
+                onPressed: () => _ship(ready: true),
+              ),
+            ]
           : [
               ListenableBuilder(
                 listenable: _tracking,
@@ -592,6 +748,7 @@ class _SellerProductEditScreenState
           .saveProduct(
             base.copyWith(
               name: _name.text.trim(),
+              description: _desc.text.trim(),
               priceCents: _priceCents,
               stock: int.tryParse(_stock.text) ?? 0,
               service: _service,
@@ -622,6 +779,7 @@ class _SellerProductEditScreenState
         _loaded = true;
         _base = p;
         _name.text = p.name;
+        _desc.text = p.description;
         _price.text = (p.priceCents / 100).toStringAsFixed(2);
         _stock.text = '${p.stock}';
         _service = p.service;

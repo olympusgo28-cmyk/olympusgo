@@ -45,6 +45,9 @@ abstract class Product with _$Product {
 
     /// For the seller: draft, live.
     @Default(true) bool published,
+
+    /// What the seller wrote about it.
+    @Default('') String description,
   }) = _Product;
 
   const Product._();

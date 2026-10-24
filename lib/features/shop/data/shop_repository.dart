@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/data/auth_repository.dart';
+import '../../clubs/domain/club_sport.dart';
+import '../../onboarding/domain/sport.dart';
 import '../../wallet/data/wallet_repository.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
@@ -53,8 +56,33 @@ abstract interface class ShopRepository {
   });
   Future<void> report(String what, {required String reason, String note = ''});
 
+  /// Reviews everything in a delivered order.
+  Future<void> review(
+    String orderId, {
+    required int stars,
+    required List<String> tags,
+    required String text,
+    required bool showLevel,
+  });
+
+  /// Asks the shop to take a delivered order back.
+  Future<void> requestReturn(
+    String orderId, {
+    required String reason,
+    required String want,
+  });
+
   // Seller.
-  Future<SellerSummary> sellerSummary();
+
+  /// Null until the player opens a shop.
+  Future<SellerSummary?> sellerSummary();
+  Future<void> openShop({
+    required String name,
+    required String blurb,
+    required String about,
+    required String shipsFrom,
+  });
+  Future<void> decideReturn(String orderId, {required bool accept});
   Future<List<Order>> sellerOrders();
   Future<void> markShipped(
     String orderId, {
@@ -71,53 +99,340 @@ abstract interface class ShopRepository {
   Future<void> postVideo({required String caption, required String productId});
 }
 
-const _closed = AuthFailure(
-  "The Shop isn't open yet. It opens once shops and payments are connected.",
-);
-
-/// No shop tables yet: lists are empty and actions explain why.
+/// The Shop on Supabase, with payments switched off: buyers order and pay
+/// the shop directly on delivery or pickup. Videos and live selling come
+/// later.
 class SupabaseShopRepository implements ShopRepository {
   SupabaseShopRepository(this._client);
-
-  // Kept for the Shop phase, when malls and products get their tables.
-  // ignore: unused_field
   final SupabaseClient _client;
 
+  static const _later = AuthFailure(
+    'Videos and live selling open later. Your products are in the Shop now.',
+  );
+
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      debugPrint('Shop error: ${e.code} ${e.message}');
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      if (e.code == '23514') {
+        throw const AuthFailure('Check the details and try again.');
+      }
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (e) {
+      debugPrint('Shop network error: $e');
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  Future<dynamic> _rpc(String fn, [Map<String, dynamic>? params]) =>
+      _client.rpc(fn, params: params);
+
+  Future<List<Map<String, dynamic>>> _list(
+    String fn, [
+    Map<String, dynamic>? params,
+  ]) async => [
+    for (final r in (await _rpc(fn, params)) as List? ?? const [])
+      (r as Map).cast<String, dynamic>(),
+  ];
+
+  static Map<String, dynamic> _m(Object? v) =>
+      (v as Map).cast<String, dynamic>();
+
+  static Product _product(Map<String, dynamic> r) => Product(
+    id: r['id'] as String,
+    name: r['name'] as String,
+    mallId: r['mall_id'] as String,
+    mallName: r['mall_name'] as String,
+    priceCents: r['price_cents'] as int,
+    oldPriceCents: r['old_price_cents'] as int?,
+    maxPoints: r['max_points'] as int? ?? 0,
+    art: r['art'] == 'racquet' ? ProductArt.racquet : ProductArt.bag,
+    rating: (r['rating'] as num? ?? 0).toDouble(),
+    sold: (r['sold'] as num? ?? 0).toInt(),
+    service: r['service'] as bool? ?? false,
+    stock: r['stock'] as int? ?? 0,
+    published: r['published'] as bool? ?? false,
+    description: r['description'] as String? ?? '',
+  );
+
+  static Mall _mall(Map<String, dynamic> r) => Mall(
+    id: r['id'] as String,
+    name: r['name'] as String,
+    initials: r['initials'] as String,
+    blurb: r['blurb'] as String? ?? '',
+    color: (r['color'] as num).toInt(),
+    ink: (r['ink'] as num).toInt(),
+    pointsAccepted: false,
+  );
+
+  static Address _address(Map<String, dynamic> r) => Address(
+    id: r['id'] as String? ?? '',
+    label: r['label'] as String? ?? '',
+    name: r['name'] as String? ?? '',
+    line: r['line'] as String? ?? '',
+    phone: r['phone'] as String? ?? '',
+    isDefault: r['is_default'] as bool? ?? false,
+    pickup: r['pickup'] as bool? ?? false,
+  );
+
+  static Order _order(Map<String, dynamic> r) {
+    final step = switch (r['step']) {
+      'shipped' => OrderStep.shipped,
+      'delivered' => OrderStep.delivered,
+      'cancelled' => OrderStep.cancelled,
+      _ => OrderStep.packing,
+    };
+    final ret = (r['return'] as Map?)?.cast<String, dynamic>();
+    return Order(
+      id: r['id'] as String,
+      mallId: r['mall_id'] as String,
+      mallName: r['mall_name'] as String,
+      lines: [
+        for (final l in (r['lines'] as List).cast<Map>())
+          OrderLine(
+            l['name'] as String,
+            l['variant'] as String? ?? '',
+            l['qty'] as int,
+            l['price_cents'] as int,
+          ),
+      ],
+      placedAt: DateTime.parse(r['placed_at'] as String).toLocal(),
+      step: step,
+      deliveryCents: r['delivery_cents'] as int? ?? 0,
+      paidWith: r['paid_with'] as String? ?? 'Pay the shop',
+      address: r['address'] == null ? null : _address(_m(r['address'])),
+      delivery: r['delivery'] as String? ?? 'Standard',
+      arrives: r['arrives'] == null
+          ? null
+          : DateTime.parse(r['arrives'] as String),
+      tracking: r['tracking'] as String?,
+      courier: r['courier'] as String?,
+      buyer: r['buyer'] as String? ?? '',
+      service: r['service'] as bool? ?? false,
+      booking: r['booking'] as String?,
+      received: step == OrderStep.delivered,
+      reviewed: r['reviewed'] as bool? ?? false,
+      returnState: ret?['status'] as String?,
+      returnReason: ret == null ? null : '${ret['reason']} · ${ret['want']}',
+    );
+  }
+
   @override
-  Future<List<Mall>> malls() async => const [];
+  Future<List<Mall>> malls() => _guard(() async {
+    return [for (final r in await _list('shop_malls')) _mall(r)];
+  });
+
+  Future<List<Product>> _products(
+    String kind, {
+    String? mallId,
+    String query = '',
+  }) => _guard(() async {
+    final rows = await _list('shop_products', {
+      'p_kind': kind,
+      'p_mall': mallId,
+      'p_query': query,
+    });
+    return [for (final r in rows) _product(r)];
+  });
+
   @override
-  Future<List<Product>> popular() async => const [];
+  Future<List<Product>> popular() => _products('popular');
+
   @override
-  Future<List<Product>> products({String? mallId, String query = ''}) async =>
-      const [];
+  Future<List<Product>> products({String? mallId, String query = ''}) =>
+      _products('all', mallId: mallId, query: query);
+
   @override
-  Future<List<Product>> deals() async => const [];
+  Future<List<Product>> deals() => _products('deals');
+
   @override
-  Future<ProductDetail> product(String id) => throw _closed;
+  Future<ProductDetail> product(String id) => _guard(() async {
+    final r = _m(await _rpc('shop_product', {'p_id': id}));
+    final p = _product(_m(r['product']));
+    final raw = _m(r['product']);
+    String ago(DateTime at) {
+      final d = DateTime.now().difference(at).inDays;
+      return d < 1
+          ? 'today'
+          : d < 7
+          ? '$d ${d == 1 ? 'day' : 'days'} ago'
+          : d < 35
+          ? '${d ~/ 7} ${d ~/ 7 == 1 ? 'week' : 'weeks'} ago'
+          : '${d ~/ 30} months ago';
+    }
+
+    return ProductDetail(
+      product: p,
+      headline: p.name,
+      about: [
+        for (final line in p.description.split('\n'))
+          if (line.trim().isNotEmpty) line.trim(),
+        'Sold by ${p.mallName}',
+        if (!p.service) 'Returns within 7 days, unused',
+        'Pay the shop on delivery or pickup',
+      ],
+      options: [
+        for (final o in (raw['options'] as List? ?? const []).cast<Map>())
+          OptionGroup(o['title'] as String, [
+            for (final v in o['values'] as List) v as String,
+          ]),
+      ],
+      ratings: raw['ratings'] as int? ?? 0,
+      reviews: [
+        for (final v in (r['reviews'] as List).cast<Map>())
+          () {
+            final level = (v['level'] as Map?)?.cast<String, dynamic>();
+            final sport = level == null
+                ? null
+                : Sport.values.where((s) => s.id == level['sport']).firstOrNull;
+            final body = (v['body'] as String? ?? '').trim();
+            final tags = [for (final t in v['tags'] as List) t as String];
+            return Review(
+              v['name'] as String,
+              [
+                '${'★' * (v['stars'] as int)}${'☆' * (5 - (v['stars'] as int))}',
+                if (sport != null)
+                  '${sport.label} ${SkillBand.forLevel((level!['level'] as num).toDouble()).code}',
+                'bought ${ago(DateTime.parse(v['at'] as String))}',
+              ].join(', '),
+              body.isEmpty ? tags.join(', ') : body,
+            );
+          }(),
+      ],
+      arrives: p.service
+          ? 'Book a drop-off slot. Pay the shop when you collect it'
+          : 'Arrives in 3 to 5 working days, delivery from S\$1.99',
+      related: [
+        for (final x in (r['related'] as List).cast<Map>())
+          _product(x.cast<String, dynamic>()),
+      ],
+    );
+  });
+
   @override
-  Future<MallDetail> mall(String id) => throw _closed;
+  Future<MallDetail> mall(String id) => _guard(() async {
+    final r = _m(await _rpc('shop_mall', {'p_mall': id}));
+    final m = _m(r['mall']);
+    final opened = DateTime.parse(m['created_at'] as String).toLocal();
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return MallDetail(
+      mall: _mall(m),
+      about: m['about'] as String? ?? '',
+      rating: (r['rating'] as num? ?? 0).toDouble(),
+      ratings: r['ratings'] as int? ?? 0,
+      followers: r['followers'] as int? ?? 0,
+      following: r['following'] as bool? ?? false,
+      facts: [
+        ('Opened on Olympus', '${months[opened.month - 1]} ${opened.year}'),
+        if ((m['ships_from'] as String? ?? '').isNotEmpty)
+          ('Ships from', m['ships_from'] as String),
+        ('Returns', 'Within 7 days, unused'),
+        ('Pay with', 'Pay the shop on delivery or pickup'),
+        ('Verified shop', m['verified'] == true ? 'Yes' : 'Not yet'),
+      ],
+      products: [
+        for (final p in (r['products'] as List).cast<Map>())
+          _product(p.cast<String, dynamic>()),
+      ],
+    );
+  });
+
   @override
-  Future<void> follow(String mallId, bool on) => throw _closed;
+  Future<void> follow(String mallId, bool on) => _guard(() async {
+    await _rpc('shop_follow', {'p_mall': mallId, 'p_on': on});
+  });
+
+  // Shops don't run vouchers yet, so there is nothing to claim.
   @override
-  Future<void> claimVoucher(String mallId, String title) => throw _closed;
+  Future<void> claimVoucher(String mallId, String title) async {}
+
   @override
   Future<List<ShopVideo>> videos() async => const [];
+
   @override
   Future<List<LiveStream>> lives() async => const [];
+
   @override
-  Future<List<CartLine>> cart() async => const [];
+  Future<List<CartLine>> cart() => _guard(() async {
+    return [
+      for (final r in await _list('shop_cart'))
+        CartLine(
+          id: r['id'] as String,
+          product: _product(_m(r['product'])),
+          variant: r['variant'] as String? ?? '',
+          qty: r['qty'] as int,
+        ),
+    ];
+  });
+
   @override
   Future<void> addToCart(
     String productId, {
     String variant = '',
     int qty = 1,
-  }) => throw _closed;
+  }) => _guard(() async {
+    await _rpc('shop_cart_add', {
+      'p_product': productId,
+      'p_variant': variant,
+      'p_qty': qty,
+    });
+  });
+
   @override
-  Future<void> setQty(String lineId, int qty) => throw _closed;
+  Future<void> setQty(String lineId, int qty) => _guard(() async {
+    await _rpc('shop_cart_set', {'p_line': lineId, 'p_qty': qty});
+  });
+
   @override
-  Future<List<Address>> addresses() async => const [];
+  Future<List<Address>> addresses() => _guard(() async {
+    final rows = await _client
+        .from('addresses')
+        .select()
+        .order('is_default', ascending: false)
+        .order('created_at');
+    return [for (final r in rows) _address(r)];
+  });
+
   @override
-  Future<Address> saveAddress(Address address) => throw _closed;
+  Future<Address> saveAddress(Address address) => _guard(() async {
+    final id = await _rpc('shop_address_save', {
+      'p': {
+        'label': address.label,
+        'name': address.name,
+        'line': address.line,
+        'phone': address.phone,
+        'is_default': address.isDefault,
+      },
+    });
+    return Address(
+      id: id as String,
+      label: address.label,
+      name: address.name,
+      line: address.line,
+      phone: address.phone,
+      isDefault: address.isDefault,
+    );
+  });
+
   @override
   Future<List<Order>> checkout({
     required Address address,
@@ -125,56 +440,204 @@ class SupabaseShopRepository implements ShopRepository {
     required int pointsCents,
     required String paidWith,
     CartLine? only,
-  }) => throw _closed;
+  }) => _guard(() async {
+    final ids = await _rpc('shop_checkout', {
+      'p_address': {
+        'label': address.label,
+        'name': address.name,
+        'line': address.line,
+        'phone': address.phone,
+        'pickup': address.pickup || delivery.cents == 0,
+      },
+      'p_delivery': delivery.name,
+      'p_only': only == null
+          ? null
+          : {
+              'product': only.product.id,
+              'variant': only.variant,
+              'qty': only.qty,
+            },
+    });
+    return [for (final id in ids as List) await order(id as String)];
+  });
+
   @override
-  Future<List<Order>> orders() async => const [];
+  Future<List<Order>> orders() => _guard(() async {
+    return [for (final r in await _list('shop_orders')) _order(r)];
+  });
+
   @override
-  Future<Order> order(String id) => throw _closed;
+  Future<Order> order(String id) =>
+      _guard(() async => _order(_m(await _rpc('shop_order', {'p_order': id}))));
+
   @override
-  Future<void> confirmReceived(String id) => throw _closed;
+  Future<void> confirmReceived(String id) => _guard(() async {
+    await _rpc('shop_confirm_received', {'p_order': id});
+  });
+
   @override
   Future<int> cancelOrder(
     String id, {
     required String reason,
     required bool toWallet,
-  }) => throw _closed;
+  }) => _guard(
+    () async =>
+        await _rpc('shop_cancel', {'p_order': id, 'p_reason': reason}) as int,
+  );
+
   @override
   Future<Order> bookService(
     String productId, {
     required String slot,
     required String tension,
-  }) => throw _closed;
+  }) => _guard(() async {
+    final id = await _rpc('shop_book_service', {
+      'p_product': productId,
+      'p_slot': slot,
+      'p_tension': tension,
+    });
+    return order(id as String);
+  });
+
   @override
   Future<void> report(
     String what, {
     required String reason,
     String note = '',
-  }) => throw _closed;
+  }) => _guard(() async {
+    await _rpc('shop_report', {
+      'p_what': what,
+      'p_reason': reason,
+      'p_note': note,
+    });
+  });
+
   @override
-  Future<SellerSummary> sellerSummary() => throw _closed;
+  Future<void> review(
+    String orderId, {
+    required int stars,
+    required List<String> tags,
+    required String text,
+    required bool showLevel,
+  }) => _guard(() async {
+    await _rpc('shop_review', {
+      'p_order': orderId,
+      'p_stars': stars,
+      'p_tags': tags,
+      'p_body': text,
+      'p_show_level': showLevel,
+    });
+  });
+
   @override
-  Future<List<Order>> sellerOrders() async => const [];
+  Future<void> requestReturn(
+    String orderId, {
+    required String reason,
+    required String want,
+  }) => _guard(() async {
+    await _rpc('shop_return_request', {
+      'p_order': orderId,
+      'p_reason': reason,
+      'p_want': want,
+    });
+  });
+
+  @override
+  Future<SellerSummary?> sellerSummary() => _guard(() async {
+    final r = await _rpc('shop_seller_summary');
+    if (r == null) return null;
+    final s = _m(r);
+    return SellerSummary(
+      mall: _mall(_m(s['mall'])),
+      salesTodayCents: (s['sales_today_cents'] as num).toInt(),
+      toShip: s['to_ship'] as int,
+      onTheWay: s['on_the_way'] as int,
+      returns: s['returns'] as int,
+      listed: s['listed'] as int,
+      lowStock: s['low_stock'] as int,
+    );
+  });
+
+  @override
+  Future<void> openShop({
+    required String name,
+    required String blurb,
+    required String about,
+    required String shipsFrom,
+  }) => _guard(() async {
+    await _rpc('shop_open', {
+      'p': {
+        'name': name,
+        'blurb': blurb,
+        'about': about,
+        'ships_from': shipsFrom,
+      },
+    });
+  });
+
+  @override
+  Future<void> decideReturn(String orderId, {required bool accept}) =>
+      _guard(() async {
+        await _rpc('shop_return_decide', {
+          'p_order': orderId,
+          'p_accept': accept,
+        });
+      });
+
+  @override
+  Future<List<Order>> sellerOrders() => _guard(() async {
+    return [for (final r in await _list('shop_seller_orders')) _order(r)];
+  });
+
   @override
   Future<void> markShipped(
     String orderId, {
     required String courier,
     required String tracking,
-  }) => throw _closed;
+  }) => _guard(() async {
+    await _rpc('shop_mark_shipped', {
+      'p_order': orderId,
+      'p_courier': courier,
+      'p_tracking': tracking,
+    });
+  });
+
   @override
-  Future<List<Product>> sellerProducts() async => const [];
+  Future<List<Product>> sellerProducts() => _guard(() async {
+    return [for (final r in await _list('shop_seller_products')) _product(r)];
+  });
+
   @override
-  Future<Product> saveProduct(Product product) => throw _closed;
+  Future<Product> saveProduct(Product product) => _guard(() async {
+    final r = await _rpc('shop_save_product', {
+      'p': {
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price_cents': product.priceCents,
+        'old_price_cents': product.oldPriceCents,
+        'max_points': product.maxPoints,
+        'art': product.art.name,
+        'service': product.service,
+        'stock': product.stock,
+        'published': product.published,
+      },
+    });
+    return _product(_m(r));
+  });
+
   @override
   Future<void> goLive({
     required String title,
     required List<String> productIds,
     required String deal,
-  }) => throw _closed;
+  }) => throw _later;
+
   @override
   Future<void> postVideo({
     required String caption,
     required String productId,
-  }) => throw _closed;
+  }) => throw _later;
 }
 
 /// The design's shops and products, with a working cart and orders. The
@@ -881,7 +1344,7 @@ class DemoShopRepository implements ShopRepository {
   }) async => _tick();
 
   @override
-  Future<SellerSummary> sellerSummary() async {
+  Future<SellerSummary?> sellerSummary() async {
     await _tick();
     final mine = _products.where((p) => p.mallId == myShop).toList();
     return SellerSummary(
@@ -949,4 +1412,55 @@ class DemoShopRepository implements ShopRepository {
     required String caption,
     required String productId,
   }) => _tick();
+
+  @override
+  Future<void> review(
+    String orderId, {
+    required int stars,
+    required List<String> tags,
+    required String text,
+    required bool showLevel,
+  }) async {
+    await _tick();
+    final i = _orders.indexWhere((o) => o.id == orderId);
+    if (i >= 0) _orders[i] = _orders[i].copyWith(reviewed: true);
+  }
+
+  @override
+  Future<void> requestReturn(
+    String orderId, {
+    required String reason,
+    required String want,
+  }) async {
+    await _tick();
+    final i = _orders.indexWhere((o) => o.id == orderId);
+    if (i >= 0) {
+      _orders[i] = _orders[i].copyWith(
+        returnState: 'requested',
+        returnReason: '$reason · $want',
+      );
+    }
+  }
+
+  @override
+  Future<void> openShop({
+    required String name,
+    required String blurb,
+    required String about,
+    required String shipsFrom,
+  }) async {
+    await _tick();
+    throw const AuthFailure('The sample player already runs Racket Lab.');
+  }
+
+  @override
+  Future<void> decideReturn(String orderId, {required bool accept}) async {
+    await _tick();
+    final i = _sellerOrders.indexWhere((o) => o.id == orderId);
+    if (i >= 0) {
+      _sellerOrders[i] = _sellerOrders[i].copyWith(
+        returnState: accept ? 'accepted' : 'declined',
+      );
+    }
+  }
 }

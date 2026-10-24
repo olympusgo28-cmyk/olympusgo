@@ -619,11 +619,11 @@ final sellerSummaryProvider = SellerSummaryProvider._();
 final class SellerSummaryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<SellerSummary>,
-          SellerSummary,
-          FutureOr<SellerSummary>
+          AsyncValue<SellerSummary?>,
+          SellerSummary?,
+          FutureOr<SellerSummary?>
         >
-    with $FutureModifier<SellerSummary>, $FutureProvider<SellerSummary> {
+    with $FutureModifier<SellerSummary?>, $FutureProvider<SellerSummary?> {
   SellerSummaryProvider._()
     : super(
         from: null,
@@ -640,17 +640,17 @@ final class SellerSummaryProvider
 
   @$internal
   @override
-  $FutureProviderElement<SellerSummary> $createElement(
+  $FutureProviderElement<SellerSummary?> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<SellerSummary> create(Ref ref) {
+  FutureOr<SellerSummary?> create(Ref ref) {
     return sellerSummary(ref);
   }
 }
 
-String _$sellerSummaryHash() => r'15da9d5df7410fca1b98acf0c46ed3490a96dc6d';
+String _$sellerSummaryHash() => r'2889a8cf3b1a866ddc4f434bfd1508c33d9e7b60';
 
 @ProviderFor(sellerOrders)
 final sellerOrdersProvider = SellerOrdersProvider._();

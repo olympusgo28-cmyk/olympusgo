@@ -443,7 +443,7 @@ final class EventRepositoryProvider
   }
 }
 
-String _$eventRepositoryHash() => r'629f92ed994c0a2462edb7cf85850709256eebac';
+String _$eventRepositoryHash() => r'439b3e58990c587b8b25ad7900f2823892f6c759';
 
 @ProviderFor(clubRepository)
 final clubRepositoryProvider = ClubRepositoryProvider._();
@@ -654,7 +654,7 @@ final class GameRepositoryProvider
   }
 }
 
-String _$gameRepositoryHash() => r'a9acd4e4b44552131fca5af82b8f2659471b46f4';
+String _$gameRepositoryHash() => r'b71e2ea5cce6e90f448cbf535db033bc1ca4720c';
 
 @ProviderFor(safetyRepository)
 final safetyRepositoryProvider = SafetyRepositoryProvider._();

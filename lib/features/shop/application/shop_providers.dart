@@ -54,7 +54,7 @@ Future<Order> orderDetail(Ref ref, String id) =>
     ref.watch(shopRepositoryProvider).order(id);
 
 @riverpod
-Future<SellerSummary> sellerSummary(Ref ref) =>
+Future<SellerSummary?> sellerSummary(Ref ref) =>
     ref.watch(shopRepositoryProvider).sellerSummary();
 
 @riverpod

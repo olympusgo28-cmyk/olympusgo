@@ -302,7 +302,8 @@ mixin _$Product {
  int? get oldPriceCents; double get rating; int get sold;/// "Coach Ravi", the creator who plays with it.
  String? get usedBy;/// A service is booked (restringing), not shipped.
  bool get service; int get stock;/// For the seller: draft, live.
- bool get published;
+ bool get published;/// What the seller wrote about it.
+ String get description;
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -314,20 +315,20 @@ $ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Product;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.mallId, _this.mallId) || other.mallId == _this.mallId)&&(identical(other.mallName, _this.mallName) || other.mallName == _this.mallName)&&(identical(other.priceCents, _this.priceCents) || other.priceCents == _this.priceCents)&&(identical(other.maxPoints, _this.maxPoints) || other.maxPoints == _this.maxPoints)&&(identical(other.art, _this.art) || other.art == _this.art)&&(identical(other.oldPriceCents, _this.oldPriceCents) || other.oldPriceCents == _this.oldPriceCents)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.sold, _this.sold) || other.sold == _this.sold)&&(identical(other.usedBy, _this.usedBy) || other.usedBy == _this.usedBy)&&(identical(other.service, _this.service) || other.service == _this.service)&&(identical(other.stock, _this.stock) || other.stock == _this.stock)&&(identical(other.published, _this.published) || other.published == _this.published));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.mallId, _this.mallId) || other.mallId == _this.mallId)&&(identical(other.mallName, _this.mallName) || other.mallName == _this.mallName)&&(identical(other.priceCents, _this.priceCents) || other.priceCents == _this.priceCents)&&(identical(other.maxPoints, _this.maxPoints) || other.maxPoints == _this.maxPoints)&&(identical(other.art, _this.art) || other.art == _this.art)&&(identical(other.oldPriceCents, _this.oldPriceCents) || other.oldPriceCents == _this.oldPriceCents)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.sold, _this.sold) || other.sold == _this.sold)&&(identical(other.usedBy, _this.usedBy) || other.usedBy == _this.usedBy)&&(identical(other.service, _this.service) || other.service == _this.service)&&(identical(other.stock, _this.stock) || other.stock == _this.stock)&&(identical(other.published, _this.published) || other.published == _this.published)&&(identical(other.description, _this.description) || other.description == _this.description));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Product;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.mallId,_this.mallName,_this.priceCents,_this.maxPoints,_this.art,_this.oldPriceCents,_this.rating,_this.sold,_this.usedBy,_this.service,_this.stock,_this.published);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.mallId,_this.mallName,_this.priceCents,_this.maxPoints,_this.art,_this.oldPriceCents,_this.rating,_this.sold,_this.usedBy,_this.service,_this.stock,_this.published,_this.description);
 }
 
 @override
 String toString() {
   final _this = this as Product;
-  return 'Product(id: ${_this.id}, name: ${_this.name}, mallId: ${_this.mallId}, mallName: ${_this.mallName}, priceCents: ${_this.priceCents}, maxPoints: ${_this.maxPoints}, art: ${_this.art}, oldPriceCents: ${_this.oldPriceCents}, rating: ${_this.rating}, sold: ${_this.sold}, usedBy: ${_this.usedBy}, service: ${_this.service}, stock: ${_this.stock}, published: ${_this.published})';
+  return 'Product(id: ${_this.id}, name: ${_this.name}, mallId: ${_this.mallId}, mallName: ${_this.mallName}, priceCents: ${_this.priceCents}, maxPoints: ${_this.maxPoints}, art: ${_this.art}, oldPriceCents: ${_this.oldPriceCents}, rating: ${_this.rating}, sold: ${_this.sold}, usedBy: ${_this.usedBy}, service: ${_this.service}, stock: ${_this.stock}, published: ${_this.published}, description: ${_this.description})';
 }
 
 
@@ -338,7 +339,7 @@ abstract mixin class $ProductCopyWith<$Res>  {
   factory $ProductCopyWith(Product value, $Res Function(Product) _then) = _$ProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String mallId, String mallName, int priceCents, int maxPoints, ProductArt art, int? oldPriceCents, double rating, int sold, String? usedBy, bool service, int stock, bool published
+ String id, String name, String mallId, String mallName, int priceCents, int maxPoints, ProductArt art, int? oldPriceCents, double rating, int sold, String? usedBy, bool service, int stock, bool published, String description
 });
 
 
@@ -355,7 +356,7 @@ class _$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? mallId = null,Object? mallName = null,Object? priceCents = null,Object? maxPoints = null,Object? art = null,Object? oldPriceCents = freezed,Object? rating = null,Object? sold = null,Object? usedBy = freezed,Object? service = null,Object? stock = null,Object? published = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? mallId = null,Object? mallName = null,Object? priceCents = null,Object? maxPoints = null,Object? art = null,Object? oldPriceCents = freezed,Object? rating = null,Object? sold = null,Object? usedBy = freezed,Object? service = null,Object? stock = null,Object? published = null,Object? description = null,}) {
   return _then(Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -371,7 +372,8 @@ as int,usedBy: freezed == usedBy ? _self.usedBy : usedBy // ignore: cast_nullabl
 as String?,service: null == service ? _self.service : service // ignore: cast_nullable_to_non_nullable
 as bool,stock: null == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
 as int,published: null == published ? _self.published : published // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -456,10 +458,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published,  String description)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published);case _:
+return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published,_that.description);case _:
   return orElse();
 
 }
@@ -477,10 +479,10 @@ return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published,  String description)  $default,) {final _that = this;
 switch (_that) {
 case _Product():
-return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published);case _:
+return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published,_that.description);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -497,10 +499,10 @@ return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String mallId,  String mallName,  int priceCents,  int maxPoints,  ProductArt art,  int? oldPriceCents,  double rating,  int sold,  String? usedBy,  bool service,  int stock,  bool published,  String description)?  $default,) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published);case _:
+return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents,_that.maxPoints,_that.art,_that.oldPriceCents,_that.rating,_that.sold,_that.usedBy,_that.service,_that.stock,_that.published,_that.description);case _:
   return null;
 
 }
@@ -512,7 +514,7 @@ return $default(_that.id,_that.name,_that.mallId,_that.mallName,_that.priceCents
 
 
 class _Product extends Product {
-  const _Product({required this.id, required this.name, required this.mallId, required this.mallName, required this.priceCents, this.maxPoints = 0, this.art = ProductArt.bag, this.oldPriceCents, this.rating = 0, this.sold = 0, this.usedBy, this.service = false, this.stock = 10, this.published = true}): super._();
+  const _Product({required this.id, required this.name, required this.mallId, required this.mallName, required this.priceCents, this.maxPoints = 0, this.art = ProductArt.bag, this.oldPriceCents, this.rating = 0, this.sold = 0, this.usedBy, this.service = false, this.stock = 10, this.published = true, this.description = ''}): super._();
   
 
 @override final  String id;
@@ -534,6 +536,8 @@ class _Product extends Product {
 @override@JsonKey() final  int stock;
 /// For the seller: draft, live.
 @override@JsonKey() final  bool published;
+/// What the seller wrote about it.
+@override@JsonKey() final  String description;
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
@@ -545,18 +549,18 @@ _$ProductCopyWith<_Product> get copyWith => __$ProductCopyWithImpl<_Product>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mallId, mallId) || other.mallId == mallId)&&(identical(other.mallName, mallName) || other.mallName == mallName)&&(identical(other.priceCents, priceCents) || other.priceCents == priceCents)&&(identical(other.maxPoints, maxPoints) || other.maxPoints == maxPoints)&&(identical(other.art, art) || other.art == art)&&(identical(other.oldPriceCents, oldPriceCents) || other.oldPriceCents == oldPriceCents)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.sold, sold) || other.sold == sold)&&(identical(other.usedBy, usedBy) || other.usedBy == usedBy)&&(identical(other.service, service) || other.service == service)&&(identical(other.stock, stock) || other.stock == stock)&&(identical(other.published, published) || other.published == published));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mallId, mallId) || other.mallId == mallId)&&(identical(other.mallName, mallName) || other.mallName == mallName)&&(identical(other.priceCents, priceCents) || other.priceCents == priceCents)&&(identical(other.maxPoints, maxPoints) || other.maxPoints == maxPoints)&&(identical(other.art, art) || other.art == art)&&(identical(other.oldPriceCents, oldPriceCents) || other.oldPriceCents == oldPriceCents)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.sold, sold) || other.sold == sold)&&(identical(other.usedBy, usedBy) || other.usedBy == usedBy)&&(identical(other.service, service) || other.service == service)&&(identical(other.stock, stock) || other.stock == stock)&&(identical(other.published, published) || other.published == published)&&(identical(other.description, description) || other.description == description));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,mallId,mallName,priceCents,maxPoints,art,oldPriceCents,rating,sold,usedBy,service,stock,published);
+    return Object.hash(runtimeType,id,name,mallId,mallName,priceCents,maxPoints,art,oldPriceCents,rating,sold,usedBy,service,stock,published,description);
 }
 
 @override
 String toString() {
-    return 'Product(id: $id, name: $name, mallId: $mallId, mallName: $mallName, priceCents: $priceCents, maxPoints: $maxPoints, art: $art, oldPriceCents: $oldPriceCents, rating: $rating, sold: $sold, usedBy: $usedBy, service: $service, stock: $stock, published: $published)';
+    return 'Product(id: $id, name: $name, mallId: $mallId, mallName: $mallName, priceCents: $priceCents, maxPoints: $maxPoints, art: $art, oldPriceCents: $oldPriceCents, rating: $rating, sold: $sold, usedBy: $usedBy, service: $service, stock: $stock, published: $published, description: $description)';
 }
 
 
@@ -567,7 +571,7 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
   factory _$ProductCopyWith(_Product value, $Res Function(_Product) _then) = __$ProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String mallId, String mallName, int priceCents, int maxPoints, ProductArt art, int? oldPriceCents, double rating, int sold, String? usedBy, bool service, int stock, bool published
+ String id, String name, String mallId, String mallName, int priceCents, int maxPoints, ProductArt art, int? oldPriceCents, double rating, int sold, String? usedBy, bool service, int stock, bool published, String description
 });
 
 
@@ -584,7 +588,7 @@ class __$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? mallId = null,Object? mallName = null,Object? priceCents = null,Object? maxPoints = null,Object? art = null,Object? oldPriceCents = freezed,Object? rating = null,Object? sold = null,Object? usedBy = freezed,Object? service = null,Object? stock = null,Object? published = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? mallId = null,Object? mallName = null,Object? priceCents = null,Object? maxPoints = null,Object? art = null,Object? oldPriceCents = freezed,Object? rating = null,Object? sold = null,Object? usedBy = freezed,Object? service = null,Object? stock = null,Object? published = null,Object? description = null,}) {
   return _then(_Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -600,7 +604,8 @@ as int,usedBy: freezed == usedBy ? _self.usedBy : usedBy // ignore: cast_nullabl
 as String?,service: null == service ? _self.service : service // ignore: cast_nullable_to_non_nullable
 as bool,stock: null == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
 as int,published: null == published ? _self.published : published // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

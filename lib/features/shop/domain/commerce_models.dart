@@ -231,6 +231,9 @@ class Order {
     this.service = false,
     this.booking,
     this.received = false,
+    this.reviewed = false,
+    this.returnState,
+    this.returnReason,
   });
 
   final String id;
@@ -260,6 +263,13 @@ class Order {
   /// "Sat 10 Oct, 10:00 AM" for a booked service.
   final String? booking;
   final bool received;
+  final bool reviewed;
+
+  /// 'requested', 'accepted' or 'declined' once a return is asked for.
+  final String? returnState;
+
+  /// "Wrong size · Refund to Wallet".
+  final String? returnReason;
 
   int get itemsCents => lines.fold(0, (a, l) => a + l.priceCents * l.qty);
   int get totalCents => itemsCents - voucherCents + deliveryCents - pointsCents;
@@ -276,6 +286,9 @@ class Order {
     int? refundCents,
     String? refundTo,
     bool? received,
+    bool? reviewed,
+    String? returnState,
+    String? returnReason,
   }) => Order(
     id: id,
     mallId: mallId,
@@ -298,6 +311,9 @@ class Order {
     service: service,
     booking: booking,
     received: received ?? this.received,
+    reviewed: reviewed ?? this.reviewed,
+    returnState: returnState ?? this.returnState,
+    returnReason: returnReason ?? this.returnReason,
   );
 }
 

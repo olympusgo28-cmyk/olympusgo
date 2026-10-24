@@ -20,6 +20,7 @@ import '../../wallet/application/wallet_providers.dart';
 import '../../wallet/presentation/wallet_screens.dart' show cash;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
+import '../domain/shop_models.dart';
 import 'shop_screens.dart';
 
 /// The cart, grouped by shop.
@@ -246,7 +247,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${cash(paid)} paid with ${placed.first.paidWith}. ${placed.length} '
+                  '${Env.hasSupabase ? '${cash(paid)} to pay the shop on delivery or pickup' : '${cash(paid)} paid with ${placed.first.paidWith}'}. ${placed.length} '
                   '${placed.length == 1 ? 'shop is' : 'shops are'} packing your order.',
                   style: OgText.body(15, height: 1.45, color: c.textMuted),
                 ),
@@ -469,13 +470,19 @@ class _PaySheet extends ConsumerStatefulWidget {
 }
 
 class _PaySheetState extends ConsumerState<_PaySheet> {
-  late bool _usePoints = widget.usablePoints > 0;
-  String _method = 'Card ending 4242';
+  late bool _usePoints = !Env.hasSupabase && widget.usablePoints > 0;
+  String _method = Env.hasSupabase ? 'Pay the shop' : 'Card ending 4242';
 
   int get _points => _usePoints ? widget.usablePoints : 0;
   int get _total => widget.items + widget.delivery - _points;
 
   Future<void> _confirm() async {
+    // Card payments are off: the order is placed and the buyer pays the
+    // shop directly.
+    if (Env.hasSupabase) {
+      Navigator.of(context).pop((0, _method));
+      return;
+    }
     // Demo mode skips the device check, so a simulator never asks for its
     // passcode.
     final ok =
@@ -513,49 +520,71 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
             widget.delivery == 0 ? 'Free' : cash(widget.delivery),
           ),
           if (_points > 0) KitKeyValue('Points used', '−${cash(_points)}'),
-          if (widget.usablePoints > 0)
-            SwitchRow(
-              compact: true,
-              title:
-                  'Use ${(widget.usablePoints / 100).toStringAsFixed(1)} points',
+          if (Env.hasSupabase) ...[
+            const SizedBox(height: 8),
+            KitChoiceRow(
+              title: 'Pay the shop',
               subtitle:
-                  'Takes ${cash(widget.usablePoints)} off. The rest stay in your wallet.',
-              value: _usePoints,
-              onChanged: (v) => setState(() => _usePoints = v),
+                  'Cash or PayNow to the shop when it arrives or you '
+                  'collect it',
+              selected: true,
+              onTap: () {},
             ),
-          const SizedBox(height: 8),
-          Text('Pay with', style: OgText.body(15, weight: FontWeight.w700)),
-          KitChoiceRow(
-            title: 'Card ending 4242',
-            subtitle: 'Default card',
-            selected: _method == 'Card ending 4242',
-            onTap: () => setState(() => _method = 'Card ending 4242'),
-          ),
-          KitChoiceRow(
-            title: 'Wallet',
-            subtitle: walletOk
-                ? 'Balance ${cash(widget.walletCents)}'
-                : 'Not enough in your wallet',
-            selected: _method == 'Wallet',
-            onTap: walletOk ? () => setState(() => _method = 'Wallet') : () {},
-          ),
-          KitChoiceRow(
-            title: 'PayNow',
-            subtitle: 'Opens your bank app',
-            selected: _method == 'PayNow',
-            onTap: () => setState(() => _method = 'PayNow'),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Shop orders have no platform fee.',
-            style: OgText.body(13, color: c.textMuted),
-          ),
-          const SizedBox(height: 14),
-          KitButton(
-            label: 'Pay ${cash(_total)}',
-            icon: OgIcons.faceId,
-            onPressed: _confirm,
-          ),
+            const SizedBox(height: 8),
+            Text(
+              'Card, Wallet and points payments are coming. For now nothing '
+              'is charged in the app.',
+              style: OgText.body(13, color: c.textMuted),
+            ),
+            const SizedBox(height: 14),
+            KitButton(label: 'Place order', onPressed: _confirm),
+          ] else ...[
+            if (widget.usablePoints > 0)
+              SwitchRow(
+                compact: true,
+                title:
+                    'Use ${(widget.usablePoints / 100).toStringAsFixed(1)} points',
+                subtitle:
+                    'Takes ${cash(widget.usablePoints)} off. The rest stay in your wallet.',
+                value: _usePoints,
+                onChanged: (v) => setState(() => _usePoints = v),
+              ),
+            const SizedBox(height: 8),
+            Text('Pay with', style: OgText.body(15, weight: FontWeight.w700)),
+            KitChoiceRow(
+              title: 'Card ending 4242',
+              subtitle: 'Default card',
+              selected: _method == 'Card ending 4242',
+              onTap: () => setState(() => _method = 'Card ending 4242'),
+            ),
+            KitChoiceRow(
+              title: 'Wallet',
+              subtitle: walletOk
+                  ? 'Balance ${cash(widget.walletCents)}'
+                  : 'Not enough in your wallet',
+              selected: _method == 'Wallet',
+              onTap: walletOk
+                  ? () => setState(() => _method = 'Wallet')
+                  : () {},
+            ),
+            KitChoiceRow(
+              title: 'PayNow',
+              subtitle: 'Opens your bank app',
+              selected: _method == 'PayNow',
+              onTap: () => setState(() => _method = 'PayNow'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Shop orders have no platform fee.',
+              style: OgText.body(13, color: c.textMuted),
+            ),
+            const SizedBox(height: 14),
+            KitButton(
+              label: 'Pay ${cash(_total)}',
+              icon: OgIcons.faceId,
+              onPressed: _confirm,
+            ),
+          ],
         ],
       ),
     );
@@ -738,7 +767,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           (o) => switch (_tab) {
             1 => o.step == OrderStep.packing,
             2 => o.step == OrderStep.shipped,
-            3 => o.step == OrderStep.delivered,
+            3 => o.step == OrderStep.delivered && !o.reviewed,
             _ => true,
           },
         )
@@ -1030,7 +1059,14 @@ class OrderDetailScreen extends ConsumerWidget {
               ),
             if (o.pointsCents > 0)
               KitKeyValue('Points used', '−${cash(o.pointsCents)}'),
-            KitKeyValue('Paid with ${o.paidWith}', cash(o.totalCents)),
+            KitKeyValue(
+              o.paidWith == 'Pay the shop'
+                  ? (o.step == OrderStep.delivered
+                        ? 'Paid to the shop'
+                        : 'To pay the shop')
+                  : 'Paid with ${o.paidWith}',
+              cash(o.totalCents),
+            ),
             if (o.address != null)
               KitKeyValue(
                 o.address!.pickup ? 'Pick up' : 'Deliver to ${o.address!.name}',
@@ -1046,13 +1082,32 @@ class OrderDetailScreen extends ConsumerWidget {
               onTap: () =>
                   showOgToast(context, 'Shop chat opens with the Shop.'),
             ),
-            if (o.step == OrderStep.delivered)
+            if (o.step == OrderStep.delivered && !o.reviewed)
+              KitNavTile(
+                icon: OgIcons.star,
+                title: 'Write a review',
+                subtitle: 'Help other players pick the right gear',
+                onTap: () => context.push(Routes.orderReview(o.id)),
+              ),
+            if (o.returnState case final state?)
+              KitNavTile(
+                icon: OgIcons.leave,
+                title: switch (state) {
+                  'accepted' => 'Return accepted',
+                  'declined' => 'Return declined',
+                  _ => 'Return requested',
+                },
+                subtitle: state == 'requested'
+                    ? '${o.returnReason ?? ''}. ${o.mallName} answers within 2 working days'
+                    : o.returnReason,
+                onTap: () {},
+              )
+            else if (o.step == OrderStep.delivered && !o.service)
               KitNavTile(
                 icon: OgIcons.leave,
                 title: 'Return or refund',
                 subtitle: 'Within 7 days, unused',
-                onTap: () =>
-                    showOgToast(context, 'Returns open with the Shop.'),
+                onTap: () => context.push(Routes.orderReturn(o.id)),
               ),
             KitNavTile(
               icon: OgIcons.flag,
@@ -1109,13 +1164,17 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
         header: const KitHeader(title: 'Cancel order'),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
-          KitButton(
-            label: 'Track the refund',
-            onPressed: () => context.pushReplacement(Routes.refund(widget.id)),
-          ),
+          if (!Env.hasSupabase)
+            KitButton(
+              label: 'Track the refund',
+              onPressed: () =>
+                  context.pushReplacement(Routes.refund(widget.id)),
+            ),
           KitButton(
             label: 'Back to my orders',
-            style: KitButtonStyle.outline,
+            style: Env.hasSupabase
+                ? KitButtonStyle.primary
+                : KitButtonStyle.outline,
             onPressed: () => context.go(Routes.orders()),
           ),
         ],
@@ -1124,7 +1183,9 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              '${cash(back)} refunded. It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. Points you used are back in your wallet.',
+              Env.hasSupabase
+                  ? 'Nothing was charged, so there is nothing to refund. The shop has been told.'
+                  : '${cash(back)} refunded. It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. Points you used are back in your wallet.',
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
           ),
@@ -1173,24 +1234,32 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
               ),
           ],
         ),
-        Text('Where should the refund go?', style: OgText.heading(20)),
-        KitChoiceRow(
-          title: 'Wallet',
-          subtitle: '${cash(o.totalCents)} · instant',
-          selected: _toWallet,
-          onTap: () => setState(() => _toWallet = true),
-        ),
-        KitChoiceRow(
-          title: 'Card ending 4242',
-          subtitle: '${cash(o.totalCents)} · 3 to 5 working days',
-          selected: !_toWallet,
-          onTap: () => setState(() => _toWallet = false),
-        ),
-        Text(
-          'You can cancel free until the shop ships. Shop orders have no '
-          'platform fee, so you get all of it back either way.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
-        ),
+        if (Env.hasSupabase)
+          Text(
+            'You pay the shop on delivery or pickup, so nothing has been '
+            'charged. You can cancel free until the shop ships.',
+            style: OgText.body(13, height: 1.45, color: c.textMuted),
+          )
+        else ...[
+          Text('Where should the refund go?', style: OgText.heading(20)),
+          KitChoiceRow(
+            title: 'Wallet',
+            subtitle: '${cash(o.totalCents)} · instant',
+            selected: _toWallet,
+            onTap: () => setState(() => _toWallet = true),
+          ),
+          KitChoiceRow(
+            title: 'Card ending 4242',
+            subtitle: '${cash(o.totalCents)} · 3 to 5 working days',
+            selected: !_toWallet,
+            onTap: () => setState(() => _toWallet = false),
+          ),
+          Text(
+            'You can cancel free until the shop ships. Shop orders have no '
+            'platform fee, so you get all of it back either way.',
+            style: OgText.body(13, height: 1.45, color: c.textMuted),
+          ),
+        ],
       ],
     );
   }
@@ -1467,6 +1536,358 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
         ),
         if (_why != null && _reasons.any((r) => r.$1 == _why && r.$3))
           KitNote('Urgent reports are reviewed first.', tone: KitTone.warn),
+      ],
+    );
+  }
+}
+
+/// Rate a delivered order: stars, what stood out, and a few words.
+class WriteReviewScreen extends ConsumerStatefulWidget {
+  const WriteReviewScreen({super.key, required this.id});
+
+  final String id;
+
+  @override
+  ConsumerState<WriteReviewScreen> createState() => _WriteReviewScreenState();
+}
+
+class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
+  static const _tags = [
+    'Good grip',
+    'True to size',
+    'Comfortable',
+    'Good value',
+    'Fast delivery',
+    'Well packed',
+  ];
+  static const _words = [
+    'Tap to rate',
+    'Poor',
+    'Fair',
+    'Good',
+    'Very good',
+    'Excellent',
+  ];
+
+  int _stars = 0;
+  final _picked = <String>{};
+  final _text = TextEditingController();
+  bool _showLevel = true;
+  bool _busy = false;
+  bool _sent = false;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(shopRepositoryProvider)
+          .review(
+            widget.id,
+            stars: _stars,
+            tags: _picked.toList(),
+            text: _text.text.trim(),
+            showLevel: _showLevel,
+          );
+      HapticFeedback.mediumImpact();
+      refreshShop(ref.invalidate);
+      if (mounted) setState(() => _sent = true);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final t = context.tones;
+    if (_sent) {
+      return KitScaffold(
+        header: const KitHeader(title: 'Write a review'),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+        bottom: [
+          KitButton(
+            label: 'Back to my orders',
+            onPressed: () => context.go(Routes.orders()),
+          ),
+        ],
+        children: [
+          const KitDoneBanner(title: 'Review posted'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'Thanks. Reviews from players at your level help others pick '
+              'the right gear.',
+              style: OgText.body(15, height: 1.45, color: c.textMuted),
+            ),
+          ),
+        ],
+      );
+    }
+    final o = ref.watch(orderDetailProvider(widget.id)).value;
+    return KitScaffold(
+      header: const KitHeader(title: 'Write a review'),
+      bottom: [
+        KitButton(
+          label: _stars == 0 ? 'Tap a star to rate' : 'Post review',
+          loading: _busy,
+          onPressed: _stars == 0 ? null : _send,
+        ),
+      ],
+      children: [
+        if (o != null)
+          Row(
+            children: [
+              SizedBox(
+                width: 56,
+                child: ProductArtBox(
+                  height: 56,
+                  product: Product(
+                    id: '',
+                    name: o.lines.first.name,
+                    mallId: o.mallId,
+                    mallName: o.mallName,
+                    priceCents: o.lines.first.priceCents,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      o.summary,
+                      style: OgText.body(15, weight: FontWeight.w700),
+                    ),
+                    Text(
+                      o.mallName,
+                      style: OgText.body(13, color: c.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 1; i <= 5; i++)
+                  KitIconButton(
+                    icon: OgIcons.star,
+                    label: '$i ${i == 1 ? 'star' : 'stars'}',
+                    size: 34,
+                    fill: i <= _stars,
+                    color: i <= _stars ? t.gold : c.textMuted,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _stars = i);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(_words[_stars], style: OgText.heading(24)),
+          ],
+        ),
+        Text('What stood out?', style: OgText.heading(20)),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final tag in _tags)
+              KitChip(
+                label: tag,
+                selected: _picked.contains(tag),
+                onTap: () => setState(() {
+                  if (!_picked.remove(tag)) _picked.add(tag);
+                }),
+              ),
+          ],
+        ),
+        KitTextArea(
+          label: 'Tell other players more',
+          optional: true,
+          controller: _text,
+          lines: 4,
+        ),
+        KitChoiceRow(
+          title: 'Show my sport and level next to my review',
+          selected: _showLevel,
+          multi: true,
+          onTap: () => setState(() => _showLevel = !_showLevel),
+        ),
+      ],
+    );
+  }
+}
+
+/// Ask the shop to take a delivered item back.
+class ReturnRequestScreen extends ConsumerStatefulWidget {
+  const ReturnRequestScreen({super.key, required this.id});
+
+  final String id;
+
+  @override
+  ConsumerState<ReturnRequestScreen> createState() =>
+      _ReturnRequestScreenState();
+}
+
+class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
+  static const _reasons = [
+    ('Wrong size', 'Too small or too big'),
+    ('Damaged or faulty', 'Arrived broken or does not work'),
+    ('Not as described', 'Different from the photos or details'),
+    ('Changed my mind', 'Item is unused'),
+  ];
+  static const _wants = ['Refund', 'Exchange for another size'];
+
+  String? _why;
+  String _want = _wants.first;
+  bool _busy = false;
+  bool _sent = false;
+
+  Future<void> _send() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(shopRepositoryProvider)
+          .requestReturn(widget.id, reason: _why!, want: _want);
+      HapticFeedback.mediumImpact();
+      refreshShop(ref.invalidate);
+      if (mounted) setState(() => _sent = true);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final o = ref.watch(orderDetailProvider(widget.id)).value;
+    if (_sent) {
+      return KitScaffold(
+        header: const KitHeader(title: 'Return an item'),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+        bottom: [
+          KitButton(
+            label: 'Back to my orders',
+            onPressed: () => context.go(Routes.orders()),
+          ),
+        ],
+        children: [
+          const KitDoneBanner(title: 'Request sent'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  o == null ? _want : '$_want, ${cash(o.itemsCents)}',
+                  style: OgText.heading(26),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${o?.mallName ?? 'The shop'} answers within 2 working days '
+                  'and arranges the return with you.',
+                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    final deadline = o?.placedAt == null
+        ? null
+        : (o!.arrives ?? o.placedAt).add(const Duration(days: 7));
+    return KitScaffold(
+      header: const KitHeader(title: 'Return an item'),
+      bottom: [
+        KitButton(
+          label: _why == null ? 'Pick a reason' : 'Send return request',
+          loading: _busy,
+          onPressed: _why == null ? null : _send,
+        ),
+      ],
+      children: [
+        if (o != null)
+          Row(
+            children: [
+              SizedBox(
+                width: 56,
+                child: ProductArtBox(
+                  height: 56,
+                  product: Product(
+                    id: '',
+                    name: o.lines.first.name,
+                    mallId: o.mallId,
+                    mallName: o.mallName,
+                    priceCents: o.lines.first.priceCents,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      o.summary,
+                      style: OgText.body(15, weight: FontWeight.w700),
+                    ),
+                    Text(
+                      o.mallName,
+                      style: OgText.body(13, color: c.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Text(cash(o.itemsCents), style: OgText.heading(20)),
+            ],
+          ),
+        Text('Why are you returning it?', style: OgText.heading(20)),
+        Column(
+          children: [
+            for (final (title, sub) in _reasons)
+              KitChoiceRow(
+                title: title,
+                subtitle: sub,
+                selected: _why == title,
+                onTap: () => setState(() => _why = title),
+              ),
+          ],
+        ),
+        Text('What would you like?', style: OgText.heading(20)),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final w in _wants)
+              KitChip(
+                label: w,
+                selected: _want == w,
+                onTap: () => setState(() => _want = w),
+              ),
+          ],
+        ),
+        KitNote(
+          '${o?.mallName ?? 'Shops'} accept returns within 7 days if the item '
+          'is unused${deadline == null ? '' : '. You have until ${Fmt.day(deadline)}'}. '
+          'You paid the shop directly, so it refunds you directly.',
+          tone: KitTone.warn,
+        ),
       ],
     );
   }

@@ -272,6 +272,11 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push(Routes.orders()),
                         ),
                         _ListRow(
+                          title: 'My shop',
+                          subtitle: 'Sell gear or services to players',
+                          onTap: () => context.push(Routes.seller),
+                        ),
+                        _ListRow(
                           title: 'Sports and levels',
                           subtitle: levels.isEmpty ? 'Add your sports' : levels,
                           onTap: () => context.push(Routes.profileSports),
