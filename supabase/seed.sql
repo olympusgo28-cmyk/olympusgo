@@ -29,3 +29,19 @@ update public.profiles set username = 'hannah_plays', full_name = 'Hannah Goh',
 insert into public.player_sports (user_id, sport, level, play_min, play_max) values
   ('00000000-0000-4000-a000-000000000001', 'badminton', 4, 3, 5),
   ('00000000-0000-4000-a000-000000000002', 'badminton', 4, 3, 5);
+
+-- A local staff member for the admin app: admin@test.local, password
+-- local-admin-password. They enrol their own MFA on first sign-in.
+insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at, confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current, phone_change,
+  phone_change_token, reauthentication_token)
+values ('00000000-0000-4000-a000-0000000000a1', '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'admin@test.local',
+  extensions.crypt('local-admin-password', extensions.gen_salt('bf')),
+  now(), now(), now(), '', '', '', '', '', '', '', '');
+insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+values ('00000000-0000-4000-a000-0000000000a1', '00000000-0000-4000-a000-0000000000a1',
+  '{"sub": "00000000-0000-4000-a000-0000000000a1", "email": "admin@test.local"}', 'email', now(), now(), now());
+insert into public.staff (user_id, role) values ('00000000-0000-4000-a000-0000000000a1', 'super');
+

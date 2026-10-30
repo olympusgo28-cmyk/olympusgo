@@ -21,6 +21,10 @@ version: 1.0.0+1
 environment:
   sdk: ^3.13.3
 
+workspace:
+  - packages/og_design
+  - admin
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -50,6 +54,8 @@ dependencies:
   share_plus: ^13.3.1
   url_launcher: ^6.3.3
   http: ^1.5.0
+  og_design:
+    path: packages/og_design
 
 dev_dependencies:
   flutter_test:

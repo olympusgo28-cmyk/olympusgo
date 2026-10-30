@@ -110,8 +110,7 @@ class MyReportsScreen extends ConsumerWidget {
       children: [
         const KitTitle(
           'Your reports',
-          lead:
-              'Only you can see these. We tell you the result of every report.',
+          lead: 'Only you can see these. Thanks for telling us. We review every report.',
         ),
         if (reports == null)
           const CupertinoActivityIndicator()
@@ -278,7 +277,7 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
             title: 'What can happen',
             child: KitCheckList([
               'Removed, and the person is told which rule was broken',
-              'Kept, if it does not break the rules. We tell you why',
+              'Kept, if it does not break the rules',
               'Serious cases go to the police or the safety regulator in your country',
             ]),
           )

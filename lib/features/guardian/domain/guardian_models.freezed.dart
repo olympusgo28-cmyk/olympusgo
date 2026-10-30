@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Restrictions {
 
- String get audience; bool get restricted; bool get pendingParent; bool get canScan; bool get canChat; bool get canDiscover; bool get canShop; bool get canHost;
+ String get audience; bool get restricted; bool get suspended; bool get pendingParent; bool get canScan; bool get canChat; bool get canDiscover; bool get canShop; bool get canHost;
 /// Create a copy of Restrictions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $RestrictionsCopyWith<Restrictions> get copyWith => _$RestrictionsCopyWithImpl<R
 @override
 bool operator ==(Object other) {
   final _this = this as Restrictions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Restrictions&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.restricted, _this.restricted) || other.restricted == _this.restricted)&&(identical(other.pendingParent, _this.pendingParent) || other.pendingParent == _this.pendingParent)&&(identical(other.canScan, _this.canScan) || other.canScan == _this.canScan)&&(identical(other.canChat, _this.canChat) || other.canChat == _this.canChat)&&(identical(other.canDiscover, _this.canDiscover) || other.canDiscover == _this.canDiscover)&&(identical(other.canShop, _this.canShop) || other.canShop == _this.canShop)&&(identical(other.canHost, _this.canHost) || other.canHost == _this.canHost));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Restrictions&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.restricted, _this.restricted) || other.restricted == _this.restricted)&&(identical(other.suspended, _this.suspended) || other.suspended == _this.suspended)&&(identical(other.pendingParent, _this.pendingParent) || other.pendingParent == _this.pendingParent)&&(identical(other.canScan, _this.canScan) || other.canScan == _this.canScan)&&(identical(other.canChat, _this.canChat) || other.canChat == _this.canChat)&&(identical(other.canDiscover, _this.canDiscover) || other.canDiscover == _this.canDiscover)&&(identical(other.canShop, _this.canShop) || other.canShop == _this.canShop)&&(identical(other.canHost, _this.canHost) || other.canHost == _this.canHost));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Restrictions;
-  return Object.hash(runtimeType,_this.audience,_this.restricted,_this.pendingParent,_this.canScan,_this.canChat,_this.canDiscover,_this.canShop,_this.canHost);
+  return Object.hash(runtimeType,_this.audience,_this.restricted,_this.suspended,_this.pendingParent,_this.canScan,_this.canChat,_this.canDiscover,_this.canShop,_this.canHost);
 }
 
 @override
 String toString() {
   final _this = this as Restrictions;
-  return 'Restrictions(audience: ${_this.audience}, restricted: ${_this.restricted}, pendingParent: ${_this.pendingParent}, canScan: ${_this.canScan}, canChat: ${_this.canChat}, canDiscover: ${_this.canDiscover}, canShop: ${_this.canShop}, canHost: ${_this.canHost})';
+  return 'Restrictions(audience: ${_this.audience}, restricted: ${_this.restricted}, suspended: ${_this.suspended}, pendingParent: ${_this.pendingParent}, canScan: ${_this.canScan}, canChat: ${_this.canChat}, canDiscover: ${_this.canDiscover}, canShop: ${_this.canShop}, canHost: ${_this.canHost})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $RestrictionsCopyWith<$Res>  {
   factory $RestrictionsCopyWith(Restrictions value, $Res Function(Restrictions) _then) = _$RestrictionsCopyWithImpl;
 @useResult
 $Res call({
- String audience, bool restricted, bool pendingParent, bool canScan, bool canChat, bool canDiscover, bool canShop, bool canHost
+ String audience, bool restricted, bool suspended, bool pendingParent, bool canScan, bool canChat, bool canDiscover, bool canShop, bool canHost
 });
 
 
@@ -68,10 +68,11 @@ class _$RestrictionsCopyWithImpl<$Res>
 
 /// Create a copy of Restrictions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? audience = null,Object? restricted = null,Object? pendingParent = null,Object? canScan = null,Object? canChat = null,Object? canDiscover = null,Object? canShop = null,Object? canHost = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? audience = null,Object? restricted = null,Object? suspended = null,Object? pendingParent = null,Object? canScan = null,Object? canChat = null,Object? canDiscover = null,Object? canShop = null,Object? canHost = null,}) {
   return _then(Restrictions(
 audience: null == audience ? _self.audience : audience // ignore: cast_nullable_to_non_nullable
 as String,restricted: null == restricted ? _self.restricted : restricted // ignore: cast_nullable_to_non_nullable
+as bool,suspended: null == suspended ? _self.suspended : suspended // ignore: cast_nullable_to_non_nullable
 as bool,pendingParent: null == pendingParent ? _self.pendingParent : pendingParent // ignore: cast_nullable_to_non_nullable
 as bool,canScan: null == canScan ? _self.canScan : canScan // ignore: cast_nullable_to_non_nullable
 as bool,canChat: null == canChat ? _self.canChat : canChat // ignore: cast_nullable_to_non_nullable
@@ -163,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String audience,  bool restricted,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String audience,  bool restricted,  bool suspended,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Restrictions() when $default != null:
-return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
+return $default(_that.audience,_that.restricted,_that.suspended,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
   return orElse();
 
 }
@@ -184,10 +185,10 @@ return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canSca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String audience,  bool restricted,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String audience,  bool restricted,  bool suspended,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)  $default,) {final _that = this;
 switch (_that) {
 case _Restrictions():
-return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
+return $default(_that.audience,_that.restricted,_that.suspended,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +205,10 @@ return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canSca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String audience,  bool restricted,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String audience,  bool restricted,  bool suspended,  bool pendingParent,  bool canScan,  bool canChat,  bool canDiscover,  bool canShop,  bool canHost)?  $default,) {final _that = this;
 switch (_that) {
 case _Restrictions() when $default != null:
-return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
+return $default(_that.audience,_that.restricted,_that.suspended,_that.pendingParent,_that.canScan,_that.canChat,_that.canDiscover,_that.canShop,_that.canHost);case _:
   return null;
 
 }
@@ -219,11 +220,12 @@ return $default(_that.audience,_that.restricted,_that.pendingParent,_that.canSca
 
 
 class _Restrictions extends Restrictions {
-  const _Restrictions({this.audience = 'adult', this.restricted = false, this.pendingParent = false, this.canScan = true, this.canChat = true, this.canDiscover = true, this.canShop = true, this.canHost = true}): super._();
+  const _Restrictions({this.audience = 'adult', this.restricted = false, this.suspended = false, this.pendingParent = false, this.canScan = true, this.canChat = true, this.canDiscover = true, this.canShop = true, this.canHost = true}): super._();
   
 
 @override@JsonKey() final  String audience;
 @override@JsonKey() final  bool restricted;
+@override@JsonKey() final  bool suspended;
 @override@JsonKey() final  bool pendingParent;
 @override@JsonKey() final  bool canScan;
 @override@JsonKey() final  bool canChat;
@@ -241,18 +243,18 @@ _$RestrictionsCopyWith<_Restrictions> get copyWith => __$RestrictionsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Restrictions&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.restricted, restricted) || other.restricted == restricted)&&(identical(other.pendingParent, pendingParent) || other.pendingParent == pendingParent)&&(identical(other.canScan, canScan) || other.canScan == canScan)&&(identical(other.canChat, canChat) || other.canChat == canChat)&&(identical(other.canDiscover, canDiscover) || other.canDiscover == canDiscover)&&(identical(other.canShop, canShop) || other.canShop == canShop)&&(identical(other.canHost, canHost) || other.canHost == canHost));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Restrictions&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.restricted, restricted) || other.restricted == restricted)&&(identical(other.suspended, suspended) || other.suspended == suspended)&&(identical(other.pendingParent, pendingParent) || other.pendingParent == pendingParent)&&(identical(other.canScan, canScan) || other.canScan == canScan)&&(identical(other.canChat, canChat) || other.canChat == canChat)&&(identical(other.canDiscover, canDiscover) || other.canDiscover == canDiscover)&&(identical(other.canShop, canShop) || other.canShop == canShop)&&(identical(other.canHost, canHost) || other.canHost == canHost));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,audience,restricted,pendingParent,canScan,canChat,canDiscover,canShop,canHost);
+    return Object.hash(runtimeType,audience,restricted,suspended,pendingParent,canScan,canChat,canDiscover,canShop,canHost);
 }
 
 @override
 String toString() {
-    return 'Restrictions(audience: $audience, restricted: $restricted, pendingParent: $pendingParent, canScan: $canScan, canChat: $canChat, canDiscover: $canDiscover, canShop: $canShop, canHost: $canHost)';
+    return 'Restrictions(audience: $audience, restricted: $restricted, suspended: $suspended, pendingParent: $pendingParent, canScan: $canScan, canChat: $canChat, canDiscover: $canDiscover, canShop: $canShop, canHost: $canHost)';
 }
 
 
@@ -263,7 +265,7 @@ abstract mixin class _$RestrictionsCopyWith<$Res> implements $RestrictionsCopyWi
   factory _$RestrictionsCopyWith(_Restrictions value, $Res Function(_Restrictions) _then) = __$RestrictionsCopyWithImpl;
 @override @useResult
 $Res call({
- String audience, bool restricted, bool pendingParent, bool canScan, bool canChat, bool canDiscover, bool canShop, bool canHost
+ String audience, bool restricted, bool suspended, bool pendingParent, bool canScan, bool canChat, bool canDiscover, bool canShop, bool canHost
 });
 
 
@@ -280,10 +282,11 @@ class __$RestrictionsCopyWithImpl<$Res>
 
 /// Create a copy of Restrictions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? audience = null,Object? restricted = null,Object? pendingParent = null,Object? canScan = null,Object? canChat = null,Object? canDiscover = null,Object? canShop = null,Object? canHost = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? audience = null,Object? restricted = null,Object? suspended = null,Object? pendingParent = null,Object? canScan = null,Object? canChat = null,Object? canDiscover = null,Object? canShop = null,Object? canHost = null,}) {
   return _then(_Restrictions(
 audience: null == audience ? _self.audience : audience // ignore: cast_nullable_to_non_nullable
 as String,restricted: null == restricted ? _self.restricted : restricted // ignore: cast_nullable_to_non_nullable
+as bool,suspended: null == suspended ? _self.suspended : suspended // ignore: cast_nullable_to_non_nullable
 as bool,pendingParent: null == pendingParent ? _self.pendingParent : pendingParent // ignore: cast_nullable_to_non_nullable
 as bool,canScan: null == canScan ? _self.canScan : canScan // ignore: cast_nullable_to_non_nullable
 as bool,canChat: null == canChat ? _self.canChat : canChat // ignore: cast_nullable_to_non_nullable

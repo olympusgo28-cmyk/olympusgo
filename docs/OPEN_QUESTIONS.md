@@ -56,4 +56,7 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q44 | R-ATT-1 closes attendance at 23:59 on the day. A Meet starting at 23:30 would close after 29 minutes, and one crossing midnight could not be marked afterwards. Should attendance close at the end of the day the Meet ends instead? | Late Meets | Built as R-ATT-1 says | Open |
 | Q45 | **Wallet.** Owner decided on 30 Oct: no Wallet. Refunds go to the original PayNow or card, as the checklist says. R-REF-1, R-REF-2, R-WAL-1 to 4, Q18 and the Wallet screens are superseded and removed in Phase 4 | Phase 4 | No Wallet | Decided (owner, 30 Oct) |
 | Q46 | Phase 4 test-mode payment code: the checklist allows it now, but R-HOLD-6 and Q1 say no payment code until a lawyer confirms. Owner to confirm the checklist wins before Phase 4 starts | Phase 4 | Stripe test mode only, once confirmed | Open |
+| Q47 | Reporters: the checklist says a neutral acknowledgement only; the PRD (SAF-3) shows the result and offers a second look. Built as the checklist says, so the second-look screen no longer appears | Moderation | Neutral only | Open |
+| Q48 | What should a message containing a phone number or outside link do: blocked, as built, or sent and flagged? Should it apply to adults too? | Chat | Blocked for everyone, as built | Open |
+| Q49 | The moderation word list is a small starter set. It needs review by native speakers of English, Malay, Mandarin and Tamil before the pilot | Moderation | Starter list | Open |
 

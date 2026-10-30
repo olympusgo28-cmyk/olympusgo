@@ -10,6 +10,7 @@ abstract class Restrictions with _$Restrictions {
   const factory Restrictions({
     @Default('adult') String audience,
     @Default(false) bool restricted,
+    @Default(false) bool suspended,
     @Default(false) bool pendingParent,
     @Default(true) bool canScan,
     @Default(true) bool canChat,
@@ -21,6 +22,7 @@ abstract class Restrictions with _$Restrictions {
   factory Restrictions.fromRow(Map<String, dynamic> r) => Restrictions(
     audience: r['audience'] as String,
     restricted: r['restricted'] as bool,
+    suspended: r['suspended'] as bool? ?? false,
     pendingParent: r['pending_parent'] as bool,
     canScan: r['can_scan'] as bool,
     canChat: r['can_chat'] as bool,

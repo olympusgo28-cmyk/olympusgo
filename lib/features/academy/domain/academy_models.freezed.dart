@@ -848,7 +848,7 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 
 
 class _Academy extends Academy {
-  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF16181B, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0, this.verification = 'none',  List<String> invitedCoaches = const []}): _coaches = coaches,_classes = classes,_invitedCoaches = invitedCoaches,super._();
+  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF1C1F23, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0, this.verification = 'none',  List<String> invitedCoaches = const []}): _coaches = coaches,_classes = classes,_invitedCoaches = invitedCoaches,super._();
   
 
 @override final  String id;

@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:og_design/og_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'core/config.dart';
+import 'core/ui.dart';
+import 'features/audit/audit_screen.dart';
+import 'features/auth/login_screen.dart';
+import 'features/auth/mfa_screen.dart';
+import 'features/auth/session.dart';
+import 'features/reports/reports_screens.dart';
+import 'features/shell/admin_shell.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: Config.supabaseUrl,
+    publishableKey: Config.supabaseKey,
+  );
+  runApp(const ProviderScope(child: AdminApp()));
+}
+
+const sections = [Section('/audit', 'Audit log', Icons.history, 'super')];
+
+final _router = GoRouter(
+  initialLocation: '/reports',
+  routes: [
+    ShellRoute(
+      builder: (context, state, child) =>
+          _Gate(location: state.matchedLocation, child: child),
+      routes: [
+        GoRoute(path: '/audit', builder: (_, _) => const AuditScreen()),
+        GoRoute(path: '/reports', builder: (_, _) => const ReportsScreen()),
+        GoRoute(path: '/reports/bans', builder: (_, _) => const BansScreen()),
+        GoRoute(
+          path: '/reports/:id',
+          builder: (_, s) => CaseScreen(id: s.pathParameters['id']!),
+        ),
+      ],
+    ),
+  ],
+);
+
+class AdminApp extends StatelessWidget {
+  const AdminApp({super.key});
+
+  @override
+  Widget build(BuildContext context) => MaterialApp.router(
+    title: 'OlympusGO staff',
+    debugShowCheckedModeBanner: false,
+    theme: OgTheme.light(),
+    darkTheme: OgTheme.dark(),
+    routerConfig: _router,
+  );
+}
+
+/// Nothing past here renders until the session has passed MFA.
+class _Gate extends ConsumerWidget {
+  const _Gate({required this.location, required this.child});
+
+  final String location;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ref
+      .watch(staffSessionProvider)
+      .when(
+        loading: () =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
+        error: (_, _) => const Scaffold(
+          body: StaffPage(
+            title: 'OlympusGO staff',
+            child: Text("Can't reach OlympusGO. Try again."),
+          ),
+        ),
+        data: (session) {
+          if (session == null) return const LoginScreen();
+          if (session.roles.isEmpty) return const _NotStaff();
+          if (!session.mfa) return const MfaScreen();
+          return AdminShell(
+            session: session,
+            sections: sections,
+            location: location,
+            child: child,
+          );
+        },
+      );
+}
+
+class _NotStaff extends StatelessWidget {
+  const _NotStaff();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: StaffPage(
+      title: 'OlympusGO staff',
+      actions: [
+        TextButton(
+          onPressed: () => Supabase.instance.client.auth.signOut(),
+          child: const Text('Log out'),
+        ),
+      ],
+      child: const Text('This account is not a staff account.'),
+    ),
+  );
+}

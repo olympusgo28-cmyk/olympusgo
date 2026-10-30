@@ -5,10 +5,14 @@
 [auth]
 enable_signup = false
 
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [auth.email]
 otp_length = 6
 # Must stay on: off disables the email provider, and with it the internal
-# sign-in that resolve-login uses. [auth] below is what stops direct sign-up.
+# sign-in that resolve-login uses. [auth] above is what stops direct sign-up.
 enable_signup = true
 enable_confirmations = false
 
@@ -28,3 +32,6 @@ verify_jwt = false
 [auth.sms]
 enable_signup = false
 enable_confirmations = false
+
+[functions.admin-action]
+verify_jwt = true

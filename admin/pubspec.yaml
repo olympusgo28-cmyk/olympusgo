@@ -1,0 +1,26 @@
+name: olympus_admin
+description: OlympusGO staff console.
+publish_to: 'none'
+version: 1.0.0+1
+resolution: workspace
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.2
+  og_design:
+    path: ../packages/og_design
+  supabase_flutter: ^2.18.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  google_fonts: ^9.0.0
+
+flutter:
+  uses-material-design: true

@@ -22,8 +22,9 @@ class RestrictedHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
-    final pending =
-        ref.watch(restrictionsProvider).value?.pendingParent ?? false;
+    final status = ref.watch(restrictionsProvider).value;
+    final pending = status?.pendingParent ?? false;
+    final suspended = status?.suspended ?? false;
     return KitScaffold(
       children: [
         Semantics(
@@ -31,20 +32,26 @@ class RestrictedHomeScreen extends ConsumerWidget {
           child: Text('OlympusGO', style: OgText.h1.copyWith(color: c.text)),
         ),
         KitNote(
-          pending
+          suspended
+              ? 'Your account is suspended'
+              : pending
               ? 'Your parent has your code. Ask them to approve the link.'
               : 'Ask a parent to link your account',
           tone: KitTone.warn,
         ),
         Text(
-          'Until a parent links your account, you can set up your profile, '
-          'but not join Meets, chat, scan or shop.',
+          suspended
+              ? 'You can read our rules and contact help, but not use the rest '
+                    'of OlympusGO.'
+              : 'Until a parent links your account, you can set up your '
+                    'profile, but not join Meets, chat, scan or shop.',
           style: OgText.lead(c.textMuted),
         ),
-        KitButton(
-          label: 'Show my parent a code',
-          onPressed: () => context.push(Routes.parentCode),
-        ),
+        if (!suspended)
+          KitButton(
+            label: 'Show my parent a code',
+            onPressed: () => context.push(Routes.parentCode),
+          ),
         KitCard(
           children: [
             KitNavTile(
