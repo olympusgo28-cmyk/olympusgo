@@ -101,6 +101,16 @@ abstract interface class PlayRepository {
     String? reason,
   });
 
+  /// Scores this organizer has to decide.
+  Future<List<String>> disputes(String activityId);
+
+  /// Keeps the score, or sets [games] instead.
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  });
+
   // Rounds from the match generator.
   Future<List<Round>> rounds(String activityId);
 
@@ -756,6 +766,34 @@ class SupabasePlayRepository implements PlayRepository {
     await _client.rpc(
       'answer_score',
       params: {'score': scoreId, 'ok': confirm, 'why': reason},
+    );
+    return score(scoreId);
+  });
+
+  @override
+  Future<List<String>> disputes(String activityId) => _guard(() async {
+    final rows = await _client
+        .from('match_scores')
+        .select('id')
+        .eq('activity_id', activityId)
+        .eq('status', 'disputed')
+        .order('created_at');
+    return [for (final r in rows) r['id'] as String];
+  });
+
+  @override
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  }) => _guard(() async {
+    await _client.rpc(
+      'organiser_decide_score',
+      params: {
+        'p_score': scoreId,
+        'p_games': ?games?.map((g) => [g.$1, g.$2]).toList(),
+        'p_reason': ?reason,
+      },
     );
     return score(scoreId);
   });
@@ -1879,6 +1917,16 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   final _rounds = <String, List<Round>>{};
+
+  @override
+  Future<List<String>> disputes(String activityId) async => const [];
+
+  @override
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  }) async => score(scoreId);
 
   @override
   Future<ScoringPreset> scoring(String activityId) async =>

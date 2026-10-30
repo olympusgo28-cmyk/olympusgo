@@ -103,9 +103,10 @@ All amounts are integer minor units with a currency.
 | --- | --- | --- |
 | `submit_score(activity, partners, opponents, games, client_key)` | Player on the Meet | Enters a score. A repeat `client_key` returns the same score |
 | `answer_score(score, ok, why)` | Other side | Confirms or disputes, under a row lock |
-| `organiser_decide_score(p_score, p_games, p_reason)` | Organizer | Decides a disputed or unconfirmed score |
+| `organiser_decide_score(p_score, p_games, p_reason)` | Organizer | Decides a disputed score, or one left unanswered for 24 hours. Not a match they played in |
 | `tournament_score(p_match, p_games, p_reason, p_retired)` | Organizer | Final score. A correction needs a reason, within 24 hours |
-| `staff_result_correct(p_score, p_games, p_reason)` | Staff, moderator | Later correction, through `admin-action`. The winner of a tournament match can't change (Q53) |
+| `staff_result_correct(p_score, p_games, p_reason)` | Staff, moderator | Later correction or a dispute an organizer can't decide, through `admin-action`. The winner of a tournament match can't change (Q53) |
+| `staff_scores(p_score)` | Staff, moderator | Disputes in an organizer's own match, or one score by id |
 | `activity_preset_set(p_activity, p_preset)` | Organizer | Picks scoring until the first score |
 | `activity_scoring(p_activity)` | Signed in | The rules a score is checked with |
 | `meet_rounds_save(p_activity, p_from, p_rounds)`, `meet_rounds(p_activity)` | Organizer, players | Saves and reads rounds |

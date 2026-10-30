@@ -158,7 +158,10 @@ class MeetRecap {
 enum ScoreStatus {
   waiting('waiting'),
   confirmed('confirmed'),
-  disputed('disputed');
+  disputed('disputed'),
+
+  /// A correction replaced it.
+  superseded('superseded');
 
   const ScoreStatus(this.id);
   final String id;

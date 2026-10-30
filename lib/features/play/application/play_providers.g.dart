@@ -1147,6 +1147,81 @@ final class ScoringPresetsFamily extends $Family
   String toString() => r'scoringPresetsProvider';
 }
 
+@ProviderFor(meetDisputes)
+final meetDisputesProvider = MeetDisputesFamily._();
+
+final class MeetDisputesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          FutureOr<List<String>>
+        >
+    with $FutureModifier<List<String>>, $FutureProvider<List<String>> {
+  MeetDisputesProvider._({
+    required MeetDisputesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'meetDisputesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$meetDisputesHash();
+
+  @override
+  String toString() {
+    return r'meetDisputesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return meetDisputes(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MeetDisputesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$meetDisputesHash() => r'5a19cc68ad53c09cd0be7529a332ed1f3f9dd72a';
+
+final class MeetDisputesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<String>>, String> {
+  MeetDisputesFamily._()
+    : super(
+        retry: null,
+        name: r'meetDisputesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MeetDisputesProvider call(String id) =>
+      MeetDisputesProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'meetDisputesProvider';
+}
+
 @ProviderFor(meetRounds)
 final meetRoundsProvider = MeetRoundsFamily._();
 

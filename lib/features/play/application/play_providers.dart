@@ -167,6 +167,10 @@ Future<List<(String, String, ScoringPreset)>> scoringPresets(
 ) => ref.watch(playRepositoryProvider).presets(sport);
 
 @riverpod
+Future<List<String>> meetDisputes(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).disputes(id);
+
+@riverpod
 Future<List<Round>> meetRounds(Ref ref, String id) =>
     ref.watch(playRepositoryProvider).rounds(id);
 

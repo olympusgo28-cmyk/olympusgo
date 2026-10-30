@@ -67,7 +67,7 @@ select throws_ok($$update public.match_results set winner = 2$$, 'P0001', 'match
 -- Repeat match counts less.
 select t.as_user('d1000000-0000-0000-0000-000000000001');
 create temp table s2 on commit drop as
-  select public.submit_score((select id from m), '{}', '{d1000000-0000-0000-0000-000000000002}', '[[21,10],[21,12]]') as id;
+  select public.submit_score((select id from m), '{}', '{d1000000-0000-0000-0000-000000000002}', '[[21,11],[21,12]]') as id;
 grant select on s2 to authenticated;
 select t.reset();
 select t.as_user('d1000000-0000-0000-0000-000000000002');
@@ -121,7 +121,8 @@ select is((select count(*)::int from public.rating_events where result_id = (sel
 select t.player('d1000000-0000-0000-0000-000000000005');
 insert into public.player_sports (user_id, sport, level, play_min, play_max)
   values ('d1000000-0000-0000-0000-000000000005', 'badminton', 8, 3, 8);
-select is((private.rating_row('d1000000-0000-0000-0000-000000000005', 'badminton')).rating, 1800.00, 'R-RAT-3 PRO cannot be self-chosen');
+select is((select level from public.player_sports where user_id = 'd1000000-0000-0000-0000-000000000005' and sport = 'badminton'), 7.0, 'R-RAT-3 PRO cannot be self-chosen');
+select is((private.rating_row('d1000000-0000-0000-0000-000000000005', 'badminton')).rating, 1800.00, 'R-RAT-3 and it cannot seed above AD');
 
 -- Clients are refused.
 select t.as_anon();
@@ -139,7 +140,7 @@ select t.reset();
 -- Tournament rules.
 create temp table k on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004', p_game => 'singles') as id;
 grant select on k to authenticated;
-update public.activities set kind = 'tournament', format = 'knockout', ranked = false where id = (select id from k);
+update public.activities set kind = 'tournament', format = 'knockout', ranked = false, starts_at = now() - interval '1 hour' where id = (select id from k);
 insert into public.tournament_entries (activity_id, division, user_id) values
   ((select id from k), 'main', 'd1000000-0000-0000-0000-000000000001'),
   ((select id from k), 'main', 'd1000000-0000-0000-0000-000000000002');
@@ -197,7 +198,7 @@ select is((select count(*)::int from public.admin_audit where action = 'result_c
 -- Retirement (R-STA-3).
 create temp table r on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004', p_game => 'singles') as id;
 grant select on r to authenticated;
-update public.activities set kind = 'tournament', format = 'knockout', ranked = false where id = (select id from r);
+update public.activities set kind = 'tournament', format = 'knockout', ranked = false, starts_at = now() - interval '1 hour' where id = (select id from r);
 insert into public.tournament_entries (activity_id, division, user_id) values
   ((select id from r), 'main', 'd1000000-0000-0000-0000-000000000001'),
   ((select id from r), 'main', 'd1000000-0000-0000-0000-000000000002');

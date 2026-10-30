@@ -57,6 +57,10 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
       }
       rounds = engine.rounds(_count, from: from);
     } else {
+      // With an odd number of pairs' worth of players, the last one sits out.
+      final spare = !singles && active.length.isOdd
+          ? [active.last.id]
+          : <String>[];
       final teams = singles
           ? [for (final p in active) p.id]
           : [
@@ -65,14 +69,18 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
             ];
       rounds = [
         for (final r in circleRounds(teams, courts: _courts))
-          Round(r.number + from - 1, [
-            for (final m in r.matches)
-              Pairing(
-                m.court,
-                m.sideA.expand((t) => t.split('+')).toList(),
-                m.sideB.expand((t) => t.split('+')).toList(),
-              ),
-          ], r.byes.expand((t) => t.split('+')).toList()),
+          Round(
+            r.number + from - 1,
+            [
+              for (final m in r.matches)
+                Pairing(
+                  m.court,
+                  m.sideA.expand((t) => t.split('+')).toList(),
+                  m.sideB.expand((t) => t.split('+')).toList(),
+                ),
+            ],
+            [...r.byes.expand((t) => t.split('+')), ...spare],
+          ),
       ];
     }
     if (rounds.every((r) => r.matches.isEmpty)) {
@@ -121,7 +129,7 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
       };
       String side(List<String> ids) =>
           ids.map((id) => names[id] ?? 'Player').join(' and ');
-      final from = (_from ?? 1).clamp(1, saved.length + 1);
+      final from = (_from ?? saved.length + 1).clamp(1, saved.length + 1);
       final needed = a.gameType == GameType.singles ? 2 : 4;
       final sport = a.sports.firstOrNull?.id;
       final presets = sport == null
@@ -141,6 +149,8 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
             KitButton(
               label: saved.isEmpty
                   ? 'Generate rounds'
+                  : from > saved.length
+                  ? 'Add rounds'
                   : 'Regenerate from round $from',
               loading: _busy,
               onPressed: enough

@@ -139,6 +139,20 @@ void main() {
       expect(ko.first.matches.first.b, 'B2 · runner-up');
       expect(ko[1].matches.single.a, 'SF1 winner');
 
+      // Only a tournament that has started moves ratings.
+      await SupabaseClient(
+            url!,
+            Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+          )
+          .from('activities')
+          .update({
+            'starts_at': DateTime.now()
+                .toUtc()
+                .subtract(const Duration(hours: 1))
+                .toIso8601String(),
+          })
+          .eq('id', id);
+
       // Play every group match, then the knockout, as they become ready.
       for (var round = 0; round < 10; round++) {
         ms = await host.matches(id, divisionId: 'main');
