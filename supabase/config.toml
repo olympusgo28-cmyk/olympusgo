@@ -1,15 +1,14 @@
 # Only the settings OlympusGO needs. `supabase config push` changes only the
 # values declared here, so everything else in the hosted project is left alone.
-#
-# WARNING: the [auth.sms] blocks at the end are for the local stack only. Do
-# not run `supabase config push` against a hosted project until they are
-# removed: they would replace real SMS sending with a fake provider and fixed
-# test codes. Hosted SMS is set in the dashboard.
+
+# Accounts are made only by resolve-login. Keep the hosted project the same.
+[auth]
+enable_signup = false
 
 [auth.email]
 otp_length = 6
-# Off would also stop email log-in. An email-only account stays restricted by
-# the database (private.has_verified_mobile), so this stays on.
+# Must stay on: off disables the email provider, and with it the internal
+# sign-in that resolve-login uses. [auth] below is what stops direct sign-up.
 enable_signup = true
 enable_confirmations = false
 
@@ -25,21 +24,7 @@ content_path = "./supabase/templates/code_email.html"
 [functions.resolve-login]
 verify_jwt = false
 
-# Local only. See the warning at the top of this file.
+# Supabase never sends or checks a text message: see resolve-login.
 [auth.sms]
-enable_signup = true
-enable_confirmations = true
-template = "Your OlympusGO code is {{ .Code }}"
-
-[auth.sms.twilio]
-enabled = true
-account_sid = "ACtest"
-message_service_sid = "MGtest"
-auth_token = "local-test-token"
-
-# Numbers no real phone uses, each with a fixed code.
-[auth.sms.test_otp]
-6580000001 = "123456"
-6580000002 = "123456"
-6580000003 = "123456"
-6580000004 = "123456"
+enable_signup = false
+enable_confirmations = false

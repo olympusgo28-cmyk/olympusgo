@@ -23,13 +23,10 @@ Log in with `+65 8000 0001`, code `123456`. That is seeded as Aaron Ng; `+65 800
 
 ## Supabase setup
 
-**Do not run `supabase config push` from this repository**: the `[auth.sms]` blocks in `supabase/config.toml` are for the local stack and would replace real SMS with fixed test codes.
-
 1. Apply the schema: `supabase link --project-ref sfkylxlwbjculhuxoimd`, then `supabase db push` (runs every file in `supabase/migrations/`, including the `avatars` storage bucket and realtime for messages).
-2. Deploy sign-in: `supabase functions deploy resolve-login`, and set the `LOGIN_HASH_PEPPER` secret to a long random value.
+2. Deploy sign-in: `supabase functions deploy resolve-login`. Set secrets `LOGIN_HASH_PEPPER` (long and random), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID`, `RESEND_API_KEY` and `LOGIN_EMAIL_FROM`. In the dashboard, turn off new sign-ups and the phone provider, and leave the email provider on.
 3. In the dashboard, under Authentication:
    - Email: switch on "Email OTP" and set the email template to send `{{ .Token }}` (a 6-digit code) instead of a magic link.
-   - Phone: connect an SMS provider (Twilio, MessageBird or Vonage) for phone log-in and the mobile-number step.
 4. Payments: paid Meets, events and tournaments need a payment provider (for example Stripe). Until one is connected, free ones join for real and paid ones say card payments aren't switched on yet. Demo mode shows the full pay flow with a test Visa and wallet.
 
 ## Layout

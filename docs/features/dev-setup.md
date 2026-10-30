@@ -41,8 +41,4 @@ After a deliberate design change: `flutter test --update-goldens test/design_gol
 
 ## Test accounts
 
-`+65 8000 0001` to `0004` take the fixed code `123456` on the local stack only. Email codes arrive in Mailpit at http://127.0.0.1:54324.
-
-## SMS
-
-`[auth.sms]` in `supabase/config.toml` is for the local stack. Never run `supabase config push` from this repository while it is there. Hosted SMS is set in the dashboard.
+`+65 8000 0001` to `+65 8000 0999`, and any `@test.local` address, take the fixed code `123456`. This only works on a local stack.

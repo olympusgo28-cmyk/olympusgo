@@ -21,7 +21,6 @@ abstract interface class SettingsRepository {
   Future<void> saveCountry(Country country);
 
   /// Starts an email change; Supabase emails a confirmation link.
-  Future<void> changeEmail(String email);
 
   Future<NotificationPrefs> notifications();
   Future<void> saveNotifications(NotificationPrefs prefs);
@@ -122,25 +121,20 @@ class SupabaseSettingsRepository implements SettingsRepository {
 
   @override
   Future<PrivateInfo> privateInfo() => _guard(() async {
-    final user = _client.auth.currentUser!;
     final r = await _client
         .from('account_private')
-        .select('birthday, country_code, identity_verified_at')
+        .select('birthday, country_code, identity_verified_at, mobile, email')
         .eq('id', _me)
         .single();
     final birthday = r['birthday'] as String?;
     return PrivateInfo(
-      email: user.email ?? '',
-      phone: user.phone ?? '',
+      email: r['email'] as String? ?? '',
+      phone: r['mobile'] as String? ?? '',
       birthday: birthday == null ? null : DateTime.parse(birthday),
       country: Country.fromCode(r['country_code'] as String?),
       identityVerified: r['identity_verified_at'] != null,
     );
   });
-
-  @override
-  Future<void> changeEmail(String email) =>
-      _guard(() => _client.auth.updateUser(UserAttributes(email: email)));
 
   @override
   Future<NotificationPrefs> notifications() => _guard(() async {
@@ -261,9 +255,6 @@ class DemoSettingsRepository implements SettingsRepository {
     await _tick();
     _country = country;
   }
-
-  @override
-  Future<void> changeEmail(String email) => _tick();
 
   @override
   Future<NotificationPrefs> notifications() async => _notifications;

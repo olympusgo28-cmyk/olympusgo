@@ -20,7 +20,7 @@ This is the honest position, ticket by ticket. "Proven" means a test or a run sh
 | P1-01 Database foundation | Proven, including 20 parallel joins on 10 spots |
 | P1-02 Mobile sign-up | Proven against the local stack. A real SMS provider is not connected |
 | P1-03 Age paths | Proven for 12, 13, 17 and 18 |
-| P1-04 Login | Proven through the app's path: identical replies and timing, 5-code lockout under parallel tries. **Direct calls to Supabase Auth bypass it (Q41)** |
+| P1-04 Login | Proven: identical replies and timing, 5-code lockout under parallel tries, and direct Supabase Auth calls reveal nothing and skip nothing (Q41 fixed) |
 | P1-05 Saved accounts and Face ID | Proven on the iOS Simulator with a simulated Face ID match. Not tested on a real phone or on Android |
 | P1-06 Recovery | Request recorded. The review screen is A-04 |
 | P1-07 Restricted mode | Proven in the app and at the API |
@@ -38,7 +38,6 @@ A separate reviewer read the Phase 1 work. Fixed and tested: a child approving t
 
 Still open from that review:
 
-- **Q41: direct Supabase Auth calls bypass enumeration protection and the lockout. This blocks Gate A.**
 - `tournament_register` has no row lock, so a tournament can overfill. Phase 3.
 - Messages already in a conversation are not stopped when a parent link ends, beyond the child's own restriction.
 - Not confirmed either way: odd URL encodings getting past the rate limit table; `pg_graphql` on the hosted project; timing if SMS or email takes longer than the 900 ms pad.
@@ -46,7 +45,6 @@ Still open from that review:
 
 ## Still needed for Gate A
 
-- Q41 above.
 - An outside reviewer has to read the policies. The review above was an AI agent, not a person.
 - A person has to review every money, sign-in, minors and RLS change. Nothing here has been reviewed by a person.
 - Logging: the Dart app still uses `debugPrint`. There is no scrubber yet (P1-13).

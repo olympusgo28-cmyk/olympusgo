@@ -1,4 +1,5 @@
 import { assertEquals, assertNotEquals } from "jsr:@std/assert@1";
+import { isLocalStack, isTestContact, liveDelivery, localDelivery, randomCode } from "./delivery.ts";
 import { canonical, clientIp, paddingMs, parseIdentifier, sha256 } from "./logic.ts";
 
 Deno.test("reads a mobile number and drops spaces", () => {
@@ -43,4 +44,23 @@ Deno.test("a caller cannot choose their own address", () => {
     "8.8.8.8",
   );
   assertEquals(clientIp(new Headers()), "unknown");
+});
+
+Deno.test("fixed codes exist only on a local stack, and only for test contacts", () => {
+  assertEquals(isLocalStack("http://kong:8000"), true);
+  assertEquals(isLocalStack("http://127.0.0.1:54321"), true);
+  assertEquals(isLocalStack("https://abc.supabase.co"), false);
+  assertEquals(localDelivery.codeFor("+6580000001"), "123456");
+  assertNotEquals(liveDelivery(() => undefined).codeFor("+6580000001"), "123456000");
+  assertEquals(isTestContact("+6591234567"), false);
+});
+
+Deno.test("codes are six digits, padded", () => {
+  for (let i = 0; i < 200; i++) assertEquals(/^\d{6}$/.test(randomCode()), true);
+});
+
+Deno.test("live delivery reports failure when its keys are missing", async () => {
+  const live = liveDelivery(() => undefined);
+  assertEquals(await live.sms("+6591234567", "123456"), false);
+  assertEquals(await live.email("a@example.com", "123456"), false);
 });

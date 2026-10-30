@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/format.dart';
@@ -2000,7 +1999,5 @@ class TournamentResultsScreen extends ConsumerWidget {
   }
 }
 
-/// Whether the player has a verified mobile number. Demo players have one.
-bool get _mobileVerified =>
-    !Env.hasSupabase ||
-    (Supabase.instance.client.auth.currentUser?.phone ?? '').isNotEmpty;
+/// Every account that can reach this screen has a verified mobile.
+const _mobileVerified = true;

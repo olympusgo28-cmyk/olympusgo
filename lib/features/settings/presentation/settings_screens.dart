@@ -446,8 +446,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     });
     try {
       if (_original != null && email != _original!.email) {
-        await ref.read(settingsRepositoryProvider).changeEmail(email);
-        if (mounted) showOgToast(context, 'Check $email to confirm the change');
+        await ref.read(authRepositoryProvider).startEmailChange(email);
+        if (mounted) context.push(Routes.verifyPhoneChange, extra: email);
+        return;
       }
       final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
       final phone = '${_original?.country.dialCode ?? '+65'}$digits';
@@ -1137,6 +1138,9 @@ class _VerifyPhoneChangeScreenState
   String? _error;
   bool _busy = false;
 
+  /// This screen confirms a new email as well as a new mobile.
+  bool get _isEmail => widget.phone.contains('@');
+
   @override
   void dispose() {
     _code.dispose();
@@ -1150,12 +1154,18 @@ class _VerifyPhoneChangeScreenState
       _error = null;
     });
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .verifyPhoneChange(widget.phone, _code.text);
+      final auth = ref.read(authRepositoryProvider);
+      if (_isEmail) {
+        await auth.verifyEmailChange(widget.phone, _code.text);
+      } else {
+        await auth.verifyPhoneChange(widget.phone, _code.text);
+      }
       ref.invalidate(privateInfoProvider);
       if (!mounted) return;
-      showOgToast(context, 'Mobile number updated');
+      showOgToast(
+        context,
+        _isEmail ? 'Email updated' : 'Mobile number updated',
+      );
       context.go(Routes.settings);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);

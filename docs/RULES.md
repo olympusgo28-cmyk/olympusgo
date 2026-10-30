@@ -121,7 +121,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 
 | Id | Rule | Status | Source |
 | --- | --- | --- | --- |
-| R-WAL-1 | The Wallet holds refunds and rewards. It can be spent in the app or withdrawn to a bank. | Decided | PAY-5 |
+| R-WAL-1 | **Superseded by owner decision, 30 Oct (Q45): no Wallet. Refunds go to the original PayNow or card.** Formerly: the Wallet holds refunds and rewards. | Superseded | Q45 |
 | R-WAL-2 | No top-up at launch. The top-up screen exists but nothing links to it; it sits behind the `wallet.topup` flag, off. | Decided | PAY-5 |
 | R-WAL-3 | Withdrawals are free: to a bank in 1 to 2 working days, or PayNow within minutes. | Designed | WalletWithdraw |
 | R-WAL-4 | The Wallet can pay only when the balance covers the whole total. Splitting a payment between Wallet and card is not designed. | Assumed | Payment sheet, Q18 |

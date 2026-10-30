@@ -25,7 +25,7 @@ select t.reset();
 
 -- A child with a second, email-only account and an adult birthday.
 select t.player('30000000-0000-0000-0000-000000000006', 30);
-update auth.users set phone = null, phone_confirmed_at = null where id = '30000000-0000-0000-0000-000000000006';
+update public.account_private set mobile = null, mobile_verified_at = null where id = '30000000-0000-0000-0000-000000000006';
 select ok(private.is_restricted('30000000-0000-0000-0000-000000000006'), 'R-ACC-5 an account with no verified mobile is restricted');
 select t.as_user('30000000-0000-0000-0000-000000000006');
 select throws_ok(

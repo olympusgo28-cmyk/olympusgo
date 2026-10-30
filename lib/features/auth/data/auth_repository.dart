@@ -145,25 +145,33 @@ class SupabaseAuthRepository implements AuthRepository {
     await _auth.setSession(token);
   });
 
-  @override
-  Future<void> startPhoneChange(String phone) =>
-      _guard(() => _auth.updateUser(UserAttributes(phone: phone)));
+  Future<void> _contactSend(String contact) => _guard(() async {
+    await _client.functions.invoke(
+      'resolve-login',
+      body: {'action': 'contact_send', 'identifier': contact},
+    );
+  });
+
+  Future<void> _contactVerify(String contact, String code) => _guard(() async {
+    await _client.functions.invoke(
+      'resolve-login',
+      body: {'action': 'contact_verify', 'identifier': contact, 'code': code},
+    );
+  });
 
   @override
-  Future<void> verifyPhoneChange(String phone, String code) => _guard(
-    () => _auth.verifyOTP(phone: phone, token: code, type: OtpType.phoneChange),
-    onAuthError: _badCode,
-  );
+  Future<void> startPhoneChange(String phone) => _contactSend(phone);
 
   @override
-  Future<void> startEmailChange(String email) =>
-      _guard(() => _auth.updateUser(UserAttributes(email: email)));
+  Future<void> verifyPhoneChange(String phone, String code) =>
+      _contactVerify(phone, code);
 
   @override
-  Future<void> verifyEmailChange(String email, String code) => _guard(
-    () => _auth.verifyOTP(email: email, token: code, type: OtpType.emailChange),
-    onAuthError: _badCode,
-  );
+  Future<void> startEmailChange(String email) => _contactSend(email);
+
+  @override
+  Future<void> verifyEmailChange(String email, String code) =>
+      _contactVerify(email, code);
 
   @override
   Future<void> requestRecovery(String contactEmail) => _guard(
@@ -186,7 +194,12 @@ class SupabaseAuthRepository implements AuthRepository {
   }) async {
     final user = _auth.currentUser;
     if (user == null) return;
-    final phone = user.phone;
+    final private = await _client
+        .from('account_private')
+        .select('mobile')
+        .eq('id', user.id)
+        .maybeSingle();
+    final phone = private?['mobile'] as String?;
     await _vault.saveAccount(
       SavedAccount(
         userId: user.id,

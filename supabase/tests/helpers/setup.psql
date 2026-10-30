@@ -10,9 +10,13 @@ grant usage on schema t to anon, authenticated, service_role;
 create function t.player(p_id uuid, p_age int default 30, p_country text default 'SG')
 returns uuid language plpgsql security definer as $$
 begin
-  insert into auth.users (id, instance_id, aud, role, email, phone, phone_confirmed_at)
+  insert into auth.users (id, instance_id, aud, role, email)
   values (p_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-    p_id::text || '@test.local', '65' || substr(md5(p_id::text), 1, 12), now());
+    p_id::text || '@test.local');
+  update public.account_private
+  set mobile = '+65' || lpad((('x' || substr(md5(p_id::text), 1, 8))::bit(32)::bigint % 100000000)::text, 8, '0'),
+      mobile_verified_at = now()
+  where id = p_id;
   if p_age is not null then
     update public.account_private
     set birthday = (now() at time zone 'Asia/Singapore')::date
@@ -69,10 +73,11 @@ begin
 end;
 $$;
 
--- Moves a Meet so it is under way, which opens attendance.
+-- Moves a Meet to just before its start, which opens attendance. Not after
+-- the start: run just past midnight that would be yesterday, and closed.
 create function t.start_meet(p_id uuid) returns void language sql security definer as $$
   update public.activities
-  set starts_at = now() - interval '5 minutes', ends_at = now() + interval '2 hours'
+  set starts_at = now() + interval '5 minutes', ends_at = now() + interval '2 hours'
   where id = p_id;
 $$;
 
