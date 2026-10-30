@@ -321,9 +321,45 @@ class ChildDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final posts = ref.watch(childPostsProvider(childId));
+    final groups =
+        ref.watch(childGroupRequestsProvider(childId)).value ?? const [];
+
+    Future<void> decide(GroupRequest group, bool approve) async {
+      try {
+        await ref
+            .read(guardianRepositoryProvider)
+            .decideGroup(childId, group.clubId, approve: approve);
+        ref.invalidate(childGroupRequestsProvider(childId));
+      } on AuthFailure catch (e) {
+        if (context.mounted) showOgToast(context, e.message, error: true);
+      }
+    }
+
     return KitScaffold(
       header: KitHeader(title: link?.name ?? 'Your child'),
       children: [
+        if (groups.isNotEmpty) const KitSection('Groups waiting for you'),
+        for (final group in groups)
+          KitCard(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(group.name, style: OgText.body(16, color: c.text)),
+              if (group.area.isNotEmpty)
+                Text(group.area, style: OgText.body(13, color: c.textMuted)),
+              const SizedBox(height: 8),
+              KitButton(
+                label: 'Approve',
+                height: 44,
+                onPressed: () => decide(group, true),
+              ),
+              const SizedBox(height: 8),
+              KitButton.outline(
+                label: 'Not this one',
+                height: 44,
+                onPressed: () => decide(group, false),
+              ),
+            ],
+          ),
         const KitSection('What they posted'),
         ...posts.when(
           loading: () => const [Center(child: CircularProgressIndicator())],

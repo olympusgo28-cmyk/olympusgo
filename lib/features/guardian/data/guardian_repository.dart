@@ -22,6 +22,12 @@ abstract interface class GuardianRepository {
   Future<List<GuardianLink>> parents();
   Future<List<ChildPost>> childPosts(String childId);
   Future<void> deletePost(String childId, ChildPost post);
+  Future<List<GroupRequest>> groupRequests(String childId);
+  Future<void> decideGroup(
+    String childId,
+    String clubId, {
+    required bool approve,
+  });
 }
 
 class SupabaseGuardianRepository implements GuardianRepository {
@@ -127,6 +133,29 @@ class SupabaseGuardianRepository implements GuardianRepository {
       params: {'p_child': childId, 'p_kind': post.kind, 'p_id': post.id},
     ),
   );
+
+  @override
+  Future<List<GroupRequest>> groupRequests(String childId) => _guard(() async {
+    final rows = await _client.rpc(
+      'guardian_group_requests',
+      params: {'p_child': childId},
+    ) as List;
+    return [
+      for (final r in rows) GroupRequest.fromRow(r as Map<String, dynamic>),
+    ];
+  });
+
+  @override
+  Future<void> decideGroup(
+    String childId,
+    String clubId, {
+    required bool approve,
+  }) => _guard(
+    () => _client.rpc(
+      'guardian_group_decide',
+      params: {'p_child': childId, 'p_club': clubId, 'p_approve': approve},
+    ),
+  );
 }
 
 /// Used in demo mode. `DEMO_AUDIENCE` picks the age group, so restricted mode
@@ -227,5 +256,27 @@ class DemoGuardianRepository implements GuardianRepository {
   @override
   Future<void> deletePost(String childId, ChildPost post) async {
     _posts.removeWhere((p) => p.id == post.id);
+  }
+
+  final _groups = <GroupRequest>[
+    const GroupRequest(
+      clubId: 'demo-club',
+      name: 'Tampines Smashers',
+      area: 'Tampines',
+    ),
+  ];
+
+  @override
+  Future<List<GroupRequest>> groupRequests(String childId) async => [
+    ..._groups,
+  ];
+
+  @override
+  Future<void> decideGroup(
+    String childId,
+    String clubId, {
+    required bool approve,
+  }) async {
+    _groups.removeWhere((g) => g.clubId == clubId);
   }
 }

@@ -102,3 +102,19 @@ abstract class ChildPost with _$ChildPost {
     _ => 'Product review',
   };
 }
+
+/// A group a child asked to join, waiting for their parent.
+@freezed
+abstract class GroupRequest with _$GroupRequest {
+  const factory GroupRequest({
+    required String clubId,
+    required String name,
+    @Default('') String area,
+  }) = _GroupRequest;
+
+  factory GroupRequest.fromRow(Map<String, dynamic> r) => GroupRequest(
+    clubId: r['club_id'] as String,
+    name: r['name'] as String,
+    area: r['area'] as String? ?? '',
+  );
+}

@@ -1383,4 +1383,274 @@ as DateTime,
 
 }
 
+/// @nodoc
+mixin _$GroupRequest {
+
+ String get clubId; String get name; String get area;
+/// Create a copy of GroupRequest
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GroupRequestCopyWith<GroupRequest> get copyWith => _$GroupRequestCopyWithImpl<GroupRequest>(this as GroupRequest, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as GroupRequest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupRequest&&(identical(other.clubId, _this.clubId) || other.clubId == _this.clubId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.area, _this.area) || other.area == _this.area));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as GroupRequest;
+  return Object.hash(runtimeType,_this.clubId,_this.name,_this.area);
+}
+
+@override
+String toString() {
+  final _this = this as GroupRequest;
+  return 'GroupRequest(clubId: ${_this.clubId}, name: ${_this.name}, area: ${_this.area})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GroupRequestCopyWith<$Res>  {
+  factory $GroupRequestCopyWith(GroupRequest value, $Res Function(GroupRequest) _then) = _$GroupRequestCopyWithImpl;
+@useResult
+$Res call({
+ String clubId, String name, String area
+});
+
+
+
+
+}
+/// @nodoc
+class _$GroupRequestCopyWithImpl<$Res>
+    implements $GroupRequestCopyWith<$Res> {
+  _$GroupRequestCopyWithImpl(this._self, this._then);
+
+  final GroupRequest _self;
+  final $Res Function(GroupRequest) _then;
+
+/// Create a copy of GroupRequest
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? clubId = null,Object? name = null,Object? area = null,}) {
+  return _then(GroupRequest(
+clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GroupRequest].
+extension GroupRequestPatterns on GroupRequest {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GroupRequest value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GroupRequest() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GroupRequest value)  $default,){
+final _that = this;
+switch (_that) {
+case _GroupRequest():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GroupRequest value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GroupRequest() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String clubId,  String name,  String area)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GroupRequest() when $default != null:
+return $default(_that.clubId,_that.name,_that.area);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String clubId,  String name,  String area)  $default,) {final _that = this;
+switch (_that) {
+case _GroupRequest():
+return $default(_that.clubId,_that.name,_that.area);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String clubId,  String name,  String area)?  $default,) {final _that = this;
+switch (_that) {
+case _GroupRequest() when $default != null:
+return $default(_that.clubId,_that.name,_that.area);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GroupRequest implements GroupRequest {
+  const _GroupRequest({required this.clubId, required this.name, this.area = ''});
+  
+
+@override final  String clubId;
+@override final  String name;
+@override@JsonKey() final  String area;
+
+/// Create a copy of GroupRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GroupRequestCopyWith<_GroupRequest> get copyWith => __$GroupRequestCopyWithImpl<_GroupRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupRequest&&(identical(other.clubId, clubId) || other.clubId == clubId)&&(identical(other.name, name) || other.name == name)&&(identical(other.area, area) || other.area == area));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,clubId,name,area);
+}
+
+@override
+String toString() {
+    return 'GroupRequest(clubId: $clubId, name: $name, area: $area)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GroupRequestCopyWith<$Res> implements $GroupRequestCopyWith<$Res> {
+  factory _$GroupRequestCopyWith(_GroupRequest value, $Res Function(_GroupRequest) _then) = __$GroupRequestCopyWithImpl;
+@override @useResult
+$Res call({
+ String clubId, String name, String area
+});
+
+
+
+
+}
+/// @nodoc
+class __$GroupRequestCopyWithImpl<$Res>
+    implements _$GroupRequestCopyWith<$Res> {
+  __$GroupRequestCopyWithImpl(this._self, this._then);
+
+  final _GroupRequest _self;
+  final $Res Function(_GroupRequest) _then;
+
+/// Create a copy of GroupRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? clubId = null,Object? name = null,Object? area = null,}) {
+  return _then(_GroupRequest(
+clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
 // dart format on

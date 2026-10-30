@@ -26,3 +26,7 @@ Future<List<GuardianLink>> myParents(Ref ref) =>
 @riverpod
 Future<List<ChildPost>> childPosts(Ref ref, String childId) =>
     ref.watch(guardianRepositoryProvider).childPosts(childId);
+
+@riverpod
+Future<List<GroupRequest>> childGroupRequests(Ref ref, String childId) =>
+    ref.watch(guardianRepositoryProvider).groupRequests(childId);

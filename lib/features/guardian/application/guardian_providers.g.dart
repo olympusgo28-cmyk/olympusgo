@@ -208,3 +208,81 @@ final class ChildPostsFamily extends $Family
   @override
   String toString() => r'childPostsProvider';
 }
+
+@ProviderFor(childGroupRequests)
+final childGroupRequestsProvider = ChildGroupRequestsFamily._();
+
+final class ChildGroupRequestsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GroupRequest>>,
+          List<GroupRequest>,
+          FutureOr<List<GroupRequest>>
+        >
+    with
+        $FutureModifier<List<GroupRequest>>,
+        $FutureProvider<List<GroupRequest>> {
+  ChildGroupRequestsProvider._({
+    required ChildGroupRequestsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'childGroupRequestsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$childGroupRequestsHash();
+
+  @override
+  String toString() {
+    return r'childGroupRequestsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GroupRequest>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GroupRequest>> create(Ref ref) {
+    final argument = this.argument as String;
+    return childGroupRequests(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChildGroupRequestsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$childGroupRequestsHash() =>
+    r'2fa6f3da17838bec7a1a130199d6d31eec12cdda';
+
+final class ChildGroupRequestsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<GroupRequest>>, String> {
+  ChildGroupRequestsFamily._()
+    : super(
+        retry: null,
+        name: r'childGroupRequestsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChildGroupRequestsProvider call(String childId) =>
+      ChildGroupRequestsProvider._(argument: childId, from: this);
+
+  @override
+  String toString() => r'childGroupRequestsProvider';
+}
