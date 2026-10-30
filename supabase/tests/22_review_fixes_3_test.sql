@@ -174,10 +174,10 @@ select cmp_ok((select abs(delta) from public.rating_events where user_id = 'ab00
   '<', (select x from d1), 'R-RAT-5 the same opponent counts less with a new partner');
 
 -- 16. Deleting an account after a correction.
-insert into public.staff (user_id, role) values ('ab000000-0000-0000-0000-000000000007', 'moderator');
+insert into public.staff (user_id, role) values ('ab000000-0000-0000-0000-000000000004', 'moderator');
 create temp table c on commit drop as select id from public.match_scores where activity_id = (select id from d) and status = 'confirmed' limit 1;
 grant select on c to authenticated;
-select t.as_staff('ab000000-0000-0000-0000-000000000007');
+select t.as_staff('ab000000-0000-0000-0000-000000000004');
 select lives_ok(format($q$select public.staff_result_correct(%L, '[[21,1],[21,1]]', 'Typed wrong')$q$, (select id from c)), 'staff correct a Meet result');
 select isnt_empty($$select public.staff_scores()$$, 'staff can list what needs them');
 select t.reset();

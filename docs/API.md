@@ -115,4 +115,4 @@ All amounts are integer minor units with a currency.
 | `guardian_leaderboard_set(p_child, p_on)` | Linked parent | Opts a child in or out |
 | `leaderboards_refresh()` | Service role only | Rebuilds snapshots |
 | `staff_preset_save(...)`, `staff_level_save(...)` | Staff, content | A-05, through `admin-action` |
-
+| `score_view(p_score)`, `my_meet_results(p_activity)`, `meet_disputes(p_activity)` | Players in the match, organizer | The only client reads of scores and results. Ids match what the roster shows that viewer |

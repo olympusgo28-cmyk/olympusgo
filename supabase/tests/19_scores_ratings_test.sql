@@ -21,7 +21,7 @@ select is(private.match_winner('[[21,10],[21,10]]', '{"points_to_win":21,"win_by
 select is(private.match_winner('[[21,10],[21,10],[21,10]]', '{"points_to_win":21,"win_by":2,"cap":30,"best_of":3}'), 0, 'no game after it is won');
 select is(private.match_winner('[[21,10],[10,21]]', '{"points_to_win":21,"win_by":2,"cap":30,"best_of":3}'), 0, 'a split needs a decider');
 
-create temp table m on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004') as id;
+create temp table m on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004', p_game => 'singles') as id;
 grant select on m to authenticated;
 update public.activities set ranked = true where id = (select id from m);
 insert into public.activity_participants (activity_id, user_id, status, attendance)
@@ -34,6 +34,8 @@ select throws_ok(format($q$select public.submit_score(%L, '{}', '{d1000000-0000-
   'P0001', 'That score can''t stand. Check each game.', 'P3-03 the database refuses an impossible score');
 select throws_ok(format($q$select public.submit_score(%L, '{d1000000-0000-0000-0000-000000000003}', '{d1000000-0000-0000-0000-000000000002}', '[[21,10],[21,10]]')$q$, (select id from m)),
   'P0001', 'Both sides need the same number of players.', 'sides must match');
+select throws_ok(format($q$select public.submit_score(%L, '{d1000000-0000-0000-0000-000000000003}', '{d1000000-0000-0000-0000-000000000002,d1000000-0000-0000-0000-000000000004}', '[[21,10],[21,10]]')$q$, (select id from m)),
+  'P0001', 'That''s the wrong number of players for this game.', 'two a side doesn''t fit singles');
 create temp table s on commit drop as
   select public.submit_score((select id from m), '{}', '{d1000000-0000-0000-0000-000000000002}', '[[21,10],[21,12]]', 'd1000000-0000-0000-0000-0000000000aa') as id;
 grant select on s to authenticated;
@@ -76,7 +78,7 @@ select t.reset();
 select cmp_ok((select abs(delta) from public.rating_events order by id desc limit 1), '<', 16.00, 'R-RAT-5 a repeat match counts less');
 
 -- Absent players do not move.
-create temp table a on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004') as id;
+create temp table a on commit drop as select t.meet('d1000000-0000-0000-0000-000000000004', p_game => 'singles') as id;
 grant select on a to authenticated;
 update public.activities set ranked = true, starts_at = now() - interval '1 hour' where id = (select id from a);
 insert into public.activity_participants (activity_id, user_id, status, attendance) values
@@ -132,7 +134,8 @@ select throws_ok($$select * from public.match_results$$, '42501', null, 'signed 
 select t.reset();
 
 select t.as_user('d1000000-0000-0000-0000-000000000005');
-select is_empty($$select 1 from public.match_results$$, 'an outsider sees no results');
+select throws_ok($$select 1 from public.match_results$$, '42501', null, 'results are read through functions');
+select throws_ok($$select 1 from public.match_scores$$, '42501', null, 'scores are read through functions');
 select is_empty($$select 1 from public.rating_events$$, 'an outsider sees no rating history');
 select throws_ok($$select private.rating_write(gen_random_uuid(), auth.uid(), 'badminton', 500, false)$$, '42501', null, 'rating helpers cannot be called');
 select t.reset();

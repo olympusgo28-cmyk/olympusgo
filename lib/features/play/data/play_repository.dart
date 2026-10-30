@@ -546,26 +546,20 @@ class SupabasePlayRepository implements PlayRepository {
   @override
   Future<MeetRecap> recap(String id) => _guard(() async {
     final me = _me;
-    final all =
-        (await _client
-                .from('match_results')
-                .select('id, supersedes, side_a, side_b, games, winner')
-                .eq('activity_id', id))
-            .cast<Map<String, dynamic>>();
-    final replaced = {for (final r in all) r['supersedes']};
-    final rows = all.where((r) => !replaced.contains(r['id']));
+    final rows = (await _client.rpc(
+      'my_meet_results',
+      params: {'p_activity': id},
+    ) as List).cast<Map>();
     var wins = 0, losses = 0;
     String? best;
     var bestGap = -1;
     for (final r in rows) {
-      final onA = (r['side_a'] as List).contains(me);
-      if (!onA && !(r['side_b'] as List).contains(me)) continue;
+      final onA = r['on_a'] == true;
       final games = [
         for (final g in (r['games'] as List).cast<List>())
           onA ? (g[0] as int, g[1] as int) : (g[1] as int, g[0] as int),
       ];
-      final won = r['winner'] == (onA ? 1 : 2);
-      won ? wins++ : losses++;
+      r['won'] == true ? wins++ : losses++;
       for (final g in games) {
         if (g.$1 > g.$2 && g.$1 - g.$2 > bestGap) {
           bestGap = g.$1 - g.$2;
@@ -691,25 +685,11 @@ class SupabasePlayRepository implements PlayRepository {
 
   @override
   Future<MatchScore> score(String scoreId) => _guard(() async {
-    final r = await _client
-        .from('match_scores')
-        .select('*, activities(title, host_id)')
-        .eq('id', scoreId)
-        .single();
-    final ids = <String>{
-      ...(r['side_a'] as List).cast<String>(),
-      ...(r['side_b'] as List).cast<String>(),
-      (r['activities'] as Map)['host_id'] as String,
-    };
-    final people = {
-      for (final p
-          in await _client
-              .from('profiles')
-              .select('id, username, full_name, avatar_url')
-              .inFilter('id', ids.toList()))
-        p['id'] as String: PlayerSummary.fromRow(p),
-    };
-    PlayerSummary who(String id) => people[id] ?? PlayerSummary(id: id);
+    final j = await _client.rpc('score_view', params: {'p_score': scoreId});
+    if (j == null) throw const AuthFailure("Can't find this score.");
+    final r = Map<String, dynamic>.from(j as Map);
+    PlayerSummary who(Object? p) =>
+        PlayerSummary.fromRow(Map<String, dynamic>.from(p as Map));
     final status = ScoreStatus.fromId(r['status'] as String?);
     final change = status == ScoreStatus.confirmed
         ? await _ratingChange(r['activity_id'] as String, scoreId)
@@ -717,20 +697,20 @@ class SupabasePlayRepository implements PlayRepository {
     return MatchScore(
       id: r['id'] as String,
       activityId: r['activity_id'] as String,
-      activityTitle: (r['activities'] as Map)['title'] as String,
-      sideA: [for (final id in (r['side_a'] as List).cast<String>()) who(id)],
-      sideB: [for (final id in (r['side_b'] as List).cast<String>()) who(id)],
+      activityTitle: r['title'] as String,
+      sideA: [for (final p in r['side_a'] as List) who(p)],
+      sideB: [for (final p in r['side_b'] as List) who(p)],
       games: [
         for (final g in (r['games'] as List).cast<List>())
           (g[0] as int, g[1] as int),
       ],
-      enteredBy: who(r['entered_by'] as String),
+      enteredBy: who(r['entered_by']),
       enteredAt: DateTime.parse(r['created_at'] as String).toLocal(),
       status: status,
       reason: r['reason'] as String?,
       ratingBefore: change?.$1,
       ratingAfter: change?.$2,
-      organizer: who((r['activities'] as Map)['host_id'] as String),
+      organizer: who(r['organizer']),
     );
   });
 
@@ -772,13 +752,11 @@ class SupabasePlayRepository implements PlayRepository {
 
   @override
   Future<List<String>> disputes(String activityId) => _guard(() async {
-    final rows = await _client
-        .from('match_scores')
-        .select('id')
-        .eq('activity_id', activityId)
-        .eq('status', 'disputed')
-        .order('created_at');
-    return [for (final r in rows) r['id'] as String];
+    final ids = await _client.rpc(
+      'meet_disputes',
+      params: {'p_activity': activityId},
+    ) as List;
+    return ids.cast<String>();
   });
 
   @override

@@ -97,7 +97,13 @@ class _ScoresScreenState extends ConsumerState<ScoresScreen> {
                         ListTile(
                           title: Text(s['title'] as String),
                           subtitle: Text(
-                            [s['status'], s['games'], ?s['reason']].join(' · '),
+                            [
+                              '${(s['side_a'] as List).join(' and ')} vs '
+                                  '${(s['side_b'] as List).join(' and ')}',
+                              s['status'],
+                              s['games'],
+                              ?s['reason'],
+                            ].join(' · '),
                           ),
                           onTap: () => _correct(s),
                         ),

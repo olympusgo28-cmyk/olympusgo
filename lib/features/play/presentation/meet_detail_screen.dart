@@ -457,28 +457,20 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                               ? () => context.push(Routes.scoreEntry(a.id))
                               : null,
                         ),
-                      if (a.iAmHost &&
-                          a.ranked &&
-                          (ref.watch(meetDisputesProvider(a.id)).value ??
-                                  const [])
-                              .isNotEmpty)
-                        KitCard(
-                          children: [
-                            KitNavTile(
-                              icon: OgIcons.pointsStar,
-                              title: 'A score needs you',
-                              subtitle: 'Set the final score',
-                              onTap: () => context.push(
-                                Routes.score(
-                                  ref
-                                      .read(meetDisputesProvider(a.id))
-                                      .value!
-                                      .first,
-                                ),
+                      if (a.iAmHost && a.ranked)
+                        for (final id
+                            in ref.watch(meetDisputesProvider(a.id)).value ??
+                                const <String>[])
+                          KitCard(
+                            children: [
+                              KitNavTile(
+                                icon: OgIcons.pointsStar,
+                                title: 'A score needs you',
+                                subtitle: 'Set the final score',
+                                onTap: () => context.push(Routes.score(id)),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
                       if (a.kind == ActivityKind.meet &&
                           (a.iAmHost || a.myStatus == MyStatus.joined))
                         KitCard(
