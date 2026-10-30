@@ -36,6 +36,8 @@ import '../../features/clubs/presentation/group_chat_screens.dart';
 import '../../features/discover/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
+import '../../features/discover/presentation/coming_screens.dart';
+import '../../features/discover/presentation/find_screen.dart';
 import '../../features/scan/host_scan_screen.dart';
 import '../../features/guardian/application/guardian_providers.dart';
 import '../../features/guardian/domain/guardian_models.dart';
@@ -164,6 +166,23 @@ GoRouter appRouter(Ref ref) {
       page(Routes.deleteAccount, (_) => const DeleteAccountScreen()),
       // Game.
       page(Routes.game, (_) => const GameHomeScreen()),
+      page(Routes.find, (_) => const FindScreen()),
+      page(
+        Routes.services,
+        (_) => const EmptyCategoryScreen(
+          title: 'Services',
+          message:
+              'Partner physios and other services will be listed here. '
+              'None are open yet.',
+        ),
+      ),
+      page(
+        Routes.fitness,
+        (_) => const EmptyCategoryScreen(
+          title: 'Fitness',
+          message: 'Workouts will be here. None are open yet.',
+        ),
+      ),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
       page('/game/:id', (s) => CampaignScreen(id: s.pathParameters['id']!)),
       page(

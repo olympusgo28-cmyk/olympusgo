@@ -362,6 +362,54 @@ final class PlayRepositoryProvider
 
 String _$playRepositoryHash() => r'0c2554a88011e1ada739e40396824fbb64d36f7b';
 
+@ProviderFor(discoverRepository)
+final discoverRepositoryProvider = DiscoverRepositoryProvider._();
+
+final class DiscoverRepositoryProvider
+    extends
+        $FunctionalProvider<
+          DiscoverRepository,
+          DiscoverRepository,
+          DiscoverRepository
+        >
+    with $Provider<DiscoverRepository> {
+  DiscoverRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'discoverRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$discoverRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DiscoverRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  DiscoverRepository create(Ref ref) {
+    return discoverRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DiscoverRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DiscoverRepository>(value),
+    );
+  }
+}
+
+String _$discoverRepositoryHash() =>
+    r'75cf5b691dc4a3d41e9f59f20287c3141d65fa59';
+
 @ProviderFor(paymentGateway)
 final paymentGatewayProvider = PaymentGatewayProvider._();
 

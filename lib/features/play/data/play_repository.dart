@@ -109,6 +109,9 @@ class SupabasePlayRepository implements PlayRepository {
     return id;
   }
 
+  /// A row from `activity_cards`, for other repositories that read one.
+  Activity fromCard(Map<String, dynamic> row) => _fromRow(row);
+
   Future<T> _guard<T>(Future<T> Function() run) async {
     try {
       return await run();

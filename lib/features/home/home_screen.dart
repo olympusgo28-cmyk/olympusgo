@@ -14,6 +14,7 @@ import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/pressable.dart';
 import '../clubs/application/club_providers.dart';
+import '../clubs/data/club_repository.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../shell/main_shell.dart';
@@ -60,6 +61,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: _Categories()),
             const SliverToBoxAdapter(child: _Balances()),
+            const SliverToBoxAdapter(child: _YourGroups()),
             const SliverToBoxAdapter(
               child: ActivityShelf(kind: ActivityKind.meet, title: 'Meets'),
             ),
@@ -418,6 +420,38 @@ class _Balances extends ConsumerWidget {
             noteColor: const Color(0xFFC9C9CF),
             route: Routes.points,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The groups the player belongs to. Nothing shows until they join one.
+class _YourGroups extends ConsumerWidget {
+  const _YourGroups();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groups = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
+    if (groups.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text('Your groups', style: OgText.section),
+          ),
+          const SizedBox(height: 8),
+          for (final item in groups.take(3))
+            KitNavTile(
+              icon: OgIcons.group,
+              title: item.club.name,
+              subtitle: item.club.area,
+              padding: EdgeInsets.zero,
+              onTap: () => context.push(Routes.club(item.club.id)),
+            ),
         ],
       ),
     );

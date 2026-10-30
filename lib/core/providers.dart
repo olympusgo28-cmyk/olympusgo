@@ -9,6 +9,7 @@ import '../features/auth/data/biometric_vault.dart';
 import '../features/clubs/data/club_repository.dart';
 import '../features/clubs/data/demo_club_repository.dart';
 import '../features/clubs/data/supabase_club_repository.dart';
+import '../features/discover/data/discover_repository.dart';
 import '../features/guardian/data/guardian_repository.dart';
 import '../features/profile/data/profile_repository.dart';
 import '../features/profile/domain/profile.dart';
@@ -70,6 +71,14 @@ SettingsRepository settingsRepository(Ref ref) => Env.hasSupabase
 PlayRepository playRepository(Ref ref) => Env.hasSupabase
     ? SupabasePlayRepository(Supabase.instance.client)
     : DemoPlayRepository();
+
+@Riverpod(keepAlive: true)
+DiscoverRepository discoverRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseDiscoverRepository(
+        Supabase.instance.client,
+        ref.watch(playRepositoryProvider) as SupabasePlayRepository,
+      )
+    : DemoDiscoverRepository(ref.watch(playRepositoryProvider));
 
 @Riverpod(keepAlive: true)
 PaymentGateway paymentGateway(Ref ref) => Env.hasSupabase

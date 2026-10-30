@@ -27,6 +27,9 @@ abstract final class Routes {
 
   static const home = '/home';
   static const discover = '/discover';
+  static const find = '/find';
+  static const services = '/services';
+  static const fitness = '/fitness';
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';

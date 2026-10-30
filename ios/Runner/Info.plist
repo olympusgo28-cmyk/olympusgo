@@ -30,6 +30,8 @@
 	<string>Scan Meet and player QR codes, and take a profile photo.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to unlock OlympusGO without a code.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sort Meets near you. We keep only a rough area, and other players never see it.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose a profile photo.</string>
 	<key>UIApplicationSceneManifest</key>

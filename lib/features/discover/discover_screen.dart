@@ -195,6 +195,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             ),
             if (_shows(_Scope.meets))
               SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: KitButton.outline(
+                    label: 'Find a Meet by date and distance',
+                    onPressed: () => context.push(Routes.find),
+                  ),
+                ),
+              ),
+            if (_shows(_Scope.meets))
+              SliverToBoxAdapter(
                 child: ActivityShelf(
                   kind: ActivityKind.meet,
                   title: 'Meets',
@@ -226,11 +236,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               ),
             if (_shows(_Scope.players))
               SliverToBoxAdapter(
-                child: PlayerShelf(
-                  title: 'Players and creators',
-                  linkLabel: 'Top creator',
-                  linkRoute: Routes.creator('ravi'),
-                ),
+                child: PlayerShelf(title: 'Players and creators'),
               ),
             if (_shows(_Scope.malls))
               const SliverToBoxAdapter(child: MallShelf()),
