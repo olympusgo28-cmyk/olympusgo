@@ -13,7 +13,7 @@ update public.profiles set visibility = 'only_me' where id = 'f0000000-0000-0000
 insert into public.blocks (blocker_id, blocked_id)
   values ('f0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000004');
 insert into public.player_sports (user_id, sport, level, play_min, play_max)
-select ('f0000000-0000-0000-0000-00000000000' || i)::uuid, 'badminton', 4, 3, 5 from generate_series(1, 5) i;
+select ('f0000000-0000-0000-0000-00000000000' || i)::uuid, 'badminton', 7.3, 3, 8 from generate_series(1, 5) i;
 
 create temp table m on commit drop as select t.meet('f0000000-0000-0000-0000-000000000002') as id;
 create temp table b on commit drop as select t.meet('f0000000-0000-0000-0000-000000000004') as id;
@@ -40,10 +40,10 @@ select is(jsonb_array_length(public.discover_sessions(p_max_km => 0.001)), 0, 't
 select is(jsonb_array_length(public.discover_sessions(p_from => now() + interval '30 days')), 0, 'the date filter works');
 
 -- Players.
-select ok(public.discover_players()::text like '%f0000000-0000-0000-0000-000000000002%', 'P2-01 an adult is found');
-select ok(public.discover_players()::text not like '%f0000000-0000-0000-0000-000000000003%', 'P2-01 minors are left out');
-select ok(public.discover_players()::text not like '%f0000000-0000-0000-0000-000000000004%', 'P2-01 blocked players are left out');
-select ok(public.discover_players()::text not like '%f0000000-0000-0000-0000-000000000005%', 'only-me players are left out');
+select ok(public.discover_players(p_level => 7.3)::text like '%f0000000-0000-0000-0000-000000000002%', 'P2-01 an adult is found');
+select ok(public.discover_players(p_level => 7.3)::text not like '%f0000000-0000-0000-0000-000000000003%', 'P2-01 minors are left out');
+select ok(public.discover_players(p_level => 7.3)::text not like '%f0000000-0000-0000-0000-000000000004%', 'P2-01 blocked players are left out');
+select ok(public.discover_players(p_level => 7.3)::text not like '%f0000000-0000-0000-0000-000000000005%', 'only-me players are left out');
 
 -- Withdrawing.
 select public.consent_set('location', false);

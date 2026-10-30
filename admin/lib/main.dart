@@ -12,6 +12,7 @@ import 'features/auth/mfa_screen.dart';
 import 'features/auth/session.dart';
 import 'features/reports/reports_screens.dart';
 import 'features/shell/admin_shell.dart';
+import 'features/sports/rules_screen.dart';
 import 'features/sports/sports_screen.dart';
 import 'features/users/users_screen.dart';
 
@@ -24,7 +25,13 @@ Future<void> main() async {
   runApp(const ProviderScope(child: AdminApp()));
 }
 
-const sections = [Section('/audit', 'Audit log', Icons.history, 'super')];
+const sections = [
+  Section('/reports', 'Reports', Icons.flag_outlined, 'moderator'),
+  Section('/users', 'Users', Icons.people_outline, 'moderator'),
+  Section('/sports', 'Sports', Icons.sports_tennis, 'content'),
+  Section('/rules', 'Rating and scoring', Icons.rule, 'content'),
+  Section('/audit', 'Audit log', Icons.history, 'super'),
+];
 
 final _router = GoRouter(
   initialLocation: '/reports',
@@ -36,6 +43,7 @@ final _router = GoRouter(
         GoRoute(path: '/audit', builder: (_, _) => const AuditScreen()),
         GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
+        GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),
         GoRoute(path: '/reports', builder: (_, _) => const ReportsScreen()),
         GoRoute(path: '/reports/bans', builder: (_, _) => const BansScreen()),
         GoRoute(

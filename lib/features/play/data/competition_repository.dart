@@ -52,7 +52,13 @@ abstract interface class TournamentRepository {
   Future<void> callMatch(String matchId);
 
   /// The umpire's final score, side A first.
-  Future<void> saveScore(String matchId, List<(int, int)> games);
+  /// A correction needs [reason]. [retired] is the side that stopped, 1 or 2.
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  });
 }
 
 /// Event pages: the programme, the live court and tickets.
@@ -417,15 +423,21 @@ class SupabaseTournamentRepository implements TournamentRepository {
   });
 
   @override
-  Future<void> saveScore(String matchId, List<(int, int)> games) =>
-      _guard(() async {
-        await _rpc('tournament_score', {
-          'p_match': matchId,
-          'p_games': [
-            for (final g in games) [g.$1, g.$2],
-          ],
-        });
-      });
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  }) => _guard(() async {
+    await _rpc('tournament_score', {
+      'p_match': matchId,
+      'p_games': [
+        for (final g in games) [g.$1, g.$2],
+      ],
+      'p_reason': ?reason,
+      'p_retired': ?retired,
+    });
+  });
 
   @override
   Future<void> cancel(String id, {String message = ''}) =>
@@ -1255,7 +1267,12 @@ class DemoTournamentRepository implements TournamentRepository {
   Future<void> callMatch(String matchId) => _tick();
 
   @override
-  Future<void> saveScore(String matchId, List<(int, int)> games) => _tick();
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  }) => _tick();
 }
 
 class DemoEventRepository implements EventRepository {

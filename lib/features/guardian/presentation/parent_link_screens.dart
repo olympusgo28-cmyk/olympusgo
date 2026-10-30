@@ -9,6 +9,7 @@ import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_text.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
+import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/guardian_providers.dart';
@@ -338,6 +339,28 @@ class ChildDetailScreen extends ConsumerWidget {
     return KitScaffold(
       header: KitHeader(title: link?.name ?? 'Your child'),
       children: [
+        RowGroup(
+          children: [
+            SwitchRow(
+              title: 'Show on leaderboards',
+              subtitle:
+                  'First name and initial only. Off until you turn it on.',
+              value: ref.watch(childListedProvider(childId)).value ?? false,
+              onChanged: (v) async {
+                try {
+                  await ref
+                      .read(guardianRepositoryProvider)
+                      .setChildListed(childId, listed: v);
+                  ref.invalidate(childListedProvider(childId));
+                } on AuthFailure catch (e) {
+                  if (context.mounted) {
+                    showOgToast(context, e.message, error: true);
+                  }
+                }
+              },
+            ),
+          ],
+        ),
         if (groups.isNotEmpty) const KitSection('Groups waiting for you'),
         for (final group in groups)
           KitCard(

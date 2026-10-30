@@ -96,3 +96,22 @@ All amounts are integer minor units with a currency.
 | `points.award` | Event consumer on `attendance.recorded` | — | Points entries for payers marked Present | R-PTS-1 to R-PTS-6 |
 
 `money.quote` and `money.refund_quote` are pure functions. Write them first, test them against every row of the example tables in `RULES.md`, and use them everywhere an amount is shown or charged, so the app and the server can never disagree.
+
+## Scores and ratings (checklist phase 3)
+
+| Name | Who | What it does |
+| --- | --- | --- |
+| `submit_score(activity, partners, opponents, games, client_key)` | Player on the Meet | Enters a score. A repeat `client_key` returns the same score |
+| `answer_score(score, ok, why)` | Other side | Confirms or disputes, under a row lock |
+| `organiser_decide_score(p_score, p_games, p_reason)` | Organizer | Decides a disputed or unconfirmed score |
+| `tournament_score(p_match, p_games, p_reason, p_retired)` | Organizer | Final score. A correction needs a reason, within 24 hours |
+| `staff_result_correct(p_score, p_games, p_reason)` | Staff, moderator | Later correction, through `admin-action`. The winner of a tournament match can't change (Q53) |
+| `activity_preset_set(p_activity, p_preset)` | Organizer | Picks scoring until the first score |
+| `activity_scoring(p_activity)` | Signed in | The rules a score is checked with |
+| `meet_rounds_save(p_activity, p_from, p_rounds)`, `meet_rounds(p_activity)` | Organizer, players | Saves and reads rounds |
+| `my_rating(p_sport)`, `my_rating_change(p_activity, p_score)` | Signed in | Own rating and how it moved |
+| `leaderboard_rating(p_sport, p_areas)`, `leaderboard_points(p_sport)` | Signed in | Read the snapshots |
+| `guardian_leaderboard_set(p_child, p_on)` | Linked parent | Opts a child in or out |
+| `leaderboards_refresh()` | Service role only | Rebuilds snapshots |
+| `staff_preset_save(...)`, `staff_level_save(...)` | Staff, content | A-05, through `admin-action` |
+

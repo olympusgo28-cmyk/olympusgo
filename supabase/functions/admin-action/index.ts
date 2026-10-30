@@ -16,6 +16,9 @@ const ACTIONS = new Set<string>([
   "staff_sport_save",
   "staff_format_save",
   "staff_recovery_decide",
+  "staff_preset_save",
+  "staff_level_save",
+  "staff_result_correct",
 ]);
 
 const cors = {

@@ -1,4 +1,11 @@
+import 'dart:math';
+
+import 'package:match_engine/match_engine.dart';
+
 import '../../social/domain/social_models.dart';
+
+export 'package:match_engine/match_engine.dart'
+    show Pairing, Round, RosterPlayer, ScoringPreset;
 
 /// What the organizer marked for a player after the Meet.
 enum Attendance {
@@ -221,29 +228,34 @@ class MatchScore {
   );
 }
 
-/// Who won a badminton game from its final score: 1 or 2, 0 while a side
-/// is missing, -1 when the score can't happen. A game is won at 21 with 2
-/// clear; from 20 all it goes on to a 2-point lead, capped at 30.
-int gameWinner(int? a, int? b) {
-  if (a == null || b == null) return 0;
-  final hi = a > b ? a : b;
-  final lo = a > b ? b : a;
-  final won =
-      hi == 21 && lo <= 19 ||
-      hi > 21 && hi < 30 && hi - lo == 2 ||
-      hi == 30 && lo >= 28;
-  if (!won) return -1;
-  return a > b ? 1 : 2;
-}
+/// Who won a game from its final score: 1 or 2, 0 while a side is missing,
+/// -1 when the score can't happen.
+int gameWinner(
+  int? a,
+  int? b, [
+  ScoringPreset preset = ScoringPreset.badminton,
+]) => preset.gameWinner(a, b);
 
-/// One side has won 2 games, every game typed is a real score, and game 3
-/// is only there when the first two were split.
-bool matchDecided(List<(int?, int?)> games) {
-  if (games.length < 2) return false;
-  final r = [for (final g in games) gameWinner(g.$1, g.$2)];
-  if (r[0] <= 0 || r[1] <= 0) return false;
-  final third =
-      games.length > 2 && (games[2].$1 != null || games[2].$2 != null);
-  if (r[0] == r[1]) return !third;
-  return third && r[2] > 0;
+/// One side has won enough games, every game typed is a real score, and no
+/// game was played after the match was over.
+bool matchDecided(
+  List<(int?, int?)> games, [
+  ScoringPreset preset = ScoringPreset.badminton,
+]) => preset.matchDecided(games);
+
+/// How a game is won, for a hint under the score.
+String scoringHint(ScoringPreset p) => p.pointsToWin == 0
+    ? "A game can't end level."
+    : 'A game is won at ${p.pointsToWin} with ${p.winBy} clear'
+          '${p.cap == null ? '' : ', or at ${p.cap}'}.';
+
+/// A random id for a score, so a retry can't enter it twice.
+String newClientKey() {
+  final r = Random.secure();
+  final b = [for (var i = 0; i < 16; i++) r.nextInt(256)];
+  b[6] = b[6] & 0x0f | 0x40;
+  b[8] = b[8] & 0x3f | 0x80;
+  final h = [for (final x in b) x.toRadixString(16).padLeft(2, '0')].join();
+  return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-'
+      '${h.substring(16, 20)}-${h.substring(20)}';
 }

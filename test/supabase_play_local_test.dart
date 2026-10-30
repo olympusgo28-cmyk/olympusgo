@@ -7,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/local_accounts.dart';
 
+import 'package:olympus_go/features/play/data/play_repository.dart';
+import 'package:olympus_go/features/play/domain/meet_ops.dart';
+
 import 'package:olympus_go/features/auth/data/biometric_vault.dart';
 import 'package:olympus_go/features/auth/data/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -237,6 +240,108 @@ void main() {
       expect(after['restricted'], isFalse);
       expect(after['can_scan'], isFalse);
       await child.from('activity_cards').select().limit(1);
+    },
+    skip: skip,
+  );
+
+  test('P3-04 two players confirm one score at once and the rating moves once', () async {
+    final service = SupabaseClient(
+      url!,
+      Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+    );
+    final host = await player('ratehost');
+    final id = await meet(host);
+    final a = await player('ratea');
+    final b = await player('rateb');
+    final c = await player('ratec');
+    final d = await player('rated');
+    for (final p in [a, b, c, d]) {
+      await p.rpc('join_activity', params: {'activity': id});
+    }
+    await service
+        .from('activities')
+        .update({
+          'starts_at': DateTime.now()
+              .toUtc()
+              .subtract(const Duration(hours: 1))
+              .toIso8601String(),
+          'ranked': true,
+        })
+        .eq('id', id);
+    await service
+        .from('activity_participants')
+        .update({'attendance': 'present'})
+        .eq('activity_id', id);
+
+    final repo = SupabasePlayRepository(a);
+    final key =
+        '11111111-2222-4333-8444-${DateTime.now().microsecondsSinceEpoch.toString().padLeft(12, '0').substring(0, 12)}';
+    Future<MatchScore> send() => repo.submitScore(
+      id,
+      partners: [b.auth.currentUser!.id],
+      opponents: [c.auth.currentUser!.id, d.auth.currentUser!.id],
+      games: const [(21, 12), (21, 15)],
+      clientKey: key,
+    );
+    final sent = await send();
+    expect((await send()).id, sent.id, reason: 'a retry finds the same one');
+
+    final results = await Future.wait([
+      for (final p in [c, d])
+        p
+            .rpc('answer_score', params: {'score': sent.id, 'ok': true})
+            .then((_) => true, onError: (_) => false),
+    ]);
+    expect(results.where((ok) => ok), hasLength(1));
+
+    final events = await service
+        .from('rating_events')
+        .select('user_id')
+        .eq('user_id', a.auth.currentUser!.id);
+    expect(events, hasLength(1));
+
+    final after = await repo.score(sent.id);
+    expect(after.ratingAfter, greaterThan(after.ratingBefore!));
+    final recap = await repo.recap(id);
+    expect(recap.wins, 1);
+    expect(recap.ratingAfter, after.ratingAfter);
+  }, skip: skip);
+
+  test(
+    'P3-06 six parallel entries on three places give exactly three',
+    () async {
+      final service = SupabaseClient(
+        url!,
+        Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+      );
+      final host = await player('drawhost');
+      final id = await meet(host, capacity: 3);
+      await service
+          .from('activities')
+          .update({
+            'kind': 'tournament',
+            'format': 'knockout',
+            'game_type': 'singles',
+            'status': 'published',
+          })
+          .eq('id', id);
+      final players = [for (var i = 0; i < 6; i++) await player('entry$i')];
+      await Future.wait([
+        for (final p in players)
+          p.rpc(
+            'tournament_register',
+            params: {
+              'p_activity': id,
+              'p_divisions': ['main'],
+            },
+          ),
+      ]);
+      final rows = await service
+          .from('tournament_entries')
+          .select('status')
+          .eq('activity_id', id);
+      expect(rows.where((r) => r['status'] == 'entered'), hasLength(3));
+      expect(rows.where((r) => r['status'] == 'waitlist'), hasLength(3));
     },
     skip: skip,
   );

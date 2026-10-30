@@ -209,6 +209,75 @@ final class ChildPostsFamily extends $Family
   String toString() => r'childPostsProvider';
 }
 
+@ProviderFor(childListed)
+final childListedProvider = ChildListedFamily._();
+
+final class ChildListedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  ChildListedProvider._({
+    required ChildListedFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'childListedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$childListedHash();
+
+  @override
+  String toString() {
+    return r'childListedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return childListed(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChildListedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$childListedHash() => r'fe55084e65735e13f214e0fbd9e8d3947d2f80e6';
+
+final class ChildListedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  ChildListedFamily._()
+    : super(
+        retry: null,
+        name: r'childListedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChildListedProvider call(String childId) =>
+      ChildListedProvider._(argument: childId, from: this);
+
+  @override
+  String toString() => r'childListedProvider';
+}
+
 @ProviderFor(childGroupRequests)
 final childGroupRequestsProvider = ChildGroupRequestsFamily._();
 

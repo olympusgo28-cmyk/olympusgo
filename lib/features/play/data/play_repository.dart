@@ -82,18 +82,30 @@ abstract interface class PlayRepository {
   Future<MeetRecap> recap(String id);
 
   // Ranked scores.
+  Future<ScoringPreset> scoring(String activityId);
+
+  /// The presets an organizer can pick for this sport.
+  Future<List<(String, String, ScoringPreset)>> presets(String sport);
+  Future<void> setPreset(String activityId, String preset);
   Future<MatchScore> score(String scoreId);
   Future<MatchScore> submitScore(
     String activityId, {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   });
   Future<MatchScore> answerScore(
     String scoreId, {
     required bool confirm,
     String? reason,
   });
+
+  // Rounds from the match generator.
+  Future<List<Round>> rounds(String activityId);
+
+  /// Replaces rounds [from] onward. Earlier rounds stand.
+  Future<void> saveRounds(String activityId, int from, List<Round> rounds);
 
   Future<List<PlaySportPref>> playSports();
   Future<void> savePlaySports(List<PlaySportPref> prefs);
@@ -523,16 +535,15 @@ class SupabasePlayRepository implements PlayRepository {
 
   @override
   Future<MeetRecap> recap(String id) => _guard(() async {
-    // Points, ratings and partners come with the rating engine. Until then
-    // the recap counts the confirmed scores this player was in.
     final me = _me;
-    final rows =
+    final all =
         (await _client
-                .from('match_scores')
-                .select('side_a, side_b, games')
-                .eq('activity_id', id)
-                .eq('status', 'confirmed'))
+                .from('match_results')
+                .select('id, supersedes, side_a, side_b, games, winner')
+                .eq('activity_id', id))
             .cast<Map<String, dynamic>>();
+    final replaced = {for (final r in all) r['supersedes']};
+    final rows = all.where((r) => !replaced.contains(r['id']));
     var wins = 0, losses = 0;
     String? best;
     var bestGap = -1;
@@ -543,7 +554,7 @@ class SupabasePlayRepository implements PlayRepository {
         for (final g in (r['games'] as List).cast<List>())
           onA ? (g[0] as int, g[1] as int) : (g[1] as int, g[0] as int),
       ];
-      final won = games.where((g) => g.$1 > g.$2).length >= 2;
+      final won = r['winner'] == (onA ? 1 : 2);
       won ? wins++ : losses++;
       for (final g in games) {
         if (g.$1 > g.$2 && g.$1 - g.$2 > bestGap) {
@@ -558,15 +569,115 @@ class SupabasePlayRepository implements PlayRepository {
         .eq('user_id', me)
         .eq('status', 'joined')
         .count(CountOption.exact);
+    final change = await _ratingChange(id);
     return MeetRecap(
       games: wins + losses,
       wins: wins,
       losses: losses,
       bestGame: best,
-      points: 4,
+      ratingBefore: change?.$1,
+      ratingAfter: change?.$2,
+      band: change == null ? null : SkillBand.forLevel(change.$2).code,
+      points: 0,
       session: sessions.count,
     );
   });
+
+  Future<(double, double)?> _ratingChange(
+    String activity, [
+    String? score,
+  ]) async {
+    final j = await _client.rpc(
+      'my_rating_change',
+      params: {'p_activity': activity, 'p_score': ?score},
+    );
+    if (j == null) return null;
+    return ((j['before'] as num).toDouble(), (j['after'] as num).toDouble());
+  }
+
+  @override
+  Future<ScoringPreset> scoring(String activityId) => _guard(() async {
+    final j = await _client.rpc(
+      'activity_scoring',
+      params: {'p_activity': activityId},
+    );
+    return ScoringPreset.fromJson(Map<String, dynamic>.from(j as Map));
+  });
+
+  @override
+  Future<List<(String, String, ScoringPreset)>> presets(String sport) =>
+      _guard(() async {
+        final rows = await _client
+            .from('scoring_presets')
+            .select('key, name, rules')
+            .eq('sport_key', sport)
+            .eq('active', true)
+            .order('key');
+        return [
+          for (final r in rows)
+            (
+              r['key'] as String,
+              r['name'] as String,
+              ScoringPreset.fromJson(
+                Map<String, dynamic>.from(r['rules'] as Map),
+              ),
+            ),
+        ];
+      });
+
+  @override
+  Future<void> setPreset(String activityId, String preset) => _guard(
+    () => _client.rpc(
+      'activity_preset_set',
+      params: {'p_activity': activityId, 'p_preset': preset},
+    ),
+  );
+
+  @override
+  Future<List<Round>> rounds(String activityId) => _guard(() async {
+    final rows = await _client.rpc(
+      'meet_rounds',
+      params: {'p_activity': activityId},
+    ) as List;
+    final byRound = <int, List<Map>>{};
+    for (final r in rows.cast<Map>()) {
+      byRound.putIfAbsent(r['round'] as int, () => []).add(r);
+    }
+    return [
+      for (final e in byRound.entries)
+        Round(e.key, [
+          for (final m in e.value)
+            Pairing(
+              m['court'] as int,
+              (m['side_a'] as List).cast<String>(),
+              (m['side_b'] as List).cast<String>(),
+            ),
+        ], (e.value.first['byes'] as List).cast<String>()),
+    ];
+  });
+
+  @override
+  Future<void> saveRounds(String activityId, int from, List<Round> rounds) =>
+      _guard(
+        () => _client.rpc(
+          'meet_rounds_save',
+          params: {
+            'p_activity': activityId,
+            'p_from': from,
+            'p_rounds': [
+              for (final r in rounds)
+                {
+                  'number': r.number,
+                  'byes': r.byes,
+                  'matches': [
+                    for (final m in r.matches)
+                      {'court': m.court, 'side_a': m.sideA, 'side_b': m.sideB},
+                  ],
+                },
+            ],
+          },
+        ),
+      );
 
   @override
   Future<MatchScore> score(String scoreId) => _guard(() async {
@@ -589,6 +700,10 @@ class SupabasePlayRepository implements PlayRepository {
         p['id'] as String: PlayerSummary.fromRow(p),
     };
     PlayerSummary who(String id) => people[id] ?? PlayerSummary(id: id);
+    final status = ScoreStatus.fromId(r['status'] as String?);
+    final change = status == ScoreStatus.confirmed
+        ? await _ratingChange(r['activity_id'] as String, scoreId)
+        : null;
     return MatchScore(
       id: r['id'] as String,
       activityId: r['activity_id'] as String,
@@ -601,8 +716,10 @@ class SupabasePlayRepository implements PlayRepository {
       ],
       enteredBy: who(r['entered_by'] as String),
       enteredAt: DateTime.parse(r['created_at'] as String).toLocal(),
-      status: ScoreStatus.fromId(r['status'] as String?),
+      status: status,
       reason: r['reason'] as String?,
+      ratingBefore: change?.$1,
+      ratingAfter: change?.$2,
       organizer: who((r['activities'] as Map)['host_id'] as String),
     );
   });
@@ -613,6 +730,7 @@ class SupabasePlayRepository implements PlayRepository {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   }) => _guard(() async {
     final id = await _client.rpc(
       'submit_score',
@@ -623,6 +741,7 @@ class SupabasePlayRepository implements PlayRepository {
         'games': [
           for (final g in games) [g.$1, g.$2],
         ],
+        'client_key': ?clientKey,
       },
     ) as String;
     return score(id);
@@ -1759,6 +1878,36 @@ class DemoPlayRepository implements PlayRepository {
     );
   }
 
+  final _rounds = <String, List<Round>>{};
+
+  @override
+  Future<ScoringPreset> scoring(String activityId) async =>
+      ScoringPreset.badminton;
+
+  @override
+  Future<List<(String, String, ScoringPreset)>> presets(String sport) async =>
+      const [('badminton_standard', 'Badminton', ScoringPreset.badminton)];
+
+  @override
+  Future<void> setPreset(String activityId, String preset) => _tick();
+
+  @override
+  Future<List<Round>> rounds(String activityId) async =>
+      _rounds[activityId] ?? const [];
+
+  @override
+  Future<void> saveRounds(
+    String activityId,
+    int from,
+    List<Round> rounds,
+  ) async {
+    await _tick();
+    _rounds[activityId] = [
+      ...?_rounds[activityId]?.where((r) => r.number < from),
+      ...rounds,
+    ];
+  }
+
   void _seedScores() {
     final mei = _w.players['cp-mei']!;
     final singles = _items.firstWhere((a) => a.id == 'ts-singles');
@@ -1792,6 +1941,7 @@ class DemoPlayRepository implements PlayRepository {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   }) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == activityId);

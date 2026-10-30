@@ -157,6 +157,20 @@ Future<MeetRecap> meetRecap(Ref ref, String id) =>
     ref.watch(playRepositoryProvider).recap(id);
 
 @riverpod
+Future<ScoringPreset> activityScoring(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).scoring(id);
+
+@riverpod
+Future<List<(String, String, ScoringPreset)>> scoringPresets(
+  Ref ref,
+  String sport,
+) => ref.watch(playRepositoryProvider).presets(sport);
+
+@riverpod
+Future<List<Round>> meetRounds(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).rounds(id);
+
+@riverpod
 Future<MatchScore> matchScore(Ref ref, String id) =>
     ref.watch(playRepositoryProvider).score(id);
 

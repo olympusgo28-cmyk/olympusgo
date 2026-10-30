@@ -458,6 +458,21 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                               : null,
                         ),
                       if (a.kind == ActivityKind.meet &&
+                          (a.iAmHost || a.myStatus == MyStatus.joined))
+                        KitCard(
+                          children: [
+                            KitNavTile(
+                              icon: OgIcons.pointsStar,
+                              title: 'Match rounds',
+                              subtitle: a.iAmHost
+                                  ? 'Set who plays who on each court'
+                                  : 'See who plays who on each court',
+                              onTap: () =>
+                                  context.push(Routes.meetRounds(a.id)),
+                            ),
+                          ],
+                        ),
+                      if (a.kind == ActivityKind.meet &&
                           a.myStatus == MyStatus.joined &&
                           a.startsAt.isBefore(DateTime.now()))
                         KitCard(

@@ -116,6 +116,7 @@ abstract final class Routes {
   static String meetAttendance(String id) => '/activities/$id/attendance';
   static String meetScanPlayers(String id) => '/activities/$id/scan-players';
   static String meetRecap(String id) => '/activities/$id/recap';
+  static String meetRounds(String id) => '/activities/$id/rounds';
   static String meetCancel(String id) => '/activities/$id/cancel';
   static String scoreEntry(String id) => '/activities/$id/score';
   static String score(String id) => '/scores/$id';

@@ -827,18 +827,19 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
                 if (context.mounted) showOgToast(context, 'Link copied');
               },
             ),
-          KitNote(
-            'You earned ${r.points} points for showing up.',
-            tone: KitTone.info,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: KitLink(
-                'See your points',
-                underline: true,
-                onPressed: () => context.push(Routes.points),
+          if (r.points > 0)
+            KitNote(
+              'You earned ${r.points} points for showing up.',
+              tone: KitTone.info,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: KitLink(
+                  'See your points',
+                  underline: true,
+                  onPressed: () => context.push(Routes.points),
+                ),
               ),
             ),
-          ),
         ],
       );
     },

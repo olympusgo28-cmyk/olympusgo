@@ -57,6 +57,7 @@ import '../../features/play/presentation/tournament_host_screens.dart';
 import '../../features/play/presentation/tournament_screens.dart';
 import '../../features/play/presentation/meet_action_screens.dart';
 import '../../features/play/presentation/meet_host_screens.dart';
+import '../../features/play/presentation/meet_rounds_screen.dart';
 import '../../features/play/presentation/score_screens.dart';
 import '../../features/play/presentation/meet_detail_screen.dart';
 import '../../features/play/presentation/play_screen.dart';
@@ -503,6 +504,10 @@ GoRouter appRouter(Ref ref) {
       page(
         '/activities/:id/recap',
         (s) => MeetRecapScreen(activityId: s.pathParameters['id']!),
+      ),
+      page(
+        '/activities/:id/rounds',
+        (s) => MeetRoundsScreen(activityId: s.pathParameters['id']!),
       ),
       page(
         '/activities/:id/cancel',

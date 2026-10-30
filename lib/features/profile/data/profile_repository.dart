@@ -16,6 +16,7 @@ abstract interface class ProfileRepository {
 
   /// Your past sessions in [sport], newest first.
   Future<PassportHistory> history(String sport);
+  Future<RatingCard?> rating(String sport);
 
   /// Replaces the player's Passport sports and their own levels.
   Future<void> saveSports(String userId, List<PlayerSport> sports);
@@ -106,6 +107,20 @@ class SupabaseProfileRepository implements ProfileRepository {
       params: {'p_user': userId},
     );
     return ProfileSummary(sessions: played as int);
+  });
+
+  @override
+  Future<RatingCard?> rating(String sport) => _guard(() async {
+    final j = await _client.rpc('my_rating', params: {'p_sport': sport});
+    if (j == null) return null;
+    return RatingCard(
+      level: (j['level'] as num).toDouble(),
+      matches: j['matches'] as int,
+      provisional: j['provisional'] as bool,
+      history: [
+        for (final p in j['history'] as List) (p['rating'] as num).toDouble(),
+      ],
+    );
   });
 
   @override
@@ -208,6 +223,9 @@ class DemoProfileRepository implements ProfileRepository {
           ),
         ]
       : const [];
+
+  @override
+  Future<RatingCard?> rating(String sport) async => null;
 
   @override
   Future<PassportHistory> history(String sport) async {

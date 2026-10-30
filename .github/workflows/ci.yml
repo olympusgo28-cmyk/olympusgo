@@ -41,6 +41,8 @@ jobs:
       - run: dart format --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
+      - run: flutter test
+        working-directory: packages/match_engine
 
   database:
     runs-on: ubuntu-latest

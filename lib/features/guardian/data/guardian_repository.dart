@@ -21,6 +21,8 @@ abstract interface class GuardianRepository {
   Future<List<GuardianLink>> children();
   Future<List<GuardianLink>> parents();
   Future<List<ChildPost>> childPosts(String childId);
+  Future<bool> childListed(String childId);
+  Future<void> setChildListed(String childId, {required bool listed});
   Future<void> deletePost(String childId, ChildPost post);
   Future<List<GroupRequest>> groupRequests(String childId);
   Future<void> decideGroup(
@@ -116,6 +118,24 @@ class SupabaseGuardianRepository implements GuardianRepository {
 
   @override
   Future<List<GuardianLink>> parents() => _links('guardian_parents');
+
+  @override
+  Future<bool> childListed(String childId) => _guard(() async {
+    final r = await _client
+        .from('leaderboard_consents')
+        .select('child_id')
+        .eq('child_id', childId)
+        .maybeSingle();
+    return r != null;
+  });
+
+  @override
+  Future<void> setChildListed(String childId, {required bool listed}) => _guard(
+    () => _client.rpc(
+      'guardian_leaderboard_set',
+      params: {'p_child': childId, 'p_on': listed},
+    ),
+  );
 
   @override
   Future<List<ChildPost>> childPosts(String childId) => _guard(() async {
@@ -262,6 +282,15 @@ class DemoGuardianRepository implements GuardianRepository {
 
   @override
   Future<List<GuardianLink>> parents() async => const [];
+
+  bool _listed = false;
+
+  @override
+  Future<bool> childListed(String childId) async => _listed;
+
+  @override
+  Future<void> setChildListed(String childId, {required bool listed}) async =>
+      _listed = listed;
 
   @override
   Future<List<ChildPost>> childPosts(String childId) async => [..._posts];

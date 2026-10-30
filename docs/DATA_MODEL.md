@@ -423,6 +423,16 @@ create table activities.attendance (
 );
 ```
 
+## Matches and ratings (checklist phase 3)
+
+- `scoring_presets`: named rules per sport, with staff able to change them (A-05). `activity_presets` holds an organizer's choice.
+- `matches`: rounds from the generator, by round and court.
+- `match_scores`: adds `client_key` (unique per person), `supersedes`, `retired_side`, and the status `superseded`. A trigger checks every score against `private.activity_rules`.
+- `match_results`: append-only. Made by a trigger when a score becomes confirmed. A correction is a new row with `supersedes`.
+- `ratings`, `rating_events`: no client write path. `rating_events` is append-only; a correction adds reversal rows.
+- `player_sports.level` follows the rating once a `ratings` row exists.
+- `leaderboard_rows`: snapshots from `private.leaderboards_build()`, hourly. `leaderboard_consents`: a guardian's opt-in. Both are read through RPCs that recheck `private.listable`.
+
 ## Money (phase 9, after Q1 is answered)
 
 ```sql

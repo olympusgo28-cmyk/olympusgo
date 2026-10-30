@@ -108,6 +108,23 @@ class HistoryItem {
 }
 
 /// Sessions and results in one sport.
+/// A player's rating in one sport, from confirmed results.
+class RatingCard {
+  const RatingCard({
+    required this.level,
+    required this.matches,
+    required this.provisional,
+    this.history = const [],
+  });
+
+  final double level;
+  final int matches;
+  final bool provisional;
+
+  /// The rating after each result, oldest first.
+  final List<double> history;
+}
+
 class PassportHistory {
   const PassportHistory({
     this.sessions = 0,

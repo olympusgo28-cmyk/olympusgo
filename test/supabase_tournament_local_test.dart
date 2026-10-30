@@ -417,6 +417,11 @@ void main() {
     final (other, _) = await player('other', 4);
     expect(await SupabaseGameRepository(other).gear(), isEmpty);
 
+    // Leaderboards are snapshots a job builds, so build one now.
+    await SupabaseClient(
+      url!,
+      Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+    ).rpc('leaderboards_refresh');
     final points = await game.leaderboard(
       local: false,
       sport: 'Badminton',

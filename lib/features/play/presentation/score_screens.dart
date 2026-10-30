@@ -15,12 +15,12 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/domain/social_models.dart';
-import '../../onboarding/domain/sport.dart';
 import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import '../domain/draw_logic.dart';
 import '../domain/meet_ops.dart';
+import '../domain/tournament_models.dart';
 import 'meet_action_screens.dart';
 
 const _lime = Color(0xFFFF7A1A);
@@ -65,12 +65,16 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
   bool _fresh = true;
   bool _busy = false;
   MatchScore? _sent;
+  final _key = newClientKey();
+  ScoringPreset _rules = ScoringPreset.badminton;
 
   int? _n(String v) => v.isEmpty ? null : int.parse(v);
   List<(int?, int?)> get _games => [
     for (var g = 0; g < 3; g++) (_n(_cells[g * 2]), _n(_cells[g * 2 + 1])),
   ];
-  List<int> get _results => [for (final g in _games) gameWinner(g.$1, g.$2)];
+  List<int> get _results => [
+    for (final g in _games) gameWinner(g.$1, g.$2, _rules),
+  ];
   bool get _showThird {
     final r = _results;
     return r[0] > 0 && r[1] > 0 && r[0] != r[1] ||
@@ -95,7 +99,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
     var v = _fresh ? '' : _cells[_cur];
     if (v.length >= 2) v = '';
     v = '$v$d';
-    if (v.length == 2 && int.parse(v) > 30) v = '$d';
+    if (v.length == 2 && int.parse(v) > (_rules.cap ?? 99)) v = '$d';
     _put(v, advance: v.length == 2);
   }
 
@@ -131,6 +135,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
             partners: [?_partner],
             opponents: _opponents,
             games: games,
+            clientKey: _key,
           );
       HapticFeedback.mediumImpact();
       if (mounted) setState(() => _sent = s);
@@ -147,6 +152,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
     title: 'Enter score',
     body: (a) {
       final me = ref.watch(currentUserIdProvider).value;
+      _rules = ref.watch(activityScoringProvider(a.id)).value ?? _rules;
       final players = (ref.watch(meetPlayersProvider(a.id)).value ?? const [])
           .where((p) => p.waitlistAt == null && !p.isGuest && p.player.id != me)
           .toList();
@@ -222,7 +228,10 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
       final r = _results;
       final winsA = r.where((x) => x == 1).length;
       final winsB = r.where((x) => x == 2).length;
-      final decided = matchDecided(_games.take(_showThird ? 3 : 2).toList());
+      final decided = matchDecided(
+        _games.take(_showThird ? 3 : 2).toList(),
+        _rules,
+      );
       final bad = r.indexOf(-1);
       final head = _camera
           ? 'Camera scoring is coming'
@@ -235,7 +244,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
           ? 'Courts with a camera will score on their own in Phase 2. Type '
                 'the score by hand for now.'
           : bad >= 0
-          ? 'A game is won at 21 with 2 clear, or at 30.'
+          ? scoringHint(_rules)
           : decided
           ? 'Ratings change after the other ${singles ? 'player' : 'pair'} '
                 'confirms.'
@@ -374,22 +383,15 @@ class _TournamentUmpireScreenState
   bool _saved = false;
   bool _filled = false;
 
-  /// Badminton games go to 21 with 2 clear, or 30. Other sports just need
-  /// a winner.
-  bool _strict = true;
+  ScoringPreset _rules = ScoringPreset.badminton;
 
   int? _n(String v) => v.isEmpty ? null : int.parse(v);
   List<(int?, int?)> get _games => [
     for (var g = 0; g < 3; g++) (_n(_cells[g * 2]), _n(_cells[g * 2 + 1])),
   ];
-  int _win(int? a, int? b) {
-    if (_strict) return gameWinner(a, b);
-    if (a == null || b == null) return 0;
-    if (a == b) return -1;
-    return a > b ? 1 : 2;
-  }
-
-  List<int> get _results => [for (final g in _games) _win(g.$1, g.$2)];
+  List<int> get _results => [
+    for (final g in _games) gameWinner(g.$1, g.$2, _rules),
+  ];
   bool get _showThird {
     final r = _results;
     return r[0] > 0 && r[1] > 0 && r[0] != r[1] ||
@@ -422,7 +424,7 @@ class _TournamentUmpireScreenState
     var v = _fresh ? '' : _cells[_cur];
     if (v.length >= 2) v = '';
     v = '$v$d';
-    if (_strict && v.length == 2 && int.parse(v) > 30) v = '$d';
+    if (v.length == 2 && int.parse(v) > (_rules.cap ?? 99)) v = '$d';
     _put(v, advance: v.length == 2);
   }
 
@@ -444,16 +446,25 @@ class _TournamentUmpireScreenState
     }
   }
 
-  Future<void> _save() async {
+  Future<void> _save({required bool correcting, int? retired}) async {
     final games = [
       for (final g in _games)
         if (g.$1 != null && g.$2 != null) (g.$1!, g.$2!),
     ];
+    if (games.isEmpty) {
+      showOgToast(context, 'Type the score so far.', error: true);
+      return;
+    }
+    String? reason;
+    if (correcting) {
+      reason = await _askReason();
+      if (reason == null || !mounted) return;
+    }
     setState(() => _busy = true);
     try {
       await ref
           .read(tournamentRepositoryProvider)
-          .saveScore(widget.matchId, games);
+          .saveScore(widget.matchId, games, reason: reason, retired: retired);
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       if (mounted) setState(() => _saved = true);
@@ -462,6 +473,60 @@ class _TournamentUmpireScreenState
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// R-SCO-3: a saved result only changes with a reason.
+  Future<String?> _askReason() {
+    final field = TextEditingController();
+    return showCupertinoDialog<String>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Why is this changing?'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: field,
+            autofocus: true,
+            placeholder: 'Scores were swapped',
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep the result'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              final why = field.text.trim();
+              if (why.isNotEmpty) Navigator.of(context).pop(why);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _retire(DrawMatch m) async {
+    final side = await showCupertinoDialog<int>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Who retired?'),
+        content: const Text('The score so far is kept.'),
+        actions: [
+          for (final (i, name) in [m.a!, m.b!].indexed)
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(i + 1),
+              child: Text(name),
+            ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Nobody'),
+          ),
+        ],
+      ),
+    );
+    if (side != null) await _save(correcting: m.done, retired: side);
   }
 
   @override
@@ -492,7 +557,8 @@ class _TournamentUmpireScreenState
         ],
       );
     }
-    _strict = info.activity.sports.firstOrNull == Sport.badminton;
+    _rules =
+        ref.watch(activityScoringProvider(widget.activityId)).value ?? _rules;
     if (!_filled) {
       // Correcting a score starts from the one saved.
       _filled = true;
@@ -545,9 +611,7 @@ class _TournamentUmpireScreenState
         ? 'Check game ${bad + 1}'
         : 'Type each game';
     final hint = bad >= 0
-        ? (_strict
-              ? 'A game is won at 21 with 2 clear, or at 30.'
-              : "A game can't end level.")
+        ? scoringHint(_rules)
         : decided
         ? 'The score is final once saved. Ratings update for everyone in '
               'the match.'
@@ -560,9 +624,14 @@ class _TournamentUmpireScreenState
       bottom: [
         _Keypad(onDigit: _digit, onNext: _next, onDelete: _delete),
         KitButton(
-          label: 'Save final score',
+          label: m.done ? 'Save correction' : 'Save final score',
           loading: _busy,
-          onPressed: decided ? _save : null,
+          onPressed: decided ? () => _save(correcting: m.done) : null,
+        ),
+        KitButton.outline(
+          label: 'A player retired',
+          height: 44,
+          onPressed: _busy ? null : () => _retire(m),
         ),
       ],
       children: [
