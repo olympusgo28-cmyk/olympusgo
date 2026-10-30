@@ -31,8 +31,11 @@ An AI reviewer who had not seen the work ran attacks against the local stack and
 
 A second review of those fixes found more, all fixed in `20261103120000_review_fixes_4.sql` with tests in `23_review_fixes_4_test.sql`. The worst were a host erasing their own loss by flipping attendance, and any player reading a minor's real id through a fake score, so clients now read scores only through `score_view`, `my_meet_results` and `meet_disputes`.
 
+A final review of how scores are read found no leaks there and no breakage, and found an older hole: a host could cancel a stranger's Meet by copying its series id. That and four smaller gaps are fixed in `20261103130000_review_fixes_5.sql`. Later fixes have passed the test suite but have not had another outside review.
+
 Known limits left in place:
 
+- A minor who hosts is visible by real id on `activities.host_id`. This predates Phase 3.
 - A rematch with an identical score in the same Meet is refused, and so is any new score between the same sides while one is open. Without scores tied to rounds, this is what stops one match being entered twice.
 - Results held for attendance and two friends running their own tournament are open questions (Q58, Q60), as is one partner confirming for both (Q62).
 
