@@ -24,6 +24,7 @@ import '../../settings/application/settings_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../domain/passport.dart';
 import '../domain/profile.dart';
+import 'passport_history_screen.dart';
 
 /// The player's Passport: hero card, sport switcher and four tabs.
 class PassportScreen extends ConsumerStatefulWidget {
@@ -287,9 +288,23 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: c.border, width: 2),
           ),
-          child: Text(
-            'Play your first ranked match to start your season, form and stats.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+          child: Consumer(
+            builder: (context, ref, _) {
+              final played = level == null
+                  ? 0
+                  : ref.watch(ratingCardProvider(level.sport)).value?.matches ??
+                        0;
+              return Text(
+                played == 0
+                    ? 'Play your first ranked match to start your season, form '
+                          'and stats.'
+                    : played < 5
+                    ? '$played of 5 ranked matches played. Your form and '
+                          'stats start after 5.'
+                    : 'See your matches in Sessions and rating.',
+                style: OgText.body(15, height: 1.45, color: c.textMuted),
+              );
+            },
           ),
         ),
       ],

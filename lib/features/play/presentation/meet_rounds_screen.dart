@@ -46,7 +46,7 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
           RosterPlayer(p.player.id, skill: p.rating ?? 4),
     ];
     final List<Round> rounds;
-    if (_style == 0) {
+    if (_style == 0 && !singles) {
       final engine = Americano(
         roster: active,
         courts: _courts,
@@ -74,6 +74,10 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
               ),
           ], r.byes.expand((t) => t.split('+')).toList()),
       ];
+    }
+    if (rounds.every((r) => r.matches.isEmpty)) {
+      showOgToast(context, 'Not enough players for a match.', error: true);
+      return;
     }
     setState(() => _busy = true);
     try {
@@ -156,18 +160,20 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
               ),
             ],
             const KitSection('Rounds'),
-            KitSegments(
-              labels: const ['Rotating partners', 'Fixed teams'],
-              selected: _style,
-              onSelect: (i) => setState(() => _style = i),
-            ),
+            // Singles has no partners to rotate: everyone plays everyone.
+            if (a.gameType != GameType.singles)
+              KitSegments(
+                labels: const ['Rotating partners', 'Fixed teams'],
+                selected: _style,
+                onSelect: (i) => setState(() => _style = i),
+              ),
             _Count(
               label: 'Courts',
               value: _courts,
               min: 1,
               onChange: (v) => setState(() => _courts = v),
             ),
-            if (_style == 0)
+            if (_style == 0 && a.gameType != GameType.singles)
               _Count(
                 label: 'Rounds',
                 value: _count,

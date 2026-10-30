@@ -14,9 +14,10 @@ import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
 import '../domain/profile.dart';
 
-final _ratingProvider = FutureProvider.autoDispose.family<RatingCard?, String>(
-  (ref, sport) => ref.watch(profileRepositoryProvider).rating(sport),
-);
+final ratingCardProvider = FutureProvider.autoDispose
+    .family<RatingCard?, String>(
+      (ref, sport) => ref.watch(profileRepositoryProvider).rating(sport),
+    );
 
 final _historyProvider = FutureProvider.autoDispose
     .family<PassportHistory, String>(
@@ -49,7 +50,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final sport = Sport.fromId(widget.sport);
-    final rating = ref.watch(_ratingProvider(widget.sport)).value;
+    final rating = ref.watch(ratingCardProvider(widget.sport)).value;
     final level =
         rating?.level ??
         ref
@@ -140,7 +141,17 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
               for (final (i, (value, label)) in [
                 ('${h.sessions}', 'sessions'),
                 ('${h.rankedGames}', 'ranked games'),
-                (h.winRate == null ? '—' : '${h.winRate}%', 'games won'),
+                // R-STA-2: a percentage waits for 5 matches.
+                (
+                  h.winRate == null
+                      ? '—'
+                      : rating != null && rating.matches < 5
+                      ? '${rating.matches} of 5'
+                      : '${h.winRate}%',
+                  rating != null && rating.matches < 5
+                      ? 'matches'
+                      : 'games won',
+                ),
               ].indexed) ...[
                 if (i > 0) const SizedBox(width: 10),
                 Expanded(
