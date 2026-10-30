@@ -328,7 +328,7 @@ class ChildDetailScreen extends ConsumerWidget {
       try {
         await ref
             .read(guardianRepositoryProvider)
-            .decideGroup(childId, group.clubId, approve: approve);
+            .decideGroup(childId, group, approve: approve);
         ref.invalidate(childGroupRequestsProvider(childId));
       } on AuthFailure catch (e) {
         if (context.mounted) showOgToast(context, e.message, error: true);

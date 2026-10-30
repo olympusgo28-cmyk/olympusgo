@@ -7,7 +7,7 @@ insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at,
   email_change_token_new, email_change_token_current, phone_change,
   phone_change_token, reauthentication_token)
 select id::uuid, '00000000-0000-0000-0000-000000000000', 'authenticated',
-  'authenticated', 'u-' || id || '@users.olympusgo.invalid', now(), now(), now(),
+  'authenticated', private.random_auth_email(), now(), now(), now(),
   '', '', '', '', '', '', '', ''
 from (values
   ('00000000-0000-4000-a000-000000000001'),
@@ -25,6 +25,9 @@ update public.profiles set username = 'aaron_host', full_name = 'Aaron Ng',
   onboarding_completed = true where id = '00000000-0000-4000-a000-000000000001';
 update public.profiles set username = 'hannah_plays', full_name = 'Hannah Goh',
   onboarding_completed = true where id = '00000000-0000-4000-a000-000000000002';
+
+update public.account_private ap set auth_email = u.email
+from auth.users u where u.id = ap.id and u.email like '%@users.olympusgo.invalid';
 
 insert into public.player_sports (user_id, sport, level, play_min, play_max) values
   ('00000000-0000-4000-a000-000000000001', 'badminton', 4, 3, 5),

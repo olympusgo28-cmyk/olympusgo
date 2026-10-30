@@ -110,11 +110,13 @@ abstract class GroupRequest with _$GroupRequest {
     required String clubId,
     required String name,
     @Default('') String area,
+    @Default('club') String kind,
   }) = _GroupRequest;
 
   factory GroupRequest.fromRow(Map<String, dynamic> r) => GroupRequest(
     clubId: r['club_id'] as String,
     name: r['name'] as String,
     area: r['area'] as String? ?? '',
+    kind: r['kind'] as String? ?? 'club',
   );
 }

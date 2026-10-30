@@ -117,15 +117,22 @@ async function session(internalEmail: string): Promise<string | undefined> {
   return res.data.session?.refresh_token;
 }
 
+/** A random address nobody can work out, so nothing can ask Supabase for it. */
+function randomAuthEmail(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `u-${hex}@users.olympusgo.invalid`;
+}
+
 async function createAccount(mobile: string): Promise<Account | null> {
   const id = crypto.randomUUID();
-  const email = `u-${id}@users.olympusgo.invalid`;
+  const email = randomAuthEmail();
   const { error } = await admin.auth.admin.createUser({ id, email, email_confirm: true });
   if (error) return null;
-  const { data: bound } = await admin.rpc("login_contact_set", {
+  const { data: bound } = await admin.rpc("login_account_bind", {
     p_user: id,
-    p_kind: "mobile",
-    p_value: mobile,
+    p_mobile: mobile,
+    p_auth_email: email,
   });
   if (bound) return { user_id: id, mobile, email: null, internal_email: email };
   // Someone else took this mobile in the same moment: that account stands.

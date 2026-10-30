@@ -1,12 +1,15 @@
 -- Q41: Supabase Auth holds no real contact details, and codes stay server-side.
 begin;
 \ir helpers/setup.psql
-select plan(9);
+select plan(10);
 
 select t.player('b0000000-0000-0000-0000-000000000001');
 
 select is_empty($$select 1 from auth.users where phone is not null$$, 'Supabase Auth holds no mobile numbers');
 select is_empty($$select 1 from auth.users where email not like '%@users.olympusgo.invalid' and email not like '%@test.local'$$, 'Supabase Auth holds no real email addresses');
+
+select is_empty($$select 1 from auth.users where email like '%' || id::text || '%@users.olympusgo.invalid'$$,
+  'an internal address cannot be worked out from a user id');
 
 select public.login_code_issue('target', 'first', 'login');
 select public.login_code_issue('target', 'second', 'login');

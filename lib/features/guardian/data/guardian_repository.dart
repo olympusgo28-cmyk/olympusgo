@@ -25,7 +25,7 @@ abstract interface class GuardianRepository {
   Future<List<GroupRequest>> groupRequests(String childId);
   Future<void> decideGroup(
     String childId,
-    String clubId, {
+    GroupRequest group, {
     required bool approve,
   });
 }
@@ -148,13 +148,26 @@ class SupabaseGuardianRepository implements GuardianRepository {
   @override
   Future<void> decideGroup(
     String childId,
-    String clubId, {
+    GroupRequest group, {
     required bool approve,
   }) => _guard(
-    () => _client.rpc(
-      'guardian_group_decide',
-      params: {'p_child': childId, 'p_club': clubId, 'p_approve': approve},
-    ),
+    () => group.kind == 'team'
+        ? _client.rpc(
+            'guardian_team_decide',
+            params: {
+              'p_child': childId,
+              'p_team': group.clubId,
+              'p_approve': approve,
+            },
+          )
+        : _client.rpc(
+            'guardian_group_decide',
+            params: {
+              'p_child': childId,
+              'p_club': group.clubId,
+              'p_approve': approve,
+            },
+          ),
   );
 }
 
@@ -274,9 +287,9 @@ class DemoGuardianRepository implements GuardianRepository {
   @override
   Future<void> decideGroup(
     String childId,
-    String clubId, {
+    GroupRequest group, {
     required bool approve,
   }) async {
-    _groups.removeWhere((g) => g.clubId == clubId);
+    _groups.remove(group);
   }
 }

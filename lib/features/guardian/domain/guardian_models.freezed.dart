@@ -1386,7 +1386,7 @@ as DateTime,
 /// @nodoc
 mixin _$GroupRequest {
 
- String get clubId; String get name; String get area;
+ String get clubId; String get name; String get area; String get kind;
 /// Create a copy of GroupRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1398,20 +1398,20 @@ $GroupRequestCopyWith<GroupRequest> get copyWith => _$GroupRequestCopyWithImpl<G
 @override
 bool operator ==(Object other) {
   final _this = this as GroupRequest;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupRequest&&(identical(other.clubId, _this.clubId) || other.clubId == _this.clubId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.area, _this.area) || other.area == _this.area));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupRequest&&(identical(other.clubId, _this.clubId) || other.clubId == _this.clubId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.kind, _this.kind) || other.kind == _this.kind));
 }
 
 
 @override
 int get hashCode {
   final _this = this as GroupRequest;
-  return Object.hash(runtimeType,_this.clubId,_this.name,_this.area);
+  return Object.hash(runtimeType,_this.clubId,_this.name,_this.area,_this.kind);
 }
 
 @override
 String toString() {
   final _this = this as GroupRequest;
-  return 'GroupRequest(clubId: ${_this.clubId}, name: ${_this.name}, area: ${_this.area})';
+  return 'GroupRequest(clubId: ${_this.clubId}, name: ${_this.name}, area: ${_this.area}, kind: ${_this.kind})';
 }
 
 
@@ -1422,7 +1422,7 @@ abstract mixin class $GroupRequestCopyWith<$Res>  {
   factory $GroupRequestCopyWith(GroupRequest value, $Res Function(GroupRequest) _then) = _$GroupRequestCopyWithImpl;
 @useResult
 $Res call({
- String clubId, String name, String area
+ String clubId, String name, String area, String kind
 });
 
 
@@ -1439,11 +1439,12 @@ class _$GroupRequestCopyWithImpl<$Res>
 
 /// Create a copy of GroupRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? clubId = null,Object? name = null,Object? area = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? clubId = null,Object? name = null,Object? area = null,Object? kind = null,}) {
   return _then(GroupRequest(
 clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -1529,10 +1530,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String clubId,  String name,  String area)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String clubId,  String name,  String area,  String kind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GroupRequest() when $default != null:
-return $default(_that.clubId,_that.name,_that.area);case _:
+return $default(_that.clubId,_that.name,_that.area,_that.kind);case _:
   return orElse();
 
 }
@@ -1550,10 +1551,10 @@ return $default(_that.clubId,_that.name,_that.area);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String clubId,  String name,  String area)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String clubId,  String name,  String area,  String kind)  $default,) {final _that = this;
 switch (_that) {
 case _GroupRequest():
-return $default(_that.clubId,_that.name,_that.area);case _:
+return $default(_that.clubId,_that.name,_that.area,_that.kind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1570,10 +1571,10 @@ return $default(_that.clubId,_that.name,_that.area);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String clubId,  String name,  String area)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String clubId,  String name,  String area,  String kind)?  $default,) {final _that = this;
 switch (_that) {
 case _GroupRequest() when $default != null:
-return $default(_that.clubId,_that.name,_that.area);case _:
+return $default(_that.clubId,_that.name,_that.area,_that.kind);case _:
   return null;
 
 }
@@ -1585,12 +1586,13 @@ return $default(_that.clubId,_that.name,_that.area);case _:
 
 
 class _GroupRequest implements GroupRequest {
-  const _GroupRequest({required this.clubId, required this.name, this.area = ''});
+  const _GroupRequest({required this.clubId, required this.name, this.area = '', this.kind = 'club'});
   
 
 @override final  String clubId;
 @override final  String name;
 @override@JsonKey() final  String area;
+@override@JsonKey() final  String kind;
 
 /// Create a copy of GroupRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -1602,18 +1604,18 @@ _$GroupRequestCopyWith<_GroupRequest> get copyWith => __$GroupRequestCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupRequest&&(identical(other.clubId, clubId) || other.clubId == clubId)&&(identical(other.name, name) || other.name == name)&&(identical(other.area, area) || other.area == area));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupRequest&&(identical(other.clubId, clubId) || other.clubId == clubId)&&(identical(other.name, name) || other.name == name)&&(identical(other.area, area) || other.area == area)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,clubId,name,area);
+    return Object.hash(runtimeType,clubId,name,area,kind);
 }
 
 @override
 String toString() {
-    return 'GroupRequest(clubId: $clubId, name: $name, area: $area)';
+    return 'GroupRequest(clubId: $clubId, name: $name, area: $area, kind: $kind)';
 }
 
 
@@ -1624,7 +1626,7 @@ abstract mixin class _$GroupRequestCopyWith<$Res> implements $GroupRequestCopyWi
   factory _$GroupRequestCopyWith(_GroupRequest value, $Res Function(_GroupRequest) _then) = __$GroupRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String clubId, String name, String area
+ String clubId, String name, String area, String kind
 });
 
 
@@ -1641,11 +1643,12 @@ class __$GroupRequestCopyWithImpl<$Res>
 
 /// Create a copy of GroupRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? clubId = null,Object? name = null,Object? area = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? clubId = null,Object? name = null,Object? area = null,Object? kind = null,}) {
   return _then(_GroupRequest(
 clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
