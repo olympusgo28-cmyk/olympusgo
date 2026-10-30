@@ -621,6 +621,21 @@ class SupabaseClubRepository implements ClubRepository {
       );
 
   @override
+  Future<List<GroupRank>> groupRanking() => _guard(() async {
+    final rows = await _client.rpc('group_activity_rank') as List;
+    return [
+      for (final r in rows.cast<Map<String, dynamic>>())
+        GroupRank(
+          rank: r['rank'] as int,
+          clubId: r['club_id'] as String,
+          name: r['name'] as String,
+          area: r['area'] as String? ?? '',
+          games: r['games'] as int,
+        ),
+    ];
+  });
+
+  @override
   Future<void> report(ReportTarget target, ContentReport reason, String note) =>
       _guard(
         () => _client.from('content_reports').insert({

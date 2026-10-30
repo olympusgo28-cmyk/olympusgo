@@ -1727,3 +1727,42 @@ abstract class _$TeamDraftController extends $Notifier<TeamDraft> {
     return element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(groupRanking)
+final groupRankingProvider = GroupRankingProvider._();
+
+final class GroupRankingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GroupRank>>,
+          List<GroupRank>,
+          FutureOr<List<GroupRank>>
+        >
+    with $FutureModifier<List<GroupRank>>, $FutureProvider<List<GroupRank>> {
+  GroupRankingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'groupRankingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupRankingHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GroupRank>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GroupRank>> create(Ref ref) {
+    return groupRanking(ref);
+  }
+}
+
+String _$groupRankingHash() => r'329c0520152ba0395cc9662352bf8505356a5069';

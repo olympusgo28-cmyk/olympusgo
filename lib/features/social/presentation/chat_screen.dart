@@ -29,9 +29,27 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
+/// A message on screen before the server has confirmed it.
+class _Pending {
+  _Pending(this.clientId, this.body);
+  final String clientId;
+  final String body;
+  bool failed = false;
+}
+
+String _newClientId() {
+  final r = math.Random.secure();
+  final b = List.generate(16, (_) => r.nextInt(256));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+  return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-'
+      '${h.substring(16, 20)}-${h.substring(20)}';
+}
+
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _text = TextEditingController();
-  bool _sending = false;
+  final _pending = <_Pending>[];
 
   @override
   void initState() {
@@ -48,19 +66,53 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
+  /// The message shows straight away and is marked if it doesn't get through.
   Future<void> _send() async {
     final body = _text.text.trim();
-    if (body.isEmpty || _sending) return;
-    setState(() => _sending = true);
+    if (body.isEmpty) return;
     HapticFeedback.lightImpact();
     _text.clear();
+    final item = _Pending(_newClientId(), body);
+    setState(() => _pending.add(item));
+    await _deliver(item);
+  }
+
+  Future<void> _deliver(_Pending item) async {
+    setState(() => item.failed = false);
     try {
-      await ref.read(chatRepositoryProvider).send(widget.conversationId, body);
+      await ref
+          .read(chatRepositoryProvider)
+          .send(widget.conversationId, item.body, item.clientId);
     } on AuthFailure catch (e) {
-      _text.text = body;
+      if (!mounted) return;
+      setState(() => item.failed = true);
+      showOgToast(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _delete(ChatMessage message) async {
+    final sure = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Delete this message?'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    try {
+      await ref.read(chatRepositoryProvider).delete(message.id);
+    } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -71,10 +123,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(currentUserIdProvider).value;
     final partner = ref.watch(chatPartnerProvider(widget.conversationId)).value;
     final messages = ref.watch(chatMessagesProvider(widget.conversationId));
-    ref.listen(
-      chatMessagesProvider(widget.conversationId),
-      (_, _) => _markRead(),
-    );
+    ref.listen(chatMessagesProvider(widget.conversationId), (_, next) {
+      _markRead();
+      // The real message has arrived, so its stand-in can go.
+      final arrived = {...?next.value?.map((m) => m.clientId)};
+      if (_pending.any((p) => arrived.contains(p.clientId))) {
+        setState(
+          () => _pending.removeWhere((p) => arrived.contains(p.clientId)),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -153,19 +211,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             Expanded(
               child: switch (messages) {
-                AsyncData(:final value) when value.isEmpty => Center(
-                  child: Text(
-                    'Say hi to ${partner?.displayName ?? 'them'}.',
-                    style: OgText.body(15, color: c.textMuted),
+                AsyncData(:final value)
+                    when value.isEmpty && _pending.isEmpty =>
+                  Center(
+                    child: Text(
+                      'Say hi to ${partner?.displayName ?? 'them'}.',
+                      style: OgText.body(15, color: c.textMuted),
+                    ),
                   ),
-                ),
                 AsyncData(:final value) => ListView.builder(
                   reverse: true,
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.only(top: 16, bottom: 4),
-                  itemCount: value.length,
+                  itemCount: value.length + _pending.length,
                   itemBuilder: (context, i) {
+                    if (i < _pending.length) {
+                      final p = _pending[_pending.length - 1 - i];
+                      return _PendingBubble(
+                        body: p.body,
+                        failed: p.failed,
+                        onRetry: () => _deliver(p),
+                      );
+                    }
+                    i -= _pending.length;
                     final m = value[value.length - 1 - i];
                     final prev = i == value.length - 1
                         ? null
@@ -182,7 +251,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               style: OgText.body(13, color: c.textMuted),
                             ),
                           ),
-                        _Bubble(message: m, mine: m.senderId == me),
+                        _Bubble(
+                          message: m,
+                          mine: m.senderId == me,
+                          onDelete: m.senderId == me && !m.deleted
+                              ? () => _delete(m)
+                              : null,
+                        ),
                       ],
                     );
                   },
@@ -279,36 +354,92 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
+/// A message on its way. Tapping a failed one sends it again.
+class _PendingBubble extends StatelessWidget {
+  const _PendingBubble({
+    required this.body,
+    required this.failed,
+    required this.onRetry,
+  });
+
+  final String body;
+  final bool failed;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    return Pressable(
+      semanticLabel: failed ? 'Not sent. Tap to try again. $body' : body,
+      onPressed: failed ? onRetry : null,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Opacity(
+              opacity: failed ? 1 : 0.6,
+              child: _Bubble(
+                message: ChatMessage(
+                  id: '',
+                  senderId: '',
+                  body: body,
+                  createdAt: DateTime.now(),
+                ),
+                mine: true,
+              ),
+            ),
+            if (failed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Not sent. Tap to try again.',
+                  style: OgText.body(13, color: c.error),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.mine});
+  const _Bubble({required this.message, required this.mine, this.onDelete});
 
   final ChatMessage message;
   final bool mine;
+
+  /// Long press to delete. Null for messages that can't be deleted.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        constraints: const BoxConstraints(maxWidth: 270),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: mine ? c.primary : c.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(mine ? 20 : 6),
-            bottomRight: Radius.circular(mine ? 6 : 20),
+      child: GestureDetector(
+        onLongPress: onDelete,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          constraints: const BoxConstraints(maxWidth: 270),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: mine ? c.primarySmall : c.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(20),
+              topRight: const Radius.circular(20),
+              bottomLeft: Radius.circular(mine ? 20 : 6),
+              bottomRight: Radius.circular(mine ? 6 : 20),
+            ),
           ),
-        ),
-        child: Text(
-          message.body,
-          style: OgText.body(
-            16,
-            height: 1.35,
-            color: mine ? c.onPrimary : c.text,
+          child: Text(
+            message.body,
+            style: OgText.body(
+              16,
+              height: 1.35,
+              color: mine ? c.onPrimary : c.text,
+            ).copyWith(fontStyle: message.deleted ? FontStyle.italic : null),
           ),
         ),
       ),

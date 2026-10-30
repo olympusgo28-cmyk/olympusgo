@@ -36,6 +36,7 @@ import '../../features/clubs/presentation/group_chat_screens.dart';
 import '../../features/discover/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
+import '../../features/clubs/presentation/group_rank_screen.dart';
 import '../../features/discover/presentation/coming_screens.dart';
 import '../../features/discover/presentation/find_screen.dart';
 import '../../features/scan/host_scan_screen.dart';
@@ -580,6 +581,7 @@ GoRouter appRouter(Ref ref) {
         (s) => CancelCourtBookingScreen(id: id(s)),
       ),
       // Clubs. Literal paths come before /clubs/:id.
+      page(Routes.groupRanking, (_) => const GroupRankScreen()),
       page(
         Routes.clubs,
         (s) => ClubsHomeScreen(teams: s.uri.queryParameters['kind'] == 'teams'),

@@ -59,4 +59,6 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q47 | Reporters: the checklist says a neutral acknowledgement only; the PRD (SAF-3) shows the result and offers a second look. Built as the checklist says, so the second-look screen no longer appears | Moderation | Neutral only | Open |
 | Q48 | What should a message containing a phone number or outside link do: blocked, as built, or sent and flagged? Should it apply to adults too? | Chat | Blocked for everyone, as built | Open |
 | Q49 | The moderation word list is a small starter set. It needs review by native speakers of English, Malay, Mandarin and Tamil before the pilot | Moderation | Starter list | Open |
+| Q50 | Leagues (P2-03): the checklist lists clubs, teams, leagues, but no document says what a league is or how it differs from a tournament or a team. Not built | Groups | Not built until described | Open |
+| Q51 | Group chat still restores the text on a failed send, rather than the optimistic send and retry that direct messages now have. Is that acceptable for now? | Chat | As built | Open |
 

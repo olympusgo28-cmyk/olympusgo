@@ -659,3 +659,15 @@ String clubInitials(String name) {
   if (words.length == 1) return words.first[0].toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
 }
+
+/// A group's place in the activity ranking. Groups only: no player is named.
+@freezed
+abstract class GroupRank with _$GroupRank {
+  const factory GroupRank({
+    required int rank,
+    required String clubId,
+    required String name,
+    @Default('') String area,
+    required int games,
+  }) = _GroupRank;
+}

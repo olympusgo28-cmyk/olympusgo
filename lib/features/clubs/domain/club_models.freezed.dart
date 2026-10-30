@@ -7718,4 +7718,280 @@ as Set<String>,
 
 }
 
+/// @nodoc
+mixin _$GroupRank {
+
+ int get rank; String get clubId; String get name; String get area; int get games;
+/// Create a copy of GroupRank
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GroupRankCopyWith<GroupRank> get copyWith => _$GroupRankCopyWithImpl<GroupRank>(this as GroupRank, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as GroupRank;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupRank&&(identical(other.rank, _this.rank) || other.rank == _this.rank)&&(identical(other.clubId, _this.clubId) || other.clubId == _this.clubId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.games, _this.games) || other.games == _this.games));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as GroupRank;
+  return Object.hash(runtimeType,_this.rank,_this.clubId,_this.name,_this.area,_this.games);
+}
+
+@override
+String toString() {
+  final _this = this as GroupRank;
+  return 'GroupRank(rank: ${_this.rank}, clubId: ${_this.clubId}, name: ${_this.name}, area: ${_this.area}, games: ${_this.games})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GroupRankCopyWith<$Res>  {
+  factory $GroupRankCopyWith(GroupRank value, $Res Function(GroupRank) _then) = _$GroupRankCopyWithImpl;
+@useResult
+$Res call({
+ int rank, String clubId, String name, String area, int games
+});
+
+
+
+
+}
+/// @nodoc
+class _$GroupRankCopyWithImpl<$Res>
+    implements $GroupRankCopyWith<$Res> {
+  _$GroupRankCopyWithImpl(this._self, this._then);
+
+  final GroupRank _self;
+  final $Res Function(GroupRank) _then;
+
+/// Create a copy of GroupRank
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? rank = null,Object? clubId = null,Object? name = null,Object? area = null,Object? games = null,}) {
+  return _then(GroupRank(
+rank: null == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
+as int,clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,games: null == games ? _self.games : games // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GroupRank].
+extension GroupRankPatterns on GroupRank {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GroupRank value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GroupRank() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GroupRank value)  $default,){
+final _that = this;
+switch (_that) {
+case _GroupRank():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GroupRank value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GroupRank() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int rank,  String clubId,  String name,  String area,  int games)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GroupRank() when $default != null:
+return $default(_that.rank,_that.clubId,_that.name,_that.area,_that.games);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int rank,  String clubId,  String name,  String area,  int games)  $default,) {final _that = this;
+switch (_that) {
+case _GroupRank():
+return $default(_that.rank,_that.clubId,_that.name,_that.area,_that.games);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int rank,  String clubId,  String name,  String area,  int games)?  $default,) {final _that = this;
+switch (_that) {
+case _GroupRank() when $default != null:
+return $default(_that.rank,_that.clubId,_that.name,_that.area,_that.games);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GroupRank implements GroupRank {
+  const _GroupRank({required this.rank, required this.clubId, required this.name, this.area = '', required this.games});
+  
+
+@override final  int rank;
+@override final  String clubId;
+@override final  String name;
+@override@JsonKey() final  String area;
+@override final  int games;
+
+/// Create a copy of GroupRank
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GroupRankCopyWith<_GroupRank> get copyWith => __$GroupRankCopyWithImpl<_GroupRank>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupRank&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.clubId, clubId) || other.clubId == clubId)&&(identical(other.name, name) || other.name == name)&&(identical(other.area, area) || other.area == area)&&(identical(other.games, games) || other.games == games));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,rank,clubId,name,area,games);
+}
+
+@override
+String toString() {
+    return 'GroupRank(rank: $rank, clubId: $clubId, name: $name, area: $area, games: $games)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GroupRankCopyWith<$Res> implements $GroupRankCopyWith<$Res> {
+  factory _$GroupRankCopyWith(_GroupRank value, $Res Function(_GroupRank) _then) = __$GroupRankCopyWithImpl;
+@override @useResult
+$Res call({
+ int rank, String clubId, String name, String area, int games
+});
+
+
+
+
+}
+/// @nodoc
+class __$GroupRankCopyWithImpl<$Res>
+    implements _$GroupRankCopyWith<$Res> {
+  __$GroupRankCopyWithImpl(this._self, this._then);
+
+  final _GroupRank _self;
+  final $Res Function(_GroupRank) _then;
+
+/// Create a copy of GroupRank
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? rank = null,Object? clubId = null,Object? name = null,Object? area = null,Object? games = null,}) {
+  return _then(_GroupRank(
+rank: null == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
+as int,clubId: null == clubId ? _self.clubId : clubId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,area: null == area ? _self.area : area // ignore: cast_nullable_to_non_nullable
+as String,games: null == games ? _self.games : games // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
 // dart format on

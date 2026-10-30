@@ -118,6 +118,9 @@ abstract interface class ClubRepository {
   Future<void> removeMessage(ChatScope scope, String messageId, bool removed);
   Future<void> report(ReportTarget target, ContentReport reason, String note);
 
+  /// Most active groups, by counted games.
+  Future<List<GroupRank>> groupRanking();
+
   // Club info and settings.
   Future<ClubLeaderboard> leaderboard(String clubId, ClubSport sport);
   Future<ClubReward> reward(String clubId);

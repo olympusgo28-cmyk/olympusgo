@@ -228,6 +228,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             if (_shows(_Scope.clubs))
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: KitButton.outline(
+                    label: 'Most active groups',
+                    onPressed: () => context.push(Routes.groupRanking),
+                  ),
+                ),
+              ),
+            if (_shows(_Scope.clubs))
               const SliverToBoxAdapter(
                 child: ClubShelf(
                   title: 'Clubs to join',

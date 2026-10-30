@@ -23,6 +23,7 @@ final auditRoutes = <(String, String)>[
   ('addEmail', Routes.addEmail),
   ('addEmailVerify', Routes.addEmailVerify),
   ('find', Routes.find),
+  ('groupRanking', Routes.groupRanking),
   ('services', Routes.services),
   ('fitness', Routes.fitness),
   ('parentCode', Routes.parentCode),

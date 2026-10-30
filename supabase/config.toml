@@ -35,3 +35,6 @@ enable_confirmations = false
 
 [functions.admin-action]
 verify_jwt = true
+
+[functions.send-push]
+verify_jwt = false

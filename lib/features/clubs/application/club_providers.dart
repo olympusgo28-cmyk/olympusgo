@@ -155,3 +155,7 @@ class TeamDraftController extends _$TeamDraftController {
     return id;
   }
 }
+
+@riverpod
+Future<List<GroupRank>> groupRanking(Ref ref) =>
+    ref.watch(clubRepositoryProvider).groupRanking();

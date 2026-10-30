@@ -161,6 +161,7 @@ abstract final class Routes {
   static String clubsTab({bool teams = false}) =>
       teams ? '/clubs?kind=teams' : clubs;
   static const createGroup = '/clubs/start';
+  static const groupRanking = '/clubs/ranking';
   static const newClub = '/clubs/start/club';
   static const newClubSports = '/clubs/start/club/sports';
   static const newClubLevels = '/clubs/start/club/levels';

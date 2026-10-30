@@ -1339,6 +1339,17 @@ class DemoClubRepository implements ClubRepository {
   }
 
   @override
+  Future<List<GroupRank>> groupRanking() async => const [
+    GroupRank(
+      rank: 1,
+      clubId: 'demo',
+      name: 'Tampines Smashers',
+      area: 'Tampines',
+      games: 12,
+    ),
+  ];
+
+  @override
   Future<void> report(
     ReportTarget target,
     ContentReport reason,
