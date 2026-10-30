@@ -164,7 +164,7 @@ class CreatorProfileScreen extends ConsumerWidget {
                         compact(v),
                         style: OgText.body(
                           12,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: const Color(0xFFFFFFFF),
                         ),
                       ),
@@ -283,7 +283,7 @@ class CreatorEarningsScreen extends ConsumerWidget {
                 'READY TO PAY OUT',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
@@ -380,7 +380,7 @@ class CreatorChallengesScreen extends ConsumerWidget {
                       : 'Creator access ends ${Fmt.day(s.graceEnds!)}',
                   style: OgText.body(
                     15,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                   ),
                 ),
@@ -396,7 +396,7 @@ class CreatorChallengesScreen extends ConsumerWidget {
                   '${s.followers} of ${s.threshold} followers · ${s.threshold - s.followers} to go',
                   style: OgText.body(
                     13,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                   ),
                 ),
@@ -524,14 +524,14 @@ class _NewChallengeScreenState extends ConsumerState<NewChallengeScreen> {
           hint: 'Win 5 doubles matches in 14 days',
           maxLength: 60,
         ),
-        Text('Sport', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Sport', style: OgText.body(15, weight: FontWeight.w600)),
         KitSegments(
           labels: const ['Badminton', 'Pickleball'],
           selected: _sport == 'Badminton' ? 0 : 1,
           onSelect: (i) =>
               setState(() => _sport = i == 0 ? 'Badminton' : 'Pickleball'),
         ),
-        Text('Duration', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Duration', style: OgText.body(15, weight: FontWeight.w600)),
         KitSegments(
           labels: const ['7 days', '14 days', '30 days'],
           selected: [7, 14, 30].indexOf(_days),

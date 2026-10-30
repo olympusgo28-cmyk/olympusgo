@@ -1,0 +1,56 @@
+# Open questions
+
+Decisions an agent must not make. Each row says what it blocks and the default to build with until the owner answers. When the owner decides, change **Status** to Decided, write the answer and the date, and update `RULES.md`.
+
+**How agents use this file**
+
+- If your ticket depends on a row marked Open, build only what does not depend on it, or build with the suggested default **in configuration** (never hard-coded) and say so in your summary.
+- If you find a new question, add a row at the bottom with the next number. Do not delete rows.
+- Never mark a row Decided yourself.
+
+| # | Question | Blocks | Suggested default | Status |
+| --- | --- | --- | --- | --- |
+| Q1 | Payments model: may Olympus hold customer money until attendance and keep a refund Wallet without a payments licence (MAS in Singapore)? Merchant of record, or connected accounts? | All payment work (phase 9) | Stripe Connect, player pays the platform, manual payouts. Do not write payment code until a lawyer confirms | Open |
+| Q2 | Under-18 sign-up in Foundation: build `guardian_links` and parent approval in phase 1, or block under-18 sign-up until the guardian model ships? | Phase 1 sign-up | Build guardian links in phase 1, since the design has the 13 to 17 and under-13 paths | Open |
+| Q3 | Riverpod with code generation, or manual providers? | Phase 0 | Decide in week 1 and record an ADR | Open |
+| Q4 | Are teams an organisation type (`org_type = team` with `team_ext`)? | Phase 4 | Yes, recorded by a new ACR | Open |
+| Q5 | Waitlist inside 24 hours of the start: offer with expiry, or auto-join and charge? | Waitlist (phase 3) | Offer with a 30-minute expiry more than 24 hours out; auto-join inside 24 hours | Open |
+| Q6 | Does Discover need a login? Can a spectator follow a tournament without an account? | Phase 2, tournaments | Venues, public activities and tournament schedules and scores open by link; players and statistics need sign-in | Open |
+| Q7 | Minimum sign-up age and how guardians are verified, per country (Malaysia, New Zealand) | Phase 1 for those countries | Singapore 13 and 18; others in `country_config` after legal review | Open |
+| Q8 | Hosting region and the published sub-processor list | Phase 0 | Singapore; publish the list before Foundation | Open |
+| Q9 | Payout amount above which a second staff member must approve | Payouts (phase 9) | Set with finance | Open |
+| Q10 | Brand form shown in the UI: "OlympusGO" or "OLYMPUS GO" | Phase 0 copy | "OlympusGO", as the design system writes it | Open |
+| Q11 | Platform fee minimum in ringgit and NZ dollars | Malaysia and New Zealand launch | Store per currency in `fee_rules`; no default | Open |
+| Q12 | If an organizer's balance cannot cover card fees from a cancellation, is the shortfall taken from later earnings? | Refunds (phase 9) | Yes, netted against later payouts; flag to staff if unpaid after 30 days | Open |
+| Q13 | Points: weekly earning cap and minimum account age before redeeming | Points (phase 9) | Config values, no default; points earning off until set | Open |
+| Q14 | Years receipts and payment records are kept after an account is deleted | Deletion, retention job | Lawyer to confirm; keep everything until then | Open |
+| Q15 | Which visual style is final? The OlympusGO Design System (orange `#E8590C`, Baloo 2 and Nunito Sans) or the style on most Club Screen Mockup boards (tangerine `#F28500`, Barlow) | All UI | The OlympusGO Design System. Canvas boards give layout, copy and behaviour only | Open |
+| Q16 | Where Shop, sellers, creators and campaigns sit in the build order. The PRD puts them in public launch; the ACR phases don't name them | Estimates | Agree before quotes; default phase 12 | Open |
+| Q17 | Confirm or change the rules assumed while drawing (PRD "Rules assumed while drawing" and the 13 in the handoff): waitlist, guests, court fee, trial class, commissions, payout timing, under-18 approval, campaign rewards, free practice, challenge attempts, typed codes, Finals Day ticket, academy fee, deletion undo, children's accounts, receipts, recovery wait, code lockout, spending limits, SMS rule, leaderboard minimum, Circles | Each feature | Build as in `RULES.md` with values in config | Open |
+| Q18 | Can a payment be split between the Wallet and a card? | Payment sheet | No; the Wallet pays only when it covers the total | Open |
+| Q19 | How long Account Centre stays unlocked after Face ID | Phase 1 | 5 minutes | Open |
+| Q20 | Launch sport | Seed data, scoring rules | Badminton, then pickleball | Open |
+| Q21 | Tournament and sport profile decisions: who may score point by point; are casual matches in win rate; which five tiles lead the badminton Overview; is point-by-point scoring in launch; is tennis a sport | Tournaments PRD items | Umpires only; ranked only; win rate, points won %, deciding-game record, average margin, streak; point-by-point after launch; tennis later | Open |
+| Q22 | Rounding of percentage fees to the cent | Fee calculation | Round half up | Open |
+| Q23 | How long a Meet spot is held while payment completes | Joining paid Meets | 10 minutes | Open |
+| Q24 | Is the badminton camera feasibility test passed? | Phase 7 camera work | Camera features stay off (`camera.scoring` flag) | Open |
+| Q25 | Venue owner's side: are courts booked in the app at launch? If yes, the owner's screens must be designed first | VEN-2, VEN-3 | Court booking off at launch until designed | Open |
+| Q26 | Is "Wyse Active" the academy to use in examples and seed data instead of "Smash Academy"? | Seed data only | Keep "Smash Academy" as fake data | Open |
+| Q27 | **Which document wins?** `DEVELOPER_CHECKLIST.md` (30 Oct) names `MASTER_BUILD_PLAN.md` as the tie-breaker, but that file, `SPORTS_AND_FORMATS.md`, `SCREENS_UPDATE_30OCT.md` and `BUILD_GUIDE.md` were not provided. The dev kit in `docs/` is older (12 Oct) | Every conflict below | Built so far with: checklist first, then `RULES.md`, then the rest. Send the missing files to confirm | Open |
+| Q28 | Sign-up: checklist says mobile first with email optional; `RULES.md` R-ACC-1 says email | Sign-up | Mobile first, as the checklist says | Open |
+| Q29 | Under 13: checklist says their own restricted account; `RULES.md` R-AGE-1 says a profile inside a parent's account with no login | Accounts for children | Own restricted account, as the checklist says | Open |
+| Q30 | Rating engine: checklist says Elo; `RULES.md` R-RAT-2 says Glicko-2 | Phase 3 | Not built yet. Decide with open decision 19 (K factor) | Open |
+| Q31 | Points value and shop commission: checklist says 1 point = S$0.10 and 10%; `RULES.md` says 1 point = S$1.00 and 8%; the earlier build used 8% | Phase 4 | Not built yet. Checklist numbers, in configuration, when it is | Open |
+| Q32 | Font weight: checklist says nothing above 600; `DESIGN_SYSTEM.md` uses 700 and 800 | All text | 600 maximum, as the checklist says | Open |
+| Q33 | Link colour: checklist says `#A83B00`; `DESIGN_SYSTEM.md` says `#C94A00` | Links | `#A83B00`, as the checklist says | Open |
+| Q34 | Fonts: the checklist is silent. `DESIGN_SYSTEM.md` says Baloo 2 and Nunito Sans; the earlier build used Archivo and Figtree | All text | Baloo 2 and Nunito Sans. Both are fetched at run time for now and should be bundled before release | Open |
+| Q35 | Should a restricted player (under 18, no parent yet) be able to join or host Meets? The checklist lists what they cannot see but does not mention these | Restricted mode | They cannot join or host. Safer to open up later than to close down | Open |
+| Q36 | Can a linked teen host a Meet? Open decision 9 only covers vouchers | Hosting | Yes, but never publicly listed | Open |
+| Q37 | Sports on the earlier build's Passports (basketball, football, running, swimming, cycling, hyrox) are not in the checklist's lists | Catalogue | Kept as drafts: on Passports, no new Meets | Open |
+| Q38 | Face ID with a passcode fallback cannot be combined with "a fresh code is needed if biometrics change": on iOS a passcode would still unlock the token after a new face is enrolled | Saved accounts | Biometrics only for tiles; no biometrics means a code | Open |
+| Q39 | Countries: the earlier build offered Indonesia and Thailand; the checklist says Malaysia and New Zealand | Sign-up | All closed except Singapore until ages are confirmed | Open |
+| Q40 | The app and README name two different hosted Supabase projects (`iikojvrmiadzemqqixhz` in `env.dart`, `sfkylxlwbjculhuxoimd` in the README). Which is real? | Deployment | Neither was touched | Open |
+| Q41 | **Sign-in can be sidestepped by calling Supabase Auth directly.** `/auth/v1/otp` reveals whether a mobile is registered, and `/auth/v1/verify` skips the 5-code lockout. `resolve-login` protects the app's own path only. Closing this means issuing and checking codes in our own function and turning off direct OTP, which changes how sessions are created | **Gate A** (enumeration tests) | Not fixed. Recommended: own code service in `resolve-login`, sending through the SMS provider directly | Open |
+| Q42 | Should logging out keep the session alive for the saved tile? Today it does, held behind Face ID, until the tile is removed. Removing a tile on a signed-out phone cannot end that session on the server | Saved accounts | Keep. Add "log out of all devices" to Account Centre | Open |
+| Q43 | A child with their own second phone number can still lie about their birthday and become their own "parent". The checklist asks for 18 or over only | Parent links | Accepted for now. Decide whether a parent needs an identity check before the closed pilot | Open |
+

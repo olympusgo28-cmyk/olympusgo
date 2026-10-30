@@ -312,7 +312,7 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
                                       style: OgText.body(
                                         15,
                                         weight: m.unread > 0
-                                            ? FontWeight.w800
+                                            ? FontWeight.w600
                                             : FontWeight.w600,
                                       ),
                                     ),
@@ -579,7 +579,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                       ][at.weekday - 1],
                       style: OgText.body(
                         11,
-                        weight: FontWeight.w800,
+                        weight: FontWeight.w600,
                         color: t.onTag,
                       ),
                     ),
@@ -642,7 +642,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
               style: OgText.body(13, height: 1.4, color: c.textMuted),
             ),
           ] else if (_mode == 'time') ...[
-            Text('New date', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('New date', style: OgText.body(15, weight: FontWeight.w600)),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -750,7 +750,7 @@ class CoachPayScreen extends ConsumerWidget {
                 '${p.month.toUpperCase()} PAY',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
@@ -879,7 +879,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                         children: [
                           Text(
                             p.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: OgText.body(14, weight: FontWeight.w600),
                           ),
                           Text(
                             p.sub,
@@ -933,7 +933,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                 '${w.week}',
                                 style: OgText.body(
                                   13,
-                                  weight: FontWeight.w800,
+                                  weight: FontWeight.w600,
                                   color: w.week == 5 ? c.onPrimary : t.onTag,
                                 ),
                               ),
@@ -947,7 +947,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                     w.topic,
                                     style: OgText.body(
                                       14,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
@@ -998,7 +998,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                         '${d.minutes} min',
                                         style: OgText.body(
                                           13,
-                                          weight: FontWeight.w700,
+                                          weight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -1126,7 +1126,7 @@ class _LessonPlanEditScreenState extends ConsumerState<LessonPlanEditScreen> {
               '$total min',
               style: OgText.body(
                 14,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: total > 90 ? context.tones.onDangerFill : c.textMuted,
               ),
             ),
@@ -1257,7 +1257,7 @@ class _DrillPickerState extends ConsumerState<_DrillPicker> {
                   d.video,
                   style: OgText.body(
                     11,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: const Color(0xFFFFFFFF),
                   ),
                 ),
@@ -1372,7 +1372,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
                 children: [
                   Text(
                     'Invite link for ${cls.name}',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   Text(
                     '${link.replaceFirst('https://', '')} · valid 7 days',
@@ -1523,7 +1523,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
                         children: [
                           Text(
                             Fmt.day(l.at),
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             l.lesson,
@@ -1638,7 +1638,7 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(k.name, style: OgText.body(15, weight: FontWeight.w700)),
+              Text(k.name, style: OgText.body(15, weight: FontWeight.w600)),
               const SizedBox(height: 6),
               KitSegments(
                 labels: [
@@ -1654,7 +1654,7 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
               ),
             ],
           ),
-        Text('Add a line', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Add a line', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1818,7 +1818,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                   '${i + 1}',
                   style: OgText.body(
                     12,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: c.onPrimary,
                   ),
                 ),
@@ -1830,7 +1830,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                   children: [
                     Text(
                       title,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(
                       text,
@@ -1876,7 +1876,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
             'Signed by you, parent · ${Fmt.dayTimeComma(_signed!)}',
             style: OgText.body(
               13,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: t.successInk,
             ),
           ),

@@ -280,7 +280,7 @@ class _Hero extends ConsumerWidget {
               width: 220,
               height: 220,
               decoration: BoxDecoration(
-                color: c.primary,
+                color: c.primarySmall,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -354,7 +354,7 @@ class _Hero extends ConsumerWidget {
                   KitTag(
                     'Featured',
                     background: OgColors.ink,
-                    foreground: OgColors.lime,
+                    foreground: OgColors.orange300,
                   ),
                   const SizedBox(height: 8),
                   Text(

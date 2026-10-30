@@ -217,6 +217,121 @@ final class HubActivitiesFamily extends $Family
   String toString() => r'hubActivitiesProvider';
 }
 
+/// Sports new Meets can be created in.
+
+@ProviderFor(liveSports)
+final liveSportsProvider = LiveSportsProvider._();
+
+/// Sports new Meets can be created in.
+
+final class LiveSportsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          FutureOr<Set<String>>
+        >
+    with $FutureModifier<Set<String>>, $FutureProvider<Set<String>> {
+  /// Sports new Meets can be created in.
+  LiveSportsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'liveSportsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$liveSportsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Set<String>> create(Ref ref) {
+    return liveSports(ref);
+  }
+}
+
+String _$liveSportsHash() => r'7686626039c30cc6367ba2ea096f43b5d77b34dc';
+
+@ProviderFor(paymentsEnabled)
+final paymentsEnabledProvider = PaymentsEnabledProvider._();
+
+final class PaymentsEnabledProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  PaymentsEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentsEnabledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentsEnabledHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return paymentsEnabled(ref);
+  }
+}
+
+String _$paymentsEnabledHash() => r'a72602cd457c7a87e97dbaa16d8e0bc05b089733';
+
+/// The signed-in player's QR token.
+
+@ProviderFor(myQr)
+final myQrProvider = MyQrProvider._();
+
+/// The signed-in player's QR token.
+
+final class MyQrProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  /// The signed-in player's QR token.
+  MyQrProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myQrProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myQrHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    return myQr(ref);
+  }
+}
+
+String _$myQrHash() => r'b57177df19d3398c2f3dead51f03b54dbbe02ecc';
+
 @ProviderFor(activityDetail)
 final activityDetailProvider = ActivityDetailFamily._();
 

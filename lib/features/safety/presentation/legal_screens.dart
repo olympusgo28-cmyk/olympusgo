@@ -272,7 +272,7 @@ class Under18ProtectionScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                 Text(sub, style: OgText.body(13, color: c.textMuted)),
               ],
             ),
@@ -585,7 +585,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           'Send a legal notice',
           lead: 'For a person harmed by something on Olympus, or someone acting for them. You do not need an account.',
         ),
-        Text('I am', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('I am', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -605,7 +605,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           hint: 'name@example.com',
           keyboardType: TextInputType.emailAddress,
         ),
-        Text('Country', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Country', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,

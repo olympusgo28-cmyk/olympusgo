@@ -94,10 +94,7 @@ class SupabaseSettingsRepository implements SettingsRepository {
 
   @override
   Future<void> saveCountry(Country country) => _guard(
-    () => _client
-        .from('account_private')
-        .update({'country_code': country.code})
-        .eq('id', _me),
+    () => _client.rpc('set_country', params: {'p_country': country.code}),
   );
 
   @override

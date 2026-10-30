@@ -144,7 +144,7 @@ class _StudentHome extends ConsumerWidget {
               fontSize: 15,
             ),
             const SizedBox(width: 10),
-            Text(s.name, style: OgText.body(17, weight: FontWeight.w700)),
+            Text(s.name, style: OgText.body(17, weight: FontWeight.w600)),
           ],
         ),
         if (s.notice != null)
@@ -158,7 +158,7 @@ class _StudentHome extends ConsumerWidget {
                   'CLASS MOVED · SENT BY ${cls.coach.toUpperCase()}',
                   style: OgText.body(
                     11,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                     letterSpacing: 0.6,
                   ),
@@ -168,7 +168,7 @@ class _StudentHome extends ConsumerWidget {
                   s.notice!,
                   style: OgText.body(
                     15,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                   ),
                 ),
@@ -239,7 +239,7 @@ class _StudentHome extends ConsumerWidget {
                           : 'In $daysAway days',
                       height: 20,
                       fontSize: 11,
-                      background: OgColors.lime,
+                      background: OgColors.orange300,
                       foreground: OgColors.ink,
                     ),
                   ],
@@ -263,7 +263,7 @@ class _StudentHome extends ConsumerWidget {
                   'WEEK ${cls.week}',
                   style: OgText.body(
                     11,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: t.gold,
                     letterSpacing: 0.6,
                   ),
@@ -286,7 +286,7 @@ class _StudentHome extends ConsumerWidget {
                     children: [
                       Text(
                         '${s.makeupCredits} make-up ${s.makeupCredits == 1 ? 'credit' : 'credits'}',
-                        style: OgText.body(16, weight: FontWeight.w700),
+                        style: OgText.body(16, weight: FontWeight.w600),
                       ),
                       if (s.creditUseBy != null)
                         Text(
@@ -326,7 +326,7 @@ class _StudentHome extends ConsumerWidget {
                         children: [
                           Text(
                             'From ${note.coach}',
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             'After ${Fmt.day(note.at)} · ${note.lesson}',
@@ -501,7 +501,7 @@ class StudentClassScreen extends ConsumerWidget {
                             '${w.week}',
                             style: OgText.body(
                               14,
-                              weight: FontWeight.w700,
+                              weight: FontWeight.w600,
                               color: c.textMuted,
                             ),
                           ),
@@ -512,7 +512,7 @@ class StudentClassScreen extends ConsumerWidget {
                             style: OgText.body(
                               15,
                               weight: w.week == cls.week
-                                  ? FontWeight.w700
+                                  ? FontWeight.w600
                                   : FontWeight.w400,
                             ),
                           ),
@@ -531,7 +531,7 @@ class StudentClassScreen extends ConsumerWidget {
                             height: 22,
                             fontSize: 11,
                             background: OgColors.ink,
-                            foreground: OgColors.lime,
+                            foreground: OgColors.orange300,
                           ),
                       ],
                     ),
@@ -782,7 +782,7 @@ class _BookMakeupScreenState extends ConsumerState<BookMakeupScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: _slot == sl ? OgColors.tangerineLine : c.border,
+                      color: _slot == sl ? OgColors.orange700 : c.border,
                       width: _slot == sl ? 2 : 1,
                     ),
                   ),
@@ -796,7 +796,7 @@ class _BookMakeupScreenState extends ConsumerState<BookMakeupScreen> {
                               _dow(sl.at),
                               style: OgText.body(
                                 11,
-                                weight: FontWeight.w700,
+                                weight: FontWeight.w600,
                                 color: c.link,
                               ),
                             ),
@@ -811,7 +811,7 @@ class _BookMakeupScreenState extends ConsumerState<BookMakeupScreen> {
                           children: [
                             Text(
                               '${Fmt.time(sl.at)} · ${sl.className}',
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             Text(
                               '${sl.coach} · ${sl.lesson}',
@@ -877,7 +877,7 @@ class StudentProgressScreen extends ConsumerWidget {
                   label,
                   style: OgText.body(
                     11,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: c.textMuted,
                     letterSpacing: 0.5,
                   ),
@@ -956,7 +956,7 @@ class StudentProgressScreen extends ConsumerWidget {
                           ? 0
                           : s.skillsGot / s.skills.length,
                       minHeight: 8,
-                      color: OgColors.lime,
+                      color: OgColors.orange300,
                       backgroundColor: const Color(0x33FFFFFF),
                     ),
                   ),
@@ -989,7 +989,7 @@ class StudentProgressScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(g.key, style: OgText.body(15, weight: FontWeight.w700)),
+                  Text(g.key, style: OgText.body(15, weight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   for (final k in g.value)
                     Container(
@@ -1044,7 +1044,7 @@ class StudentProgressScreen extends ConsumerWidget {
                           children: [
                             Text(
                               '${n.coach} · ${Fmt.day(n.at)}',
-                              style: OgText.body(13, weight: FontWeight.w700),
+                              style: OgText.body(13, weight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),
                             Text(n.text, style: OgText.body(14, height: 1.45)),

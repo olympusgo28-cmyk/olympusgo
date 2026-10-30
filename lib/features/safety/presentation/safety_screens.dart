@@ -247,7 +247,7 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
                   children: [
                     Text(
                       r.heading,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(r.detail, style: OgText.body(13, color: c.textMuted)),
                     const SizedBox(height: 4),
@@ -337,7 +337,7 @@ class _Step extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                 Text(line, style: OgText.body(13, color: c.textMuted)),
               ],
             ),

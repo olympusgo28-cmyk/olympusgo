@@ -76,7 +76,7 @@ Widget _countTile(
           count,
           style: OgText.body(
             14,
-            weight: FontWeight.w700,
+            weight: FontWeight.w600,
             color: context.og.textMuted,
           ),
         ),
@@ -315,7 +315,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                           k.toUpperCase(),
                           style: OgText.body(
                             12,
-                            weight: FontWeight.w800,
+                            weight: FontWeight.w600,
                             color: c.textMuted,
                             letterSpacing: 0.6,
                           ),
@@ -355,7 +355,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                                     m.player.displayName,
                                     style: OgText.body(
                                       15,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -364,7 +364,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                                     '${m.band!.code} ${m.rating!.toStringAsFixed(1)}',
                                     style: OgText.body(
                                       13,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                       color: c.textMuted,
                                     ),
                                   ),
@@ -568,7 +568,7 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
                 'Saved',
                 style: OgText.body(
                   13,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   color: t.successInk,
                 ),
               ),
@@ -676,7 +676,7 @@ class _BanSheetState extends State<_BanSheet> {
         const SizedBox(height: 14),
         Text(
           'Reason, shown to other Admins',
-          style: OgText.body(15, weight: FontWeight.w700),
+          style: OgText.body(15, weight: FontWeight.w600),
         ),
         for (final r in const [
           'No-shows',
@@ -791,7 +791,7 @@ class JoinRequestsScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 r.player.displayName,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 [
@@ -940,7 +940,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                             TextSpan(
                               text: e.actor,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             TextSpan(text: ' ${e.action}'),
@@ -1051,7 +1051,7 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                                   b.player.displayName,
                                   style: OgText.body(
                                     15,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
@@ -1180,7 +1180,7 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
                 children: [
                   Text(
                     'Invite link',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(

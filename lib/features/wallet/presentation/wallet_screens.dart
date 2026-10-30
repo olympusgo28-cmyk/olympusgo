@@ -60,7 +60,7 @@ class _BalanceCard extends StatelessWidget {
             label.toUpperCase(),
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: t.gold,
               letterSpacing: 0.8,
             ),
@@ -114,7 +114,7 @@ class MoneyRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                  Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                   Text(sub, style: OgText.body(13, color: c.textMuted)),
                 ],
               ),
@@ -124,7 +124,7 @@ class MoneyRow extends StatelessWidget {
               amount,
               style: OgText.body(
                 15,
-                weight: FontWeight.w800,
+                weight: FontWeight.w600,
                 color: good ? context.tones.successInk : c.text,
               ),
             ),
@@ -376,7 +376,7 @@ class PointsWalletScreen extends ConsumerWidget {
                 children: [
                   TextSpan(
                     text: '${p.pending.toStringAsFixed(0)} points pending ',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   TextSpan(text: p.pendingNote),
                 ],
@@ -405,7 +405,7 @@ class PointsWalletScreen extends ConsumerWidget {
                         '${i + 1}',
                         style: OgText.body(
                           13,
-                          weight: FontWeight.w800,
+                          weight: FontWeight.w600,
                           color: c.onPrimary,
                         ),
                       ),
@@ -417,7 +417,7 @@ class PointsWalletScreen extends ConsumerWidget {
                         children: [
                           Text(
                             title,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             text,
@@ -500,7 +500,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
             'RECEIPT',
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: sheet.og.textMuted,
               letterSpacing: 0.8,
             ),

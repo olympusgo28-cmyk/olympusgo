@@ -4,6 +4,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/features/clubs/data/supabase_club_repository.dart';
 import 'package:olympus_go/features/clubs/domain/club_models.dart';
 import 'package:olympus_go/features/clubs/domain/club_sport.dart';
@@ -34,9 +37,14 @@ void main() {
       ),
     );
     final stamp = DateTime.now().microsecondsSinceEpoch;
-    final res = await client.auth.signUp(
+    final res = await signUpLocal(
+      client,
       email: '$name.$stamp@test.local',
       password: 'test-password-123',
+    );
+    await client.rpc(
+      'set_birthday',
+      params: {'p_birthday': '1990-01-01', 'p_country': 'SG'},
     );
     await client
         .from('profiles')

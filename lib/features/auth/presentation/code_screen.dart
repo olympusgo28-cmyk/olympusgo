@@ -63,14 +63,15 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
   @override
   Widget build(BuildContext context) {
     final pending = ref.watch(pendingCodeControllerProvider);
-    final channel = pending?.channel ?? CodeChannel.loginEmail;
-    final signUp = channel == CodeChannel.signupEmail;
+    final channel = pending?.channel ?? CodeChannel.loginMobile;
+    final signUp = channel == CodeChannel.signupMobile;
 
-    final title = signUp ? 'Check your email' : 'Enter the code';
+    final title = signUp ? 'Check your messages' : 'Enter the code';
     final lead = switch (channel) {
-      CodeChannel.signupEmail => 'We sent a 6-digit code to the email you entered. It works for 10 minutes.',
-      CodeChannel.loginPhone => 'We sent a 6-digit code by SMS to your mobile number. It works for 10 minutes.',
-      _ => 'We sent a 6-digit code to the email on this account. It works for 10 minutes.',
+      CodeChannel.loginEmail =>
+        'We sent a 6-digit code to that email. It works for 10 minutes.',
+      CodeChannel.loginUsername => 'We sent a 6-digit code to the email or mobile on this account. It works for 10 minutes.',
+      _ => 'We sent a 6-digit code by SMS to that mobile number. It works for 10 minutes.',
     };
 
     return OgFlowScreen(
@@ -88,15 +89,15 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
       ],
       bottom: [
         OgButton(
-          label: signUp ? 'Verify email' : 'Log in',
+          label: signUp ? 'Verify mobile' : 'Log in',
           loading: _busy,
           onPressed: _verify,
         ),
         const SizedBox(height: 16),
         OgTextLink(
           signUp
-              ? 'Wrong email? Change it'
-              : 'Use a different email, mobile or username',
+              ? 'Wrong number? Change it'
+              : 'Use a different mobile, email or username',
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(signUp ? Routes.signUp : Routes.logIn),

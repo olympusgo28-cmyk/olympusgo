@@ -23,7 +23,7 @@ import '../domain/draw_logic.dart';
 import '../domain/meet_ops.dart';
 import 'meet_action_screens.dart';
 
-const _lime = Color(0xFFC6FF00);
+const _lime = Color(0xFFFF7A1A);
 const _muted = Color(0xFFC9C6BC);
 
 /// "You and Priya Raman", "Hannah Goh and Daniel Tan".
@@ -295,7 +295,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
                                   textAlign: TextAlign.center,
                                   style: OgText.body(
                                     13,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                     color: _muted,
                                   ),
                                 ),
@@ -592,7 +592,7 @@ class _TournamentUmpireScreenState
                                 textAlign: TextAlign.center,
                                 style: OgText.body(
                                   13,
-                                  weight: FontWeight.w700,
+                                  weight: FontWeight.w600,
                                   color: _muted,
                                 ),
                               ),
@@ -649,7 +649,7 @@ class _TeamLine extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: OgText.body(
               16,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: Colors.white,
             ),
           ),
@@ -761,7 +761,7 @@ class _Keypad extends StatelessWidget {
               onNext,
               child: Text(
                 'Next',
-                style: OgText.body(16, weight: FontWeight.w700),
+                style: OgText.body(16, weight: FontWeight.w600),
               ),
             ),
             key('0', () => onDigit(0)),
@@ -942,7 +942,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: OgText.body(
                             16,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),

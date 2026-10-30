@@ -35,8 +35,8 @@ abstract class VenueDetail with _$VenueDetail {
     double? rating,
     @Default(0) int ratingCount,
     @Default(false) bool autoCheckIn,
-    @Default(0xFF16181B) int color,
-    @Default(0xFFC6FF00) int ink,
+    @Default(0xFF1C1F23) int color,
+    @Default(0xFFFF7A1A) int ink,
   }) = _VenueDetail;
 
   const VenueDetail._();

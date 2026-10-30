@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/country.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/og_buttons.dart';
-import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_screen.dart';
+import '../../../core/widgets/phone_field.dart';
 import '../application/pending_code.dart';
 import '../data/auth_repository.dart';
 import 'validators.dart';
@@ -18,19 +19,20 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
-  final _email = TextEditingController();
+  final _mobile = TextEditingController();
+  Country _country = Country.singapore;
   String? _error;
   bool _busy = false;
 
   @override
   void dispose() {
-    _email.dispose();
+    _mobile.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    final email = _email.text.trim();
-    final invalid = Validators.email(email);
+    final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
+    final invalid = Validators.mobile(digits);
     if (invalid != null) return setState(() => _error = invalid);
     setState(() {
       _error = null;
@@ -39,7 +41,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     try {
       await ref
           .read(pendingCodeControllerProvider.notifier)
-          .send(CodeChannel.signupEmail, email);
+          .send(CodeChannel.signupMobile, '${_country.dialCode}$digits');
       if (mounted) context.push(Routes.signUpCode);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
@@ -55,21 +57,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         const OgBackButton(),
         const OgHeading(
           title: 'Create your account',
-          lead: "Enter your email. We'll send a 6-digit code. No password to remember.",
+          lead: "Enter your mobile number. We'll send a 6-digit code. No password to remember.",
         ),
         const SizedBox(height: 32),
-        AutofillGroup(
-          child: OgTextField(
-            label: 'Email',
-            controller: _email,
-            hint: 'you@example.com',
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            autocorrect: false,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _send(),
-            error: _error,
-          ),
+        PhoneField(
+          country: _country,
+          onCountryChanged: (v) => setState(() => _country = v),
+          controller: _mobile,
+          onSubmitted: (_) => _send(),
+          error: _error,
         ),
       ],
       bottom: [

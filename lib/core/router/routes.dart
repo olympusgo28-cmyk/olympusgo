@@ -8,7 +8,7 @@ abstract final class Routes {
   static const signUp = '/signup';
   static const signUpCode = '/signup/code';
   static const logIn = '/login';
-  static const logInPhone = '/login/phone';
+  static const logInEmail = '/login/email';
   static const logInUsername = '/login/username';
   static const logInCode = '/login/code';
   static const recovery = '/recovery';
@@ -21,8 +21,8 @@ abstract final class Routes {
   static const skills = '/onboarding/skills';
   static String skill(String sportId) => '/onboarding/skills/$sportId';
   static const username = '/onboarding/username';
-  static const mobile = '/onboarding/mobile';
-  static const mobileVerify = '/onboarding/mobile/verify';
+  static const addEmail = '/onboarding/email';
+  static const addEmailVerify = '/onboarding/email/verify';
   static const ready = '/ready';
 
   static const home = '/home';
@@ -30,6 +30,22 @@ abstract final class Routes {
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';
+
+  // Parent links. Restricted players stay on these until a parent approves.
+  static const parentLink = '/parent-link';
+  static const parentCode = '/parent-link/code';
+  static const enterChildCode = '/parent-link/enter';
+  static const children = '/parent-link/children';
+  static String child(String id) => '/parent-link/children/$id';
+  static const restrictedPrefixes = [
+    parentLink,
+    settings,
+    legal,
+    '/onboarding',
+    ready,
+    setupAccount,
+    setupPersonal,
+  ];
 
   // Account set-up right after onboarding.
   static const setupAccount = '/setup/account';
@@ -95,6 +111,7 @@ abstract final class Routes {
       live ? '/shop/live/$id/report' : '/shop/videos/$id/report';
   static String meetWalkIn(String id) => '/activities/$id/walk-in';
   static String meetAttendance(String id) => '/activities/$id/attendance';
+  static String meetScanPlayers(String id) => '/activities/$id/scan-players';
   static String meetRecap(String id) => '/activities/$id/recap';
   static String meetCancel(String id) => '/activities/$id/cancel';
   static String scoreEntry(String id) => '/activities/$id/score';

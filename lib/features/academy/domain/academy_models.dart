@@ -95,7 +95,7 @@ abstract class Academy with _$Academy {
     @Default(2) int makeupsPerMonth,
     @Default([]) List<AcademyCoach> coaches,
     @Default([]) List<AcademyClass> classes,
-    @Default(0xFF16181B) int color,
+    @Default(0xFF1C1F23) int color,
     @Default(0xFFF2C14E) int ink,
 
     /// The banner on the academy page, like a club's cover colour.

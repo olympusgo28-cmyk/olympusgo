@@ -88,7 +88,7 @@ class DemoClubRepository implements ClubRepository {
       'hannahgoh',
       0xFF101010,
       6.2,
-      ink: 0xFFC6FF00,
+      ink: 0xFFFF7A1A,
     );
     _person('cp-siti', 'Siti Kamal', 'sitikamal', 0xFF0E6B4E, 5.7);
     _person(

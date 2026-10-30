@@ -57,8 +57,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         const OgHeading(
           title: 'Get back your account',
           lead:
-              'Lost access to both your email and your mobile number? Enter an email '
-              "address you can use now and we'll help you recover your account.",
+              'Lost your mobile number but still have your email? Log in with email '
+              'instead. Lost both? Enter an email address you can use now and our '
+              'team will review your request.',
         ),
         const SizedBox(height: 32),
         OgTextField(
@@ -100,10 +101,10 @@ class RecoverySentScreen extends StatelessWidget {
           ),
         ),
         const OgHeading(
-          title: 'Check your email',
+          title: 'We got your request',
           lead:
-              'We sent a message to that address with the next steps to get back into '
-              "your account. If you don't see it in a few minutes, check your spam folder.",
+              'Our team reviews every request by hand. If we can match it to an '
+              "account, we'll reply to that address with the next steps.",
         ),
       ],
       bottom: [

@@ -190,7 +190,7 @@ class _Hero extends ConsumerWidget {
                   KitTag(
                     demo ? 'Creator challenge' : 'Play',
                     fontSize: 12,
-                    background: c.onPrimary,
+                    background: OgColors.ink,
                     foreground: Colors.white,
                   ),
                   const SizedBox(height: 8),
@@ -200,7 +200,7 @@ class _Hero extends ConsumerWidget {
                         : 'Find your next game',
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    // Archivo runs much wider than the artboard's condensed
+                    // Baloo 2 runs much wider than the artboard's condensed
                     // face, so 26 keeps three lines clear of the circle.
                     style: OgText.heading(26, color: c.onPrimary, height: 1),
                   ),
@@ -361,7 +361,7 @@ class _Balances extends ConsumerWidget {
                       label,
                       style: OgText.body(
                         13,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: labelColor,
                       ),
                     ),

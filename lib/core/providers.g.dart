@@ -91,6 +91,54 @@ final class AuthRepositoryProvider
 
 String _$authRepositoryHash() => r'65c9429dcf1535fc008aa31e5ac650f957f58fd1';
 
+@ProviderFor(guardianRepository)
+final guardianRepositoryProvider = GuardianRepositoryProvider._();
+
+final class GuardianRepositoryProvider
+    extends
+        $FunctionalProvider<
+          GuardianRepository,
+          GuardianRepository,
+          GuardianRepository
+        >
+    with $Provider<GuardianRepository> {
+  GuardianRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'guardianRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$guardianRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<GuardianRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  GuardianRepository create(Ref ref) {
+    return guardianRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GuardianRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GuardianRepository>(value),
+    );
+  }
+}
+
+String _$guardianRepositoryHash() =>
+    r'85fed50a8d45bec6c133630dcfc18cf30267531b';
+
 @ProviderFor(profileRepository)
 final profileRepositoryProvider = ProfileRepositoryProvider._();
 
@@ -815,7 +863,7 @@ final class SessionProfileProvider
   SessionProfile create() => SessionProfile();
 }
 
-String _$sessionProfileHash() => r'71d0149db2a59d6f99e77d4cc1a31554508b5f00';
+String _$sessionProfileHash() => r'e80acb54d34499bdcab9738448ad40cfdce4f610';
 
 /// The signed-in player's profile; null when signed out.
 

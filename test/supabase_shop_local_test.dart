@@ -4,6 +4,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/features/shop/data/shop_repository.dart';
 import 'package:olympus_go/features/shop/domain/commerce_models.dart';
 import 'package:olympus_go/features/shop/domain/shop_models.dart';
@@ -26,9 +29,14 @@ void main() {
       ),
     );
     final stamp = DateTime.now().microsecondsSinceEpoch;
-    final res = await client.auth.signUp(
+    final res = await signUpLocal(
+      client,
       email: '$name.$stamp@test.local',
       password: 'test-password-123',
+    );
+    await client.rpc(
+      'set_birthday',
+      params: {'p_birthday': '1990-01-01', 'p_country': 'SG'},
     );
     await client
         .from('profiles')

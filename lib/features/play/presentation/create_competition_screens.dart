@@ -140,7 +140,7 @@ class _Money extends StatelessWidget {
                       k,
                       style: OgText.body(
                         14,
-                        weight: bold ? FontWeight.w800 : FontWeight.w400,
+                        weight: bold ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                   ),
@@ -148,7 +148,7 @@ class _Money extends StatelessWidget {
                     v,
                     style: OgText.body(
                       14,
-                      weight: bold ? FontWeight.w800 : FontWeight.w600,
+                      weight: bold ? FontWeight.w600 : FontWeight.w600,
                     ),
                   ),
                 ],
@@ -584,7 +584,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             'tournament uses draws and matches.',
             tone: KitTone.info,
           ),
-          Text('Tier', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Tier', style: OgText.body(15, weight: FontWeight.w600)),
           KitSegments(
             labels: _tiers.keys.toList(),
             selected: _tiers.keys.toList().indexOf(d.tier),

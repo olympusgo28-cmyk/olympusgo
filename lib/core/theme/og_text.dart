@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// OlympusGO type styles from the ThemeTokens artboard: display text is
-/// Archivo (700 and 800), body text is Figtree. Sizes and line heights match
-/// the artboards; colour comes from the surrounding [DefaultTextStyle]
-/// unless a screen overrides it.
+/// OlympusGO type styles: display text is Baloo 2, body text is Nunito Sans.
+/// Nothing is heavier than 600. Sizes and line heights match the artboards;
+/// colour comes from the surrounding [DefaultTextStyle] unless a screen
+/// overrides it.
 abstract final class OgText {
   static TextStyle display(double size, {double height = 1.1, Color? color}) =>
-      GoogleFonts.archivo(
+      GoogleFonts.baloo2(
         fontSize: size,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         height: height,
         color: color,
       );
@@ -21,7 +21,7 @@ abstract final class OgText {
     Color? color,
     double? letterSpacing,
     TextDecoration? decoration,
-  }) => GoogleFonts.figtree(
+  }) => GoogleFonts.nunitoSans(
     fontSize: size,
     fontWeight: weight,
     height: height,
@@ -32,17 +32,17 @@ abstract final class OgText {
   );
 
   /// Tight headings on club, team and shop screens (the design's `.d`
-  /// class: extra bold, -0.01em tracking).
+  /// class: -0.01em tracking).
   static TextStyle heading(double size, {Color? color, double height = 1.05}) =>
-      GoogleFonts.archivo(
+      GoogleFonts.baloo2(
         fontSize: size,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w600,
         height: height,
         letterSpacing: -0.01 * size,
         color: color,
       );
 
-  /// Screen titles: 34px Archivo.
+  /// Screen titles: 34px Baloo 2.
   static TextStyle get h1 => display(34);
 
   /// Section titles such as "Meets near you": 22px.

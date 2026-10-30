@@ -324,7 +324,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                           '${level.playMin.toStringAsFixed(1)} to ${level.playMax.toStringAsFixed(1)}',
                       style: TextStyle(
                         color: c.text,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -1467,7 +1467,7 @@ class _WinRatePainter extends CustomPainter {
         Offset(x(i), 148 * sy),
         OgText.body(
           12,
-          weight: i == selected ? FontWeight.w800 : FontWeight.w400,
+          weight: i == selected ? FontWeight.w600 : FontWeight.w400,
           color: i == selected ? c.text : c.textMuted,
         ),
         center: true,
@@ -1497,7 +1497,7 @@ class _WinRatePainter extends CustomPainter {
       canvas,
       title,
       Offset(tx + 10, 14 * sy + 7),
-      OgText.body(13, weight: FontWeight.w800, color: c.text),
+      OgText.body(13, weight: FontWeight.w600, color: c.text),
     );
     _rich(
       canvas,
@@ -1521,7 +1521,7 @@ class _WinRatePainter extends CustomPainter {
         children: [
           TextSpan(
             text: b,
-            style: OgText.body(12, weight: FontWeight.w800, color: c.text),
+            style: OgText.body(12, weight: FontWeight.w600, color: c.text),
           ),
         ],
       ),

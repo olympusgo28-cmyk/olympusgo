@@ -169,7 +169,7 @@ class PlayCard extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           a.kind.label,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         const SizedBox(width: 8),
                         KitTag(
@@ -201,7 +201,7 @@ class PlayCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: OgText.body(
                       19,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: c.text,
                     ),
                   ),
@@ -272,11 +272,11 @@ class _GenderChip extends StatelessWidget {
             children: [
               OgIcon(OgIcons.male, size: 13, strokeWidth: 2.2),
               const SizedBox(width: 2),
-              Text('$men', style: OgText.body(12, weight: FontWeight.w700)),
+              Text('$men', style: OgText.body(12, weight: FontWeight.w600)),
               const SizedBox(width: 8),
               OgIcon(OgIcons.female, size: 13, strokeWidth: 2.2),
               const SizedBox(width: 2),
-              Text('$women', style: OgText.body(12, weight: FontWeight.w700)),
+              Text('$women', style: OgText.body(12, weight: FontWeight.w600)),
             ],
           ),
         ),
@@ -311,7 +311,7 @@ class _Line extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
               // Always takes a line, so cards line up with or without one.
               Text(
@@ -354,7 +354,7 @@ class _Proof extends StatelessWidget {
                   text: proof.name,
                   style: OgText.body(
                     13,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: c.text,
                   ),
                 ),

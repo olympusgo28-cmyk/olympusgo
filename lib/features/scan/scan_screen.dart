@@ -13,7 +13,10 @@ import '../../core/theme/og_text.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/share.dart';
+import '../../core/widgets/og_toast.dart';
+import '../auth/data/auth_repository.dart';
 import '../clubs/domain/club_sport.dart';
+import '../guardian/application/guardian_providers.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../shell/main_shell.dart';
@@ -39,7 +42,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   );
   bool _visible = false;
   bool _handling = false;
-  bool _myCode = false;
+  bool _showMyCode = false;
+
+  /// Under-13s only ever see their own code.
+  bool get _myCode =>
+      _showMyCode || !(ref.read(restrictionsProvider).value?.canScan ?? true);
   bool _torch = false;
 
   static final _host = RegExp.escape(Links.host);
@@ -53,10 +60,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   /// Event tickets: `olympusgo:ticket:<event id>:<booking code>`.
   static final _ticket = RegExp(r'^olympusgo:ticket:([^:]+):(.+)$');
 
+  /// My QR: `olympusgo:player:<token>`. The token means nothing on its own.
+  static final _token = RegExp(r'^olympusgo:player:([0-9a-z]{16,64})$');
+
   bool get _cameraWanted => _visible && !_myCode;
 
   Future<void> _syncCamera() async {
-    if (_cameraWanted) {
+    final canScan = ref.read(restrictionsProvider).value?.canScan ?? true;
+    if (_cameraWanted && canScan) {
       await _camera.start();
     } else {
       if (_torch) setState(() => _torch = false);
@@ -87,9 +98,25 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     setState(() => _torch = !_torch);
   }
 
+  Future<void> _openToken(String token) async {
+    _handling = true;
+    HapticFeedback.mediumImpact();
+    await _camera.stop();
+    try {
+      final username = await ref.read(playRepositoryProvider).resolveQr(token);
+      if (mounted) await context.push(Routes.scannedPlayer(username));
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    }
+    _handling = false;
+    if (mounted) await _syncCamera();
+  }
+
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_handling) return;
     final raw = capture.barcodes.firstOrNull?.rawValue ?? '';
+    final token = _token.firstMatch(raw)?.group(1);
+    if (token != null) return _openToken(token);
     final meet = _meetLink.firstMatch(raw)?.group(1);
     final player = meet == null ? _playerLink.firstMatch(raw)?.group(1) : null;
     final ticket = _ticket.firstMatch(raw);
@@ -150,7 +177,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: _torch ? OgColors.lime : _glass,
+                            color: _torch ? OgColors.orange300 : _glass,
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
@@ -171,14 +198,19 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 child: _ModeSwitch(
                   myCode: _myCode,
                   onChanged: (v) {
-                    setState(() => _myCode = v);
+                    setState(() => _showMyCode = v);
                     _syncCamera();
                   },
                 ),
               ),
               Expanded(
                 child: _myCode
-                    ? const _MyCode()
+                    ? const Column(
+                        children: [
+                          _ParentScansIfNeeded(),
+                          Expanded(child: _MyCode()),
+                        ],
+                      )
                     : _Scanner(camera: _camera, onDetect: _onDetect),
               ),
             ],
@@ -214,7 +246,7 @@ class _ModeSwitch extends StatelessWidget {
             label,
             style: OgText.body(
               14,
-              weight: on ? FontWeight.w700 : FontWeight.w600,
+              weight: on ? FontWeight.w600 : FontWeight.w600,
               color: on ? OgColors.ink : Colors.white,
             ),
           ),
@@ -368,7 +400,7 @@ class _Scanner extends StatelessWidget {
                             '${i + 1}',
                             style: OgText.body(
                               12,
-                              weight: FontWeight.w800,
+                              weight: FontWeight.w600,
                               color: const Color(0xFF3A2C00),
                             ),
                           ),
@@ -383,7 +415,7 @@ class _Scanner extends StatelessWidget {
                                 uses[i].$1,
                                 style: OgText.body(
                                   14,
-                                  weight: FontWeight.w700,
+                                  weight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
                               ),
@@ -407,6 +439,26 @@ class _Scanner extends StatelessWidget {
   }
 }
 
+/// Under-13s have a code for hosts to scan, but do not scan anything.
+class _ParentScansIfNeeded extends ConsumerWidget {
+  const _ParentScansIfNeeded();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(restrictionsProvider).value?.canScan ?? true) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Text(
+        'Ask a parent to scan for you. Hosts can scan the code below.',
+        textAlign: TextAlign.center,
+        style: OgText.body(15, height: 1.4, color: _muted),
+      ),
+    );
+  }
+}
+
 class _MyCode extends ConsumerWidget {
   const _MyCode();
 
@@ -418,6 +470,7 @@ class _MyCode extends ConsumerWidget {
         .where((a) => a.kind == ActivityKind.event && !a.iAmHost)
         .length;
     final username = profile?.username ?? '';
+    final token = ref.watch(myQrProvider).value;
     final level = sport == null
         ? null
         : '${SkillBand.forLevel(sport.level).code} ${sport.level.toStringAsFixed(1)}';
@@ -438,7 +491,8 @@ class _MyCode extends ConsumerWidget {
                   label: 'Your QR code',
                   image: true,
                   child: QrImageView(
-                    data: Links.player(username),
+                    // An opaque token, never a user id. Empty until it loads.
+                    data: 'olympusgo:player:${token ?? ''}',
                     size: 208,
                     padding: EdgeInsets.zero,
                     eyeStyle: const QrEyeStyle(
@@ -492,7 +546,7 @@ class _MyCode extends ConsumerWidget {
                     'My tickets · $tickets',
                     style: OgText.body(
                       15,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -511,7 +565,7 @@ class _Viewfinder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const side = BorderSide(color: OgColors.tangerine, width: 4);
+    const side = BorderSide(color: OgColors.orange500, width: 4);
     const r = Radius.circular(16);
     Widget corner(Alignment a, Border border, BorderRadius radius) => Align(
       alignment: a,
@@ -550,7 +604,7 @@ class _Viewfinder extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 height: 2,
-                color: OgColors.tangerine.withValues(alpha: 0.8),
+                color: OgColors.orange500.withValues(alpha: 0.8),
               ),
             ),
           ),

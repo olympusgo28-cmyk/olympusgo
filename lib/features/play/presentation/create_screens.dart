@@ -137,7 +137,7 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
                   children: [
                     Text(
                       k.label,
-                      style: OgText.body(17, weight: FontWeight.w700),
+                      style: OgText.body(17, weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -195,7 +195,7 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
                 children: [
                   Text(
                     'Start a group first',
-                    style: OgText.body(17, weight: FontWeight.w700),
+                    style: OgText.body(17, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -505,7 +505,7 @@ class _PickTimeScreenState extends ConsumerState<PickTimeScreen> {
           }),
         ),
         if (!tournament) ...[
-          Text('Lasts', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Lasts', style: OgText.body(15, weight: FontWeight.w600)),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -612,7 +612,7 @@ class _PickVenueScreenState extends ConsumerState<PickVenueScreen> {
                     ActivityKind.event) ...[
               Text(
                 'Courts to book',
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
               Wrap(
                 spacing: 8,

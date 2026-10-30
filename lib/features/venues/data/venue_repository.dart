@@ -104,8 +104,8 @@ class SupabaseVenueRepository implements VenueRepository {
     rating: (r['rating'] as num?)?.toDouble(),
     ratingCount: r['rating_count'] as int? ?? 0,
     autoCheckIn: r['auto_check_in'] as bool? ?? false,
-    color: _hex(r['color'] as String?) ?? 0xFF16181B,
-    ink: _hex(r['ink'] as String?) ?? 0xFFC6FF00,
+    color: _hex(r['color'] as String?) ?? 0xFF1C1F23,
+    ink: _hex(r['ink'] as String?) ?? 0xFFFF7A1A,
     courts: [
       for (final c
           in (r['venue_courts'] as List? ?? const [])

@@ -1,0 +1,94 @@
+# Every check in docs/DEVELOPER_CHECKLIST.md section 3.3. A failing job should
+# block merging: turn on branch protection for main and require these jobs.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No service-role key or live key in any app build
+        run: |
+          if grep -rEn 'service_role|SERVICE_ROLE|sb_secret_|sk_live_' lib android ios share_site; then
+            echo 'A secret or service-role reference is in app code.'
+            exit 1
+          fi
+      - name: No env file committed
+        run: |
+          if git ls-files | grep -E '(^|/)(env\.json|\.env(\.[a-z]+)?)$' | grep -v '\.example'; then
+            exit 1
+          fi
+
+  flutter:
+    # macOS, so golden files render the way they were recorded.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+      - run: supabase start
+      - run: supabase db reset
+      - run: supabase test db
+      # Advisory: the linter cannot see the temp table shop_checkout makes at
+      # run time, so it reports a false error there.
+      - run: supabase db lint --level error
+        continue-on-error: true
+
+  functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: '2.9.8'
+      - run: deno fmt --line-width 110 --check supabase/functions
+      - run: deno lint supabase/functions
+      - run: deno check supabase/functions/resolve-login/index.ts
+      - run: deno test --no-check=remote -A supabase/functions
+
+  integration:
+    runs-on: macos-latest
+    needs: [database]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+          cache: true
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+      - uses: douglascamata/setup-docker-macos-action@v1
+      - run: supabase start
+      - name: Real repositories against the local stack
+        run: |
+          export LOCAL_SUPABASE_URL=http://127.0.0.1:54321
+          export LOCAL_SUPABASE_KEY=$(supabase status -o json | jq -r .ANON_KEY)
+          export LOCAL_SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)
+          flutter test test/supabase_play_local_test.dart test/supabase_safety_local_test.dart \
+            test/supabase_clubs_local_test.dart test/supabase_shop_local_test.dart \
+            test/supabase_tournament_local_test.dart test/supabase_academy_local_test.dart

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/country.dart';
-import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_text.dart';
@@ -18,8 +17,8 @@ import 'validators.dart';
 
 enum LoginMethod { email, phone, username }
 
-/// "Welcome back": log in by email, mobile number or username. The other
-/// two methods and Face ID sit below as alternatives.
+/// "Welcome back": log in by mobile number, email or username. The other two
+/// methods sit below as alternatives; Face ID tiles are on the Welcome screen.
 class LogInScreen extends ConsumerStatefulWidget {
   const LogInScreen({super.key, required this.method});
 
@@ -46,8 +45,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
       "Enter your email. We'll send you a 6-digit code by email.",
     LoginMethod.phone =>
       "Enter your mobile number. We'll send you a 6-digit code by SMS.",
-    LoginMethod.username =>
-      "Enter your username. We'll send you a 6-digit code by email.",
+    LoginMethod.username => "Enter your username. We'll send a 6-digit code to the email or mobile on your account.",
   };
 
   Future<void> _send() async {
@@ -71,7 +69,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
         final digits = value.replaceAll(RegExp(r'\D'), '');
         return (
           Validators.mobile(digits),
-          CodeChannel.loginPhone,
+          CodeChannel.loginMobile,
           '${_country.dialCode}$digits',
         );
       }(),
@@ -90,28 +88,6 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
       setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _faceId() async {
-    try {
-      await ref.read(authRepositoryProvider).unlockWithBiometrics();
-    } on AuthFailure catch (e) {
-      if (!mounted) return;
-      showCupertinoDialog<void>(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text('Face ID is not set up yet'),
-          content: Text(e.message),
-          actions: [
-            CupertinoDialogAction(
-              isDefaultAction: true,
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
     }
   }
 
@@ -175,26 +151,20 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        OgMethodButton(
-          icon: OgIcons.faceId,
-          label: 'Unlock with Face ID',
-          onPressed: _faceId,
-        ),
+        if (widget.method != LoginMethod.phone) ...[
+          const SizedBox(height: 10),
+          OgMethodButton(
+            icon: OgIcons.phone,
+            label: 'Log in with mobile',
+            onPressed: () => _switchTo(Routes.logIn),
+          ),
+        ],
         if (widget.method != LoginMethod.email) ...[
           const SizedBox(height: 10),
           OgMethodButton(
             icon: OgIcons.mail,
             label: 'Log in with email',
-            onPressed: () => _switchTo(Routes.logIn),
-          ),
-        ],
-        if (widget.method != LoginMethod.phone) ...[
-          const SizedBox(height: 10),
-          OgMethodButton(
-            icon: OgIcons.phone,
-            label: 'Log in with phone',
-            onPressed: () => _switchTo(Routes.logInPhone),
+            onPressed: () => _switchTo(Routes.logInEmail),
           ),
         ],
         if (widget.method != LoginMethod.username) ...[
@@ -213,7 +183,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
         ),
         const SizedBox(height: 4),
         OgTextLink(
-          'Forgotten both email and mobile? Get back in',
+          'Lost both your mobile and email? Get back in',
           onPressed: () => context.push(Routes.recovery),
         ),
       ],

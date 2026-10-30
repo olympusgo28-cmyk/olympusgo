@@ -325,7 +325,7 @@ class _SellerOrdersScreenState extends ConsumerState<SellerOrdersScreen> {
                             children: [
                               Text(
                                 o.buyer,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 o.summary,
@@ -432,7 +432,7 @@ class _SellerOrderDetailScreenState
           ? [
               Text(
                 'Return asked: ${o.returnReason ?? ''}',
-                style: OgText.body(14, weight: FontWeight.w700),
+                style: OgText.body(14, weight: FontWeight.w600),
               ),
               Row(
                 children: [
@@ -500,7 +500,7 @@ class _SellerOrderDetailScreenState
                         children: [
                           Text(
                             l.name,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             '${l.variant} · qty ${l.qty}',
@@ -511,7 +511,7 @@ class _SellerOrderDetailScreenState
                     ),
                     Text(
                       cash(l.priceCents * l.qty),
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -531,7 +531,7 @@ class _SellerOrderDetailScreenState
         ],
         if (!shipped && !o.service) ...[
           KitInput(label: 'Tracking number', controller: _tracking),
-          Text('Courier', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Courier', style: OgText.body(15, weight: FontWeight.w600)),
           Column(
             children: [
               for (final cr in const ['Ninja Van', 'J&T Express', 'SingPost'])
@@ -670,7 +670,7 @@ class _SellerProductsScreenState extends ConsumerState<SellerProductsScreen> {
                             children: [
                               Text(
                                 p.name,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 '${cash(p.priceCents)} · ${p.service ? 'service' : '${p.stock} in stock'}',
@@ -915,7 +915,7 @@ class _SellerProductEditScreenState
         if (!Env.hasSupabase) ...[
           Text(
             'Points buyers can use',
-            style: OgText.body(15, weight: FontWeight.w700),
+            style: OgText.body(15, weight: FontWeight.w600),
           ),
           Wrap(
             spacing: 8,
@@ -930,7 +930,7 @@ class _SellerProductEditScreenState
           ),
         ],
         if (!_service) ...[
-          Text('Delivery', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Delivery', style: OgText.body(15, weight: FontWeight.w600)),
           Wrap(
             spacing: 8,
             children: [
@@ -1079,7 +1079,7 @@ class _SellerGoLiveScreenState extends ConsumerState<SellerGoLiveScreen> {
         ),
         Text(
           'Live-only price',
-          style: OgText.body(15, weight: FontWeight.w700),
+          style: OgText.body(15, weight: FontWeight.w600),
         ),
         Wrap(
           spacing: 8,
@@ -1222,7 +1222,7 @@ class _SellerUploadVideoScreenState
               ),
           ],
         ),
-        Text('Sport', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Sport', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           children: [

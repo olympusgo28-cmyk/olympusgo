@@ -326,7 +326,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
             icon: OgIcons.paperPlane,
             label: 'Send',
             size: 20,
-            background: c.primary,
+            background: c.primarySmall,
             color: c.onPrimary,
             onPressed: _send,
           ),
@@ -372,7 +372,7 @@ class _Pinned extends StatelessWidget {
                           text: 'Pinned: ',
                           style: OgText.body(
                             13,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: c.text,
                           ),
                         ),
@@ -621,7 +621,7 @@ class _Mine extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: c.primary,
+                color: c.primarySmall,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(4),

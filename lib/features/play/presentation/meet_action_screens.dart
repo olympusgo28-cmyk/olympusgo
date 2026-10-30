@@ -15,6 +15,8 @@ import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../guardian/application/guardian_providers.dart';
+import '../../guardian/domain/guardian_models.dart';
 import '../application/play_providers.dart';
 import '../data/payment_gateway.dart';
 import '../domain/activity.dart';
@@ -544,7 +546,7 @@ class _ScheduleRow extends StatelessWidget {
                     days[a.startsAt.weekday - 1],
                     style: OgText.body(
                       11,
-                      weight: FontWeight.w800,
+                      weight: FontWeight.w600,
                       color: t.onTag,
                     ),
                   ),
@@ -561,7 +563,7 @@ class _ScheduleRow extends StatelessWidget {
                     a.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -662,6 +664,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                     : "Couldn't check you in.",
                 tone: KitTone.warn,
               ),
+              _ChildCheckIn(activityId: a.id),
             ],
           );
         }
@@ -692,6 +695,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                   KitKeyValue('Where', [a.venue.name, ?a.court].join(', ')),
                   KitKeyValue('Time', Fmt.dayTimeComma(a.startsAt)),
                   KitKeyValue('Players here', '${snap.data} of ${a.capacity}'),
+                  _ChildCheckIn(activityId: a.id),
                 ],
               ),
             ),
@@ -700,4 +704,44 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
       },
     ),
   );
+}
+
+/// A parent at the Meet checks in their linked children, who cannot scan.
+class _ChildCheckIn extends ConsumerWidget {
+  const _ChildCheckIn({required this.activityId});
+
+  final String activityId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final children = (ref.watch(myChildrenProvider).value ?? const [])
+        .where((c) => c.status == LinkStatus.approved)
+        .toList();
+    return Column(
+      children: [
+        for (final child in children)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: KitButton.outline(
+              label: 'Check in ${child.name}',
+              onPressed: () async {
+                try {
+                  await ref
+                      .read(playRepositoryProvider)
+                      .checkInChild(activityId, child.childId!);
+                  HapticFeedback.mediumImpact();
+                  if (context.mounted) {
+                    showOgToast(context, '${child.name} is checked in');
+                  }
+                } on AuthFailure catch (e) {
+                  if (context.mounted) {
+                    showOgToast(context, e.message, error: true);
+                  }
+                }
+              },
+            ),
+          ),
+      ],
+    );
+  }
 }

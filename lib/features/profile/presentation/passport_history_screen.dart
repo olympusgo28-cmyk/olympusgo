@@ -68,7 +68,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                 '${sport.label} rating'.toUpperCase(),
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   letterSpacing: 0.6,
                   color: c.highlight,
                 ),
@@ -89,7 +89,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                         SkillBand.forLevel(level).label,
                         style: OgText.body(
                           16,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: c.onInverseCard,
                         ),
                       ),

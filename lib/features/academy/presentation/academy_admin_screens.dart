@@ -196,7 +196,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Level', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Level', style: OgText.body(15, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             KitSegments(
               labels: const ['1', '2', '3', '4', '5'],
@@ -214,7 +214,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Days', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Days', style: OgText.body(15, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -245,7 +245,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Length', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Length', style: OgText.body(15, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             KitSegments(
               labels: const ['45 min', '60 min', '90 min', '2 hr'],
@@ -289,7 +289,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Coach', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Coach', style: OgText.body(15, weight: FontWeight.w600)),
             for (final k in a.coaches)
               KitChoiceRow(
                 title: k.name,
@@ -388,7 +388,7 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
                         children: [
                           Text(
                             k.name,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             k.head ? 'Head coach' : k.role,
@@ -497,7 +497,7 @@ Future<void> showAcademyBilling(
           const SizedBox(height: 12),
           Text(
             'Make-up classes each month',
-            style: OgText.body(15, weight: FontWeight.w700),
+            style: OgText.body(15, weight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           KitSegments(

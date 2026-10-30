@@ -64,7 +64,7 @@ class _Header extends StatelessWidget {
 }
 
 Widget _label(String text) =>
-    Text(text, style: OgText.body(15, weight: FontWeight.w700));
+    Text(text, style: OgText.body(15, weight: FontWeight.w600));
 
 // ─── 1 Details ─────────────────────────────────────────────────────────────
 
@@ -260,7 +260,7 @@ class NewAcademyLevelsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           name,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         Text(meta, style: OgText.body(13, color: c.textMuted)),
                       ],
@@ -415,7 +415,7 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                   backgroundColor: t.soft,
                   child: Text(
                     '${i + 1}',
-                    style: OgText.body(13, weight: FontWeight.w700),
+                    style: OgText.body(13, weight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -425,7 +425,7 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                     children: [
                       Text(
                         _docs[i].$2,
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         _docs[i].$3,
@@ -582,7 +582,7 @@ class _Role extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+        Text(title, style: OgText.body(15, weight: FontWeight.w600)),
         Text(body, style: OgText.body(13, color: context.og.textMuted)),
       ],
     ),

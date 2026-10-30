@@ -150,7 +150,7 @@ class ProductTile extends StatelessWidget {
               p.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(14, weight: FontWeight.w700, height: 1.25),
+              style: OgText.body(14, weight: FontWeight.w600, height: 1.25),
             ),
             const SizedBox(height: 4),
             Row(
@@ -178,7 +178,7 @@ class ProductTile extends StatelessWidget {
                 'Used by ${p.usedBy}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(12, weight: FontWeight.w700, color: t.onTag),
+                style: OgText.body(12, weight: FontWeight.w600, color: t.onTag),
               ),
             if (p.maxPoints > 0)
               Padding(
@@ -322,7 +322,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
                     Text(cash(price * _qty), style: OgText.heading(22)),
                     Text(
                       p.name,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                     if (_variant.isNotEmpty)
                       Text(
@@ -336,7 +336,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
           ),
           for (final (gi, g) in widget.options.indexed) ...[
             const SizedBox(height: 14),
-            Text(g.title, style: OgText.body(15, weight: FontWeight.w700)),
+            Text(g.title, style: OgText.body(15, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -357,7 +357,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
               Expanded(
                 child: Text(
                   'Quantity',
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
               ),
               KitQty(
@@ -492,7 +492,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                     OgIcon(
                       OgIcons.racquet,
                       size: 56,
-                      color: const Color(0xFFC6FF00),
+                      color: const Color(0xFFFF7A1A),
                     ),
                   ],
                 ),
@@ -611,7 +611,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                                     m.name,
                                     style: OgText.body(
                                       15,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
@@ -702,7 +702,7 @@ class _MediaRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(16, weight: FontWeight.w700)),
+                Text(title, style: OgText.body(16, weight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -1080,7 +1080,7 @@ class ProductPageScreen extends ConsumerWidget {
               KitNavTile(
                 icon: OgIcons.racquet,
                 tile: OgColors.ink,
-                ink: const Color(0xFFC6FF00),
+                ink: const Color(0xFFFF7A1A),
                 title: '${p.usedBy} uses this',
                 subtitle: '${value.videoTitle} · Watch the video',
                 onTap: () => context.push(Routes.shopVideo('v1')),
@@ -1115,7 +1115,7 @@ class ProductPageScreen extends ConsumerWidget {
                   children: [
                     Text(
                       r.name,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                     Text(r.meta, style: OgText.body(12, color: c.textMuted)),
                     const SizedBox(height: 4),
@@ -1253,7 +1253,7 @@ class _ShopVideoScreenState extends ConsumerState<ShopVideoScreen> {
             Expanded(
               child: Text(
                 v.creator,
-                style: OgText.body(16, weight: FontWeight.w700, color: white),
+                style: OgText.body(16, weight: FontWeight.w600, color: white),
               ),
             ),
             KitButton(
@@ -1292,7 +1292,7 @@ class _ShopVideoScreenState extends ConsumerState<ShopVideoScreen> {
                       v.product.name,
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: OgColors.ink,
                       ),
                     ),
@@ -1451,7 +1451,7 @@ class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
                             TextSpan(
                               text: '$who  ',
                               style: const TextStyle(
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             TextSpan(text: text),
@@ -1486,7 +1486,7 @@ class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
                       'Live price · ends with the stream',
                       style: OgText.body(
                         11,
-                        weight: FontWeight.w800,
+                        weight: FontWeight.w600,
                         color: const Color(0xFFD2342C),
                       ),
                     ),
@@ -1494,7 +1494,7 @@ class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
                       pinned.name,
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: OgColors.ink,
                       ),
                     ),
@@ -1567,7 +1567,7 @@ class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
                     p.name,
                     style: OgText.body(
                       14,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: white,
                     ),
                   ),

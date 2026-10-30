@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -16,7 +14,6 @@ import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_screen.dart';
-import '../../../core/widgets/phone_field.dart';
 import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/validators.dart';
@@ -85,7 +82,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
       final notifier = ref.read(onboardingControllerProvider.notifier)
         ..setUsername(_name.text);
       await notifier.save(complete: false);
-      if (mounted) context.push(Routes.mobile);
+      if (mounted) context.push(Routes.addEmail);
     } on AuthFailure catch (e) {
       setState(() {
         _error = e.message;
@@ -182,44 +179,39 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   }
 }
 
-/// Step 6: mobile number for sign-in codes and match alerts.
-class MobileNumberScreen extends ConsumerStatefulWidget {
-  const MobileNumberScreen({super.key});
+/// Step 6: an optional email, for getting back in if the mobile is lost.
+class AddEmailScreen extends ConsumerStatefulWidget {
+  const AddEmailScreen({super.key});
 
   @override
-  ConsumerState<MobileNumberScreen> createState() => _MobileNumberScreenState();
+  ConsumerState<AddEmailScreen> createState() => _AddEmailScreenState();
 }
 
-class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
-  late final _number = TextEditingController(
-    text: ref.read(onboardingControllerProvider).phoneNumber,
+class _AddEmailScreenState extends ConsumerState<AddEmailScreen> {
+  late final _email = TextEditingController(
+    text: ref.read(onboardingControllerProvider).email,
   );
-  late Country _country = ref.read(onboardingControllerProvider).phoneCountry;
   String? _error;
   bool _busy = false;
 
   @override
   void dispose() {
-    _number.dispose();
+    _email.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    final digits = _number.text.replaceAll(RegExp(r'\D'), '');
-    final invalid = Validators.mobile(digits);
+    final email = _email.text.trim();
+    final invalid = Validators.email(email);
     if (invalid != null) return setState(() => _error = invalid);
-    ref
-        .read(onboardingControllerProvider.notifier)
-        .setPhone(_country, _number.text.trim());
+    ref.read(onboardingControllerProvider.notifier).setEmail(email);
     setState(() {
       _error = null;
       _busy = true;
     });
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .startPhoneChange(ref.read(onboardingControllerProvider).fullPhone);
-      if (mounted) context.push(Routes.mobileVerify);
+      await ref.read(authRepositoryProvider).startEmailChange(email);
+      if (mounted) context.push(Routes.addEmailVerify);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
     } finally {
@@ -233,42 +225,46 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
       children: [
         const OgBackButton(),
         const OgHeading(
-          title: 'Your mobile number',
+          title: 'Add an email',
           step: 6,
           topGap: 16,
-          lead: 'We use it for sign-in codes by SMS and match alerts. Other players never see it.',
+          lead:
+              'Optional. It helps you get back in if you lose your mobile. '
+              'Other players never see it.',
         ),
         const SizedBox(height: 28),
         AutofillGroup(
-          child: PhoneField(
-            country: _country,
-            onCountryChanged: (v) => setState(() => _country = v),
-            controller: _number,
+          child: OgTextField(
+            label: 'Email',
+            controller: _email,
+            hint: 'you@example.com',
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            autocorrect: false,
+            textInputAction: TextInputAction.send,
             onSubmitted: (_) => _send(),
+            error: _error,
           ),
         ),
-        if (_error != null) OgErrorText(_error!),
-        if (_error != null && kDebugMode)
-          OgTextLink(
-            'Skip for now (debug build only)',
-            align: Alignment.centerLeft,
-            onPressed: () => context.push(Routes.ready),
-          ),
       ],
-      bottom: [OgButton(label: 'Send code', loading: _busy, onPressed: _send)],
+      bottom: [
+        OgButton(label: 'Send code', loading: _busy, onPressed: _send),
+        const SizedBox(height: 16),
+        OgTextLink('Skip for now', onPressed: () => context.go(Routes.ready)),
+      ],
     );
   }
 }
 
-/// Step 7: confirm the SMS code.
-class VerifyMobileScreen extends ConsumerStatefulWidget {
-  const VerifyMobileScreen({super.key});
+/// Step 7: confirm the email code.
+class VerifyEmailScreen extends ConsumerStatefulWidget {
+  const VerifyEmailScreen({super.key});
 
   @override
-  ConsumerState<VerifyMobileScreen> createState() => _VerifyMobileScreenState();
+  ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
+class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final _code = TextEditingController();
   String? _error;
   bool _busy = false;
@@ -289,10 +285,10 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
       _busy = true;
     });
     try {
-      final phone = ref.read(onboardingControllerProvider).fullPhone;
+      final email = ref.read(onboardingControllerProvider).email;
       await ref
           .read(authRepositoryProvider)
-          .verifyPhoneChange(phone, _code.text);
+          .verifyEmailChange(email, _code.text);
       HapticFeedback.mediumImpact();
       if (mounted) context.go(Routes.ready);
     } on AuthFailure catch (e) {
@@ -310,13 +306,12 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
     return OgFlowScreen(
       children: [
         const OgBackButton(),
-        OgHeading(
-          title: 'Verify your number',
+        const OgHeading(
+          title: 'Check your email',
           step: 7,
           topGap: 16,
           lead:
-              'We texted a 6-digit code to ${draft.phoneCountry.dialCode} '
-              '${draft.phoneNumber}. It works for 10 minutes.',
+              'We sent a 6-digit code to that email. It works for 10 minutes.',
         ),
         const SizedBox(height: 32),
         OgCodeInput(
@@ -330,7 +325,7 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
             try {
               await ref
                   .read(authRepositoryProvider)
-                  .startPhoneChange(draft.fullPhone);
+                  .startEmailChange(draft.email);
             } on AuthFailure catch (e) {
               setState(() => _error = e.message);
             }
@@ -340,7 +335,7 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
       bottom: [
         OgButton(label: 'Verify', loading: _busy, onPressed: _verify),
         const SizedBox(height: 16),
-        OgTextLink('Wrong number? Change it', onPressed: () => context.pop()),
+        OgTextLink('Skip for now', onPressed: () => context.go(Routes.ready)),
       ],
     );
   }

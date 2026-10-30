@@ -1,3 +1,7 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config/env.dart';
+
 import 'package:flutter/material.dart';
 
 import '../theme/og_text.dart';
@@ -30,6 +34,22 @@ enum AvatarTone {
 
 /// Round (or, for groups, rounded-square) avatar: the photo when there is
 /// one, otherwise initials on a pastel.
+const _publicPath = '/storage/v1/object/public/avatars/';
+const _signedInPath = '/storage/v1/object/authenticated/avatars/';
+
+/// Photos are private, and the database checks each read against who may see
+/// that player. Stored addresses still use the public path, so they are
+/// pointed at the signed-in one here.
+String _authorised(String url) => url.replaceFirst(_publicPath, _signedInPath);
+
+Map<String, String>? get _headers {
+  if (!Env.hasSupabase) return null;
+  final token = Supabase.instance.client.auth.currentSession?.accessToken;
+  return token == null
+      ? null
+      : {'Authorization': 'Bearer $token', 'apikey': Env.supabaseAnonKey};
+}
+
 class Avatar extends StatelessWidget {
   const Avatar({
     super.key,
@@ -66,7 +86,8 @@ class Avatar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: radius,
         child: Image.network(
-          imageUrl!,
+          _authorised(imageUrl!),
+          headers: _headers,
           width: size,
           height: size,
           fit: BoxFit.cover,

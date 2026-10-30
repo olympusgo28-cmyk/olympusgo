@@ -323,7 +323,7 @@ class _IdentityCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(main, style: OgText.body(15, weight: FontWeight.w700)),
+                    Text(main, style: OgText.body(15, weight: FontWeight.w600)),
                     Text(
                       sub,
                       style: OgText.body(13, height: 1.4, color: c.textMuted),
@@ -410,7 +410,7 @@ class _IdentityCard extends StatelessWidget {
                           : '+$rest',
                       style: OgText.body(
                         12,
-                        weight: FontWeight.w800,
+                        weight: FontWeight.w600,
                         color: t.onTag,
                       ),
                     ),
@@ -474,7 +474,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
   Widget build(BuildContext context) {
     final l = widget.live;
     const muted = Color(0xFFC9C6BC);
-    const colA = Color(0xFFF28500);
+    const colA = Color(0xFFE8590C);
     const colB = Color(0xFFC8553D);
     final pctA = (_a + _b) == 0 ? 0.5 : _a / (_a + _b);
     Widget side(String names, List<int> games, Color dot) => Padding(
@@ -494,7 +494,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
               overflow: TextOverflow.ellipsis,
               style: OgText.body(
                 15,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),
@@ -526,7 +526,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
             'Cheer · ${_thousands(n)}',
             style: OgText.body(
               14,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: Colors.white,
             ),
           ),
@@ -557,7 +557,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
                 'LIVE · ${l.label}',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: muted,
                   letterSpacing: 0.6,
                 ),
@@ -630,14 +630,14 @@ class _ProgrammeRowState extends ConsumerState<_ProgrammeRow> {
             width: 70,
             child: Text(
               it.time,
-              style: OgText.body(13, weight: FontWeight.w800),
+              style: OgText.body(13, weight: FontWeight.w600),
             ),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(it.title, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(it.title, style: OgText.body(15, weight: FontWeight.w600)),
                 Text(it.sub, style: OgText.body(13, color: c.textMuted)),
               ],
             ),
@@ -707,13 +707,13 @@ class _GearCard extends StatelessWidget {
               'Used by ${g.player}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(11, weight: FontWeight.w700, color: t.onTag),
+              style: OgText.body(11, weight: FontWeight.w600, color: t.onTag),
             ),
             Text(
               g.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(14, weight: FontWeight.w700),
+              style: OgText.body(14, weight: FontWeight.w600),
             ),
             Text(
               'S\$${money(g.priceCents, decimals: false)}',
@@ -757,7 +757,7 @@ class _BottomBar extends ConsumerWidget {
             children: [
               Text(
                 'Your ticket · ${info.tickets} ${info.tickets == 1 ? 'person' : 'people'}',
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
               Text(
                 a.isFree
@@ -911,7 +911,7 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
             a.isFree ? 'NOTHING TO PAY' : 'TICKETS',
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: c.textMuted,
               letterSpacing: 0.8,
             ),
@@ -937,7 +937,7 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
                     children: [
                       Text(
                         'People',
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         'Up to 6 per order',
@@ -1074,7 +1074,7 @@ class EventTicketScreen extends ConsumerWidget {
                 tk.code,
                 style: OgText.body(
                   15,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: Colors.white,
                   letterSpacing: 1.5,
                 ),

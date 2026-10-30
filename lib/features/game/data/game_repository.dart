@@ -275,7 +275,7 @@ class DemoGameRepository implements GameRepository {
         meta: 'Ends ${day(monthEnd)} · 2,140 players in',
         reward: '20 bonus points',
         color: 0xFF17171A,
-        ink: 0xFFC6FF00,
+        ink: 0xFFFF7A1A,
         endsAt: monthEnd,
         about: 'Play 5 ranked Meets this month and earn 20 bonus points. Any sport, any club.',
         target: 5,

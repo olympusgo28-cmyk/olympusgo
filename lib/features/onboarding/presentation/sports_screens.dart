@@ -171,7 +171,7 @@ class SportBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: const BoxDecoration(
-        color: OgColors.tangerine,
+        color: OgColors.orange500,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,

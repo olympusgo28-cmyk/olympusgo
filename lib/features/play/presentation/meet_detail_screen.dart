@@ -97,8 +97,12 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
       await context.push(Routes.waitlist(a.id));
       return;
     }
-    if (!a.isFree) {
-      await startPayment(context, ref, a);
+    final charged =
+        !a.isFree &&
+        (a.kind != ActivityKind.meet ||
+            await ref.read(paymentsEnabledProvider.future));
+    if (charged) {
+      if (mounted) await startPayment(context, ref, a);
       return;
     }
     setState(() => _busy = true);
@@ -107,12 +111,12 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
       HapticFeedback.mediumImpact();
       refreshPlay(ref.invalidate);
       if (mounted) {
-        showOgToast(
-          context,
-          status == MyStatus.requested
-              ? 'Request sent to the host'
-              : "You're in",
-        );
+        showOgToast(context, switch (status) {
+          MyStatus.requested => 'Request sent to the host',
+          MyStatus.waitlist => "It just filled up. You're on the waitlist",
+          _ when !a.isFree => "You're in. Pay the host directly",
+          _ => "You're in",
+        });
       }
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
@@ -170,12 +174,15 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
             ? null
             : 'Registration closes ${Fmt.day(a.registrationClosesAt!)}');
     final fee = 'S\$${money(a.totalCents)}';
+    final payHost =
+        a.kind == ActivityKind.meet &&
+        !(ref.watch(paymentsEnabledProvider).value ?? false);
     final levelSub = a.levelMin == null || a.levelMax == null
         ? 'Every level is welcome'
         : '${SkillBand.forLevel(a.levelMin!).label} to ${SkillBand.forLevel(a.levelMax!).label}';
     final count = switch (a.kind) {
       ActivityKind.meet =>
-        '${a.spotsTaken}/${a.capacity} playing · ${a.spotsLeft} spots left',
+        '${a.gameIsOn ? 'Game is on · ' : ''}${a.spotsTaken}/${a.capacity} playing · ${a.spotsLeft} spots left',
       ActivityKind.tournament =>
         '${a.spotsTaken}/${a.capacity} entries · ${a.spotsLeft} slots left',
       ActivityKind.event => '${a.spotsTaken}/${a.capacity} going',
@@ -297,7 +304,7 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                           a.kind.label,
                                           style: OgText.body(
                                             15,
-                                            weight: FontWeight.w700,
+                                            weight: FontWeight.w600,
                                           ),
                                         ),
                                         if (a.ranked) ...[
@@ -364,7 +371,7 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                                   '+$rest',
                                                   style: OgText.body(
                                                     13,
-                                                    weight: FontWeight.w800,
+                                                    weight: FontWeight.w600,
                                                     color: t.onTag,
                                                   ),
                                                 ),
@@ -423,9 +430,13 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                 icon: OgIcons.ticket,
                                 main: a.isFree
                                     ? 'Free'
+                                    : payHost
+                                    ? 'S\$${money(a.feeCents)} per person'
                                     : '$fee per ${a.kind == ActivityKind.tournament ? 'entry' : 'person'}',
                                 sub: a.isFree
                                     ? 'No payment needed'
+                                    : payHost
+                                    ? 'Pay the host directly. Nothing is charged in the app yet.'
                                     : 'Includes the S\$${money(a.platformCents)} platform fee · refund if you cancel before it starts',
                                 last: true,
                               ),
@@ -492,8 +503,8 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                       if (a.kind == ActivityKind.meet && !a.iAmHost)
                         KitNote(
                           '${a.host.displayName.split(' ').first} marks attendance. '
-                          'If present, you get Passport credit, 4 points and a '
-                          'stats card to share.',
+                          'If present, you get Passport credit and a stats card '
+                          'to share.',
                           tone: KitTone.info,
                         ),
                     ], 16),
@@ -594,7 +605,7 @@ class _Caps extends StatelessWidget {
         text,
         style: OgText.body(
           11,
-          weight: FontWeight.w800,
+          weight: FontWeight.w600,
           color: ink,
           letterSpacing: 0.4,
         ),
@@ -692,7 +703,7 @@ class _InfoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(main, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(main, style: OgText.body(15, weight: FontWeight.w600)),
                 if (sub != null) ...[
                   const SizedBox(height: 3),
                   Text(
@@ -741,7 +752,7 @@ class _RankedCard extends StatelessWidget {
                 'Ranked game',
                 style: OgText.body(
                   16,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
@@ -776,7 +787,7 @@ class _RankedCard extends StatelessWidget {
                       'Enter a score',
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: t.onGold,
                       ),
                     ),
@@ -859,7 +870,7 @@ class _Players extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       'See all ${a.spotsTaken} ${noun.toLowerCase()}',
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -914,7 +925,7 @@ class PlayerRow extends StatelessWidget {
                     player.displayName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   Text(
                     meta,
@@ -1098,7 +1109,7 @@ class _BottomBar extends StatelessWidget {
                 label,
                 style: OgText.body(
                   15,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   color: fg ?? c.text,
                 ),
               ),
@@ -1151,7 +1162,7 @@ class _BottomBar extends StatelessWidget {
                       "You're going",
                       style: OgText.body(
                         16,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: t.successInk,
                       ),
                     ),
@@ -1184,7 +1195,7 @@ class _BottomBar extends StatelessWidget {
             Expanded(
               child: Text(
                 "You're #${a.myWaitlistPosition} on the waitlist",
-                style: OgText.body(16, weight: FontWeight.w700),
+                style: OgText.body(16, weight: FontWeight.w600),
               ),
             ),
             pill(
@@ -1531,7 +1542,7 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
             'YOUR SPOT',
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: c.textMuted,
               letterSpacing: 0.8,
             ),
@@ -1576,7 +1587,7 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
                     Expanded(
                       child: Text(
                         head,
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                     ),
                     Text('S\$${money(_amount)}', style: OgText.heading(20)),

@@ -567,7 +567,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+          Text(title, style: OgText.body(15, weight: FontWeight.w600)),
           const SizedBox(height: 2),
           Text(body, style: OgText.body(13, height: 1.4, color: t.onTag)),
           if (action != null)

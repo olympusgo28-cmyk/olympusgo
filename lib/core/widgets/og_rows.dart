@@ -320,7 +320,7 @@ class PillTabs extends StatelessWidget {
                     height: height,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: i == index ? c.primary : Colors.transparent,
+                      color: i == index ? c.primarySmall : Colors.transparent,
                       borderRadius: BorderRadius.circular(height / 2 + 2),
                     ),
                     child: ExcludeSemantics(
@@ -446,10 +446,10 @@ class OgChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? c.primary : Colors.transparent,
+            color: selected ? c.primarySmall : Colors.transparent,
             borderRadius: BorderRadius.circular(height / 2),
             border: Border.all(
-              color: selected ? c.primary : c.border,
+              color: selected ? c.primarySmall : c.border,
               width: 2,
             ),
           ),
@@ -649,7 +649,7 @@ class FollowButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: following ? c.surfaceRaised : c.primary,
+          color: following ? c.surfaceRaised : c.primarySmall,
           borderRadius: BorderRadius.circular(20),
           border: following ? Border.all(color: c.text, width: 2) : null,
         ),

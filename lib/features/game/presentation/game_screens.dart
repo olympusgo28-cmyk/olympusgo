@@ -55,7 +55,7 @@ class StandingRow extends StatelessWidget {
               children: [
                 Text(
                   s.mine ? 'You' : s.name,
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
                 Text(
                   s.sub,
@@ -100,7 +100,7 @@ class CampaignCard extends StatelessWidget {
                 KitTag(
                   c.state.label,
                   background: live
-                      ? const Color(0xFFC6FF00)
+                      ? const Color(0xFFFF7A1A)
                       : const Color(0x33FFFFFF),
                   foreground: live ? OgColors.ink : const Color(0xFFFFFFFF),
                 ),
@@ -109,7 +109,7 @@ class CampaignCard extends StatelessWidget {
                   child: Text(
                     c.reward,
                     textAlign: TextAlign.end,
-                    style: OgText.body(13, weight: FontWeight.w800, color: ink),
+                    style: OgText.body(13, weight: FontWeight.w600, color: ink),
                   ),
                 ),
               ],
@@ -134,7 +134,7 @@ class CampaignCard extends StatelessWidget {
                   value: c.progress / c.target,
                   minHeight: 8,
                   backgroundColor: const Color(0x33FFFFFF),
-                  color: const Color(0xFFC6FF00),
+                  color: const Color(0xFFFF7A1A),
                 ),
               ),
             ],
@@ -337,7 +337,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                 eyebrow,
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: Color(x.ink).withValues(alpha: 0.8),
                   letterSpacing: 0.6,
                 ),
@@ -373,7 +373,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                           x.kind == CampaignKind.creator
                               ? 'Your count'
                               : 'Your progress',
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                       ),
                       Text(
@@ -442,7 +442,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                           children: [
                             Text(
                               '${i + 1}. ${e.name}',
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             Text(
                               e.form,
@@ -453,7 +453,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                       ),
                       Text(
                         '${e.reps} reps',
-                        style: OgText.body(14, weight: FontWeight.w700),
+                        style: OgText.body(14, weight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -563,7 +563,7 @@ class CameraSetupScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(80),
                     border: Border.all(
-                      color: const Color(0xFFC6FF00),
+                      color: const Color(0xFFFF7A1A),
                       width: 3,
                     ),
                   ),
@@ -579,7 +579,7 @@ class CameraSetupScreen extends ConsumerWidget {
                 top: 14,
                 child: KitTag(
                   'You’re in frame',
-                  background: const Color(0xFFC6FF00),
+                  background: const Color(0xFFFF7A1A),
                   foreground: OgColors.ink,
                 ),
               ),
@@ -728,7 +728,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
             '${_exercise + 1} OF ${x.exercises.length} · ${ex.name.toUpperCase()}',
             style: OgText.body(
               13,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: const Color(0xFFC9C6BC),
               letterSpacing: 0.8,
             ),
@@ -737,7 +737,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
         Center(
           child: Text(
             '$_reps',
-            style: OgText.heading(96, color: const Color(0xFFC6FF00)),
+            style: OgText.heading(96, color: const Color(0xFFFF7A1A)),
           ),
         ),
         Center(
@@ -757,7 +757,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
                 ? 'Paused at ${clock(_seconds)}. Your reps are kept.'
                 : (_countdown > 0 ? 'Starting in $_countdown' : _feedback),
             textAlign: TextAlign.center,
-            style: OgText.body(15, weight: FontWeight.w700, color: white),
+            style: OgText.body(15, weight: FontWeight.w600, color: white),
           ),
         ),
         Text(
@@ -830,7 +830,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
                         children: [
                           Text(
                             name,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(sub, style: OgText.body(13, color: c.textMuted)),
                         ],
@@ -1014,7 +1014,7 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
               s.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(13, weight: FontWeight.w700),
+              style: OgText.body(13, weight: FontWeight.w600),
             ),
             Text(s.score, style: OgText.body(12, color: c.textMuted)),
             const SizedBox(height: 6),
@@ -1111,7 +1111,7 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
                     'You · 6 confirmed matches this month',
                     style: OgText.body(
                       14,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: t.onSuccessFill,
                     ),
                   ),
@@ -1135,7 +1135,7 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
           onPressed: () => context.push(Routes.help),
           child: Text(
             'Report a result that looks wrong',
-            style: OgText.body(14, weight: FontWeight.w700, color: c.link),
+            style: OgText.body(14, weight: FontWeight.w600, color: c.link),
           ),
         ),
       ],

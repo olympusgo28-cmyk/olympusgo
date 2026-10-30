@@ -282,7 +282,7 @@ class _TournamentEntriesScreenState
                             children: [
                               Text(
                                 e.names,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 [
@@ -396,7 +396,7 @@ class _TournamentCheckInScreenState
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'of ${entries.length} $unit here',
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -407,7 +407,7 @@ class _TournamentCheckInScreenState
               value: entries.isEmpty ? 0 : count / entries.length,
               minHeight: 10,
               backgroundColor: tones.tag,
-              color: const Color(0xFFC6FF00),
+              color: const Color(0xFFFF7A1A),
             ),
           ),
           KitCard(
@@ -437,7 +437,7 @@ class _TournamentCheckInScreenState
                           children: [
                             Text(
                               e.names,
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             if (e.firstMatch != null)
                               Text(
@@ -865,7 +865,7 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
               const SizedBox(height: 8),
               Text(
                 gamesText(m.games),
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
             ],
             const SizedBox(height: 18),
@@ -999,7 +999,7 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'of ${ms.length} matches played',
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1049,7 +1049,7 @@ class _RunMatchRow extends StatelessWidget {
     final m = match;
     TextStyle name(bool? win) => OgText.body(
       15,
-      weight: win == false ? FontWeight.w500 : FontWeight.w700,
+      weight: win == false ? FontWeight.w500 : FontWeight.w600,
       color: win == false ? c.textMuted : c.text,
     );
     return Pressable(
@@ -1066,7 +1066,7 @@ class _RunMatchRow extends StatelessWidget {
                 children: [
                   Text(
                     m.at == null ? '–' : Fmt.time(m.at!),
-                    style: OgText.body(14, weight: FontWeight.w700),
+                    style: OgText.body(14, weight: FontWeight.w600),
                   ),
                   Text(
                     m.court == null ? '' : 'Court ${m.court}',
@@ -1099,7 +1099,7 @@ class _RunMatchRow extends StatelessWidget {
             if (m.done)
               Text(
                 m.walkover ? 'W/O' : '${m.gamesA}–${m.gamesB}',
-                style: OgText.body(15, weight: FontWeight.w800),
+                style: OgText.body(15, weight: FontWeight.w600),
               )
             else if (m.state == DrawMatchState.called)
               KitTag(

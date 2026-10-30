@@ -9,6 +9,7 @@ import '../features/auth/data/biometric_vault.dart';
 import '../features/clubs/data/club_repository.dart';
 import '../features/clubs/data/demo_club_repository.dart';
 import '../features/clubs/data/supabase_club_repository.dart';
+import '../features/guardian/data/guardian_repository.dart';
 import '../features/profile/data/profile_repository.dart';
 import '../features/profile/domain/profile.dart';
 import '../features/safety/data/safety_repository.dart';
@@ -37,6 +38,11 @@ AuthRepository authRepository(Ref ref) {
   ref.onDispose(repo.dispose);
   return repo;
 }
+
+@Riverpod(keepAlive: true)
+GuardianRepository guardianRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseGuardianRepository(Supabase.instance.client)
+    : DemoGuardianRepository();
 
 @Riverpod(keepAlive: true)
 ProfileRepository profileRepository(Ref ref) => Env.hasSupabase
@@ -149,7 +155,19 @@ class SessionProfile extends _$SessionProfile {
   Future<Profile?> build() async {
     final userId = await ref.watch(currentUserIdProvider.future);
     if (userId == null) return null;
-    return ref.watch(profileRepositoryProvider).fetch(userId);
+    final profile = await ref.watch(profileRepositoryProvider).fetch(userId);
+    final name = profile?.fullName;
+    if (profile != null && profile.onboardingCompleted && name != null) {
+      // Saved for the Welcome screen's tile, whatever happens next.
+      await ref
+          .read(authRepositoryProvider)
+          .rememberAccount(
+            displayName: name,
+            avatarUrl: profile.avatarUrl,
+            username: profile.username,
+          );
+    }
+    return profile;
   }
 
   Future<void> reload() async {

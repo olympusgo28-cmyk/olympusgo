@@ -9,12 +9,24 @@ cp env.example.json env.json   # add your Supabase anon or publishable key
 flutter run --dart-define-from-file=env.json
 ```
 
-Without a key the app runs in **demo mode**: every screen works, any 6-digit code is accepted, nothing is saved, and the people on screen are the design's sample players. Add `--dart-define=DEMO_SIGNED_IN=true` to skip sign-up and start as Alex Lim.
+Without a key the app runs in **demo mode**: every screen works, any 6-digit code is accepted, nothing is saved, and the people on screen are the design's sample players. Add `--dart-define=DEMO_SIGNED_IN=true` to skip sign-up, and `--dart-define=DEMO_AUDIENCE=child` to see restricted mode.
+
+## Run against a local stack
+
+```bash
+supabase start
+supabase db reset
+flutter run --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_ANON_KEY=<anon key from supabase status>
+```
+
+Log in with `+65 8000 0001`, code `123456`. That is seeded as Aaron Ng; `+65 8000 0002` is Hannah Goh. See `docs/features/dev-setup.md` for the tests and every check.
 
 ## Supabase setup
 
+**Do not run `supabase config push` from this repository**: the `[auth.sms]` blocks in `supabase/config.toml` are for the local stack and would replace real SMS with fixed test codes.
+
 1. Apply the schema: `supabase link --project-ref sfkylxlwbjculhuxoimd`, then `supabase db push` (runs every file in `supabase/migrations/`, including the `avatars` storage bucket and realtime for messages).
-2. Deploy username log-in: `supabase functions deploy username-login`.
+2. Deploy sign-in: `supabase functions deploy resolve-login`, and set the `LOGIN_HASH_PEPPER` secret to a long random value.
 3. In the dashboard, under Authentication:
    - Email: switch on "Email OTP" and set the email template to send `{{ .Token }}` (a 6-digit code) instead of a magic link.
    - Phone: connect an SMS provider (Twilio, MessageBird or Vonage) for phone log-in and the mobile-number step.

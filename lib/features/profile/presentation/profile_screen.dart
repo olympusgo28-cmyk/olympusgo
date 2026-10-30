@@ -147,7 +147,7 @@ class ProfileScreen extends ConsumerWidget {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFE8CC),
+                          color: const Color(0xFFFFE6D6),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: Row(
@@ -160,7 +160,7 @@ class ProfileScreen extends ConsumerWidget {
                                     '${wallet.points.toStringAsFixed(1)} points',
                                     style: OgText.body(
                                       16,
-                                      weight: FontWeight.w800,
+                                      weight: FontWeight.w600,
                                       color: const Color(0xFF7A3B00),
                                     ),
                                   ),
@@ -180,7 +180,7 @@ class ProfileScreen extends ConsumerWidget {
                               'Use points',
                               style: OgText.body(
                                 14,
-                                weight: FontWeight.w700,
+                                weight: FontWeight.w600,
                                 color: const Color(0xFF7A3B00),
                               ),
                             ),
@@ -270,6 +270,11 @@ class ProfileScreen extends ConsumerWidget {
                           title: 'My orders',
                           subtitle: 'Gear from the shop',
                           onTap: () => context.push(Routes.orders()),
+                        ),
+                        _ListRow(
+                          title: 'My children',
+                          subtitle: 'Link and look after a child\'s account',
+                          onTap: () => context.push(Routes.children),
                         ),
                         _ListRow(
                           title: 'My shop',
@@ -416,7 +421,7 @@ class _ListRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                  Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                   const SizedBox(height: 1),
                   Text(subtitle, style: OgText.body(13, color: c.textMuted)),
                 ],
@@ -505,7 +510,7 @@ class _PassportCard extends StatelessWidget {
                     'PASSPORT · ${label.toUpperCase()}',
                     style: OgText.body(
                       12,
-                      weight: FontWeight.w800,
+                      weight: FontWeight.w600,
                       color: _muted,
                       letterSpacing: 0.6,
                     ),
@@ -524,7 +529,7 @@ class _PassportCard extends StatelessWidget {
                     'MAIN SPORT',
                     style: OgText.body(
                       11,
-                      weight: FontWeight.w800,
+                      weight: FontWeight.w600,
                       color: const Color(0xFF3A2C00),
                     ),
                   ),
@@ -546,7 +551,7 @@ class _PassportCard extends StatelessWidget {
                     '${band.label} · ${band.code}',
                     style: OgText.body(
                       16,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -583,7 +588,7 @@ class _PassportCard extends StatelessWidget {
                             : 'Local #$localRank${area == null ? '' : ' in $area'} · See leaderboards',
                         style: OgText.body(
                           14,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -629,7 +634,7 @@ class _BadgeTile extends StatelessWidget {
           Text(
             badge.name,
             textAlign: TextAlign.center,
-            style: OgText.body(12, weight: FontWeight.w700, height: 1.25),
+            style: OgText.body(12, weight: FontWeight.w600, height: 1.25),
           ),
         ],
       ),

@@ -56,7 +56,7 @@ abstract class ProfileBadge with _$ProfileBadge {
   const factory ProfileBadge({
     required String mark,
     required String name,
-    @Default(0xFFFFE8CC) int color,
+    @Default(0xFFFFE6D6) int color,
     @Default(0xFF7A3B00) int ink,
   }) = _ProfileBadge;
 }

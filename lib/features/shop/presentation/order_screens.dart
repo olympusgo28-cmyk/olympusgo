@@ -107,7 +107,7 @@ class CartScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
                   child: Text(
                     e.key,
-                    style: OgText.body(15, weight: FontWeight.w800),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                 ),
                 for (final l in e.value)
@@ -129,7 +129,7 @@ class CartScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 l.product.name,
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: OgText.body(14, weight: FontWeight.w600),
                               ),
                               if (l.variant.isNotEmpty)
                                 Text(
@@ -138,7 +138,7 @@ class CartScreen extends ConsumerWidget {
                                 ),
                               Text(
                                 cash(l.product.priceCents),
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: OgText.body(14, weight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -340,7 +340,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             : (address.pickup
                                   ? address.label
                                   : 'Deliver to ${address.name}'),
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       if (address != null)
                         Text(
@@ -359,7 +359,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   'Change',
                   style: OgText.body(
                     14,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: c.link,
                   ),
                 ),
@@ -405,7 +405,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         children: [
                           Text(
                             l.product.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: OgText.body(14, weight: FontWeight.w600),
                           ),
                           Text(
                             [
@@ -419,7 +419,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     Text(
                       cash(l.totalCents),
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -438,7 +438,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const TextSpan(text: 'You have '),
                 TextSpan(
                   text: '${points.toStringAsFixed(1)} points',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const TextSpan(
                   text:
@@ -511,7 +511,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
             'PAYMENT',
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: c.textMuted,
               letterSpacing: 0.8,
             ),
@@ -554,7 +554,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                 onChanged: (v) => setState(() => _usePoints = v),
               ),
             const SizedBox(height: 8),
-            Text('Pay with', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Pay with', style: OgText.body(15, weight: FontWeight.w600)),
             KitChoiceRow(
               title: 'Card ending 4242',
               subtitle: 'Default card',
@@ -813,7 +813,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                           Expanded(
                             child: Text(
                               o.mallName,
-                              style: OgText.body(15, weight: FontWeight.w800),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                           ),
                           KitTag(
@@ -980,7 +980,7 @@ class OrderDetailScreen extends ConsumerWidget {
                               '${i + 1}',
                               style: OgText.body(
                                 12,
-                                weight: FontWeight.w800,
+                                weight: FontWeight.w600,
                                 color: i < reached ? c.onPrimary : t.onTag,
                               ),
                             ),
@@ -994,7 +994,7 @@ class OrderDetailScreen extends ConsumerWidget {
                                   title,
                                   style: OgText.body(
                                     14,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                     color: i < reached ? c.text : c.textMuted,
                                   ),
                                 ),
@@ -1030,7 +1030,7 @@ class OrderDetailScreen extends ConsumerWidget {
                         children: [
                           Text(
                             l.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: OgText.body(14, weight: FontWeight.w600),
                           ),
                           Text(
                             [
@@ -1044,7 +1044,7 @@ class OrderDetailScreen extends ConsumerWidget {
                     ),
                     Text(
                       cash(l.priceCents * l.qty),
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -1292,7 +1292,7 @@ class MoneyLine extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+              Text(title, style: OgText.body(15, weight: FontWeight.w600)),
               Text(sub, style: OgText.body(13, color: context.og.textMuted)),
             ],
           ),
@@ -1371,7 +1371,7 @@ class RefundStatusScreen extends ConsumerWidget {
                             '${i + 1}',
                             style: OgText.body(
                               12,
-                              weight: FontWeight.w800,
+                              weight: FontWeight.w600,
                               color: i < done ? c.onPrimary : t.onTag,
                             ),
                           ),
@@ -1383,7 +1383,7 @@ class RefundStatusScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 title,
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: OgText.body(14, weight: FontWeight.w600),
                               ),
                               Text(
                                 sub,
@@ -1671,7 +1671,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   children: [
                     Text(
                       o.summary,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(
                       o.mallName,
@@ -1854,7 +1854,7 @@ class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
                   children: [
                     Text(
                       o.summary,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(
                       o.mallName,

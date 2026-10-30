@@ -431,7 +431,7 @@ class _ClubTile extends ConsumerWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(16, weight: FontWeight.w700),
+                    style: OgText.body(16, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -575,7 +575,7 @@ class _PlayerTile extends ConsumerWidget {
                         p.level!.toStringAsFixed(1),
                         style: OgText.body(
                           11,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: c.accent,
                         ),
                       ),
@@ -587,7 +587,7 @@ class _PlayerTile extends ConsumerWidget {
             Text(
               p.player.displayName,
               textAlign: TextAlign.center,
-              style: OgText.body(14, weight: FontWeight.w700),
+              style: OgText.body(14, weight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
@@ -628,7 +628,7 @@ class _PlayerTile extends ConsumerWidget {
                   following ? 'Following' : 'Follow',
                   style: OgText.body(
                     13,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: following ? c.text : c.onInverseCard,
                   ),
                 ),
@@ -688,7 +688,7 @@ class MallShelf extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         height: 1.25,
                       ),
                     ),
@@ -765,7 +765,7 @@ class ProductShelf extends ConsumerWidget {
                         p.name,
                         style: OgText.body(
                           14,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           height: 1.25,
                         ),
                       ),
@@ -779,7 +779,7 @@ class ProductShelf extends ConsumerWidget {
                         children: [
                           Text(
                             'S\$${money(p.priceCents, decimals: p.priceCents % 100 != 0)}',
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           if (p.maxPoints > 0) ...[
                             const SizedBox(width: 8),

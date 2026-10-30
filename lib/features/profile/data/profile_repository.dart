@@ -101,14 +101,11 @@ class SupabaseProfileRepository implements ProfileRepository {
   @override
   Future<ProfileSummary> summary(String userId) => _guard(() async {
     // Ranks, areas and badges arrive with leaderboards; sessions are real.
-    final played = await _client
-        .from('activity_participants')
-        .select('activity_id, activities!inner(starts_at)')
-        .eq('user_id', userId)
-        .eq('status', 'joined')
-        .lt('activities.starts_at', DateTime.now().toUtc().toIso8601String())
-        .count(CountOption.exact);
-    return ProfileSummary(sessions: played.count);
+    final played = await _client.rpc(
+      'player_session_count',
+      params: {'p_user': userId},
+    );
+    return ProfileSummary(sessions: played as int);
   });
 
   @override
@@ -158,25 +155,6 @@ class SupabaseProfileRepository implements ProfileRepository {
           'full_name': d.fullName.trim(),
           if (d.username.isNotEmpty) 'username': d.username,
           'onboarding_completed': complete,
-        })
-        .eq('id', userId);
-
-    final private = await _client
-        .from('account_private')
-        .select('birthday')
-        .eq('id', userId)
-        .single();
-    await _client
-        .from('account_private')
-        .update({
-          // Birthday is locked once saved; only send it the first time.
-          if (private['birthday'] == null && d.birthday != null)
-            'birthday': d.birthday!.toIso8601String().substring(0, 10),
-          'country_code': d.country.code,
-          // Blank means no parent; the column takes an address or nothing.
-          'parent_email': (d.parentEmail?.trim().isEmpty ?? true)
-              ? null
-              : d.parentEmail!.trim(),
         })
         .eq('id', userId);
 

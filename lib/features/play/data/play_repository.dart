@@ -36,6 +36,26 @@ abstract interface class PlayRepository {
   /// Checks in at the venue. Returns how many players are here.
   Future<int> checkIn(String id);
 
+  /// The opaque token shown on My QR, and a new one to replace it.
+  Future<String> myQr();
+  Future<String> rotateQr();
+
+  /// The username a scanned token opens.
+  Future<String> resolveQr(String token);
+
+  /// The host scans a player's QR. Returns their name and how many are here.
+  Future<(String, int)> hostCheckIn(String id, String token);
+
+  /// A parent checks in a linked child, who cannot scan.
+  Future<int> checkInChild(String id, String childId);
+
+  /// Sports new Meets can be created in.
+  Future<Set<String>> liveSports();
+
+  /// Off until real payments go live. While off, a Meet's price is settled
+  /// with the host and nothing is charged here.
+  Future<bool> paymentsEnabled();
+
   Future<String> publish(ActivityDraft draft);
 
   /// Saves changes to one published activity (one date of a series).
@@ -134,6 +154,10 @@ class SupabasePlayRepository implements PlayRepository {
       capacity: r['capacity'] as int,
       spotsTaken: r['spots_taken'] as int,
       waitlistCount: r['waitlist_count'] as int,
+      gameIsOn: r['game_is_on'] as bool? ?? false,
+      genderMix: r['gender_mix'] as String? ?? 'any',
+      reservedSlots: r['reserved_slots'] as int? ?? 0,
+      courtBooked: r['court_booked'] as bool? ?? false,
       feeCents: r['fee_cents'] as int,
       allowGuests: r['allow_guests'] as bool,
       approvalRequired: r['approval_required'] as bool,
@@ -165,7 +189,7 @@ class SupabasePlayRepository implements PlayRepository {
       recurrence: r['recurrence'] as String?,
       subtitle: r['subtitle'] as String?,
       coverTitle: r['cover_title'] as String?,
-      coverColor: _hex(r['cover_color'] as String?) ?? 0xFF16181B,
+      coverColor: _hex(r['cover_color'] as String?) ?? 0xFF1C1F23,
       coverInk: _hex(r['cover_ink'] as String?) ?? 0xFFFFFFFF,
       tier: r['tier'] as String?,
       live: r['live'] as bool? ?? false,
@@ -271,22 +295,19 @@ class SupabasePlayRepository implements PlayRepository {
         .select()
         .eq('id', id)
         .single();
-    final going = await _client
-        .from('activity_participants')
-        .select('user_id')
-        .eq('activity_id', id)
-        .eq('status', 'joined')
-        .order('created_at')
-        .limit(20);
-    final ids = going.map((g) => g['user_id'] as String).toList();
-    final people = ids.isEmpty
-        ? const <Map<String, dynamic>>[]
-        : await _client
-              .from('profiles')
-              .select('id, username, full_name, avatar_url')
-              .inFilter('id', ids);
-    return _fromRow(row)
-        .copyWith(going: people.map(PlayerSummary.fromRow).toList());
+    // The roster function masks minors and leaves out blocked players.
+    final going =
+        await _client
+                .rpc('meet_players', params: {'activity': id})
+                .eq('status', 'joined')
+                .limit(20)
+            as List;
+    return _fromRow(row).copyWith(
+      going: [
+        for (final g in going.cast<Map<String, dynamic>>())
+          PlayerSummary.fromRow({...g, 'id': g['user_id']}),
+      ],
+    );
   });
 
   @override
@@ -341,7 +362,11 @@ class SupabasePlayRepository implements PlayRepository {
           'join_activity',
           params: {'activity': id, 'guest': guestName, 'guest_lvl': guestLevel},
         );
-        return status == 'requested' ? MyStatus.requested : MyStatus.joined;
+        return switch (status) {
+          'requested' => MyStatus.requested,
+          'waitlist' => MyStatus.waitlist,
+          _ => MyStatus.joined,
+        };
       });
 
   @override
@@ -618,6 +643,60 @@ class SupabasePlayRepository implements PlayRepository {
     () async => await _client.rpc('check_in', params: {'activity': id}) as int,
   );
 
+  @override
+  Future<String> myQr() =>
+      _guard(() async => await _client.rpc('my_qr') as String);
+
+  @override
+  Future<String> rotateQr() =>
+      _guard(() async => await _client.rpc('rotate_my_qr') as String);
+
+  @override
+  Future<String> resolveQr(String token) => _guard(() async {
+    final r = await _client.rpc(
+      'resolve_qr',
+      params: {'p_token': token},
+    ) as Map<String, dynamic>;
+    return r['username'] as String;
+  });
+
+  @override
+  Future<(String, int)> hostCheckIn(String id, String token) =>
+      _guard(() async {
+        final r = await _client.rpc(
+          'host_check_in',
+          params: {'p_activity': id, 'p_token': token},
+        ) as Map<String, dynamic>;
+        return (r['name'] as String, r['present'] as int);
+      });
+
+  @override
+  Future<int> checkInChild(String id, String childId) => _guard(
+    () async => await _client.rpc(
+      'guardian_check_in',
+      params: {'p_activity': id, 'p_child': childId},
+    ) as int,
+  );
+
+  @override
+  Future<Set<String>> liveSports() => _guard(() async {
+    final rows = await _client
+        .from('sports')
+        .select('key')
+        .eq('status', 'live');
+    return {for (final r in rows) r['key'] as String};
+  });
+
+  @override
+  Future<bool> paymentsEnabled() => _guard(() async {
+    final r = await _client
+        .from('feature_flags')
+        .select('enabled')
+        .eq('key', 'payments.enabled')
+        .maybeSingle();
+    return r?['enabled'] as bool? ?? false;
+  });
+
   /// The activities row for [d] starting at [starts].
   Map<String, dynamic> _row(ActivityDraft d, DateTime starts) {
     final meet = d.kind == ActivityKind.meet;
@@ -684,6 +763,9 @@ class SupabasePlayRepository implements PlayRepository {
         'ranked': d.ranked,
         'recurrence': d.recurrenceLabel,
         'min_players': d.minPlayers,
+        'gender_mix': d.genderMix,
+        'reserved_slots': d.reservedSlots,
+        'court_booked': d.courtBooked,
         'players_pay_fee': !d.chargeFee && d.playersPayFee,
         'level_numbers': d.levelAsNumbers,
         'host_invites_only': d.hostInvitesOnly,
@@ -1000,7 +1082,7 @@ class DemoPlayRepository implements PlayRepository {
         myStatus: MyStatus.joined,
         going: going,
         coverTitle: 'Tampines Open',
-        coverColor: 0xFF16181B,
+        coverColor: 0xFF1C1F23,
         coverInk: 0xFFF2C14E,
         tier: 'Regional',
         proof: const SocialProof(
@@ -1086,7 +1168,7 @@ class DemoPlayRepository implements PlayRepository {
         description: 'A free day of racquet sports for all levels, with try-outs, clinics and gear booths.',
         proof: const SocialProof(
           mark: 'TS',
-          color: 0xFF16181B,
+          color: 0xFF1C1F23,
           ink: 0xFFF2C14E,
           name: 'Tampines Smashers',
           text: 'is running a badminton try-out',
@@ -1319,6 +1401,40 @@ class DemoPlayRepository implements PlayRepository {
     if (a.isFree || !early || a.myStatus != MyStatus.joined) return 0;
     return toWallet ? a.totalCents : a.feeCents;
   }
+
+  @override
+  Future<String> myQr() async => _qrToken;
+
+  @override
+  Future<String> rotateQr() async {
+    _qrRotations++;
+    return _qrToken;
+  }
+
+  @override
+  Future<String> resolveQr(String token) async => 'hannahgoh';
+
+  @override
+  Future<(String, int)> hostCheckIn(String id, String token) async {
+    await _tick();
+    return ('Hannah Goh', 1);
+  }
+
+  @override
+  Future<int> checkInChild(String id, String childId) async {
+    await _tick();
+    return 1;
+  }
+
+  @override
+  Future<Set<String>> liveSports() async => const {'badminton', 'pickleball'};
+
+  // The demo shows the full payment sheet.
+  @override
+  Future<bool> paymentsEnabled() async => true;
+
+  int _qrRotations = 0;
+  String get _qrToken => 'demo${_qrRotations.toString().padLeft(44, '0')}';
 
   @override
   Future<int> checkIn(String id) async {

@@ -171,7 +171,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 al.title,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -244,7 +244,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                         width: 78,
                         child: Text(
                           Fmt.clock(x.hour, x.minute),
-                          style: OgText.body(15, weight: FontWeight.w800),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                       ),
                       Expanded(
@@ -253,7 +253,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                           children: [
                             Text(
                               '${x.name}${x.levelName.isEmpty ? '' : ' · ${x.levelName}'}',
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -356,7 +356,7 @@ class AcademyClassesScreen extends ConsumerWidget {
                           width: 76,
                           child: Text(
                             Fmt.clock(x.hour, x.minute),
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: OgText.body(14, weight: FontWeight.w600),
                           ),
                         ),
                         Expanded(
@@ -366,7 +366,7 @@ class AcademyClassesScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 x.name,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 '${x.coach}, ${plural(x.enrolled, 'student')}',
@@ -528,7 +528,7 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
                 'WEEK ${x.week} OF ${x.termWeeks}',
                 style: OgText.body(
                   11,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: t.gold,
                   letterSpacing: 0.6,
                 ),
@@ -590,7 +590,7 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
                         children: [
                           Text(
                             s.name,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           if (s.flag.isNotEmpty)
                             Text(
@@ -714,7 +714,7 @@ class ClassRosterScreen extends ConsumerWidget {
                       children: [
                         Text(
                           s.name,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         Text(
                           [
@@ -733,7 +733,7 @@ class ClassRosterScreen extends ConsumerWidget {
                     children: [
                       Text(
                         '${s.attendancePct}%',
-                        style: OgText.body(15, weight: FontWeight.w800),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         'attended',
@@ -812,7 +812,7 @@ class EnrolRequestsScreen extends ConsumerWidget {
                             r.age == null
                                 ? r.student
                                 : '${r.student}, age ${r.age}',
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             [

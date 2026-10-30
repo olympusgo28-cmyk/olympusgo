@@ -149,7 +149,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                       widget.kicker.toUpperCase(),
                       style: OgText.body(
                         12,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: c.textMuted,
                         letterSpacing: 1,
                       ),
@@ -197,7 +197,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                         ),
                         Text(
                           value,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -209,7 +209,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                     Expanded(
                       child: Text(
                         'Total',
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                     ),
                     Text(_total, style: OgText.heading(36, height: 1)),
@@ -224,7 +224,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
               children: [
                 Text(
                   'Pay with',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
                 for (final m in widget.methods)
                   KitChoiceRow(

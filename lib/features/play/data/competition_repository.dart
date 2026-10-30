@@ -1356,9 +1356,9 @@ class DemoEventRepository implements EventRepository {
       programme: _programme(id),
       programmeDay: Fmt.day(a.startsAt),
       clubs: finals
-          ? const [EventClub('TS', 'Tampines Smashers', 0xFF16181B, 0xFFF2C14E)]
+          ? const [EventClub('TS', 'Tampines Smashers', 0xFF1C1F23, 0xFFF2C14E)]
           : const [
-              EventClub('TS', 'Tampines Smashers', 0xFF16181B, 0xFFF2C14E),
+              EventClub('TS', 'Tampines Smashers', 0xFF1C1F23, 0xFFF2C14E),
               EventClub('ED', 'East Dinkers', 0xFF0E6B4E, 0xFFFFFFFF),
               EventClub('BR', 'Bedok Racquets', 0xFF3E6B8A, 0xFFFFFFFF),
               EventClub('PS', 'Pasir Smash', 0xFFC8553D, 0xFFFFFFFF),

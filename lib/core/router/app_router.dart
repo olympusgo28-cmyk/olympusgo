@@ -36,6 +36,10 @@ import '../../features/clubs/presentation/group_chat_screens.dart';
 import '../../features/discover/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
+import '../../features/scan/host_scan_screen.dart';
+import '../../features/guardian/application/guardian_providers.dart';
+import '../../features/guardian/domain/guardian_models.dart';
+import '../../features/guardian/presentation/parent_link_screens.dart';
 import '../../features/onboarding/domain/sport.dart';
 import '../../features/onboarding/presentation/account_screens.dart';
 import '../../features/onboarding/presentation/name_birthday_screens.dart';
@@ -88,6 +92,7 @@ GoRouter appRouter(Ref ref) {
   final refresh = ValueNotifier(0);
   ref.listen(currentUserIdProvider, (_, _) => refresh.value++);
   ref.listen(sessionProfileProvider, (_, _) => refresh.value++);
+  ref.listen(restrictionsProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   // A share link opened while signed out, opened once they're in.
@@ -128,6 +133,14 @@ GoRouter appRouter(Ref ref) {
     if (isPublic) return onboarded ? Routes.home : Routes.name;
     if (!onboarded && !inOnboarding) return Routes.name;
     if (onboarded && loc.startsWith('/onboarding')) return Routes.home;
+    // The database refuses these players everything else. This keeps the
+    // screens from showing a wall of errors.
+    final restricted =
+        ref.read(restrictionsProvider).value?.restricted ?? false;
+    if (restricted && !Routes.restrictedPrefixes.any(loc.startsWith)) {
+      return Routes.parentLink;
+    }
+    if (!restricted && loc == Routes.parentLink) return Routes.home;
     return null;
   }
 
@@ -304,10 +317,10 @@ GoRouter appRouter(Ref ref) {
       page(Routes.welcome, (_) => const WelcomeScreen()),
       page(Routes.signUp, (_) => const SignUpScreen()),
       page(Routes.signUpCode, (_) => const CodeScreen()),
-      page(Routes.logIn, (_) => const LogInScreen(method: LoginMethod.email)),
+      page(Routes.logIn, (_) => const LogInScreen(method: LoginMethod.phone)),
       page(
-        Routes.logInPhone,
-        (_) => const LogInScreen(method: LoginMethod.phone),
+        Routes.logInEmail,
+        (_) => const LogInScreen(method: LoginMethod.email),
       ),
       page(
         Routes.logInUsername,
@@ -327,8 +340,19 @@ GoRouter appRouter(Ref ref) {
             SportSkillScreen(sport: Sport.fromId(s.pathParameters['sport']!)),
       ),
       page(Routes.username, (_) => const UsernameScreen()),
-      page(Routes.mobile, (_) => const MobileNumberScreen()),
-      page(Routes.mobileVerify, (_) => const VerifyMobileScreen()),
+      page(Routes.addEmail, (_) => const AddEmailScreen()),
+      page(Routes.addEmailVerify, (_) => const VerifyEmailScreen()),
+      page(Routes.parentLink, (_) => const RestrictedHomeScreen()),
+      page(Routes.parentCode, (_) => const ParentCodeScreen()),
+      page(Routes.enterChildCode, (_) => const EnterChildCodeScreen()),
+      page(Routes.children, (_) => const MyChildrenScreen()),
+      page(
+        '${Routes.children}/:id',
+        (s) => ChildDetailScreen(
+          childId: s.pathParameters['id']!,
+          link: s.extra as GuardianLink?,
+        ),
+      ),
       page(Routes.ready, (_) => const ReadyScreen()),
       page(
         Routes.setupAccount,
@@ -447,6 +471,10 @@ GoRouter appRouter(Ref ref) {
       page(
         '/activities/:id/walk-in',
         (s) => MeetWalkInScreen(activityId: s.pathParameters['id']!),
+      ),
+      page(
+        '/activities/:id/scan-players',
+        (s) => HostScanScreen(activityId: s.pathParameters['id']!),
       ),
       page(
         '/activities/:id/attendance',

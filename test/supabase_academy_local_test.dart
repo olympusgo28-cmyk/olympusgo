@@ -4,6 +4,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/features/academy/data/academy_repository.dart';
 import 'package:olympus_go/features/academy/domain/academy_models.dart';
 import 'package:olympus_go/features/academy/domain/academy_more.dart';
@@ -30,9 +33,14 @@ void main() {
     );
     final stamp = DateTime.now().microsecondsSinceEpoch;
     final email = '$name.$stamp@test.local';
-    final res = await client.auth.signUp(
+    final res = await signUpLocal(
+      client,
       email: email,
       password: 'test-password-123',
+    );
+    await client.rpc(
+      'set_birthday',
+      params: {'p_birthday': '1990-01-01', 'p_country': 'SG'},
     );
     final username = '${name}_${stamp % 100000}';
     await client

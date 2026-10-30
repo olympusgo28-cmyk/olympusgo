@@ -279,7 +279,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                     Expanded(
                       child: Text(
                         s.sport.label,
-                        style: OgText.body(16, weight: FontWeight.w700),
+                        style: OgText.body(16, weight: FontWeight.w600),
                       ),
                     ),
                     if (i == 0)
@@ -351,7 +351,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                   children: [
                     Text(
                       mine?.player.displayName ?? 'You',
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(
                       club.createdAt == null

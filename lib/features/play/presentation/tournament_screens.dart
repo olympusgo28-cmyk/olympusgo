@@ -308,7 +308,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 "You're in",
                 style: OgText.body(
                   16,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   color: tones.successInk,
                 ),
               ),
@@ -431,7 +431,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 ].join(' · '),
                 style: OgText.body(
                   13,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: tones.onSuccessFill,
                 ),
               ),
@@ -510,7 +510,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
             subtitle: Env.hasSupabase ? 'Organizer' : 'Organizer · Verified',
             trailing: Text(
               'Contact',
-              style: OgText.body(14, weight: FontWeight.w700, color: c.link),
+              style: OgText.body(14, weight: FontWeight.w600, color: c.link),
             ),
             onTap: () => context.push(
               a.clubId != null
@@ -626,7 +626,7 @@ class _Line extends StatelessWidget {
             text,
             style: OgText.body(
               14,
-              weight: link ? FontWeight.w700 : FontWeight.w500,
+              weight: link ? FontWeight.w600 : FontWeight.w500,
               color: link ? c.link : c.text,
             ),
           ),
@@ -699,7 +699,7 @@ class _InviteCardState extends ConsumerState<_InviteCard> {
                 children: [
                   Text(
                     '${inv.from.displayName} asked you to partner them',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   Text(
                     inv.divisionName,
@@ -756,7 +756,7 @@ class _DivisionRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   d.name,
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
               ),
               KitTag(
@@ -884,7 +884,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                           'COURT',
                           style: OgText.body(
                             9,
-                            weight: FontWeight.w800,
+                            weight: FontWeight.w600,
                             color: t.onGold,
                           ),
                         ),
@@ -911,7 +911,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                           'You${info.mine?.partner == null ? '' : ' / ${info.mine!.partner!.displayName}'} vs ${next.opponent.replaceAll(' and ', ' / ')}',
                           style: OgText.body(
                             15,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
@@ -950,7 +950,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                         children: [
                           Text(
                             r.name,
-                            style: OgText.body(13, weight: FontWeight.w800),
+                            style: OgText.body(13, weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 8),
                           for (final m in r.matches) ...[
@@ -989,7 +989,7 @@ class _GroupTable extends StatelessWidget {
     final c = context.og;
     final t = context.tones;
     TextStyle head() =>
-        OgText.body(12, weight: FontWeight.w700, color: c.textMuted);
+        OgText.body(12, weight: FontWeight.w600, color: c.textMuted);
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
@@ -1006,7 +1006,7 @@ class _GroupTable extends StatelessWidget {
                 Expanded(
                   child: Text(
                     group.name,
-                    style: OgText.body(15, weight: FontWeight.w800),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                 ),
                 Text(
@@ -1058,7 +1058,7 @@ class _GroupTable extends StatelessWidget {
                     width: 22,
                     child: Text(
                       '${r.pos}',
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ),
                   Expanded(
@@ -1072,7 +1072,7 @@ class _GroupTable extends StatelessWidget {
                                 r.names,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: OgText.body(14, weight: FontWeight.w600),
                               ),
                             ),
                             if (r.mine) ...[
@@ -1107,7 +1107,7 @@ class _GroupTable extends StatelessWidget {
                     child: Text(
                       '${r.points}',
                       textAlign: TextAlign.end,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -1142,14 +1142,14 @@ class _KoCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: OgText.body(
                 13,
-                weight: win ? FontWeight.w700 : FontWeight.w500,
+                weight: win ? FontWeight.w600 : FontWeight.w500,
                 color: win ? c.text : c.textMuted,
               ),
             ),
           ),
           Text(
             score == null ? '' : '$score',
-            style: OgText.body(13, weight: FontWeight.w700),
+            style: OgText.body(13, weight: FontWeight.w600),
           ),
         ],
       ),
@@ -1208,7 +1208,7 @@ class _MatchesTab extends ConsumerWidget {
               [mine.divisionName, ?mine.group].join(' · '),
               style: OgText.body(
                 13,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: c.textMuted,
               ),
             ),
@@ -1241,7 +1241,7 @@ class _MatchesTab extends ConsumerWidget {
                       : 'NEXT MATCH',
                   style: OgText.body(
                     12,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: t.gold,
                     letterSpacing: 0.8,
                   ),
@@ -1340,7 +1340,7 @@ class MatchRow extends StatelessWidget {
               children: [
                 Text(
                   'vs ${m.opponent}',
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
                 Text(
                   showDay
@@ -1352,7 +1352,7 @@ class MatchRow extends StatelessWidget {
             ),
           ),
           if (m.score != null) ...[
-            Text(m.score!, style: OgText.body(14, weight: FontWeight.w700)),
+            Text(m.score!, style: OgText.body(14, weight: FontWeight.w600)),
             const SizedBox(width: 10),
           ],
           KitTag(label, background: bg, foreground: fg),
@@ -1559,7 +1559,7 @@ class _TournamentRegisterScreenState
                           children: [
                             Text(
                               _partner!.player.displayName,
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             Text(
                               'Invite sent when you pay${closes == null ? '' : ' · must accept by ${Fmt.day(closes)}'}',
@@ -1607,7 +1607,7 @@ class _TournamentRegisterScreenState
                             children: [
                               Text(
                                 p.player.displayName,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 p.meta,
@@ -1924,7 +1924,7 @@ class TournamentResultsScreen extends ConsumerWidget {
             result.podium[place - 1],
             textAlign: TextAlign.center,
             maxLines: 2,
-            style: OgText.body(13, weight: FontWeight.w700),
+            style: OgText.body(13, weight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Container(

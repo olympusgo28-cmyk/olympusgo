@@ -127,12 +127,12 @@ class _MeetPlayersScreenState extends State<MeetPlayersScreen> {
                 OgIcon(OgIcons.male, size: 18, color: c.textMuted),
                 Text(
                   ' ${a.men}  ',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
                 OgIcon(OgIcons.female, size: 18, color: c.textMuted),
                 Text(
                   ' ${a.women}',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
               ],
             ],
@@ -371,9 +371,10 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
       await showDoneSheet(
         context,
         title: 'Attendance saved',
-        body:
-            '$present present. They get Passport credit, points and a stats '
-            "card, and their payments go to your earnings.",
+        body: ref.read(paymentsEnabledProvider).value ?? false
+            ? '$present present. They get Passport credit and a stats card, '
+                  'and their payments go to your earnings.'
+            : '$present present. They get Passport credit and a stats card.',
         next: 'See my recap',
         onNext: () => context.push(Routes.meetRecap(a.id)),
       );
@@ -407,6 +408,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
       final host = going.where((p) => p.isHost).firstOrNull;
       final hostIn = host != null && _mark(host) == Attendance.present;
       final today = Fmt.day(now) == Fmt.day(a.startsAt);
+      final paid = ref.watch(paymentsEnabledProvider).value ?? false;
 
       Widget pill(
         String label,
@@ -430,7 +432,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
             label,
             style: OgText.body(
               13,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: on ? fg : c.textMuted,
             ),
           ),
@@ -467,7 +469,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                     children: [
                       Text(
                         'of ${going.length} present',
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         unmarked == 0
@@ -495,9 +497,10 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
           ),
           KitNote(
             'Mark by 11:59 PM ${today ? 'tonight' : 'on ${Fmt.day(a.startsAt)}'}. '
-            'Only present players get Passport credit, points and a stats '
-            'card. Saving releases the players’ payments to your earnings. If '
-            'you don’t save, they are released 24 hours after the Meet ends.',
+            'Only present players get Passport credit and a stats card.'
+            '${paid ? ' Saving releases the players’ payments to your earnings. '
+                      'If you don’t save, they are released 24 hours after the '
+                      'Meet ends.' : ''}',
           ),
           if (host != null)
             Container(
@@ -517,7 +520,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         : 'Your own attendance is automatic',
                     style: OgText.body(
                       15,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: hostIn ? t.onSuccessFill : t.onWarnFill,
                     ),
                   ),
@@ -603,6 +606,29 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         ),
                 ),
               Pressable(
+                semanticLabel: 'Scan a player',
+                onPressed: !open
+                    ? null
+                    : () async {
+                        await context.push(Routes.meetScanPlayers(a.id));
+                        ref.invalidate(meetPlayersProvider(a.id));
+                      },
+                child: SizedBox(
+                  height: 52,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OgIcon(OgIcons.scan, size: 18, color: c.text),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Scan a player',
+                        style: OgText.body(14, weight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Pressable(
                 semanticLabel: 'Add a walk-in member',
                 onPressed: () => context.push(Routes.meetWalkIn(a.id)),
                 child: SizedBox(
@@ -614,7 +640,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                       const SizedBox(width: 6),
                       Text(
                         'Add a walk-in member',
-                        style: OgText.body(14, weight: FontWeight.w700),
+                        style: OgText.body(14, weight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -766,7 +792,7 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
                             children: [
                               Text(
                                 label,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 hint,
@@ -857,7 +883,7 @@ class _RecapCard extends StatelessWidget {
             a.eyebrow.toUpperCase(),
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: t.gold,
               letterSpacing: 1,
             ),
@@ -917,7 +943,7 @@ class _RecapCard extends StatelessWidget {
                         'RATING',
                         style: OgText.body(
                           11,
-                          weight: FontWeight.w800,
+                          weight: FontWeight.w600,
                           color: muted,
                           letterSpacing: 1,
                         ),
@@ -926,7 +952,7 @@ class _RecapCard extends StatelessWidget {
                         '${r.ratingBefore!.toStringAsFixed(1)} → ${r.ratingAfter!.toStringAsFixed(1)}${r.band == null ? '' : ' · ${r.band}'}',
                         style: OgText.body(
                           16,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -954,7 +980,7 @@ class _RecapCard extends StatelessWidget {
                         '${partner!.first}${partner.length > 1 ? ' ${partner.last[0]}.' : ''}',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   TextSpan(
@@ -973,7 +999,7 @@ class _RecapCard extends StatelessWidget {
             children: [
               Text(
                 '$playerName · session ${r.session}',
-                style: OgText.body(13, weight: FontWeight.w700, color: muted),
+                style: OgText.body(13, weight: FontWeight.w600, color: muted),
               ),
             ],
           ),

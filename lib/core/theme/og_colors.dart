@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// OlympusGO colour tokens, from the ThemeTokens artboard (light
-/// "Tangerine", dark "Electric lime"). Every screen reads colours from here, never raw hex.
+/// OlympusGO colour tokens from the design system: orange on white in the
+/// light theme, lime on charcoal in the dark theme. There is no lime in the
+/// light theme. Every screen reads colours from here, never raw hex.
 @immutable
 class OgColors extends ThemeExtension<OgColors> {
   const OgColors({
     required this.primary,
     required this.onPrimary,
     required this.primaryPressed,
+    required this.primarySmall,
     required this.primaryTint,
     required this.accent,
     required this.onAccent,
@@ -33,6 +35,10 @@ class OgColors extends ThemeExtension<OgColors> {
   final Color onPrimary;
   final Color primaryPressed;
 
+  /// Fill behind small text. White on [primary] is only large-text contrast,
+  /// so anything under 18.66 px bold sits on this instead.
+  final Color primarySmall;
+
   /// Soft tinted fill behind selected options and category icons.
   final Color primaryTint;
   final Color accent;
@@ -55,74 +61,75 @@ class OgColors extends ThemeExtension<OgColors> {
   final Color onInverseCard;
   final Color onInverseCardMuted;
 
-  /// Lime used for eyebrows and icons on dark cards (#C6FF00).
+  /// Eyebrows and icons on dark cards.
   final Color highlight;
 
-  // ThemeTokens: light "Tangerine", dark "Electric lime".
-  static const tangerine = Color(0xFFF28500);
-  static const tangerineLine = Color(0xFFE67700);
-  static const tangerineText = Color(0xFFA85200);
-  static const onTangerine = Color(0xFF1B1206);
-  static const lime = Color(0xFFC6FF00);
-  static const ink = Color(0xFF16181B);
-  static const night = Color(0xFF0F1113);
-  static const paper = Color(0xFFF3F2EC);
+  static const orange500 = Color(0xFFE8590C);
+  static const orange700 = Color(0xFFC94A00);
+  static const orange800 = Color(0xFFA83B00);
+  static const orange300 = Color(0xFFFF7A1A);
+  static const lime400 = Color(0xFFC6F432);
+  static const charcoal900 = Color(0xFF1C1F23);
+  static const charcoal950 = Color(0xFF14171A);
+  static const paper = Color(0xFFF7F7F4);
   static const white = Color(0xFFFFFFFF);
-  static const offWhite = Color(0xFFF2F3F0);
-  static const grey400 = Color(0xFFA3A9B0);
+  static const offWhite = Color(0xFFF4F5F2);
+  static const grey400 = Color(0xFFA9AFB6);
 
-  // Kept for the few places that name them directly.
-  static const charcoal900 = ink;
-  static const orange300 = lime;
+  // Short names the screens use.
+  static const ink = charcoal900;
+  static const night = charcoal950;
 
   static const light = OgColors(
-    primary: tangerine,
-    onPrimary: onTangerine,
-    primaryPressed: tangerineLine,
-    primaryTint: Color(0xFFFFE8CC),
-    accent: lime,
-    onAccent: ink,
+    primary: orange500,
+    onPrimary: white,
+    primaryPressed: orange700,
+    primarySmall: orange700,
+    primaryTint: Color(0xFFFFE6D6),
+    accent: orange300,
+    onAccent: charcoal900,
     bg: white,
     surface: paper,
     surfaceRaised: white,
-    border: Color(0xFFE2E0D8),
-    borderControl: Color(0xFFD6D3C9),
-    text: ink,
-    textMuted: Color(0xFF5B6168),
-    link: tangerineText,
-    focusRing: ink,
-    success: Color(0xFF0E6B4E),
-    error: Color(0xFFD2342C),
+    border: Color(0xFFD9D9D2),
+    borderControl: Color(0xFF7A8088),
+    text: charcoal900,
+    textMuted: Color(0xFF5A5F66),
+    link: orange800,
+    focusRing: charcoal900,
+    success: Color(0xFF1A7F4B),
+    error: Color(0xFFC42B1C),
     warning: Color(0xFF8F4E00),
-    inverseCard: ink,
+    inverseCard: charcoal900,
     onInverseCard: offWhite,
     onInverseCardMuted: grey400,
-    highlight: lime,
+    highlight: orange300,
   );
 
   static const dark = OgColors(
-    primary: lime,
-    onPrimary: night,
-    primaryPressed: Color(0xFFA8D900),
-    primaryTint: Color(0xFF2A3600),
-    accent: lime,
-    onAccent: night,
-    bg: night,
-    surface: Color(0xFF1A1D21),
-    surfaceRaised: Color(0xFF1A1D21),
-    border: Color(0xFF2E333A),
-    borderControl: Color(0xFF4A5058),
+    primary: lime400,
+    onPrimary: charcoal900,
+    primaryPressed: Color(0xFFA9D11A),
+    primarySmall: lime400,
+    primaryTint: Color(0xFF2E3A10),
+    accent: orange300,
+    onAccent: charcoal900,
+    bg: charcoal950,
+    surface: charcoal900,
+    surfaceRaised: Color(0xFF262A2F),
+    border: Color(0xFF3A4047),
+    borderControl: Color(0xFF7C838B),
     text: offWhite,
     textMuted: grey400,
-    link: lime,
-    focusRing: lime,
-    success: Color(0xFF5EEAD4),
-    error: Color(0xFFFF5A4E),
+    link: lime400,
+    focusRing: lime400,
+    success: Color(0xFF5AD68F),
+    error: Color(0xFFFF8A7A),
     warning: Color(0xFFFFC14D),
-    inverseCard: Color(0xFF1A1D21),
+    inverseCard: Color(0xFF262A2F),
     onInverseCard: offWhite,
     onInverseCardMuted: grey400,
-    highlight: lime,
+    highlight: lime400,
   );
 
   @override
@@ -136,6 +143,7 @@ class OgColors extends ThemeExtension<OgColors> {
       primary: l(primary, other.primary),
       onPrimary: l(onPrimary, other.onPrimary),
       primaryPressed: l(primaryPressed, other.primaryPressed),
+      primarySmall: l(primarySmall, other.primarySmall),
       primaryTint: l(primaryTint, other.primaryTint),
       accent: l(accent, other.accent),
       onAccent: l(onAccent, other.onAccent),

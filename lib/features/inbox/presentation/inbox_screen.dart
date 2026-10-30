@@ -278,7 +278,7 @@ class _Mark extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         mark,
-        style: OgText.body(14, weight: FontWeight.w800, color: ink),
+        style: OgText.body(14, weight: FontWeight.w600, color: ink),
       ),
     );
   }
@@ -323,7 +323,7 @@ class _ChatRow extends StatelessWidget {
                     chat.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -406,7 +406,7 @@ class _UpdateRow extends StatelessWidget {
                 children: [
                   Text(
                     u.title,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   if (u.body.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -432,7 +432,7 @@ class _UpdateRow extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: const BoxDecoration(
-                      color: OgColors.tangerine,
+                      color: OgColors.orange500,
                       shape: BoxShape.circle,
                     ),
                   ),

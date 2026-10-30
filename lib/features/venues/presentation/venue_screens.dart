@@ -360,7 +360,7 @@ class _VenueRow extends StatelessWidget {
                     children: [
                       Text(
                         v.name,
-                        style: OgText.body(17, weight: FontWeight.w700),
+                        style: OgText.body(17, weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -379,7 +379,7 @@ class _VenueRow extends StatelessWidget {
                     'From ${_price(from)} / hour',
                     style: OgText.body(
                       14,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: c.link,
                     ),
                   ),
@@ -505,7 +505,7 @@ class _VenuePage extends ConsumerWidget {
                         KitTag(
                           'Auto check-in',
                           background: OgColors.ink,
-                          foreground: OgColors.lime,
+                          foreground: OgColors.orange300,
                         ),
                     ],
                   ),
@@ -595,7 +595,7 @@ class _OnHereRow extends StatelessWidget {
                 children: [
                   Text(
                     a.title,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -606,7 +606,7 @@ class _OnHereRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Text(trailing, style: OgText.body(15, weight: FontWeight.w700)),
+            Text(trailing, style: OgText.body(15, weight: FontWeight.w600)),
           ],
         ),
       ),
@@ -947,7 +947,7 @@ class _SlotButton extends StatelessWidget {
               time,
               style: OgText.body(
                 15,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: selected
                     ? Colors.white
                     : (off ? t.onDisabledFill : c.text),
@@ -1039,7 +1039,7 @@ class CourtBookingScreen extends ConsumerWidget {
                   : KitTag(
                       over ? 'Played' : 'Confirmed',
                       background: OgColors.ink,
-                      foreground: OgColors.lime,
+                      foreground: OgColors.orange300,
                     ),
               if (!cancelled && !over) ...[
                 Semantics(
