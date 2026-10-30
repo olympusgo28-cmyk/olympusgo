@@ -12,6 +12,8 @@ import 'features/auth/mfa_screen.dart';
 import 'features/auth/session.dart';
 import 'features/reports/reports_screens.dart';
 import 'features/shell/admin_shell.dart';
+import 'features/sports/sports_screen.dart';
+import 'features/users/users_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,8 @@ final _router = GoRouter(
           _Gate(location: state.matchedLocation, child: child),
       routes: [
         GoRoute(path: '/audit', builder: (_, _) => const AuditScreen()),
+        GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
+        GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/reports', builder: (_, _) => const ReportsScreen()),
         GoRoute(path: '/reports/bans', builder: (_, _) => const BansScreen()),
         GoRoute(

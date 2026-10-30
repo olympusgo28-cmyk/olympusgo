@@ -86,7 +86,7 @@ grant select on before to anon, authenticated;
 -- Reference data that is open by design.
 create temp table open_data (name text) on commit drop;
 insert into open_data values ('app_settings'), ('country_config'), ('feature_flags'),
-  ('fee_rules'), ('sports'), ('sport_formats');
+  ('fee_rules'), ('sports'), ('sport_formats'), ('game_types'), ('level_scales');
 grant select on open_data to anon, authenticated;
 
 select t.as_anon();

@@ -49,8 +49,8 @@ abstract interface class PlayRepository {
   /// A parent checks in a linked child, who cannot scan.
   Future<int> checkInChild(String id, String childId);
 
-  /// Sports new Meets can be created in.
-  Future<Set<String>> liveSports();
+  /// Sports new Meets can be created in, from the catalogue.
+  Future<List<Sport>> liveSports();
 
   /// Off until real payments go live. While off, a Meet's price is settled
   /// with the host and nothing is charged here.
@@ -682,12 +682,16 @@ class SupabasePlayRepository implements PlayRepository {
   );
 
   @override
-  Future<Set<String>> liveSports() => _guard(() async {
+  Future<List<Sport>> liveSports() => _guard(() async {
     final rows = await _client
         .from('sports')
-        .select('key')
-        .eq('status', 'live');
-    return {for (final r in rows) r['key'] as String};
+        .select('key, name')
+        .eq('status', 'live')
+        .order('position');
+    return [
+      for (final r in rows)
+        Sport.fromCatalogue(r['key'] as String, r['name'] as String),
+    ];
   });
 
   @override
@@ -1430,7 +1434,10 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<Set<String>> liveSports() async => const {'badminton', 'pickleball'};
+  Future<List<Sport>> liveSports() async => const [
+    Sport.badminton,
+    Sport.pickleball,
+  ];
 
   // The demo shows the full payment sheet.
   @override

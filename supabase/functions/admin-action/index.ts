@@ -13,6 +13,9 @@ const ACTIONS = new Set<string>([
   "staff_suspend",
   "staff_ban_request",
   "staff_ban_decide",
+  "staff_sport_save",
+  "staff_format_save",
+  "staff_recovery_decide",
 ]);
 
 const cors = {

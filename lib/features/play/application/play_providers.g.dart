@@ -227,11 +227,11 @@ final liveSportsProvider = LiveSportsProvider._();
 final class LiveSportsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<Set<String>>,
-          Set<String>,
-          FutureOr<Set<String>>
+          AsyncValue<List<Sport>>,
+          List<Sport>,
+          FutureOr<List<Sport>>
         >
-    with $FutureModifier<Set<String>>, $FutureProvider<Set<String>> {
+    with $FutureModifier<List<Sport>>, $FutureProvider<List<Sport>> {
   /// Sports new Meets can be created in.
   LiveSportsProvider._()
     : super(
@@ -249,17 +249,17 @@ final class LiveSportsProvider
 
   @$internal
   @override
-  $FutureProviderElement<Set<String>> $createElement(
+  $FutureProviderElement<List<Sport>> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<Set<String>> create(Ref ref) {
+  FutureOr<List<Sport>> create(Ref ref) {
     return liveSports(ref);
   }
 }
 
-String _$liveSportsHash() => r'7686626039c30cc6367ba2ea096f43b5d77b34dc';
+String _$liveSportsHash() => r'1b7313e6c29910396956bb23f6cd13074b0ba64f';
 
 @ProviderFor(paymentsEnabled)
 final paymentsEnabledProvider = PaymentsEnabledProvider._();

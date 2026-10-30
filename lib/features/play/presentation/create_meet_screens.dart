@@ -251,17 +251,8 @@ List<(Sport, String, bool)> _sportsFor(WidgetRef ref, String? clubId) {
   }
   // Only sports staff have made live. Until the list loads, show none rather
   // than offer a sport the server will refuse.
-  final live = ref.watch(liveSportsProvider).value ?? const <String>{};
-  return [
-    for (final s in const [
-      Sport.badminton,
-      Sport.pickleball,
-      Sport.tennis,
-      Sport.tableTennis,
-      Sport.padel,
-    ])
-      if (live.contains(s.id)) (s, sportFormats(s), false),
-  ];
+  final live = ref.watch(liveSportsProvider).value ?? const <Sport>[];
+  return [for (final s in live) (s, sportFormats(s), false)];
 }
 
 /// Step 1: the sport (or, for events, the sports).

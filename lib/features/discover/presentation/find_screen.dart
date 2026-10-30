@@ -16,6 +16,7 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../onboarding/domain/sport.dart';
+import '../../play/application/play_providers.dart';
 import '../../play/presentation/play_card.dart';
 import '../application/discover_providers.dart';
 import '../domain/discover_models.dart';
@@ -121,7 +122,8 @@ class _FindScreenState extends ConsumerState<FindScreen> {
         ),
         _Chips(
           children: [
-            for (final s in const [Sport.badminton, Sport.pickleball])
+            for (final s
+                in ref.watch(liveSportsProvider).value ?? const <Sport>[])
               KitChip(
                 label: s.label,
                 selected: _filter.sport == s,

@@ -96,7 +96,7 @@ Future<List<Activity>> hubActivities(Ref ref, HubTab tab) async {
 
 /// Sports new Meets can be created in.
 @Riverpod(keepAlive: true)
-Future<Set<String>> liveSports(Ref ref) =>
+Future<List<Sport>> liveSports(Ref ref) =>
     ref.watch(playRepositoryProvider).liveSports();
 
 @Riverpod(keepAlive: true)
