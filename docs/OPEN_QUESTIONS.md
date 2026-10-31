@@ -34,7 +34,7 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q22 | Rounding of percentage fees to the cent | Fee calculation | Round half up | Open |
 | Q23 | How long a Meet spot is held while payment completes | Joining paid Meets | 10 minutes | Open |
 | Q24 | Is the badminton camera feasibility test passed? | Phase 7 camera work | Camera features stay off (`camera.scoring` flag) | Open |
-| Q25 | Venue owner's side: are courts booked in the app at launch? If yes, the owner's screens must be designed first | VEN-2, VEN-3 | Court booking off at launch until designed | Open |
+| Q25 | Venue owner's side: are courts booked in the app at launch? If yes, the owner's screens must be designed first | VEN-2, VEN-3 | Court booking off at launch until designed | **Decided (owner, 1 Nov).** No: courts aren't booked in the app at launch. 4b builds Shop first, and P4b-01 stays off |
 | Q26 | Is "Wyse Active" the academy to use in examples and seed data instead of "Smash Academy"? | Seed data only | Keep "Smash Academy" as fake data | Open |
 | Q27 | **Which document wins?** `DEVELOPER_CHECKLIST.md` (30 Oct) names `MASTER_BUILD_PLAN.md` as the tie-breaker, but that file, `SPORTS_AND_FORMATS.md`, `SCREENS_UPDATE_30OCT.md` and `BUILD_GUIDE.md` were not provided. The dev kit in `docs/` is older (12 Oct) | Every conflict below | Built so far with: checklist first, then `RULES.md`, then the rest. Send the missing files to confirm | Open |
 | Q28 | Sign-up: checklist says mobile first with email optional; `RULES.md` R-ACC-1 says email | Sign-up | Mobile first, as the checklist says | Open |
