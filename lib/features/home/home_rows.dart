@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../core/format.dart';
 import '../../core/router/routes.dart';
@@ -781,10 +782,10 @@ class ProductShelf extends ConsumerWidget {
                             'S\$${money(p.priceCents, decimals: p.priceCents % 100 != 0)}',
                             style: OgText.body(15, weight: FontWeight.w600),
                           ),
-                          if (p.maxPoints > 0) ...[
+                          if (p.pointsCapCents > 0) ...[
                             const SizedBox(width: 8),
                             KitTag(
-                              'up to ${p.maxPoints} pts',
+                              'up to ${pointsText(p.pointsCapCents)} pts',
                               height: 20,
                               fontSize: 11,
                               background: c.primaryTint,

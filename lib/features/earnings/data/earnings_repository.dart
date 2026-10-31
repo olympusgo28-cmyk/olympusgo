@@ -2,43 +2,68 @@ import 'package:og_money/og_money.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/format.dart';
 import '../../auth/data/auth_repository.dart';
 
-/// Points earned by playing. Nothing earns them on a real backend until 4b.
+/// Points earned by playing.
 class PointsSummary {
-  const PointsSummary({this.points = 0, this.pendingPoints = 0});
+  const PointsSummary({
+    this.minor = 0,
+    this.pendingMinor = 0,
+    this.earning = true,
+  });
 
-  final double points;
-  final double pendingPoints;
+  /// In cents: 1 point is 10 cents.
+  final int minor;
+  final int pendingMinor;
+
+  /// Earning is switched on.
+  final bool earning;
+
+  /// With earning off and nothing to spend, there's nothing to show.
+  bool get worthShowing => earning || minor > 0;
 }
 
-/// A way to use points: a product and how many points it takes.
+/// A way to use points: a product and how much points can take off.
 class PointsUse {
-  const PointsUse(this.name, this.shop, this.priceCents, this.cap);
+  const PointsUse(this.name, this.shop, this.priceCents, this.capCents);
   final String name;
   final String shop;
   final int priceCents;
-  final int cap;
+  final int capCents;
 }
 
 class PointsInfo {
   const PointsInfo({
-    required this.points,
-    this.pending = 0,
+    required this.minor,
+    this.pendingMinor = 0,
     this.pendingNote = '',
     this.uses = const [],
     this.activity = const [],
+    this.earning = true,
+    this.canRedeem = true,
+    this.nextExpiry,
   });
 
-  final double points;
-  final double pending;
+  /// In cents: 1 point is 10 cents.
+  final int minor;
+  final int pendingMinor;
 
   /// "from Doubles Social tonight. They land once Hannah marks you present."
   final String pendingNote;
   final List<PointsUse> uses;
 
-  /// Title, line and points (negative when spent).
-  final List<(String, String, double)> activity;
+  /// Title, line and cents of points (negative when spent).
+  final List<(String, String, int)> activity;
+
+  /// Earning is switched on.
+  final bool earning;
+
+  /// This account can spend points.
+  final bool canRedeem;
+
+  /// When the oldest points run out.
+  final DateTime? nextExpiry;
 }
 
 /// A payment record, kept for the law's retention period.
@@ -201,10 +226,40 @@ class SupabaseEarningsRepository implements EarningsRepository {
   }
 
   @override
-  Future<PointsSummary> summary() async => const PointsSummary();
+  Future<PointsSummary> summary() => _guard(() async {
+    final r = await _client.rpc<Map<String, dynamic>>('points_my');
+    return PointsSummary(
+      minor: (r['balance_minor'] as num).toInt(),
+      earning: r['earning'] as bool? ?? false,
+    );
+  });
 
   @override
-  Future<PointsInfo> points() async => const PointsInfo(points: 0);
+  Future<PointsInfo> points() => _guard(() async {
+    final r = await _client.rpc<Map<String, dynamic>>('points_my');
+    return PointsInfo(
+      minor: (r['balance_minor'] as num).toInt(),
+      earning: r['earning'] as bool? ?? false,
+      canRedeem: r['can_redeem'] as bool? ?? false,
+      nextExpiry: DateTime.tryParse(r['next_expiry'] as String? ?? '')
+          ?.toLocal(),
+      activity: [
+        for (final h in (r['history'] as List).cast<Map>())
+          (
+            switch (h['kind']) {
+              'earn' => 'Earned',
+              'spend' => 'Used in the Shop',
+              'return' => 'Points returned',
+              'expire' => 'Expired',
+              'reverse' => 'Taken back',
+              _ => 'Points',
+            },
+            Fmt.day(DateTime.parse(h['at'] as String).toLocal()),
+            (h['amount_minor'] as num).toInt(),
+          ),
+      ],
+    );
+  });
 
   @override
   Future<List<ReceiptRecord>> receipts() => _guard(() async {
@@ -218,6 +273,7 @@ class SupabaseEarningsRepository implements EarningsRepository {
             'ticket' => 'Event',
             'tournament' => 'Tournament',
             'organizer_fee' || 'debt' => 'Fees',
+            'shop' => 'Shop',
             _ => 'Meet',
           },
           at: DateTime.parse(r['created_at'] as String).toLocal(),
@@ -225,7 +281,8 @@ class SupabaseEarningsRepository implements EarningsRepository {
           lines: [
             if ((r['price_minor'] as num) > 0)
               ('Price', '${Money((r['price_minor'] as num).toInt())}'),
-            ('Platform fee', '${Money((r['fee_minor'] as num).toInt())}'),
+            if (r['purpose'] != 'shop')
+              ('Platform fee', '${Money((r['fee_minor'] as num).toInt())}'),
           ],
           totalCents: (r['amount_minor'] as num).toInt(),
           paidWith: r['method'] == 'paynow' ? 'PayNow' : 'Card',
@@ -332,19 +389,19 @@ class SupabaseEarningsRepository implements EarningsRepository {
 }
 
 class DemoEarningsRepository implements EarningsRepository {
-  double _points = 21.2;
+  int _points = 212;
   var _account = const PayoutAccount(status: 'verified');
-  final _pointsLog = <(String, String, double)>[];
+  final _pointsLog = <(String, String, int)>[];
   final _receipts = <ReceiptRecord>[];
 
   DemoEarningsRepository() {
     final now = DateTime.now();
     DateTime ago(int d) => now.subtract(Duration(days: d));
     _pointsLog.addAll([
-      ('Doubles Social', 'Present · ${_day(ago(3))}', 4),
-      ('Overgrip, pack of 3', 'Used at Court Supply Co.', -3),
-      ('Tampines Open, Finals Day', '2 tickets scanned', 8),
-      ('Morning Singles', 'Present', 4),
+      ('Doubles Social', 'Present · ${_day(ago(3))}', 400),
+      ('Overgrip, pack of 3', 'Used at Court Supply Co.', -45),
+      ('Tampines Open, Finals Day', '2 tickets scanned', 800),
+      ('Morning Singles', 'Present', 400),
     ]);
     _receipts.addAll([
       ReceiptRecord(
@@ -410,37 +467,45 @@ class DemoEarningsRepository implements EarningsRepository {
 
   Future<void> _tick() => Future.delayed(const Duration(milliseconds: 200));
 
+  /// The demo balance, in cents of points.
+  int get balance => _points;
+
   /// Used by the demo shop: spend points.
-  void spend(String title, String sub, {double points = 0}) {
-    _points -= points;
-    if (points > 0) _pointsLog.insert(0, (title, 'Used at $sub', -points));
+  void spend(String title, String sub, {int minor = 0}) {
+    _points -= minor;
+    if (minor > 0) _pointsLog.insert(0, (title, 'Used at $sub', -minor));
   }
 
   /// Used by the demo shop: points back.
-  void credit(String title, String sub, {double points = 0}) {
-    _points += points;
-    if (points > 0) _pointsLog.insert(0, (title, 'Points returned', points));
+  void credit(String title, String sub, {int minor = 0}) {
+    _points += minor;
+    if (minor > 0) _pointsLog.insert(0, (title, 'Points returned', minor));
   }
 
   void addReceipt(ReceiptRecord r) => _receipts.insert(0, r);
 
   @override
   Future<PointsSummary> summary() async =>
-      PointsSummary(points: _points, pendingPoints: 4);
+      PointsSummary(minor: _points, pendingMinor: 400);
 
   @override
   Future<PointsInfo> points() async {
     await _tick();
     return PointsInfo(
-      points: _points,
-      pending: 4,
+      minor: _points,
+      pendingMinor: 400,
       pendingNote:
           'from Doubles Social tonight. They land once Hannah marks you '
           'present.',
       uses: const [
-        PointsUse('Carbon racket 4U', 'Racket Lab', 18900, 18),
-        PointsUse('Feather shuttles, tube of 12', 'Court Supply Co.', 2450, 3),
-        PointsUse('Court shoe, all-court grip', 'Footwork', 15900, 15),
+        PointsUse('Carbon racket 4U', 'Racket Lab', 18900, 945),
+        PointsUse(
+          'Feather shuttles, tube of 12',
+          'Court Supply Co.',
+          2450,
+          122,
+        ),
+        PointsUse('Court shoe, all-court grip', 'Footwork', 15900, 795),
       ],
       activity: List.of(_pointsLog),
     );

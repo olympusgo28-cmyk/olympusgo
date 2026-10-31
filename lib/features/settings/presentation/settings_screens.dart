@@ -82,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
             NavRow(
               icon: OgIcons.bag,
               title: 'My orders',
-              subtitle: 'Track, return and review',
+              subtitle: 'Track, collect and review',
               onTap: () => context.push(Routes.orders()),
             ),
             NavRow(

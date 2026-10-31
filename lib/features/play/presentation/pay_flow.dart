@@ -93,7 +93,7 @@ Future<PaidSpot?> payForSpot(
       );
       return null;
     }
-    return await _finish(context, gateway, hold, method);
+    return await finishPayment(context, gateway, hold, method);
   } on AuthFailure catch (e) {
     if (context.mounted) showOgToast(context, e.message, error: true);
     return null;
@@ -120,19 +120,22 @@ Future<PaidSpot?> payFeesOwed(
     if (method == null || !context.mounted) return null;
     final hold = await gateway.reserveFeesOwed(newClientKey());
     if (!context.mounted) return null;
-    return await _finish(context, gateway, hold, method);
+    return await finishPayment(context, gateway, hold, method);
   } on AuthFailure catch (e) {
     if (context.mounted) showOgToast(context, e.message, error: true);
     return null;
   }
 }
 
-Future<PaidSpot?> _finish(
+/// Starts the held payment and waits for the webhook. [shop] words the wait
+/// for an order rather than a spot.
+Future<PaidSpot?> finishPayment(
   BuildContext context,
   PaymentGateway gateway,
   PaymentHold hold,
-  PayMethod chosen,
-) async {
+  PayMethod chosen, {
+  bool shop = false,
+}) async {
   // A live payment keeps the method it started with.
   final started = hold.method;
   final methods = await gateway.methods();
@@ -145,7 +148,7 @@ Future<PaidSpot?> _finish(
       .push<PaymentProgress>(
         CupertinoPageRoute(
           fullscreenDialog: true,
-          builder: (_) => PaymentWaitingScreen(hold: hold),
+          builder: (_) => PaymentWaitingScreen(hold: hold, shop: shop),
         ),
       );
   if (done?.state != PaymentState.paid) return null;
@@ -159,9 +162,16 @@ Future<PaidSpot?> _finish(
 /// "Waiting for payment", with a countdown on the server's clock, so a wrong
 /// phone clock can't show the wrong time left.
 class PaymentWaitingScreen extends ConsumerStatefulWidget {
-  const PaymentWaitingScreen({super.key, required this.hold});
+  const PaymentWaitingScreen({
+    super.key,
+    required this.hold,
+    this.shop = false,
+  });
 
   final PaymentHold hold;
+
+  /// Paying for a Shop order rather than a spot.
+  final bool shop;
 
   @override
   ConsumerState<PaymentWaitingScreen> createState() =>
@@ -264,6 +274,7 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final gateway = ref.watch(paymentGatewayProvider);
+    final shop = widget.shop;
     final left = _left;
     final time =
         '${left.inMinutes}:${(left.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -275,8 +286,13 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
           KitTitle(
             _refunded ? 'Your payment is coming back' : 'This payment ended',
             lead: _refunded
-                ? 'We couldn’t keep your spot, so everything you paid goes back '
-                      'to where it came from.'
+                ? shop
+                      ? 'We couldn’t keep your order, so everything you paid '
+                            'goes back to where it came from.'
+                      : 'We couldn’t keep your spot, so everything you paid goes back '
+                            'to where it came from.'
+                : shop
+                ? 'You weren’t charged. Try again if you still want it.'
                 : 'You weren’t charged. Try again if you still want the spot.',
           ),
         ],
@@ -293,13 +309,19 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
         KitTitle(
           'Waiting for payment',
           lead: left == Duration.zero
-              ? 'Your hold ran out. If your payment still lands, we’ll give you '
-                    'a spot if there is one, or send it all back.'
+              ? shop
+                    ? 'Your hold ran out. If your payment still lands, we’ll '
+                          'send it all back.'
+                    : 'Your hold ran out. If your payment still lands, we’ll give you '
+                          'a spot if there is one, or send it all back.'
+              : shop
+              ? 'We’re holding your order for $time.'
               : 'We’re holding your spot for $time.',
         ),
         if (_failed)
-          const KitNote(
-            'That didn’t go through. You can try again while your spot is held.',
+          KitNote(
+            'That didn’t go through. You can try again while your '
+            '${shop ? 'order' : 'spot'} is held.',
             tone: KitTone.warn,
           ),
         Text(
@@ -307,8 +329,11 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
           style: OgText.heading(24),
         ),
         Text(
-          'OlympusGO holds your payment until the organizer marks attendance. '
-          'You’re in as soon as your bank or card confirms it.',
+          shop
+              ? 'OlympusGO holds your payment until you collect. Your order is '
+                    'placed as soon as your bank or card confirms it.'
+              : 'OlympusGO holds your payment until the organizer marks attendance. '
+                    'You’re in as soon as your bank or card confirms it.',
           style: OgText.body(14, height: 1.45, color: c.textMuted),
         ),
       ],

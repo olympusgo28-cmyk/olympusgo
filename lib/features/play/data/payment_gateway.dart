@@ -140,7 +140,7 @@ class SupabasePaymentGateway implements PaymentGateway {
     }
   }
 
-  static PaymentHold _hold(Map<String, dynamic> r) => PaymentHold(
+  static PaymentHold holdFrom(Map<String, dynamic> r) => PaymentHold(
     result: r['result'] as String? ?? 'reserved',
     id: r['payment_id'] as String?,
     totalCents: (r['amount_minor'] as num?)?.toInt() ?? 0,
@@ -189,7 +189,7 @@ class SupabasePaymentGateway implements PaymentGateway {
         'p_guest_level': guestLevel,
       },
     );
-    return _hold(r);
+    return holdFrom(r);
   });
 
   @override
@@ -198,7 +198,7 @@ class SupabasePaymentGateway implements PaymentGateway {
       'organizer_debt_reserve',
       params: {'p_key': key},
     );
-    return _hold(r);
+    return holdFrom(r);
   });
 
   @override

@@ -1,15 +1,19 @@
 import 'package:flutter/foundation.dart';
+import 'package:og_money/og_money.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/data/auth_repository.dart';
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../earnings/data/earnings_repository.dart';
+import '../../play/data/payment_gateway.dart'
+    show PaymentHold, SupabasePaymentGateway;
+import '../../play/domain/meet_ops.dart' show newClientKey;
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
 
-/// The Shop: malls, products, videos and lives, the cart, orders, and the
-/// seller's side.
+/// The Shop: partner shops, the cart, orders paid through OlympusGO and
+/// collected at the shop, and the shop owner's side.
 abstract interface class ShopRepository {
   Future<List<Mall>> malls();
   Future<List<Product>> popular();
@@ -18,41 +22,43 @@ abstract interface class ShopRepository {
   Future<ProductDetail> product(String id);
   Future<MallDetail> mall(String id);
   Future<void> follow(String mallId, bool on);
-  Future<void> claimVoucher(String mallId, String title);
-  Future<List<ShopVideo>> videos();
-  Future<List<LiveStream>> lives();
 
   Future<List<CartLine>> cart();
   Future<void> addToCart(String productId, {String variant = '', int qty = 1});
   Future<void> setQty(String lineId, int qty);
 
-  Future<List<Address>> addresses();
-  Future<Address> saveAddress(Address address);
+  /// The final price of this shop's part of the cart, or of [only].
+  Future<ShopQuote> quote(String mallId, {CartLine? only, int pointsCents = 0});
 
-  /// Places one order per shop for everything in the cart (or just
-  /// [only], for Buy now). Returns the orders.
-  Future<List<Order>> checkout({
-    required Address address,
-    required Delivery delivery,
-    required int pointsCents,
-    required String paidWith,
+  /// Holds stock and points and starts a payment for [expectedCents]. The same
+  /// [key] returns the same hold, and a changed price refuses rather than
+  /// charges. Returns the hold and the order's id.
+  Future<(PaymentHold, String)> reserve(
+    String mallId, {
+    required String key,
+    required int expectedCents,
+    int pointsCents = 0,
     CartLine? only,
   });
   Future<List<Order>> orders();
   Future<Order> order(String id);
-  Future<void> confirmReceived(String id);
 
-  /// Cancels before shipping. Returns the refund in cents.
+  /// "Yes, I got it all": final, and the shop is paid.
+  Future<void> collected(String id);
+
+  /// Holds the payment until staff decide.
+  Future<void> reportProblem(String id, String note);
+
+  /// Cancels before collecting. Returns the refund in cents.
   Future<int> cancelOrder(String id, {required String reason});
 
-  Future<Order> bookService(
+  Future<void> report(
     String productId, {
-    required String slot,
-    required String tension,
+    required String reason,
+    String note = '',
   });
-  Future<void> report(String what, {required String reason, String note = ''});
 
-  /// Reviews everything in a delivered order.
+  /// Reviews everything in a collected order.
   Future<void> review(
     String orderId, {
     required int stars,
@@ -61,56 +67,26 @@ abstract interface class ShopRepository {
     required bool showLevel,
   });
 
-  /// Asks the shop to take a delivered order back.
-  Future<void> requestReturn(
-    String orderId, {
-    required String reason,
-    required String want,
-  });
+  // The shop's owner.
 
-  // Seller.
-
-  /// Null until the player opens a shop.
-  Future<SellerSummary?> sellerSummary();
-  Future<void> openShop({
-    required String name,
-    required String blurb,
-    required String about,
-    required String shipsFrom,
-  });
-  Future<void> decideReturn(String orderId, {required bool accept});
-  Future<List<Order>> sellerOrders();
-  Future<void> markShipped(
-    String orderId, {
-    required String courier,
-    required String tracking,
-  });
-  Future<List<Product>> sellerProducts();
-  Future<Product> saveProduct(Product product);
-  Future<void> goLive({
-    required String title,
-    required List<String> productIds,
-    required String deal,
-  });
-  Future<void> postVideo({required String caption, required String productId});
+  /// The shop this account runs, if any.
+  Future<Mall?> myShop();
+  Future<List<Order>> ownerOrders();
+  Future<void> markStarted(String id);
+  Future<void> markReady(String id);
+  Future<void> ownerCancel(String id, {required String reason});
 }
 
-/// The Shop on Supabase, with payments switched off: buyers order and pay
-/// the shop directly on delivery or pickup. Videos and live selling come
-/// later.
+/// The Shop on Supabase.
 class SupabaseShopRepository implements ShopRepository {
   SupabaseShopRepository(this._client);
   final SupabaseClient _client;
-
-  static const _later = AuthFailure(
-    'Videos and live selling open later. Your products are in the Shop now.',
-  );
 
   Future<T> _guard<T>(Future<T> Function() run) async {
     try {
       return await run();
     } on PostgrestException catch (e) {
-      debugPrint('Shop error: ${e.code} ${e.message}');
+      debugPrint('Shop error: ${e.code}');
       if (e.code == 'P0001') throw AuthFailure(e.message);
       if (e.code == '23514') {
         throw const AuthFailure('Check the details and try again.');
@@ -119,7 +95,7 @@ class SupabaseShopRepository implements ShopRepository {
     } on AuthFailure {
       rethrow;
     } catch (e) {
-      debugPrint('Shop network error: $e');
+      debugPrint('Shop network error');
       throw const AuthFailure(
         "Can't reach OlympusGO. Check your connection and try again.",
       );
@@ -140,6 +116,9 @@ class SupabaseShopRepository implements ShopRepository {
   static Map<String, dynamic> _m(Object? v) =>
       (v as Map).cast<String, dynamic>();
 
+  static DateTime? _at(Object? v) =>
+      v == null ? null : DateTime.parse(v as String).toLocal();
+
   static Product _product(Map<String, dynamic> r) => Product(
     id: r['id'] as String,
     name: r['name'] as String,
@@ -147,7 +126,7 @@ class SupabaseShopRepository implements ShopRepository {
     mallName: r['mall_name'] as String,
     priceCents: r['price_cents'] as int,
     oldPriceCents: r['old_price_cents'] as int?,
-    maxPoints: r['max_points'] as int? ?? 0,
+    pointsCapCents: (r['points_cap_minor'] as num?)?.toInt() ?? 0,
     art: r['art'] == 'racquet' ? ProductArt.racquet : ProductArt.bag,
     rating: (r['rating'] as num? ?? 0).toDouble(),
     sold: (r['sold'] as num? ?? 0).toInt(),
@@ -164,28 +143,18 @@ class SupabaseShopRepository implements ShopRepository {
     blurb: r['blurb'] as String? ?? '',
     color: (r['color'] as num).toInt(),
     ink: (r['ink'] as num).toInt(),
-    pointsAccepted: false,
     ownerId: r['owner_id'] as String? ?? '',
+    pointsAccepted: r['points_open'] as bool? ?? false,
   );
 
-  static Address _address(Map<String, dynamic> r) => Address(
-    id: r['id'] as String? ?? '',
-    label: r['label'] as String? ?? '',
-    name: r['name'] as String? ?? '',
-    line: r['line'] as String? ?? '',
-    phone: r['phone'] as String? ?? '',
-    isDefault: r['is_default'] as bool? ?? false,
-    pickup: r['pickup'] as bool? ?? false,
-  );
+  // Orders from before payments have no unit amounts, and a shop isn't shown them.
+  static int _linePrice(Map l) {
+    final paid = ((l['unit_paid'] as num) + (l['unit_points'] as num)).toInt();
+    return paid > 0 ? paid : (l['price_cents'] as num).toInt();
+  }
 
   static Order _order(Map<String, dynamic> r) {
-    final step = switch (r['step']) {
-      'shipped' => OrderStep.shipped,
-      'delivered' => OrderStep.delivered,
-      'cancelled' => OrderStep.cancelled,
-      _ => OrderStep.packing,
-    };
-    final ret = (r['return'] as Map?)?.cast<String, dynamic>();
+    final pay = (r['payment'] as Map?)?.cast<String, dynamic>();
     return Order(
       id: r['id'] as String,
       mallId: r['mall_id'] as String,
@@ -196,33 +165,37 @@ class SupabaseShopRepository implements ShopRepository {
             l['name'] as String,
             l['variant'] as String? ?? '',
             l['qty'] as int,
-            l['price_cents'] as int,
+            _linePrice(l),
+            id: l['id'] as String,
+            productId: l['product_id'] as String? ?? '',
+            pointsCents: (l['unit_points'] as num).toInt(),
+            shopCents: (l['unit_shop'] as num).toInt(),
+            refundedQty: l['refunded_qty'] as int? ?? 0,
             art: l['art'] == 'racquet' ? ProductArt.racquet : ProductArt.bag,
           ),
       ],
       placedAt: DateTime.parse(r['placed_at'] as String).toLocal(),
-      step: step,
-      deliveryCents: r['delivery_cents'] as int? ?? 0,
-      paidWith: r['paid_with'] as String? ?? 'Pay the shop',
-      address: r['address'] == null ? null : _address(_m(r['address'])),
-      delivery: r['delivery'] as String? ?? 'Standard',
-      arrives: r['arrives'] == null
-          ? null
-          : DateTime.parse(r['arrives'] as String),
-      tracking: r['tracking'] as String?,
-      courier: r['courier'] as String?,
-      buyer: r['buyer'] as String? ?? '',
+      step: OrderStep.values.byName(r['step'] as String),
+      collectAddress: r['collect_address'] as String? ?? '',
+      collectBy: _at(r['collect_by']),
+      releaseAt: _at(r['release_at']),
+      readyAt: _at(r['ready_at']),
+      collectedAt: _at(r['collected_at']),
+      holdUntil: _at(r['hold_until']),
+      serverNow: _at(r['server_now']),
+      slotAt: _at(r['slot_at']),
       service: r['service'] as bool? ?? false,
-      booking: r['booking'] as String?,
-      received: step == OrderStep.delivered,
-      deliveredAt: r['delivered_at'] == null
-          ? null
-          : DateTime.parse(r['delivered_at'] as String).toLocal(),
+      reviewed: r['reviewed'] as bool? ?? false,
+      buyer: r['buyer'] as String? ?? '',
       buyerId: r['buyer_id'] as String? ?? '',
       ownerId: r['owner_id'] as String? ?? '',
-      reviewed: r['reviewed'] as bool? ?? false,
-      returnState: ret?['status'] as String?,
-      returnReason: ret == null ? null : '${ret['reason']} · ${ret['want']}',
+      paymentId: pay?['id'] as String?,
+      paymentMethod: pay?['method'] as String?,
+      paymentStatus: pay?['status'] as String? ?? '',
+      receiptNo: pay?['receipt_no'] as String? ?? '',
+      refundedCents: (pay?['refunded_minor'] as num?)?.toInt() ?? 0,
+      refundStatus: pay?['refund_status'] as String?,
+      disputeStatus: pay?['dispute_status'] as String?,
     );
   }
 
@@ -277,8 +250,8 @@ class SupabaseShopRepository implements ShopRepository {
         for (final line in p.description.split('\n'))
           if (line.trim().isNotEmpty) line.trim(),
         'Sold by ${p.mallName}',
-        if (!p.service) 'Returns within 7 days, unused',
-        'Pay the shop on delivery or pickup',
+        'Self-collect from the shop',
+        'Final once collected',
       ],
       options: [
         for (final o in (raw['options'] as List? ?? const []).cast<Map>())
@@ -308,9 +281,9 @@ class SupabaseShopRepository implements ShopRepository {
             );
           }(),
       ],
-      arrives: p.service
-          ? 'Book a drop-off slot. Pay the shop when you collect it'
-          : 'Arrives in 3 to 5 working days, delivery from S\$1.99',
+      collectLine: p.service
+          ? 'Book a drop-off time and collect from ${p.mallName}'
+          : 'Collect from ${p.mallName}',
       related: [
         for (final x in (r['related'] as List).cast<Map>())
           _product(x.cast<String, dynamic>()),
@@ -320,7 +293,9 @@ class SupabaseShopRepository implements ShopRepository {
 
   @override
   Future<MallDetail> mall(String id) => _guard(() async {
-    final r = _m(await _rpc('shop_mall', {'p_mall': id}));
+    final raw = await _rpc('shop_mall', {'p_mall': id});
+    if (raw == null) throw const AuthFailure('This shop isn’t open.');
+    final r = _m(raw);
     final m = _m(r['mall']);
     final opened = DateTime.parse(m['created_at'] as String).toLocal();
     const months = [
@@ -344,13 +319,13 @@ class SupabaseShopRepository implements ShopRepository {
       ratings: r['ratings'] as int? ?? 0,
       followers: r['followers'] as int? ?? 0,
       following: r['following'] as bool? ?? false,
+      verified: m['verified'] == true,
       facts: [
         ('Opened on Olympus', '${months[opened.month - 1]} ${opened.year}'),
-        if ((m['ships_from'] as String? ?? '').isNotEmpty)
-          ('Ships from', m['ships_from'] as String),
-        ('Returns', 'Within 7 days, unused'),
-        ('Pay with', 'Pay the shop on delivery or pickup'),
-        ('Verified shop', m['verified'] == true ? 'Yes' : 'Not yet'),
+        if ((m['collect_address'] as String? ?? '').isNotEmpty)
+          ('Collect from', m['collect_address'] as String),
+        ('Final once collected', 'Check it at the shop'),
+        ('Pay with', 'Card or PayNow, held until you collect'),
       ],
       products: [
         for (final p in (r['products'] as List).cast<Map>())
@@ -363,16 +338,6 @@ class SupabaseShopRepository implements ShopRepository {
   Future<void> follow(String mallId, bool on) => _guard(() async {
     await _rpc('shop_follow', {'p_mall': mallId, 'p_on': on});
   });
-
-  // Shops don't run vouchers yet, so there is nothing to claim.
-  @override
-  Future<void> claimVoucher(String mallId, String title) async {}
-
-  @override
-  Future<List<ShopVideo>> videos() async => const [];
-
-  @override
-  Future<List<LiveStream>> lives() async => const [];
 
   @override
   Future<List<CartLine>> cart() => _guard(() async {
@@ -405,63 +370,66 @@ class SupabaseShopRepository implements ShopRepository {
     await _rpc('shop_cart_set', {'p_line': lineId, 'p_qty': qty});
   });
 
-  @override
-  Future<List<Address>> addresses() => _guard(() async {
-    final rows = await _client
-        .from('addresses')
-        .select()
-        .order('is_default', ascending: false)
-        .order('created_at');
-    return [for (final r in rows) _address(r)];
-  });
+  static Map<String, dynamic>? _only(CartLine? only) => only == null
+      ? null
+      : {'product': only.product.id, 'variant': only.variant, 'qty': only.qty};
 
   @override
-  Future<Address> saveAddress(Address address) => _guard(() async {
-    final id = await _rpc('shop_address_save', {
-      'p': {
-        'label': address.label,
-        'name': address.name,
-        'line': address.line,
-        'phone': address.phone,
-        'is_default': address.isDefault,
-      },
-    });
-    return Address(
-      id: id as String,
-      label: address.label,
-      name: address.name,
-      line: address.line,
-      phone: address.phone,
-      isDefault: address.isDefault,
+  Future<ShopQuote> quote(
+    String mallId, {
+    CartLine? only,
+    int pointsCents = 0,
+  }) => _guard(() async {
+    final r = _m(
+      await _rpc('shop_quote', {
+        'p_mall': mallId,
+        'p_only': _only(only),
+        'p_points': pointsCents,
+      }),
+    );
+    int n(String k) => (r[k] as num? ?? 0).toInt();
+    return ShopQuote(
+      lines: [
+        for (final l in (r['lines'] as List).cast<Map>())
+          QuoteLine(
+            name: l['name'] as String,
+            variant: l['variant'] as String? ?? '',
+            qty: l['qty'] as int,
+            priceCents: ((l['unit_paid'] as num) + (l['unit_points'] as num))
+                .toInt(),
+            pointsCents: (l['unit_points'] as num).toInt(),
+          ),
+      ],
+      totalCents: n('total_minor'),
+      pointsCapCents: n('points_cap_minor'),
+      pointsLeftCents: n('points_left_minor'),
+      pointsBalanceCents: n('points_balance_minor'),
+      canRedeem: r['can_redeem'] as bool? ?? false,
+      collectAddress: r['collect_address'] as String? ?? '',
+      refundRule: r['refund_rule'] as String? ?? '',
+      canPay: r['can_pay'] as bool? ?? false,
     );
   });
 
   @override
-  Future<List<Order>> checkout({
-    required Address address,
-    required Delivery delivery,
-    required int pointsCents,
-    required String paidWith,
+  Future<(PaymentHold, String)> reserve(
+    String mallId, {
+    required String key,
+    required int expectedCents,
+    int pointsCents = 0,
     CartLine? only,
   }) => _guard(() async {
-    final ids = await _rpc('shop_checkout', {
-      'p_address': {
-        'label': address.label,
-        'name': address.name,
-        'line': address.line,
-        'phone': address.phone,
-        'pickup': address.pickup || delivery.cents == 0,
-      },
-      'p_delivery': delivery.name,
-      'p_only': only == null
-          ? null
-          : {
-              'product': only.product.id,
-              'variant': only.variant,
-              'qty': only.qty,
-            },
-    });
-    return [for (final id in ids as List) await order(id as String)];
+    final r = _m(
+      await _rpc('shop_reserve', {
+        'p_mall': mallId,
+        'p_key': key,
+        'p_expected_minor': expectedCents,
+        'p_points': pointsCents,
+        'p_only': _only(only),
+        'p_slot': only?.slot?.toUtc().toIso8601String(),
+      }),
+    );
+    return (SupabasePaymentGateway.holdFrom(r), r['order_id'] as String);
   });
 
   @override
@@ -474,38 +442,31 @@ class SupabaseShopRepository implements ShopRepository {
       _guard(() async => _order(_m(await _rpc('shop_order', {'p_order': id}))));
 
   @override
-  Future<void> confirmReceived(String id) => _guard(() async {
-    await _rpc('shop_confirm_received', {'p_order': id});
+  Future<void> collected(String id) => _guard(() async {
+    await _rpc('shop_collected', {'p_order': id});
+  });
+
+  @override
+  Future<void> reportProblem(String id, String note) => _guard(() async {
+    await _rpc('shop_report_problem', {'p_order': id, 'p_note': note});
   });
 
   @override
   Future<int> cancelOrder(String id, {required String reason}) => _guard(
-    () async =>
-        await _rpc('shop_cancel', {'p_order': id, 'p_reason': reason}) as int,
+    () async => ((await _rpc('shop_order_cancel', {
+      'p_order': id,
+      'p_reason': reason,
+    })) as num).toInt(),
   );
 
   @override
-  Future<Order> bookService(
-    String productId, {
-    required String slot,
-    required String tension,
-  }) => _guard(() async {
-    final id = await _rpc('shop_book_service', {
-      'p_product': productId,
-      'p_slot': slot,
-      'p_tension': tension,
-    });
-    return order(id as String);
-  });
-
-  @override
   Future<void> report(
-    String what, {
+    String productId, {
     required String reason,
     String note = '',
   }) => _guard(() async {
     await _rpc('shop_report', {
-      'p_what': what,
+      'p_product': productId,
       'p_reason': reason,
       'p_note': note,
     });
@@ -529,125 +490,42 @@ class SupabaseShopRepository implements ShopRepository {
   });
 
   @override
-  Future<void> requestReturn(
-    String orderId, {
-    required String reason,
-    required String want,
-  }) => _guard(() async {
-    await _rpc('shop_return_request', {
-      'p_order': orderId,
-      'p_reason': reason,
-      'p_want': want,
-    });
+  Future<Mall?> myShop() => _guard(() async {
+    final r = await _rpc('shop_my_mall');
+    return r == null ? null : _mall(_m(r));
   });
 
   @override
-  Future<SellerSummary?> sellerSummary() => _guard(() async {
-    final r = await _rpc('shop_seller_summary');
-    if (r == null) return null;
-    final s = _m(r);
-    return SellerSummary(
-      mall: _mall(_m(s['mall'])),
-      salesTodayCents: (s['sales_today_cents'] as num).toInt(),
-      toShip: s['to_ship'] as int,
-      onTheWay: s['on_the_way'] as int,
-      returns: s['returns'] as int,
-      listed: s['listed'] as int,
-      lowStock: s['low_stock'] as int,
-    );
+  Future<List<Order>> ownerOrders() => _guard(() async {
+    return [for (final r in await _list('shop_owner_orders')) _order(r)];
   });
 
   @override
-  Future<void> openShop({
-    required String name,
-    required String blurb,
-    required String about,
-    required String shipsFrom,
-  }) => _guard(() async {
-    await _rpc('shop_open', {
-      'p': {
-        'name': name,
-        'blurb': blurb,
-        'about': about,
-        'ships_from': shipsFrom,
-      },
-    });
+  Future<void> markStarted(String id) => _guard(() async {
+    await _rpc('shop_mark_started', {'p_order': id});
   });
 
   @override
-  Future<void> decideReturn(String orderId, {required bool accept}) =>
+  Future<void> markReady(String id) => _guard(() async {
+    await _rpc('shop_mark_ready', {'p_order': id});
+  });
+
+  @override
+  Future<void> ownerCancel(String id, {required String reason}) =>
       _guard(() async {
-        await _rpc('shop_return_decide', {
-          'p_order': orderId,
-          'p_accept': accept,
-        });
+        await _rpc('shop_owner_cancel', {'p_order': id, 'p_reason': reason});
       });
-
-  @override
-  Future<List<Order>> sellerOrders() => _guard(() async {
-    return [for (final r in await _list('shop_seller_orders')) _order(r)];
-  });
-
-  @override
-  Future<void> markShipped(
-    String orderId, {
-    required String courier,
-    required String tracking,
-  }) => _guard(() async {
-    await _rpc('shop_mark_shipped', {
-      'p_order': orderId,
-      'p_courier': courier,
-      'p_tracking': tracking,
-    });
-  });
-
-  @override
-  Future<List<Product>> sellerProducts() => _guard(() async {
-    return [for (final r in await _list('shop_seller_products')) _product(r)];
-  });
-
-  @override
-  Future<Product> saveProduct(Product product) => _guard(() async {
-    final r = await _rpc('shop_save_product', {
-      'p': {
-        'id': product.id,
-        'name': product.name,
-        'description': product.description,
-        'price_cents': product.priceCents,
-        'old_price_cents': product.oldPriceCents,
-        'max_points': product.maxPoints,
-        'art': product.art.name,
-        'service': product.service,
-        'stock': product.stock,
-        'published': product.published,
-      },
-    });
-    return _product(_m(r));
-  });
-
-  @override
-  Future<void> goLive({
-    required String title,
-    required List<String> productIds,
-    required String deal,
-  }) => throw _later;
-
-  @override
-  Future<void> postVideo({
-    required String caption,
-    required String productId,
-  }) => throw _later;
 }
 
 /// The design's shops and products, with a working cart and orders. The
-/// demo player also runs Racket Lab, for the seller screens.
+/// demo player also runs Racket Lab, for the owner's screens.
 class DemoShopRepository implements ShopRepository {
   DemoShopRepository([this._wallet]) {
     _seedOrders();
   }
 
   final DemoEarningsRepository? _wallet;
-  static const myShop = 'm-racket';
+  static const myShop_ = 'm-racket';
 
   Future<void> _tick() => Future.delayed(const Duration(milliseconds: 200));
 
@@ -684,11 +562,10 @@ class DemoShopRepository implements ShopRepository {
       mallName: 'Racket Lab',
       priceCents: 18900,
       oldPriceCents: 22900,
-      maxPoints: 18,
+      pointsCapCents: 945,
       art: ProductArt.racquet,
       rating: 4.8,
       sold: 1200,
-      usedBy: 'Coach Ravi',
       stock: 14,
     ),
     const Product(
@@ -698,11 +575,10 @@ class DemoShopRepository implements ShopRepository {
       mallName: 'Court Supply Co.',
       priceCents: 2450,
       oldPriceCents: 2800,
-      maxPoints: 3,
+      pointsCapCents: 122,
       art: ProductArt.racquet,
       rating: 4.9,
       sold: 5600,
-      usedBy: 'Mei Wong',
       stock: 40,
     ),
     const Product(
@@ -711,10 +587,9 @@ class DemoShopRepository implements ShopRepository {
       mallId: 'm-footwork',
       mallName: 'Footwork',
       priceCents: 15900,
-      maxPoints: 15,
+      pointsCapCents: 795,
       rating: 4.7,
       sold: 860,
-      usedBy: 'Marcus Lee',
       stock: 8,
     ),
     const Product(
@@ -723,7 +598,7 @@ class DemoShopRepository implements ShopRepository {
       mallId: 'm-court',
       mallName: 'Court Supply Co.',
       priceCents: 900,
-      maxPoints: 1,
+      pointsCapCents: 45,
       rating: 4.8,
       sold: 9100,
       stock: 3,
@@ -735,7 +610,7 @@ class DemoShopRepository implements ShopRepository {
       mallName: 'Racket Lab',
       priceCents: 6900,
       oldPriceCents: 8900,
-      maxPoints: 6,
+      pointsCapCents: 345,
       rating: 4.6,
       sold: 430,
       stock: 9,
@@ -746,10 +621,9 @@ class DemoShopRepository implements ShopRepository {
       mallId: 'm-racket',
       mallName: 'Racket Lab',
       priceCents: 2500,
-      maxPoints: 2,
+      pointsCapCents: 125,
       rating: 4.9,
       sold: 2300,
-      usedBy: 'Coach Ravi',
       service: true,
     ),
     const Product(
@@ -758,7 +632,7 @@ class DemoShopRepository implements ShopRepository {
       mallId: 'm-racket',
       mallName: 'Racket Lab',
       priceCents: 3200,
-      maxPoints: 3,
+      pointsCapCents: 160,
       rating: 4.7,
       sold: 210,
       stock: 0,
@@ -766,41 +640,18 @@ class DemoShopRepository implements ShopRepository {
   ];
 
   final _following = <String>{'m-court'};
-  final _claimed = <String>{};
   final _cart = <CartLine>[];
   int _lineSeq = 0;
-  final _addresses = <Address>[
-    const Address(
-      id: 'a-home',
-      label: 'Home',
-      name: 'Aaron Ng',
-      line: '21 Tampines Ave 1, #08-12, Singapore 529773',
-      phone: '+65 9123 4567',
-      isDefault: true,
-    ),
-    const Address(
-      id: 'a-office',
-      label: 'Office',
-      name: 'Aaron Ng',
-      line: '1 Changi Business Park, Singapore 486025',
-      phone: '+65 9123 4567',
-    ),
-    const Address(
-      id: 'a-pickup',
-      label: 'Pick up at Our Tampines Hub',
-      name: 'Front desk',
-      line: 'Free, from Monday',
-      pickup: true,
-    ),
-  ];
   final _orders = <Order>[];
-  final _sellerOrders = <Order>[];
+  final _ownerOrders = <Order>[];
 
   Product _p(String id) {
     final p = _products.where((p) => p.id == id).firstOrNull;
     if (p == null) throw const AuthFailure('This item is no longer listed.');
     return p;
   }
+
+  static const _address = '4 Tampines Central 5, #01-12, Singapore 529510';
 
   void _seedOrders() {
     final now = DateTime.now();
@@ -810,101 +661,123 @@ class DemoShopRepository implements ShopRepository {
         mallId: 'm-racket',
         mallName: 'Racket Lab',
         lines: const [
-          OrderLine('Carbon racket 4U', '4U, G5, strung 24 lb', 1, 18900),
+          OrderLine(
+            'Carbon racket 4U',
+            '4U, G5, strung 24 lb',
+            1,
+            18900,
+            pointsCents: 200,
+            shopCents: 17010,
+          ),
         ],
         placedAt: now.subtract(const Duration(days: 2, hours: 3)),
-        step: OrderStep.shipped,
-        voucherCents: 500,
-        deliveryCents: 199,
-        pointsCents: 199,
-        paidWith: 'Card',
-        address: _addresses.first,
-        arrives: now.add(const Duration(days: 1)),
-        tracking: 'NV-SG-29384756',
-        courier: 'Ninja Van',
+        step: OrderStep.ready,
+        collectAddress: _address,
+        collectBy: now.add(const Duration(days: 5)),
+        releaseAt: now.add(const Duration(days: 7)),
+        readyAt: now.subtract(const Duration(days: 1)),
+        paymentMethod: 'card',
+        receiptNo: 'OG-1001',
       ),
       Order(
         id: 'o-1002',
         mallId: 'm-court',
         mallName: 'Court Supply Co.',
         lines: const [
-          OrderLine('Overgrip, pack of 3', 'White', 2, 900),
-          OrderLine('Feather shuttles, tube of 12', 'Speed 77', 1, 2450),
+          OrderLine('Overgrip, pack of 3', 'White', 2, 900, shopCents: 810),
+          OrderLine(
+            'Feather shuttles, tube of 12',
+            'Speed 77',
+            1,
+            2450,
+            shopCents: 2205,
+          ),
         ],
         placedAt: now.subtract(const Duration(hours: 5)),
-        step: OrderStep.packing,
-        paidWith: 'Card',
-        address: _addresses.first,
-        arrives: now.add(const Duration(days: 4)),
+        step: OrderStep.paid,
+        collectAddress: _address,
+        collectBy: now.add(const Duration(days: 7)),
+        releaseAt: now.add(const Duration(days: 9)),
+        paymentMethod: 'paynow',
+        receiptNo: 'OG-1002',
       ),
       Order(
         id: 'o-0990',
         mallId: 'm-footwork',
         mallName: 'Footwork',
         lines: const [
-          OrderLine('Court shoe, all-court grip', 'US 9', 1, 15900),
+          OrderLine(
+            'Court shoe, all-court grip',
+            'US 9',
+            1,
+            15900,
+            shopCents: 14310,
+          ),
         ],
         placedAt: now.subtract(const Duration(days: 20)),
-        step: OrderStep.delivered,
-        deliveryCents: 199,
-        paidWith: 'Card',
-        address: _addresses.first,
-        received: true,
+        step: OrderStep.collected,
+        collectAddress: _address,
+        collectedAt: now.subtract(const Duration(days: 18)),
+        paymentMethod: 'card',
+        receiptNo: 'OG-0990',
       ),
     ]);
-    _sellerOrders.addAll([
+    _ownerOrders.addAll([
       Order(
         id: 's-2001',
-        mallId: myShop,
+        mallId: myShop_,
         mallName: 'Racket Lab',
         lines: const [
-          OrderLine('Carbon racket 4U', '3U G5, strung 24 lb', 1, 18900),
+          OrderLine(
+            'Carbon racket 4U',
+            '3U G5, strung 24 lb',
+            1,
+            18900,
+            shopCents: 17010,
+          ),
         ],
         placedAt: now.subtract(const Duration(hours: 2)),
-        step: OrderStep.packing,
+        step: OrderStep.paid,
         buyer: 'Priya Raman',
-        address: const Address(
-          id: 'x',
-          label: 'Home',
-          name: 'Priya Raman',
-          line: '9 Bedok North Ave 3, Singapore 469652',
-          phone: '+65 9876 5432',
-        ),
-        pointsCents: 2120,
-        deliveryCents: 199,
+        collectAddress: _address,
+        collectBy: now.add(const Duration(days: 7)),
+        releaseAt: now.add(const Duration(days: 9)),
       ),
       Order(
         id: 's-2002',
-        mallId: myShop,
+        mallId: myShop_,
         mallName: 'Racket Lab',
-        lines: const [OrderLine('Racket bag, 6-piece', 'Black', 1, 6900)],
+        lines: const [
+          OrderLine('Racket bag, 6-piece', 'Black', 1, 6900, shopCents: 6210),
+        ],
         placedAt: now.subtract(const Duration(hours: 6)),
-        step: OrderStep.packing,
+        step: OrderStep.ready,
         buyer: 'Kelvin Ho',
-        address: const Address(
-          id: 'y',
-          label: 'Home',
-          name: 'Kelvin Ho',
-          line: '3 Pasir Ris Dr 1, Singapore 519447',
-        ),
-        deliveryCents: 199,
+        collectAddress: _address,
+        collectBy: now.add(const Duration(days: 6)),
+        releaseAt: now.add(const Duration(days: 8)),
       ),
       Order(
         id: 's-2003',
-        mallId: myShop,
+        mallId: myShop_,
         mallName: 'Racket Lab',
         lines: const [
           OrderLine(
             'Restring service, 24 lb',
-            'Sat 10:00 AM drop-off',
+            '24 lb',
             1,
             2500,
+            shopCents: 2250,
           ),
         ],
         placedAt: now.subtract(const Duration(days: 1)),
-        step: OrderStep.shipped,
+        step: OrderStep.paid,
         buyer: 'Daniel Tan',
         service: true,
+        slotAt: now.add(const Duration(days: 2)),
+        collectAddress: _address,
+        collectBy: now.add(const Duration(days: 2)),
+        releaseAt: now.add(const Duration(days: 4)),
       ),
     ]);
   }
@@ -953,7 +826,7 @@ class DemoShopRepository implements ShopRepository {
               'Comes strung at 24 lb, or unstrung',
               '1-year frame warranty from Racket Lab',
             ]
-          : ['Sold by ${p.mallName}', 'Returns within 7 days, unused'],
+          : ['Sold by ${p.mallName}', 'Final once collected'],
       options: racket
           ? const [
               OptionGroup('Weight', ['3U', '4U']),
@@ -978,10 +851,9 @@ class DemoShopRepository implements ShopRepository {
           'Good control. A bit stiff for me, so I restrung at 22 lb.',
         ),
       ],
-      arrives: p.service
+      collectLine: p.service
           ? 'Ready 2 hours after drop-off'
-          : 'Arrives in 3 to 5 working days, delivery from S\$1.99',
-      videoTitle: p.usedBy == null ? null : '3 drills for a heavier smash',
+          : 'Collect from ${p.mallName}',
       related: _products
           .where((x) => x.mallId == p.mallId && x.id != p.id)
           .take(2)
@@ -997,30 +869,17 @@ class DemoShopRepository implements ShopRepository {
     return MallDetail(
       mall: m,
       about: racket
-          ? 'Rackets and restringing in Tampines. Pick up at Our Tampines Hub or get it delivered.'
-          : '${m.blurb}. Delivered across Singapore.',
+          ? 'Rackets and restringing in Tampines. Collect from the shop.'
+          : '${m.blurb}. Collect from the shop.',
       rating: racket ? 4.8 : 4.9,
       ratings: racket ? 2100 : 5400,
       followers: racket ? 3400 + (_following.contains(id) ? 1 : 0) : 8100,
       following: _following.contains(id),
-      vouchers: [
-        Voucher(
-          'S\$5 off',
-          'Orders over S\$50',
-          claimed: _claimed.contains('$id:S\$5 off'),
-        ),
-        Voucher(
-          'Free delivery',
-          'Orders over S\$80',
-          claimed: _claimed.contains('$id:Free delivery'),
-        ),
-      ],
       facts: [
         ('Opened on Olympus', 'March 2025'),
         ('Business name', '${m.name} Pte Ltd'),
-        ('Ships from', 'Tampines, Singapore'),
-        ('Returns', 'Within 7 days, unused'),
-        ('Delivery', '1 to 3 working days'),
+        ('Collect from', _address),
+        ('Final once collected', 'Check it at the shop'),
         ('Pay with', 'Card, PayNow, points'),
         ('Business licence', 'Checked by Olympus'),
       ],
@@ -1031,63 +890,6 @@ class DemoShopRepository implements ShopRepository {
   @override
   Future<void> follow(String mallId, bool on) async =>
       on ? _following.add(mallId) : _following.remove(mallId);
-
-  @override
-  Future<void> claimVoucher(String mallId, String title) async =>
-      _claimed.add('$mallId:$title');
-
-  @override
-  Future<List<ShopVideo>> videos() async => [
-    ShopVideo(
-      id: 'v1',
-      title: '3 drills for a heavier smash',
-      creator: 'Coach Ravi',
-      creatorMark: 'CR',
-      product: _p('p-racket'),
-      views: 48200,
-      likes: 3100,
-      paid: true,
-    ),
-    ShopVideo(
-      id: 'v2',
-      title: 'Why I switched to feather shuttles',
-      creator: 'Mei Wong',
-      creatorMark: 'MW',
-      product: _p('p-shuttles'),
-      views: 12900,
-      likes: 870,
-    ),
-    ShopVideo(
-      id: 'v3',
-      title: 'Footwork test: 30 lunges in these',
-      creator: 'Marcus Lee',
-      creatorMark: 'ML',
-      product: _p('p-shoes'),
-      views: 9400,
-      likes: 610,
-      paid: true,
-    ),
-  ];
-
-  @override
-  Future<List<LiveStream>> lives() async => [
-    LiveStream(
-      id: 'l1',
-      title: 'Restring night with Coach Ravi',
-      shop: 'Racket Lab',
-      shopMark: 'RL',
-      host: 'Coach Ravi',
-      watching: 1284,
-      products: [_p('p-racket'), _p('p-restring'), _p('p-bag'), _p('p-grip')],
-      livePriceCents: const {'p-racket': 17900},
-      chat: const [
-        ('Kelvin', 'Does 24 lb suit a beginner?'),
-        ('Priya R.', 'Got mine restrung here last month, feels great'),
-        ('Daniel', 'Is the flash price for 3U too?'),
-        ('Racket Lab', 'Yes, both weights. 14 left at this price.'),
-      ],
-    ),
-  ];
 
   @override
   Future<List<CartLine>> cart() async => List.of(_cart);
@@ -1137,119 +939,127 @@ class DemoShopRepository implements ShopRepository {
     }
   }
 
-  @override
-  Future<List<Address>> addresses() async => List.of(_addresses);
+  List<CartLine> _linesFor(String mallId, CartLine? only) => only == null
+      ? _cart.where((l) => l.product.mallId == mallId).toList()
+      : [only];
 
   @override
-  Future<Address> saveAddress(Address address) async {
+  Future<ShopQuote> quote(
+    String mallId, {
+    CartLine? only,
+    int pointsCents = 0,
+  }) async {
     await _tick();
-    final a = Address(
-      id: 'a-${DateTime.now().millisecondsSinceEpoch}',
-      label: address.label,
-      name: address.name,
-      line: address.line,
-      phone: address.phone,
-      isDefault: address.isDefault,
-    );
-    if (a.isDefault) {
-      for (var i = 0; i < _addresses.length; i++) {
-        final x = _addresses[i];
-        _addresses[i] = Address(
-          id: x.id,
-          label: x.label,
-          name: x.name,
-          line: x.line,
-          phone: x.phone,
-          pickup: x.pickup,
-        );
-      }
-      _addresses.insert(0, a);
-    } else {
-      _addresses.insert(_addresses.length - 1, a);
+    var left = pointsCents;
+    final lines = <QuoteLine>[];
+    var cap = 0;
+    for (final l in _linesFor(mallId, only)) {
+      final unit = [
+        l.product.pointsCapCents,
+        left ~/ l.qty,
+      ].reduce((a, b) => a < b ? a : b);
+      left -= unit * l.qty;
+      cap += l.product.pointsCapCents * l.qty;
+      lines.add(
+        QuoteLine(
+          name: l.product.name,
+          variant: l.variant,
+          qty: l.qty,
+          priceCents: l.product.priceCents,
+          pointsCents: unit,
+        ),
+      );
     }
-    return a;
+    final total = lines.fold(
+      0,
+      (a, l) => a + (l.priceCents - l.pointsCents) * l.qty,
+    );
+    return ShopQuote(
+      lines: lines,
+      totalCents: total,
+      pointsCapCents: cap,
+      pointsLeftCents: left,
+      pointsBalanceCents: ((_wallet?.balance ?? 0)).toInt(),
+      canRedeem: true,
+      collectAddress: _address,
+      refundRule:
+          'Cancel before you collect and you get everything back. Sports '
+          'equipment is final once collected.',
+      canPay: true,
+    );
   }
 
   @override
-  Future<List<Order>> checkout({
-    required Address address,
-    required Delivery delivery,
-    required int pointsCents,
-    required String paidWith,
+  Future<(PaymentHold, String)> reserve(
+    String mallId, {
+    required String key,
+    required int expectedCents,
+    int pointsCents = 0,
     CartLine? only,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    final lines = only == null ? List.of(_cart) : [only];
+    await _tick();
+    final q = await quote(mallId, only: only, pointsCents: pointsCents);
+    final lines = _linesFor(mallId, only);
     if (lines.isEmpty) throw const AuthFailure('Your cart is empty.');
-    final byMall = <String, List<CartLine>>{};
-    for (final l in lines) {
-      byMall.putIfAbsent(l.product.mallId, () => []).add(l);
-    }
-    var pointsLeft = pointsCents;
-    final placed = <Order>[];
-    for (final e in byMall.entries) {
-      final items = e.value.fold(0, (a, l) => a + l.totalCents);
-      final cap = e.value.fold(
-        0,
-        (a, l) => a + l.product.maxPoints * 100 * l.qty,
-      );
-      final pts = pointsLeft.clamp(0, cap.clamp(0, items));
-      pointsLeft -= pts;
-      final voucher = _claimed.contains('${e.key}:S\$5 off') && items >= 5000
-          ? 500
-          : 0;
-      final o = Order(
-        id: 'o-${DateTime.now().millisecondsSinceEpoch % 100000}${placed.length}',
-        mallId: e.key,
-        mallName: e.value.first.product.mallName,
+    final now = DateTime.now();
+    final o = Order(
+      id: 'o-${now.millisecondsSinceEpoch % 100000}',
+      mallId: mallId,
+      mallName: lines.first.product.mallName,
+      lines: [
+        for (final (i, l) in q.lines.indexed)
+          OrderLine(
+            l.name,
+            l.variant,
+            l.qty,
+            l.priceCents,
+            productId: lines[i].product.id,
+            pointsCents: l.pointsCents,
+            shopCents: (l.priceCents * 9 + 5) ~/ 10,
+          ),
+      ],
+      placedAt: now,
+      step: OrderStep.paid,
+      collectAddress: _address,
+      service: only?.slot != null,
+      slotAt: only?.slot,
+      collectBy: only?.slot ?? now.add(const Duration(days: 7)),
+      releaseAt: (only?.slot ?? now.add(const Duration(days: 7))).add(
+        const Duration(hours: 48),
+      ),
+      paymentMethod: 'card',
+      receiptNo: 'OG-${now.millisecondsSinceEpoch % 100000}',
+    );
+    _orders.insert(0, o);
+    _wallet?.addReceipt(
+      ReceiptRecord(
+        id: o.id,
+        title: o.summary,
+        kind: 'Shop',
+        at: o.placedAt,
+        no: o.receiptNo,
         lines: [
-          for (final l in e.value)
-            OrderLine(l.product.name, l.variant, l.qty, l.product.priceCents),
+          ('Items', '${Money(o.itemsCents)}'),
+          if (o.pointsCents > 0) ('Points used', '${Money(-o.pointsCents)}'),
         ],
-        placedAt: DateTime.now(),
-        step: OrderStep.packing,
-        voucherCents: voucher,
-        deliveryCents: placed.isEmpty ? delivery.cents : 0,
-        pointsCents: pts,
-        paidWith: paidWith,
-        address: address,
-        delivery: delivery.name,
-        arrives: DateTime.now().add(
-          Duration(days: delivery.name == 'Express' ? 1 : 4),
-        ),
-      );
-      placed.add(o);
-      _orders.insert(0, o);
-      _wallet?.addReceipt(
-        ReceiptRecord(
-          id: o.id,
-          title: o.summary,
-          kind: 'Shop',
-          at: o.placedAt,
-          no: 'OG-${o.id.toUpperCase()}',
-          lines: [
-            ('Items', 'S\$${(o.itemsCents / 100).toStringAsFixed(2)}'),
-            if (o.voucherCents > 0)
-              ('Voucher', '−S\$${(o.voucherCents / 100).toStringAsFixed(2)}'),
-            if (o.deliveryCents > 0)
-              ('Delivery', 'S\$${(o.deliveryCents / 100).toStringAsFixed(2)}'),
-            if (o.pointsCents > 0)
-              (
-                'Points used',
-                '−S\$${(o.pointsCents / 100).toStringAsFixed(2)}',
-              ),
-          ],
-          totalCents: o.totalCents,
-          paidWith: paidWith,
-        ),
-      );
+        totalCents: o.totalCents,
+        paidWith: o.paidWith,
+      ),
+    );
+    if (o.pointsCents > 0) {
+      _wallet?.spend('Shop order', o.mallName, minor: o.pointsCents);
     }
-    final spent = pointsCents - pointsLeft;
-    if (spent > 0) {
-      _wallet?.spend('Shop order', placed.first.mallName, points: spent / 100);
-    }
-    if (only == null) _cart.clear();
-    return placed;
+    if (only == null) _cart.removeWhere((l) => l.product.mallId == mallId);
+    return (
+      PaymentHold(
+        result: 'reserved',
+        id: newClientKey(),
+        totalCents: o.totalCents,
+        holdUntil: now.add(const Duration(minutes: 10)),
+        serverNow: now,
+      ),
+      o.id,
+    );
   }
 
   @override
@@ -1261,138 +1071,59 @@ class DemoShopRepository implements ShopRepository {
   @override
   Future<Order> order(String id) async {
     await _tick();
-    return [..._orders, ..._sellerOrders].firstWhere((o) => o.id == id);
+    return [..._orders, ..._ownerOrders].firstWhere((o) => o.id == id);
+  }
+
+  void _set(String id, Order Function(Order) change) {
+    for (final list in [_orders, _ownerOrders]) {
+      final i = list.indexWhere((o) => o.id == id);
+      if (i >= 0) list[i] = change(list[i]);
+    }
   }
 
   @override
-  Future<void> confirmReceived(String id) async {
-    final i = _orders.indexWhere((o) => o.id == id);
-    _orders[i] = _orders[i].copyWith(step: OrderStep.delivered, received: true);
+  Future<void> collected(String id) async {
+    await _tick();
+    _set(
+      id,
+      (o) => o.copyWith(step: OrderStep.collected, collectedAt: DateTime.now()),
+    );
+  }
+
+  @override
+  Future<void> reportProblem(String id, String note) async {
+    await _tick();
+    _set(id, (o) => o.copyWith(step: OrderStep.reported));
   }
 
   @override
   Future<int> cancelOrder(String id, {required String reason}) async {
     await _tick();
-    final i = _orders.indexWhere((o) => o.id == id);
-    final o = _orders[i];
-    if (o.step != OrderStep.packing && o.step != OrderStep.toPay) {
-      throw const AuthFailure('It has shipped, so ask for a return instead.');
+    final o = _orders.firstWhere((o) => o.id == id);
+    if (!o.canCancel) {
+      throw const AuthFailure('This order can’t be cancelled now.');
     }
     final back = o.totalCents;
-    _orders[i] = o.copyWith(
-      step: OrderStep.cancelled,
-      refundCents: back,
-      refundTo: 'Card ending 4242',
+    _set(
+      id,
+      (o) => o.copyWith(
+        step: OrderStep.cancelled,
+        refundedCents: back,
+        refundStatus: 'pending',
+      ),
     );
     if (o.pointsCents > 0) {
-      _wallet?.credit(
-        'Refund, ${o.summary}',
-        o.mallName,
-        points: o.pointsCents / 100,
-      );
+      _wallet?.credit('Refund, ${o.summary}', o.mallName, minor: o.pointsCents);
     }
     return back;
   }
 
   @override
-  Future<Order> bookService(
-    String productId, {
-    required String slot,
-    required String tension,
-  }) async {
-    await _tick();
-    final p = _p(productId);
-    final o = Order(
-      id: 'o-${DateTime.now().millisecondsSinceEpoch % 100000}',
-      mallId: p.mallId,
-      mallName: p.mallName,
-      lines: [OrderLine(p.name, '$tension · $slot', 1, p.priceCents)],
-      placedAt: DateTime.now(),
-      step: OrderStep.packing,
-      paidWith: 'Card',
-      service: true,
-      booking: slot,
-    );
-    _orders.insert(0, o);
-    return o;
-  }
-
-  @override
   Future<void> report(
-    String what, {
+    String productId, {
     required String reason,
     String note = '',
   }) async => _tick();
-
-  @override
-  Future<SellerSummary?> sellerSummary() async {
-    await _tick();
-    final mine = _products.where((p) => p.mallId == myShop).toList();
-    return SellerSummary(
-      mall: _malls.firstWhere((m) => m.id == myShop),
-      salesTodayCents: 84200,
-      toShip: _sellerOrders.where((o) => o.step == OrderStep.packing).length,
-      onTheWay: _sellerOrders.where((o) => o.step == OrderStep.shipped).length,
-      returns: 0,
-      listed: mine.where((p) => p.published).length,
-      lowStock: mine.where((p) => !p.service && p.stock <= 3).length,
-      readyCents: 312000,
-      voucher: 'S\$5 off above S\$50',
-    );
-  }
-
-  @override
-  Future<List<Order>> sellerOrders() async {
-    await _tick();
-    return List.of(_sellerOrders);
-  }
-
-  @override
-  Future<void> markShipped(
-    String orderId, {
-    required String courier,
-    required String tracking,
-  }) async {
-    await _tick();
-    final i = _sellerOrders.indexWhere((o) => o.id == orderId);
-    _sellerOrders[i] = _sellerOrders[i].copyWith(
-      step: OrderStep.shipped,
-      courier: courier,
-      tracking: tracking,
-    );
-  }
-
-  @override
-  Future<List<Product>> sellerProducts() async {
-    await _tick();
-    return _products.where((p) => p.mallId == myShop).toList();
-  }
-
-  @override
-  Future<Product> saveProduct(Product product) async {
-    await _tick();
-    final i = _products.indexWhere((p) => p.id == product.id);
-    final saved = product.copyWith(
-      id: i < 0 ? 'p-${DateTime.now().millisecondsSinceEpoch}' : product.id,
-      mallId: myShop,
-      mallName: 'Racket Lab',
-    );
-    i < 0 ? _products.add(saved) : _products[i] = saved;
-    return saved;
-  }
-
-  @override
-  Future<void> goLive({
-    required String title,
-    required List<String> productIds,
-    required String deal,
-  }) => _tick();
-
-  @override
-  Future<void> postVideo({
-    required String caption,
-    required String productId,
-  }) => _tick();
 
   @override
   Future<void> review(
@@ -1403,45 +1134,44 @@ class DemoShopRepository implements ShopRepository {
     required bool showLevel,
   }) async {
     await _tick();
-    final i = _orders.indexWhere((o) => o.id == orderId);
-    if (i >= 0) _orders[i] = _orders[i].copyWith(reviewed: true);
+    _set(orderId, (o) => o.copyWith(reviewed: true));
   }
 
   @override
-  Future<void> requestReturn(
-    String orderId, {
-    required String reason,
-    required String want,
-  }) async {
+  Future<Mall?> myShop() async => _malls.firstWhere((m) => m.id == myShop_);
+
+  @override
+  Future<List<Order>> ownerOrders() async {
     await _tick();
-    final i = _orders.indexWhere((o) => o.id == orderId);
-    if (i >= 0) {
-      _orders[i] = _orders[i].copyWith(
-        returnState: 'requested',
-        returnReason: '$reason · $want',
-      );
-    }
+    return List.of(_ownerOrders);
   }
 
   @override
-  Future<void> openShop({
-    required String name,
-    required String blurb,
-    required String about,
-    required String shipsFrom,
-  }) async {
+  Future<void> markStarted(String id) async {
     await _tick();
-    throw const AuthFailure('The sample player already runs Racket Lab.');
+    _set(id, (o) => o.copyWith(step: OrderStep.started));
   }
 
   @override
-  Future<void> decideReturn(String orderId, {required bool accept}) async {
+  Future<void> markReady(String id) async {
     await _tick();
-    final i = _sellerOrders.indexWhere((o) => o.id == orderId);
-    if (i >= 0) {
-      _sellerOrders[i] = _sellerOrders[i].copyWith(
-        returnState: accept ? 'accepted' : 'declined',
-      );
+    _set(id, (o) => o.copyWith(step: OrderStep.ready, readyAt: DateTime.now()));
+  }
+
+  @override
+  Future<void> ownerCancel(String id, {required String reason}) async {
+    await _tick();
+    final o = _ownerOrders.firstWhere((o) => o.id == id);
+    _set(
+      id,
+      (o) => o.copyWith(
+        step: OrderStep.cancelled,
+        refundedCents: o.totalCents,
+        refundStatus: 'pending',
+      ),
+    );
+    if (o.pointsCents > 0) {
+      _wallet?.credit('Refund, ${o.summary}', o.mallName, minor: o.pointsCents);
     }
   }
 }

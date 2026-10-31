@@ -35,7 +35,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-FEE-3b | Free Meet where players pay the fee: the player pays S$2.00, the organizer receives nothing. | Designed | Architecture 7.3 (`free_players_pay`), CreateMeetFee |
 | R-FEE-4 | Free event ticket: the guest pays nothing; the organizer pays S$2.00 per ticket taken (Decided, EVT-2). When a ticket is released, the organizer's S$2.00 for it is returned (Designed, EventTicketRelease). | Decided / Designed | EVT-2, EventTicketRelease |
 | R-FEE-5 | The organizer who plays in her own Meet pays only the S$2.00 platform fee, no session fee. | Decided | MET-7 |
-| R-FEE-6 | Shop: the buyer pays no platform fee. The seller pays a commission (8% assumed). Creators earn 5% on gear sold from their videos (assumed). | Assumed | PRD assumed rules |
+| R-FEE-6 | Shop: the buyer pays no platform fee. Each shop pays a 10% commission (`shop_commission` in `fee_rules`), taken out of its price by default. A switch per shop adds it on top instead, for new orders only. Creators earn nothing on the Shop until 4d decides that. | Decided (owner, 1 Nov, Q31) | Checklist P4b-02 |
 | R-FEE-7 | Court booking: 10% platform fee on top, minimum S$2.00. | Assumed | PRD assumed rules |
 | R-FEE-8 | **Superseded by owner decision, 30 Oct (Q45): no Wallet.** | Decided | Q45 |
 
@@ -72,7 +72,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-1 | Organizer, venue or shop | Everything paid, fee included | The card or PayNow used (Q45) | Decided | PAY-2 |
 | R-REF-2 | Player, in time | The price without the fee | The card or PayNow used (Q45) | Decided | PAY-3, MET-6 |
 | R-REF-3 | Player, late, or does not come | Nothing | — | Decided | RefundRules |
-| R-REF-4 | Shop orders | Everything (there is no buyer fee), to either destination | Player's choice | Designed | OrderCancel |
+| R-REF-4 | Shop orders | Everything (there is no buyer fee), back to how they paid | Original method | Decided (No Wallet) | Checklist P4b-03 |
 
 **"In time" means**
 
@@ -82,7 +82,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-6 | Paid event ticket | Until 24 hours before the start | Decided | PAY-3, EVT-3 |
 | R-REF-7 | Tournament entry | Until registration closes | Decided | PAY-3, TRN-5 |
 | R-REF-8 | Court booking | More than 24 hours before | Assumed | PRD assumed rules |
-| R-REF-9 | Shop order | Until the shop ships | Designed | OrderCancel |
+| R-REF-9 | Shop order | Until collected, or until a service is started. Sports equipment is final once collected, pending the lawyer's check at Gate D | Decided (owner, 1 Nov) | Checklist P4b-04 |
 | R-REF-10 | Trial class | At least 24 hours before the class | Designed | TrialClass |
 
 **Special cases**
@@ -97,7 +97,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-16 | Tournament: an event below its minimum entries when registration closes is cancelled and refunded in full. | Decided | TRN-5 |
 | R-REF-17 | Tournament: when the organizer changes dates, venue or fees, entrants may withdraw for a full refund within 48 hours of the change. | Designed | TournamentManage |
 | R-REF-18 | Deleting an account refunds upcoming bookings in full, fee included. | Decided | Architecture 9.3, DeleteAccount |
-| R-REF-19 | Shop: a fault reported within 7 days of delivery is refundable. An order not delivered within 14 days is refunded in full. | Assumed | AdminRefunds |
+| R-REF-19 | Shop: a problem reported before collecting, or before the payout is released, holds the money until staff decide by line and quantity. Nothing is refundable by the buyer after that. An order collected by mistake or never collected goes to staff (Q89, Q93). | Decided, details Open | Checklist P4b-04 |
 | R-REF-20 | Refund rules are shown on the payment sheet before paying, and on the Refund rules page. A rule not shown before payment does not apply. | Decided | PAY-1, PAY-4 |
 
 **Refund examples (use as test cases)**
@@ -129,11 +129,11 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-PAY-4 | People who get paid (organizers, sellers, coaches, creators) complete the payment company's identity and business checks first. | Decided | PRD dependencies |
 | R-PAY-5 | The payment sheet: review (lines, fee, total, pay with), then Face ID or fingerprint, then a receipt. Apple Pay and Google Pay use their own check, with no second prompt. The refund rule and "Olympus holds your payment" show before paying. | Decided | PAY-1 |
 | R-PAY-6 | Card details never touch Olympus servers; only the last 4 digits are stored. | Decided | PAY-6, NFR-9 |
-| R-PTS-1 | Points earned = 2 × the platform fee paid (a S$2.00 fee earns 4 points), credited to whoever paid the fee, only after the payer is marked Present. | Decided | PAY-11 |
-| R-PTS-2 | Store points in hundredths (integer). A fee of S$3.30 earns 6.60 points. | Assumed | Canvas shows decimals ("21.2 points") |
-| R-PTS-3 | 1 point = S$1.00 off at partner shops. Points used on one item cannot exceed Olympus's commission on that item. | Decided | PAY-11 |
+| R-PTS-1 | Points earned = 2 × the platform fee paid (a S$2.00 fee earns 40 points), credited to whoever paid the fee, only after the payer is marked Present or their ticket is scanned. Earning stays off until the owner sets R-PTS-5. | Decided (owner, 1 Nov, Q31, Q13) | PAY-11 |
+| R-PTS-2 | Points are stored as whole cents of value, in an append-only ledger, and shown as cents ÷ 10. A fee of S$3.30 earns 66 points. | Decided (owner, 1 Nov) | Checklist P4b-05 |
+| R-PTS-3 | 1 point = S$0.10 off at partner shops. Points on one item can't exceed half of OlympusGO's commission on it, rounded down, so a S$100.00 item takes up to 50 points. Points come out of OlympusGO's commission, never the shop's money. | Decided (owner, 1 Nov, Q31) | Checklist P4b-05 |
 | R-PTS-4 | Points expire 12 months after they are earned. No cash-out, no transfer, lost on account deletion. | Decided | PAY-11, ACC-11 |
-| R-PTS-5 | Weekly earning cap, and a minimum account age before redeeming. | Open (values) | Q13 |
+| R-PTS-5 | Weekly earning cap (`points.weekly_cap_minor`), and a minimum account age before redeeming (`points.redeem_min_account_days`). No value means no earning and no redeeming. | Open (values) | Q13 |
 | R-PTS-6 | New accounts earn no points until the mobile is verified and the player has about 5 confirmed matches. Flagged accounts lose points and badges. | Decided | PRD anti-gaming |
 | R-PTS-7 | Points are a separate ledger from money. | Decided | Architecture 13.6 |
 

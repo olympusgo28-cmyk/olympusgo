@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../../core/config/env.dart';
 import '../../../core/format.dart';
@@ -602,9 +603,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             '${kids.map((k) => k.name.split(' ').first).join(' and ')} ${kids.length == 1 ? 'is' : 'are'} linked to you',
             'Their accounts close too, unless another parent takes them over.',
           ),
-        if ((wallet?.points ?? 0) > 0)
+        if ((wallet?.minor ?? 0) > 0)
           item(
-            '${wallet!.points.toStringAsFixed(1)} points',
+            '${pointsText(wallet!.minor)} points',
             'Points cannot be moved or paid out, so they are lost.',
             action: 'Use your points first',
             onAction: () => context.push(Routes.shop),
@@ -679,7 +680,7 @@ class IdentityCheckScreen extends ConsumerWidget {
           child: KitCheckList([
             'Players know who is taking their money',
             'Payouts go only to the person who earned them',
-            'It keeps fake organizers and sellers out',
+            'It keeps fake organizers out',
           ]),
         ),
         const KitBlock(

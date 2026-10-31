@@ -57,3 +57,18 @@ int estimatedFeeMinor(int priceMinor) {
   final tenth = (priceMinor + 5) ~/ 10;
   return tenth < 200 ? 200 : tenth;
 }
+
+/// Points are held in minor units: 1 point is 10 cents. "4", "4.5".
+String pointsText(int minor) {
+  final whole = minor.abs() ~/ 10;
+  final tenth = minor.abs() % 10;
+  return '${minor < 0 ? '−' : ''}$whole${tenth == 0 ? '' : '.$tenth'}';
+}
+
+/// "12.50" or "12" as minor units, or null if it isn't an amount.
+int? parseMinor(String text) {
+  final m = RegExp(r'^(\d+)(?:\.(\d{1,2}))?$').firstMatch(text.trim());
+  if (m == null) return null;
+  final cents = (m[2] ?? '').padRight(2, '0');
+  return int.parse(m[1]!) * 100 + int.parse(cents);
+}

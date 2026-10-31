@@ -100,7 +100,7 @@ class TermsPrivacyScreen extends StatelessWidget {
               const KitCheckList([
                 'Platform fee is 10%, minimum S\$2, shown before you pay',
                 'Refund rules are shown on each Meet, ticket and entry before you pay. If the organizer cancels, you get everything back, fees included',
-                'Organizers, clubs, academies and sellers are paid once attendance is marked, or 24 hours after the end. Payouts go to banks weekly',
+                'Organizers, clubs, academies and partner shops are paid once attendance is marked, or 24 hours after the end. Payouts go to banks weekly',
               ]),
               Align(
                 alignment: Alignment.centerLeft,
@@ -218,9 +218,10 @@ class RefundRulesScreen extends StatelessWidget {
         const KitBlock(
           title: 'Shop orders',
           child: KitCheckList([
-            'Cancel free until the shop ships, all of it back',
-            'A fault: return it within 7 days',
-            'Not delivered in 14 days: all of it back',
+            'Cancel free until you collect, all of it back',
+            'A booked service can’t be cancelled once the shop has started',
+            'A problem before you collect: report it and we hold the payment',
+            'Sports equipment is final once collected',
           ]),
         ),
         const KitBlock(
@@ -422,7 +423,7 @@ class _CountryScreenState extends ConsumerState<CountryScreen> {
               ),
               const KitKeyValue('Reports answered within', '24 hours'),
               KitKeyValue('If we do not act', rules.regulator),
-              KitKeyValue('Seller details shown', rules.sellerDetails),
+              KitKeyValue('Shop details shown', rules.sellerDetails),
             ],
           ),
         ),

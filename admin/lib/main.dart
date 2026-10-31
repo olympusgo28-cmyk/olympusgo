@@ -13,6 +13,8 @@ import 'features/auth/session.dart';
 import 'features/money/money_screens.dart';
 import 'features/reports/reports_screens.dart';
 import 'features/shell/admin_shell.dart';
+import 'features/shop/catalogue_screen.dart';
+import 'features/shop/orders_screen.dart';
 import 'features/sports/rules_screen.dart';
 import 'features/sports/scores_screen.dart';
 import 'features/sports/sports_screen.dart';
@@ -33,7 +35,9 @@ const sections = [
   Section('/scores', 'Scores', Icons.scoreboard_outlined, 'moderator'),
   Section('/sports', 'Sports', Icons.sports_tennis, 'content'),
   Section('/rules', 'Rating and scoring', Icons.rule, 'content'),
+  Section('/catalogue', 'Catalogue', Icons.storefront_outlined, 'content'),
   Section('/money', 'Payments', Icons.payments_outlined, 'payments'),
+  Section('/orders', 'Orders', Icons.receipt_long_outlined, 'payments'),
   Section('/audit', 'Audit log', Icons.history, 'super'),
 ];
 
@@ -46,6 +50,8 @@ final _router = GoRouter(
       routes: [
         GoRoute(path: '/audit', builder: (_, _) => const AuditScreen()),
         GoRoute(path: '/money', builder: (_, _) => const MoneyScreen()),
+        GoRoute(path: '/catalogue', builder: (_, _) => const CatalogueScreen()),
+        GoRoute(path: '/orders', builder: (_, _) => const OrdersScreen()),
         GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),

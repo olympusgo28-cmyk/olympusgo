@@ -500,7 +500,7 @@ create table money.stripe_events (                      -- webhook log, idempote
   received_at timestamptz not null default now(), processed_at timestamptz
 );
 
-create table money.points_entries (                     -- separate ledger, hundredths of a point (R-PTS-2)
+create table money.points_entries (                     -- separate ledger (see The Shop and points)
   id bigserial primary key, user_id uuid not null references auth.users,
   amount_hundredths bigint not null, reason text not null, source_order_id uuid,
   expires_at timestamptz,                               -- 12 months (R-PTS-4)
@@ -511,6 +511,18 @@ create view money.balances with (security_invoker = true) as
   select a.id as account_id, a.kind, a.owner_type, a.owner_id, a.currency, coalesce(sum(e.amount_minor), 0) as balance_minor
   from money.accounts a left join money.entries e on e.account_id = a.id group by a.id;
 ```
+
+## The Shop and points
+
+**Built in Phase 4b, in `public` with helpers in `private`, and not as drawn above.** See `supabase/migrations/20261105090000_shop_partner.sql`, `20261105100000_points.sql` and `20261105110000_shop_money.sql`.
+
+- `malls` are partner shops: `owner_id` (one shop per owner, nullable until linked), `active`, `commission_on_top`, `collect_address`. `addresses` and `order_returns` are gone, as are delivery columns and `products.max_points`.
+- `orders` have one payment each (`payments.order_id`), with `step` moving only through `private.order_transitions`. `collect_by` and `release_at` are stamped once at capture.
+- `order_lines` store unit amounts with a check that `unit_paid = unit_shop + unit_commission - unit_points`, so refunds by quantity need no rounding.
+- `payments.held_owner` is `coalesce(activity_id, order_id)` and owns the `held` account. Commission is recognised at release, so a cancel has nothing to reverse.
+- `points_entries` is append-only and holds cents. Each earn is a lot with its own expiry, spending takes the oldest first, and a balance is a sum over unexpired lots. `points_blocks` stops a player earning.
+- `private.order_unreserve` is the only place stock and points come back, guarded by `orders.unreserved_at`.
+- Lock order: the buyer's advisory lock, then the order, the payment, then products by id.
 
 ## Tests every migration in this file needs
 

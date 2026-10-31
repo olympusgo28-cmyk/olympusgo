@@ -45,6 +45,13 @@ jobs:
         working-directory: packages/match_engine
       - run: flutter test
         working-directory: packages/og_money
+      - run: flutter analyze
+        working-directory: admin
+      - run: flutter test
+        working-directory: admin
+      # The admin app ships as JavaScript, where integers behave differently.
+      - run: flutter build web
+        working-directory: admin
 
   database:
     runs-on: ubuntu-latest
@@ -57,6 +64,7 @@ jobs:
       - run: supabase db reset
       - run: supabase test db
       - run: bash supabase/tests/races/refund_vs_release.sh 25
+      - run: bash supabase/tests/races/shop_races.sh 25
       # Advisory: the linter cannot see the temp table shop_checkout makes at
       # run time, so it reports a false error there.
       - run: supabase db lint --level error
@@ -95,5 +103,19 @@ jobs:
           export LOCAL_SUPABASE_KEY=$(supabase status -o json | jq -r .ANON_KEY)
           export LOCAL_SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)
           flutter test test/supabase_play_local_test.dart test/supabase_safety_local_test.dart \
-            test/supabase_clubs_local_test.dart test/supabase_shop_local_test.dart \
+            test/supabase_clubs_local_test.dart \
             test/supabase_tournament_local_test.dart test/supabase_academy_local_test.dart
+      - name: Money and the Shop through the real API and the Stripe stand-in
+        run: |
+          export LOCAL_SUPABASE_URL=http://127.0.0.1:54321
+          export LOCAL_SUPABASE_KEY=$(supabase status -o json | jq -r .ANON_KEY)
+          export LOCAL_SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)
+          supabase functions serve > functions.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf -X OPTIONS http://127.0.0.1:54321/functions/v1/stripe-local > /dev/null && break
+            sleep 2
+          done
+          LOCAL_MONEY_TESTS=1 flutter test -j 1 test/supabase_money_local_test.dart test/supabase_shop_local_test.dart
+      - name: Show the functions' log if that failed
+        if: failure()
+        run: cat functions.log

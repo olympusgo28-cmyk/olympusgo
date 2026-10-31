@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/env.dart';
@@ -154,15 +155,19 @@ class PointsWalletScreen extends ConsumerWidget {
         children: [CupertinoActivityIndicator()],
       );
     }
-    const how = [
-      (
-        'Play',
-        'Earn 4 points each time you are marked Present at a paid Meet.',
-      ),
-      ('Watch', 'Earn 4 points per ticket scanned at an event.'),
+    final how = [
+      if (p.earning) ...const [
+        (
+          'Play',
+          'A S\$2.00 fee earns 40 points when you are marked Present at a '
+              'paid Meet.',
+        ),
+        ('Watch', 'Earn points the same way when your ticket is scanned.'),
+      ] else
+        ('Earn', 'Earning points opens soon.'),
       (
         'Spend',
-        '1 point takes S\$1 off at partner shops. Each item has a limit.',
+        '1 point takes S\$0.10 off at partner shops. Each item has a limit.',
       ),
     ];
     return KitScaffold(
@@ -170,10 +175,10 @@ class PointsWalletScreen extends ConsumerWidget {
       children: [
         _BalanceCard(
           label: 'Your points',
-          value: p.points.toStringAsFixed(1),
-          note: 'Worth S\$${p.points.toStringAsFixed(2)} off at partner shops',
+          value: pointsText(p.minor),
+          note: 'Worth ${Money(p.minor)} off at partner shops',
         ),
-        if (p.pending > 0)
+        if (p.pendingMinor > 0)
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -184,7 +189,7 @@ class PointsWalletScreen extends ConsumerWidget {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: '${p.pending.toStringAsFixed(0)} points pending ',
+                    text: '${pointsText(p.pendingMinor)} points pending ',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   TextSpan(text: p.pendingNote),
@@ -244,6 +249,8 @@ class PointsWalletScreen extends ConsumerWidget {
               ),
           ],
         ),
+        if (p.nextExpiry != null)
+          KitKeyValue('Oldest points run out', Fmt.day(p.nextExpiry!)),
         Row(
           children: [
             Expanded(child: Text('Use points', style: OgText.heading(20))),
@@ -253,36 +260,39 @@ class PointsWalletScreen extends ConsumerWidget {
             ),
           ],
         ),
-        KitCard(
-          children: [
-            for (final u in p.uses)
-              MoneyRow(
-                title: u.name,
-                sub: '${u.shop} · ${cash(u.priceCents)} · up to ${u.cap} pts',
-                amount:
-                    'You pay ${cash(u.priceCents - (u.cap.clamp(0, p.points.floor())) * 100)}',
-                onTap: () => context.push(Routes.shop),
-              ),
-          ],
-        ),
+        if (p.uses.isNotEmpty)
+          KitCard(
+            children: [
+              for (final u in p.uses)
+                MoneyRow(
+                  title: u.name,
+                  sub:
+                      '${u.shop} · ${cash(u.priceCents)} · up to ${pointsText(u.capCents)} pts',
+                  amount:
+                      'You pay ${cash(u.priceCents - u.capCents.clamp(0, p.minor))}',
+                  onTap: () => context.push(Routes.shop),
+                ),
+            ],
+          ),
         Text(
-          '1 point takes S\$1 off. Each item has its own limit. Points left '
-          'over stay with you.',
+          '1 point takes S\$0.10 off. Each item has its own limit. Points left '
+          'over stay with you, and run out after 12 months.',
           style: OgText.body(13, color: c.textMuted),
         ),
-        Text('Activity', style: OgText.heading(20)),
-        KitCard(
-          children: [
-            for (final (title, sub, amt) in p.activity)
-              MoneyRow(
-                title: title,
-                sub: sub,
-                amount:
-                    '${amt > 0 ? '+' : '−'}${amt.abs().toStringAsFixed(amt % 1 == 0 ? 0 : 1)} pts',
-                good: amt > 0,
-              ),
-          ],
-        ),
+        if (p.activity.isNotEmpty) ...[
+          Text('Activity', style: OgText.heading(20)),
+          KitCard(
+            children: [
+              for (final (title, sub, amt) in p.activity)
+                MoneyRow(
+                  title: title,
+                  sub: sub,
+                  amount: '${amt > 0 ? '+' : '−'}${pointsText(amt.abs())} pts',
+                  good: amt > 0,
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }

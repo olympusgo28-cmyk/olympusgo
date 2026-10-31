@@ -25,35 +25,22 @@ class ChatScope {
 class ReportTarget {
   const ReportTarget.message(this.id, {required this.scope})
     : isClub = false,
-      isActivity = false,
-      video = null;
+      isActivity = false;
   const ReportTarget.club(this.id)
     : isClub = true,
       isActivity = false,
-      scope = null,
-      video = null;
+      scope = null;
 
   /// A tournament or event.
   const ReportTarget.activity(this.id)
     : isClub = false,
       isActivity = true,
-      scope = null,
-      video = null;
-
-  /// A shop video, or a live stream when [live] is true.
-  const ReportTarget.video(this.id, {bool live = false})
-    : isClub = false,
-      isActivity = false,
-      scope = null,
-      video = live ? 'live' : 'video';
+      scope = null;
 
   final String id;
   final bool isClub;
   final bool isActivity;
   final ChatScope? scope;
-
-  /// "video" or "live" for a video report.
-  final String? video;
 }
 
 /// Clubs, their members and roles, club and team chat, and teams.

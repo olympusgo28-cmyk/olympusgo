@@ -639,13 +639,11 @@ class SupabaseClubRepository implements ClubRepository {
   Future<void> report(ReportTarget target, ContentReport reason, String note) =>
       _guard(
         () => _client.from('content_reports').insert({
-          'target_kind':
-              target.video ??
-              (target.isActivity
-                  ? 'activity'
-                  : target.isClub
-                  ? 'club'
-                  : 'message'),
+          'target_kind': target.isActivity
+              ? 'activity'
+              : target.isClub
+              ? 'club'
+              : 'message',
           'target_id': target.id,
           'reason': reason.id,
           'note': note,

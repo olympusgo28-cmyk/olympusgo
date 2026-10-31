@@ -17,11 +17,17 @@ String _named(Map<String, String> names, Object? key) =>
 const _alertNames = {
   'dispute': 'Card dispute opened',
   'hold_aging': 'Money held for 75 days',
+  'order_reported': 'A buyer reported a problem with an order',
+  'order_stale': 'Order past its date, never marked ready',
+  'order_sweep_failed': 'An order couldn’t be swept',
   'organizer_shortfall': 'Organizer owes more than they earned',
+  'dispute_partial': 'A dispute covered part of a payment',
   'payout_failed': 'Payout failed',
+  'points_failed': 'Points couldn’t be updated',
   'reconcile_missing': 'Daily reconciliation didn’t run',
   'reconciliation': 'Stripe and the ledger disagree',
   'refund_after_close': 'Stripe sent a refund we had closed',
+  'release_short': 'An order has less held than the shop is owed',
   'refund_blocked_by_dispute': 'Refund waiting on a dispute',
   'refund_failed': 'Refund failed',
   'refund_old_attempt': 'Late answer about an old refund attempt',
@@ -55,6 +61,7 @@ const _purposeNames = {
   'host_spot': 'Host’s spot',
   'meet': 'Meet',
   'organizer_fee': 'Organizer’s fee',
+  'shop': 'Shop order',
   'ticket': 'Tickets',
   'tournament': 'Tournament',
 };
@@ -299,8 +306,8 @@ class _HeldTab extends ConsumerWidget {
       row: (h) => ListTile(
         title: Text('${h['title']} · ${_money(h['held_minor'])}'),
         subtitle: Text(
-          '${DateTime.parse(h['ends_at'] as String).isAfter(DateTime.now()) ? 'Ends' : 'Ended'} '
-          '${_day(h['ends_at'])} · held since ${_day(h['oldest'])}'
+          '${h['ends_at'] == null ? 'No end date' : '${DateTime.parse(h['ends_at'] as String).isAfter(DateTime.now()) ? 'Ends' : 'Ended'} ${_day(h['ends_at'])}'} '
+          '· held since ${_day(h['oldest'])}'
           '${h['hold_id'] == null ? '' : ' · held by a report'}',
         ),
         trailing: h['hold_id'] == null
@@ -548,20 +555,29 @@ class _PaymentDialogState extends ConsumerState<_PaymentDialog> {
         onPressed: () => Navigator.of(context).pop(),
         child: const Text('Close'),
       ),
-      FilledButton(
-        onPressed: () async {
-          if (await _act(
-            context,
-            ref,
-            'Refund what’s left',
-            'staff_refund_issue',
-            {'p_payment': widget.id},
-          )) {
-            widget.onChanged();
-            if (context.mounted) Navigator.of(context).pop();
+      // Shop orders are refunded by item, in Orders.
+      FutureBuilder<Map<String, dynamic>>(
+        future: _payment,
+        builder: (context, snap) {
+          if (snap.data == null || snap.data?['purpose'] == 'shop') {
+            return const SizedBox.shrink();
           }
+          return FilledButton(
+            onPressed: () async {
+              if (await _act(
+                context,
+                ref,
+                'Refund what’s left',
+                'staff_refund_issue',
+                {'p_payment': widget.id},
+              )) {
+                widget.onChanged();
+                if (context.mounted) Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Refund what’s left'),
+          );
         },
-        child: const Text('Refund what’s left'),
       ),
     ],
   );

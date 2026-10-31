@@ -627,17 +627,6 @@ enum ContentReport {
     other,
   ];
 
-  static const forVideo = [
-    harassment,
-    personalDetails,
-    intimateImage,
-    childSafety,
-    hate,
-    scam,
-    copyright,
-    other,
-  ];
-
   static const forClub = [
     scam,
     harassment,

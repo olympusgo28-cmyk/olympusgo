@@ -31,4 +31,23 @@ void main() {
     expect(estimatedFeeMinor(6000), 600);
     expect(estimatedFeeMinor(0), 0);
   });
+
+  test('points are tenths of a dollar, with integer maths', () {
+    expect(pointsText(400), '40');
+    expect(pointsText(45), '4.5');
+    expect(pointsText(0), '0');
+    expect(pointsText(-30), '−3');
+  });
+
+  test('an amount typed by staff becomes cents exactly', () {
+    expect(parseMinor('24.50'), 2450);
+    expect(parseMinor('24.5'), 2450);
+    expect(parseMinor('24'), 2400);
+    expect(parseMinor('0.07'), 7);
+    expect(parseMinor('19.99'), 1999);
+    expect(parseMinor('12.1.5'), isNull);
+    expect(parseMinor('-1'), isNull);
+    expect(parseMinor(''), isNull);
+    expect(parseMinor('1.999'), isNull);
+  });
 }

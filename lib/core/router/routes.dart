@@ -110,8 +110,6 @@ abstract final class Routes {
   static String waitlist(String id) => '/activities/$id/waitlist';
   static String meetPlayers(String id) => '/activities/$id/players';
   static String reportActivity(String id) => '/activities/$id/report';
-  static String reportVideo(String id, {bool live = false}) =>
-      live ? '/shop/live/$id/report' : '/shop/videos/$id/report';
   static String meetWalkIn(String id) => '/activities/$id/walk-in';
   static String meetAttendance(String id) => '/activities/$id/attendance';
   static String meetScanPlayers(String id) => '/activities/$id/scan-players';
@@ -233,28 +231,19 @@ abstract final class Routes {
   static const shop = '/shop';
   static String mallPage(String id) => '/shop/malls/$id';
   static String product(String id) => '/shop/products/$id';
-  static String shopVideo(String id) => '/shop/videos/$id';
-  static String shopLive(String id) => '/shop/live/$id';
   static const cart = '/shop/cart';
-  static const checkout = '/shop/checkout';
-  static const addresses = '/shop/addresses';
-  static const addressNew = '/shop/addresses/new';
+  static String checkout(String mallId) => '/shop/checkout/$mallId';
   static String orders({String tab = 'all'}) => '/shop/orders?tab=$tab';
   static String order(String id) => '/shop/orders/$id';
   static String orderCancel(String id) => '/shop/orders/$id/cancel';
   static String refund(String id) => '/shop/orders/$id/refund';
   static String orderReview(String id) => '/shop/orders/$id/review';
-  static String orderReturn(String id) => '/shop/orders/$id/return';
-  static String reportListing(String what) =>
-      '/shop/report?what=${Uri.encodeQueryComponent(what)}';
+  static String orderProblem(String id) => '/shop/orders/$id/problem';
+  static String reportListing(String id, String name) =>
+      '/shop/report/$id?name=${Uri.encodeQueryComponent(name)}';
   static String serviceBook(String id) => '/shop/services/$id';
-  static const seller = '/shop/seller';
-  static const sellerOrders = '/shop/seller/orders';
-  static String sellerOrder(String id) => '/shop/seller/orders/$id';
-  static const sellerProducts = '/shop/seller/products';
-  static String sellerProduct(String id) => '/shop/seller/products/$id';
-  static const sellerLive = '/shop/seller/live';
-  static const sellerVideo = '/shop/seller/video';
+  static const ownerOrders = '/shop/owner/orders';
+  static String ownerOrder(String id) => '/shop/owner/orders/$id';
 
   // Teams.
   static const newTeam = '/teams/start';

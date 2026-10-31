@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
-import '../../../core/config/env.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -19,6 +19,7 @@ import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../shell/main_shell.dart';
+import '../../shop/application/shop_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../../earnings/application/earnings_providers.dart';
 import '../domain/profile.dart';
@@ -137,10 +138,10 @@ class ProfileScreen extends ConsumerWidget {
                       localRank: summary?.localRank,
                       area: summary?.area,
                     ),
-                  if (wallet != null && !Env.hasSupabase)
+                  if (wallet != null && wallet.worthShowing)
                     Pressable(
                       semanticLabel:
-                          '${wallet.points.toStringAsFixed(1)} points. Use points',
+                          '${pointsText(wallet.minor)} points. Use points',
                       onPressed: () => context.push(Routes.points),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -158,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${wallet.points.toStringAsFixed(1)} points',
+                                    '${pointsText(wallet.minor)} points',
                                     style: OgText.body(
                                       16,
                                       weight: FontWeight.w600,
@@ -166,9 +167,11 @@ class ProfileScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   Text(
-                                    wallet.pendingPoints > 0
-                                        ? '${wallet.pendingPoints.toStringAsFixed(0)} more pending'
-                                        : 'Earn points by playing',
+                                    wallet.pendingMinor > 0
+                                        ? '${pointsText(wallet.pendingMinor)} more pending'
+                                        : wallet.earning
+                                        ? 'Earn points by playing'
+                                        : 'Use them in the Shop',
                                     style: OgText.body(
                                       13,
                                       color: const Color(0xFF7A3B00),
@@ -276,11 +279,12 @@ class ProfileScreen extends ConsumerWidget {
                           subtitle: 'Link and look after a child\'s account',
                           onTap: () => context.push(Routes.children),
                         ),
-                        _ListRow(
-                          title: 'My shop',
-                          subtitle: 'Sell gear or services to players',
-                          onTap: () => context.push(Routes.seller),
-                        ),
+                        if (ref.watch(myShopProvider).value case final shop?)
+                          _ListRow(
+                            title: 'My shop',
+                            subtitle: '${shop.name}: orders to get ready',
+                            onTap: () => context.push(Routes.ownerOrders),
+                          ),
                         _ListRow(
                           title: 'Sports and levels',
                           subtitle: levels.isEmpty ? 'Add your sports' : levels,

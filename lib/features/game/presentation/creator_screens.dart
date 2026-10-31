@@ -13,7 +13,6 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../shop/presentation/shop_screens.dart' show compact;
 import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
@@ -142,9 +141,8 @@ class CreatorProfileScreen extends ConsumerWidget {
           childAspectRatio: 0.75,
           children: [
             for (final v in cr.videoViews)
-              Pressable(
-                semanticLabel: 'Video, ${compact(v)} views',
-                onPressed: () => context.push(Routes.shopVideo('v1')),
+              Semantics(
+                label: 'Video, ${compact(v)} views',
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.bottomLeft,
@@ -206,8 +204,7 @@ class CreatorProfileScreen extends ConsumerWidget {
             KitLink(
               'Report or block',
               color: c.textMuted,
-              onPressed: () =>
-                  context.push(Routes.reportListing('Creator: ${cr.name}')),
+              onPressed: () => context.push(Routes.help),
             ),
             const Spacer(),
             KitLink(

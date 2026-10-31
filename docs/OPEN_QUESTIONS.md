@@ -22,7 +22,7 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q10 | Brand form shown in the UI: "OlympusGO" or "OLYMPUS GO" | Phase 0 copy | "OlympusGO", as the design system writes it | Open |
 | Q11 | Platform fee minimum in ringgit and NZ dollars | Malaysia and New Zealand launch | Store per currency in `fee_rules`; no default | Open |
 | Q12 | If an organizer's balance cannot cover card fees from a cancellation, is the shortfall taken from later earnings? | Refunds (phase 9) | Yes, netted against later payouts; flag to staff if unpaid after 30 days | Open |
-| Q13 | Points: weekly earning cap and minimum account age before redeeming | Points (phase 9) | Config values, no default; points earning off until set | Open |
+| Q13 | Points: weekly earning cap and minimum account age before redeeming | Points (phase 9) | Config values, no default; points earning off until set | **Partly decided (owner, 1 Nov).** Points are built, with earning off until the owner sets both values and switches it on. The values are still open |
 | Q14 | Years receipts and payment records are kept after an account is deleted | Deletion, retention job | Lawyer to confirm; keep everything until then | Open |
 | Q15 | Which visual style is final? The OlympusGO Design System (orange `#E8590C`, Baloo 2 and Nunito Sans) or the style on most Club Screen Mockup boards (tangerine `#F28500`, Barlow) | All UI | The OlympusGO Design System. Canvas boards give layout, copy and behaviour only | Open |
 | Q16 | Where Shop, sellers, creators and campaigns sit in the build order. The PRD puts them in public launch; the ACR phases don't name them | Estimates | Agree before quotes; default phase 12 | Open |
@@ -40,7 +40,7 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q28 | Sign-up: checklist says mobile first with email optional; `RULES.md` R-ACC-1 says email | Sign-up | Mobile first, as the checklist says | Open |
 | Q29 | Under 13: checklist says their own restricted account; `RULES.md` R-AGE-1 says a profile inside a parent's account with no login | Accounts for children | Own restricted account, as the checklist says | Open |
 | Q30 | Rating engine: checklist says Elo; `RULES.md` R-RAT-2 says Glicko-2. Owner decided on 31 Oct: Elo as the checklist says, K 32 for the first 30 matches then 20 (open decision 19), junior badminton 15 points cap 21 with the 11-point variant off (open decision 20) | Phase 3 | Elo, in `app_settings` | Decided (owner, 31 Oct) |
-| Q31 | Points value and shop commission: checklist says 1 point = S$0.10 and 10%; `RULES.md` says 1 point = S$1.00 and 8%; the earlier build used 8% | Phase 4 | Not built yet. Checklist numbers, in configuration, when it is | Open |
+| Q31 | Points value and shop commission: checklist says 1 point = S$0.10 and 10%; `RULES.md` says 1 point = S$1.00 and 8%; the earlier build used 8% | Phase 4 | Not built yet. Checklist numbers, in configuration, when it is | **Decided (owner, 1 Nov).** Checklist numbers, in config: 1 point = S$0.10, spend up to half the commission on an item, flat 10% commission, a S$2.00 fee earns 40 points |
 | Q32 | Font weight: checklist says nothing above 600; `DESIGN_SYSTEM.md` uses 700 and 800 | All text | 600 maximum, as the checklist says | Open |
 | Q33 | Link colour: checklist says `#A83B00`; `DESIGN_SYSTEM.md` says `#C94A00` | Links | `#A83B00`, as the checklist says | Open |
 | Q34 | Fonts: the checklist is silent. `DESIGN_SYSTEM.md` says Baloo 2 and Nunito Sans; the earlier build used Archivo and Figtree | All text | Baloo 2 and Nunito Sans. Both are fetched at run time for now and should be bundled before release | Open |
@@ -93,4 +93,26 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q81 | Walk-ins added by a host on a free Meet where the organizer pays: is the S$2.00 owed for them? R-HOLD-5 says cash walk-ins are attendance only | Organizer pays | No fee on walk-ins | Open |
 | Q82 | Releasing some, not all, free tickets when the organizer's fee is still being charged or failed and became a debt: it isn't reduced per ticket until all of them are released | Organizer pays | Reversed in full on full release only | Open |
 | Q83 | A lost chargeback stays in `disputes_open` and the organizer is still paid, so Olympus carries the loss (Q72). How should staff write that off? | Disputes | Stays open on the books until finance decides | Open |
-
+| Q84 | Several shops in one cart mean several payments, and a buyer scans a PayNow code for each. Is that acceptable? | Checkout | Yes: one order, one shop, one payment | Open |
+| Q85 | Money that lands after a Shop hold has ended never takes the item, unlike a Meet, because the stock or points may be gone | Checkout | Full refund | Open |
+| Q86 | Shop rounding, and whether points reduce the base the commission is charged on | Checkout | Commission half up per unit, the points cap rounds down, and points don't reduce the base | Open |
+| Q87 | Points returned after their own expiry has passed | Points | Keep the original expiry, so they lapse | Open |
+| Q88 | Can teens buy in Shop and use points? What about linked under-13s? | Checkout | Teens as with paid joins. Under-13s refused | Open |
+| Q89 | A buyer never collects a ready order | Handover | Released to the shop, as the checklist says, and the goods stay there | Open |
+| Q90 | A shop never marks an order ready, and the buyer never taps | Handover | No automatic release: an alert, and staff decide | Open |
+| Q91 | A buyer takes the goods, doesn't tap, then cancels for a full refund before release | Handover | The shop hands over only once Collected shows on its screen. There is no shop-side handed-over tap | Open |
+| Q92 | Who bears the card fee when a buyer cancels before collecting? | Refunds | OlympusGO | Open |
+| Q93 | Can staff refund after release, given no refunds after the buyer leaves? | Refunds | Staff only, audited, split between the shop and the commission | Open |
+| Q94 | Partial refunds by amount, not just by line and quantity | Refunds | Line and quantity only | Open |
+| Q95 | Points on fees the organizer paid, and the full fee when a player pays for a guest or several tickets | Points | None on organizer-paid fees. The full fee earns for whoever paid it | Open |
+| Q96 | Cheap card orders with full points can lose money: on a S$10.00 item OlympusGO keeps S$0.50 against about S$0.82 in card fees. Should there be a minimum order, or a lower cap on points? | Shop economics | Neither, for now | Open |
+| Q97 | A refund fails and staff void it on a cancelled order. The money stays in `held` with no order to release it to | Shop refunds | Stays held, raises `hold_aging`, staff decide. Stock and points already returned aren't taken back | Open |
+| Q98 | A buyer abroad books a service in their phone's time. `AGENTS.md` says show the venue's zone | Shop services | Device time, since launch is Singapore only | Open |
+| Q99 | A refund and a lost chargeback on one payment pay the buyer twice. Who bears it | Disputes | OlympusGO, never the shop | Open |
+| Q100 | `field_registry` exists only in `DATA_MODEL.md`, so new columns (`orders.report_note`, `points_blocks.reason`, `refunds.order_lines`) can't be registered as `AGENTS.md` asks | Privacy | Build the registry in its own ticket | Open |
+| Q101 | A suspended owner's open orders. The shop stops selling, the owner can't mark ready, and a buyer's collect still earns them money that waits on their payout | Shop | Payouts wait, as in 4a. Staff decide stale orders | Open |
+| Q102 | A dispute for part of a payment, or on a part-refunded one | Disputes | Closes nothing by itself. Raises `dispute_partial`, staff can still refund by item, and the buyer can't cancel. Owed refunds still go out, so a buyer could be paid twice for the part the bank returned until staff check | Open |
+| Q103 | `charge.dispute.created` debits clearing for an inquiry too, though no funds moved | Disputes | Reversed when it closes, so reconciliation can differ while one is open | Open |
+| Q104 | A shop can tap Start work on a service days before the slot, which ends the buyer's right to cancel | Shop services | Allowed. The buyer can still report a problem | Open |
+| Q105 | A buyer can read `shop_minor` on their own refund rows, so a shop's share is visible through a direct read | Privacy | Accepted: commercial data, not personal | Open |
+| Q106 | A shop marks an order ready late. Should the buyer get a full `shop.release_hours` from then | Shop | Yes: payout waits for the later of `release_at` and ready plus 48 hours | Open |

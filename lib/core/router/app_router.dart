@@ -23,7 +23,7 @@ import '../../features/game/presentation/gear_screens.dart';
 import '../../features/settings/presentation/account_screens.dart';
 import '../../features/shop/domain/commerce_models.dart';
 import '../../features/shop/presentation/order_screens.dart';
-import '../../features/shop/presentation/seller_screens.dart';
+import '../../features/shop/presentation/owner_screens.dart';
 import '../../features/shop/presentation/shop_screens.dart';
 import '../../features/earnings/presentation/earnings_screens.dart';
 import '../../features/clubs/presentation/club_overview_screen.dart';
@@ -276,18 +276,14 @@ GoRouter appRouter(Ref ref) {
         '/shop/products/:id',
         (s) => ProductPageScreen(id: s.pathParameters['id']!),
       ),
-      page(
-        '/shop/videos/:id',
-        (s) => ShopVideoScreen(id: s.pathParameters['id']!),
-      ),
-      page(
-        '/shop/live/:id',
-        (s) => ShopLiveScreen(id: s.pathParameters['id']!),
-      ),
       page(Routes.cart, (_) => const CartScreen()),
-      page(Routes.checkout, (s) => CheckoutScreen(only: s.extra as CartLine?)),
-      page(Routes.addresses, (_) => const AddressesScreen()),
-      page(Routes.addressNew, (_) => const AddressNewScreen()),
+      page(
+        '/shop/checkout/:mall',
+        (s) => CheckoutScreen(
+          mallId: s.pathParameters['mall']!,
+          only: s.extra as CartLine?,
+        ),
+      ),
       page(
         '/shop/orders',
         (s) => OrdersScreen(tab: s.uri.queryParameters['tab'] ?? 'all'),
@@ -309,29 +305,24 @@ GoRouter appRouter(Ref ref) {
         (s) => WriteReviewScreen(id: s.pathParameters['id']!),
       ),
       page(
-        '/shop/orders/:id/return',
-        (s) => ReturnRequestScreen(id: s.pathParameters['id']!),
+        '/shop/orders/:id/problem',
+        (s) => OrderProblemScreen(id: s.pathParameters['id']!),
       ),
       page(
-        '/shop/report',
-        (s) => ReportListingScreen(what: s.uri.queryParameters['what'] ?? ''),
+        '/shop/report/:id',
+        (s) => ReportListingScreen(
+          productId: s.pathParameters['id']!,
+          name: s.uri.queryParameters['name'] ?? '',
+        ),
       ),
       page(
         '/shop/services/:id',
         (s) => ServiceBookScreen(id: s.pathParameters['id']!),
       ),
-      page(Routes.seller, (_) => const SellerHomeScreen()),
-      page(Routes.sellerOrders, (_) => const SellerOrdersScreen()),
+      page(Routes.ownerOrders, (_) => const OwnerOrdersScreen()),
       page(
-        '/shop/seller/orders/:id',
-        (s) => SellerOrderDetailScreen(id: s.pathParameters['id']!),
-      ),
-      page(Routes.sellerProducts, (_) => const SellerProductsScreen()),
-      page(Routes.sellerLive, (_) => const SellerGoLiveScreen()),
-      page(Routes.sellerVideo, (_) => const SellerUploadVideoScreen()),
-      page(
-        '/shop/seller/products/:id',
-        (s) => SellerProductEditScreen(id: s.pathParameters['id']!),
+        '/shop/owner/orders/:id',
+        (s) => OwnerOrderScreen(id: s.pathParameters['id']!),
       ),
       page(Routes.welcome, (_) => const WelcomeScreen()),
       page(Routes.signUp, (_) => const SignUpScreen()),
@@ -627,14 +618,6 @@ GoRouter appRouter(Ref ref) {
       page(
         '/activities/:id/report',
         (s) => ReportContentScreen.activity(activityId: id(s)),
-      ),
-      page(
-        '/shop/videos/:id/report',
-        (s) => ReportContentScreen.video(videoId: id(s)),
-      ),
-      page(
-        '/shop/live/:id/report',
-        (s) => ReportContentScreen.video(videoId: id(s), live: true),
       ),
       page('/clubs/:id/members', (s) => ClubMembersScreen(id: id(s))),
       page(

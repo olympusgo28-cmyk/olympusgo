@@ -29,6 +29,13 @@ const ACTIONS = new Set<string>([
   "staff_alert_close",
   "staff_suspense_clear",
   "staff_venue_qr",
+  "staff_shop_save",
+  "staff_shop_commission_set",
+  "staff_shop_link_owner",
+  "staff_product_save",
+  "staff_product_stock",
+  "staff_order_decide",
+  "staff_points_block",
 ]);
 
 const cors = {

@@ -2127,8 +2127,8 @@ class KitQty extends StatelessWidget {
       semanticLabel: what,
       onPressed: tap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,

@@ -143,3 +143,23 @@ These replace the `money.*`, `payouts.*` and `wallet.*` rows above. There is no 
 | `staff_refund_issue`, `staff_refund_retry`, `staff_refund_void`, `staff_refund_manual`, `staff_hold_decide`, `staff_payout_approve`, `staff_alert_close` | admin-action, payments staff | with a reason | A-06 writes, audited | A-06 |
 
 `money_svc_*` functions are for Edge Functions with the service key, and closed to every client role.
+
+## The Shop, as built in Phase 4b
+
+These replace `shop_open`, `shop_checkout`, `shop_cancel`, `shop_confirm_received`, `shop_mark_shipped`, `shop_return_*`, `shop_address_save`, `shop_book_service` and `shop_save_product`, which are gone. One order is one shop and one payment. Orders are paid through the 4a payment flow (`create-payment-intent`, the webhook, `refund_issue`, `money-worker`).
+
+| Name | Kind | Input | Output | Covers |
+| --- | --- | --- | --- | --- |
+| `shop_quote` | RPC | mall, `p_only` (`{product, variant, qty}` or null for the cart), points in cents | Lines, `total_minor`, `points_cap_minor`, `points_left_minor`, collection address, balance, `can_redeem`, refund rule, `can_pay` | P4b-03 |
+| `shop_reserve` | RPC | mall, `p_key`, `p_expected_minor`, points, `p_only`, `p_slot` | The payment, plus `order_id`. Raises `price_changed` rather than charge another price. An unpaid order at the shop at another price raises too | P4b-03 |
+| `shop_order_cancel` | RPC | order, reason | The refund in cents. Buyer only, on `pending`, `paid` or `ready`, before `release_at` | R-REF-4, R-REF-9 |
+| `shop_collected` | RPC | order | "Yes, I got it all". Buyer only. Repeating it does nothing | P4b-04 |
+| `shop_report_problem` | RPC | order, note | Holds the payment for staff. Refused after `release_at` | P4b-04 |
+| `shop_mark_started`, `shop_mark_ready`, `shop_owner_cancel`, `shop_owner_orders` | RPC | order | The owner's side. Started stops the buyer cancelling a service. A shop's cancel refunds in full and the shop bears the card fee | P4b-04 |
+| `shop_my_mall` | RPC | none | The caller's shop, open or not | P4b-04 |
+| `shop_report` | RPC | product, reason, note | Reports a listing by id, so moderation can hide it | Fixes a bug |
+| `points_my` | RPC | none | Balance in cents, `can_redeem`, `earning`, next expiry, history | P4b-05 |
+| `staff_shop_list` | RPC, staff | none | Every shop. Content or payments | A-07 |
+| `staff_shop_save`, `staff_product_list`, `staff_product_save`, `staff_product_stock` | RPC or `admin-action`, content | as named | Stock moves by an amount, so an edit can't wipe stock held for someone paying | A-07 |
+| `staff_order_list`, `staff_order_get`, `staff_order_decide`, `staff_shop_commission_set`, `staff_shop_link_owner`, `staff_points_block` | RPC or `admin-action`, payments | as named | `staff_order_decide` takes `[{line, qty}]` and a `p_key`, so a repeat does nothing. An empty list releases to the shop, only once it's reported or past its date. Refunding part of an order still waiting leaves the rest waiting | A-07 |
+

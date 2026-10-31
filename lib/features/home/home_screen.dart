@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../core/config/env.dart';
 import '../../core/format.dart';
@@ -329,9 +330,8 @@ class _Balances extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
-    // Nothing earns points until 4b, so a real account has none to show.
-    if (Env.hasSupabase) return const SizedBox.shrink();
     final w = ref.watch(pointsSummaryProvider).value;
+    if (w == null || !w.worthShowing) return const SizedBox.shrink();
     Widget card({
       required Color bg,
       required String label,
@@ -399,11 +399,13 @@ class _Balances extends ConsumerWidget {
             icon: OgIcons.pointsStar,
             iconColor: c.accent,
             stroke: 1.6,
-            value: (w?.points ?? 0).toStringAsFixed(1),
+            value: pointsText(w.minor),
             valueColor: c.accent,
-            note: (w?.pendingPoints ?? 0) > 0
-                ? '${(w!.pendingPoints).toStringAsFixed(0)} more pending'
-                : 'Earn by playing',
+            note: w.pendingMinor > 0
+                ? '${pointsText(w.pendingMinor)} more pending'
+                : w.earning
+                ? 'Earn by playing'
+                : 'Use them in the Shop',
             noteColor: const Color(0xFFC9C9CF),
             route: Routes.points,
           ),
