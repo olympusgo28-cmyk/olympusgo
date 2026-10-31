@@ -377,7 +377,7 @@ class _Pinned extends StatelessWidget {
                           ),
                         ),
                         const TextSpan(
-                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit and points.',
+                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit.',
                         ),
                       ],
                     ),

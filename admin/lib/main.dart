@@ -10,6 +10,7 @@ import 'features/audit/audit_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/mfa_screen.dart';
 import 'features/auth/session.dart';
+import 'features/money/money_screens.dart';
 import 'features/reports/reports_screens.dart';
 import 'features/shell/admin_shell.dart';
 import 'features/sports/rules_screen.dart';
@@ -32,6 +33,7 @@ const sections = [
   Section('/scores', 'Scores', Icons.scoreboard_outlined, 'moderator'),
   Section('/sports', 'Sports', Icons.sports_tennis, 'content'),
   Section('/rules', 'Rating and scoring', Icons.rule, 'content'),
+  Section('/money', 'Payments', Icons.payments_outlined, 'payments'),
   Section('/audit', 'Audit log', Icons.history, 'super'),
 ];
 
@@ -43,6 +45,7 @@ final _router = GoRouter(
           _Gate(location: state.matchedLocation, child: child),
       routes: [
         GoRoute(path: '/audit', builder: (_, _) => const AuditScreen()),
+        GoRoute(path: '/money', builder: (_, _) => const MoneyScreen()),
         GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),

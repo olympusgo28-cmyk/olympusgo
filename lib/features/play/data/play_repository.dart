@@ -29,9 +29,9 @@ abstract interface class PlayRepository {
   Future<MyStatus> join(String id, {String? guestName, double? guestLevel});
   Future<int> joinWaitlist(String id, {bool notify = true});
 
-  /// Gives up a spot. Returns what is refunded, in cents: to the Wallet
+  /// Gives up a spot. Returns what is refunded, in cents, to how they paid
   /// all of it, to a card the session fee only. 0 once it has started.
-  Future<int> leave(String id, {bool toWallet = true});
+  Future<int> leave(String id);
 
   /// Checks in at the venue. Returns how many players are here.
   Future<int> checkIn(String id);
@@ -41,7 +41,12 @@ abstract interface class PlayRepository {
   Future<String> rotateQr();
 
   /// The username a scanned token opens.
-  Future<String> resolveQr(String token);
+  /// Where a scanned code leads: player, vendor, group or venue, and which.
+  Future<(String, String)> resolveQr(String token);
+
+  /// The code a group's managers show, and the one a verified vendor shows.
+  Future<String> groupCode(String clubId, {bool rotate = false});
+  Future<String> vendorCode({bool rotate = false});
 
   /// The host scans a player's QR. Returns their name and how many are here.
   Future<(String, int)> hostCheckIn(String id, String token);
@@ -68,7 +73,8 @@ abstract interface class PlayRepository {
 
   /// The host takes a spot (paying the platform fee) or gives it up and
   /// keeps organizing.
-  Future<void> hostPlays(String id, {required bool playing});
+  /// Takes or gives up the organizer's spot. Returns what is refunded.
+  Future<int> hostPlays(String id, {required bool playing});
 
   /// Club members who could be added as a walk-in.
   Future<List<MeetPlayer>> walkInCandidates(String id);
@@ -198,6 +204,8 @@ class SupabasePlayRepository implements PlayRepository {
         'joined' => MyStatus.joined,
         'waitlist' => MyStatus.waitlist,
         'requested' => MyStatus.requested,
+        'offered' => MyStatus.offered,
+        'reserved' => MyStatus.reserved,
         _ => MyStatus.none,
       },
       myWaitlistPosition: r['my_waitlist_position'] as int? ?? 0,
@@ -403,11 +411,9 @@ class SupabasePlayRepository implements PlayRepository {
   });
 
   @override
-  Future<int> leave(String id, {bool toWallet = true}) => _guard(
-    () async => await _client.rpc(
-      'leave_activity',
-      params: {'activity': id, 'to_wallet': toWallet},
-    ) as int,
+  Future<int> leave(String id) => _guard(
+    () async =>
+        await _client.rpc('leave_activity', params: {'activity': id}) as int,
   );
 
   MeetPlayer _player(Map<String, dynamic> r, {int? waitlistAt}) {
@@ -461,10 +467,10 @@ class SupabasePlayRepository implements PlayRepository {
   });
 
   @override
-  Future<void> hostPlays(String id, {required bool playing}) async {
+  Future<int> hostPlays(String id, {required bool playing}) async {
     try {
-      await _guard(
-        () => _client.rpc(
+      return await _guard(
+        () => _client.rpc<int>(
           'host_plays',
           params: {'activity': id, 'playing': playing},
         ),
@@ -790,12 +796,25 @@ class SupabasePlayRepository implements PlayRepository {
       _guard(() async => await _client.rpc('rotate_my_qr') as String);
 
   @override
-  Future<String> resolveQr(String token) => _guard(() async {
+  Future<String> groupCode(String clubId, {bool rotate = false}) => _guard(
+    () => _client.rpc<String>(
+      'club_qr',
+      params: {'p_club': clubId, 'p_rotate': rotate},
+    ),
+  );
+
+  @override
+  Future<String> vendorCode({bool rotate = false}) => _guard(
+    () => _client.rpc<String>('vendor_qr', params: {'p_rotate': rotate}),
+  );
+
+  @override
+  Future<(String, String)> resolveQr(String token) => _guard(() async {
     final r = await _client.rpc(
       'resolve_qr',
       params: {'p_token': token},
     ) as Map<String, dynamic>;
-    return r['username'] as String;
+    return (r['kind'] as String, (r['username'] ?? r['id']) as String);
   });
 
   @override
@@ -1523,7 +1542,7 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<int> leave(String id, {bool toWallet = true}) async {
+  Future<int> leave(String id) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == id);
     _update(
@@ -1541,7 +1560,7 @@ class DemoPlayRepository implements PlayRepository {
     _people.remove(id);
     final early = a.startsAt.isAfter(DateTime.now());
     if (a.isFree || !early || a.myStatus != MyStatus.joined) return 0;
-    return toWallet ? a.totalCents : a.feeCents;
+    return a.feeCents;
   }
 
   @override
@@ -1554,7 +1573,15 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<String> resolveQr(String token) async => 'hannahgoh';
+  Future<(String, String)> resolveQr(String token) async =>
+      ('player', 'hannahgoh');
+
+  @override
+  Future<String> groupCode(String clubId, {bool rotate = false}) async =>
+      'demo${'0' * 16}';
+
+  @override
+  Future<String> vendorCode({bool rotate = false}) async => 'demo${'0' * 16}';
 
   @override
   Future<(String, int)> hostCheckIn(String id, String token) async {
@@ -1759,10 +1786,10 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<void> hostPlays(String id, {required bool playing}) async {
+  Future<int> hostPlays(String id, {required bool playing}) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == id);
-    if (a.hostPlaying == playing) return;
+    if (a.hostPlaying == playing) return 0;
     if (playing && a.isFull) throw const AuthFailure('The Meet is full.');
     final list = _listFor(a);
     _update(
@@ -1787,6 +1814,7 @@ class DemoPlayRepository implements PlayRepository {
     } else {
       list.removeWhere((p) => p.isHost);
     }
+    return playing ? 0 : a.hostSpotCents;
   }
 
   @override

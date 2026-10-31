@@ -25,7 +25,7 @@ import '../../features/shop/domain/commerce_models.dart';
 import '../../features/shop/presentation/order_screens.dart';
 import '../../features/shop/presentation/seller_screens.dart';
 import '../../features/shop/presentation/shop_screens.dart';
-import '../../features/wallet/presentation/wallet_screens.dart';
+import '../../features/earnings/presentation/earnings_screens.dart';
 import '../../features/clubs/presentation/club_overview_screen.dart';
 import '../../features/clubs/presentation/club_page_screen.dart';
 import '../../features/clubs/presentation/club_role_screens.dart';
@@ -256,17 +256,15 @@ GoRouter appRouter(Ref ref) {
         '/students/:id/consent',
         (s) => FilmingConsentScreen(studentId: id(s)),
       ),
-      // Wallet.
-      page(Routes.wallet, (_) => const WalletScreen()),
-      page(Routes.walletWithdraw, (_) => const WithdrawScreen()),
+      // Earnings and receipts.
       page(Routes.points, (_) => const PointsWalletScreen()),
       page(Routes.receipts, (_) => const ReceiptsScreen()),
       page(Routes.earnings, (_) => const EarningsScreen()),
       page(
-        '/wallet/earnings/:id',
+        '/earnings/:id',
         (s) => EarningsDetailScreen(id: s.pathParameters['id']!),
       ),
-      page(Routes.payout, (_) => const PayoutScreen()),
+      page(Routes.paymentMethods, (_) => const PaymentMethodsScreen()),
       page(Routes.payoutAccount, (_) => const PayoutAccountScreen()),
       // Shop.
       page(Routes.shop, (_) => const ShopHomeScreen()),

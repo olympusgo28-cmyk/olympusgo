@@ -16,7 +16,7 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../shop/presentation/shop_screens.dart' show compact;
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/game_providers.dart';
 import 'game_screens.dart' show CampaignCard;
 
@@ -260,8 +260,8 @@ class CreatorEarningsScreen extends ConsumerWidget {
       header: const KitHeader(title: 'Creator earnings'),
       bottom: [
         KitButton(
-          label: 'Pay out now',
-          onPressed: () => context.push(Routes.payout),
+          label: 'See my earnings',
+          onPressed: () => context.push(Routes.earnings),
         ),
         KitButton(
           label: 'Start a challenge',

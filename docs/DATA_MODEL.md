@@ -24,10 +24,10 @@ The architecture doc was written first and uses some earlier names. Use the name
 | `profiles`, `user_private`, `consents`, `guardian_links`, `child_profiles`, `user_blocks` | Same names, in the `identity` schema |
 | `abuse_reports`, `moderation_cases`, `moderation_decisions` | `moderation.reports`, `moderation.decisions` |
 | `organizations`, `organization_members`, `org_roles`, `org_role_permissions` | `orgs.organizations`, `orgs.members`, `orgs.roles`, `orgs.role_permissions` |
-| `ledger_accounts`, `ledger_entries` | `money.accounts`, `money.entries` (plus `money.transactions`) |
+| `ledger_accounts`, `ledger_entries` | Same names, in `public`, plus `ledger_transactions` (Phase 4a) |
 | `meets.join(meet_id, idempotency_key)` | `activities.join_meet` |
-| `payments.refund(...)` | `money.refund` |
-| `release_held_funds` job | `money.release_funds` |
+| `payments.refund(...)` | `private.refund_issue` |
+| `release_held_funds` job | `private.release_activity`, swept by `private.money_sweep` |
 
 ## Shared platform tables
 
@@ -433,7 +433,10 @@ create table activities.attendance (
 - `player_sports.level` follows the rating once a `ratings` row exists.
 - `leaderboard_rows`: snapshots from `private.leaderboards_build()`, hourly. `leaderboard_consents`: a guardian's opt-in. Both are read through RPCs that recheck `private.listable`.
 
-## Money (phase 9, after Q1 is answered)
+## Money
+
+**Built in Phase 4a, in `public` with helpers in `private`, and not as drawn below.** See `supabase/migrations/20261104090000_money_ledger.sql`. Tables: `payments`, `refunds`, `ledger_accounts`, `ledger_transactions`, `ledger_entries`, `stripe_events`, `money_alerts`, `payment_customers`, `activity_money_holds`, `payment_disputes`, `vendors`, `payouts`, `payout_items`, `reconciliation_runs`, `place_qr_tokens`. There is no Wallet (Q45). The sketch below is the earlier design, kept for its reasoning.
+
 
 ```sql
 create schema if not exists money;

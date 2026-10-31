@@ -16,18 +16,17 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_kit.dart';
-import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../clubs/application/club_providers.dart';
 import '../../clubs/domain/club_sport.dart';
 import '../../social/application/social_providers.dart';
 import '../../social/domain/social_models.dart';
-import '../../settings/application/settings_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import 'event_screens.dart';
 import 'tournament_screens.dart';
+import 'pay_flow.dart';
 import 'create_meet_screens.dart' show editActivity;
 
 /// A Meet, tournament or event: what, when, where, who is going, and
@@ -93,7 +92,9 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
   };
 
   Future<void> _join() async {
-    if (a.isFull) {
+    if (a.isFull &&
+        a.myStatus != MyStatus.offered &&
+        a.myStatus != MyStatus.reserved) {
       await context.push(Routes.waitlist(a.id));
       return;
     }
@@ -990,26 +991,36 @@ class _HostCardState extends ConsumerState<_HostCard> {
   Activity get a => widget.activity;
 
   Future<void> _play() async {
-    final fee = a.hostSpotCents;
-    if (fee > 0) {
-      final method = await showPaySheet(
+    if (await ref.read(paymentsEnabledProvider.future)) {
+      if (!mounted) return;
+      setState(() => _busy = true);
+      final paid = await payForSpot(
         context,
+        ref,
+        a,
         kicker: 'Play too',
-        title: a.title,
         subtitle: '${meetWhen(a)} at ${a.venue.name}',
-        lines: [
-          ('Session', 'No fee for you'),
-          ('Platform fee', 'S\$${money(fee)}'),
-        ],
-        totalCents: fee,
-        payee: 'Olympus',
-        notes: [
-          'Paying the platform fee makes you 1 of the ${a.capacity} players.',
-          'Give up your spot before the Meet starts and the '
-              'S\$${money(fee)} goes back to your Wallet.',
-        ],
+        priceLine: 'Session',
+        payee: 'you',
       );
-      if (method == null || !mounted) return;
+      if (!mounted) return;
+      setState(() => _busy = false);
+      if (paid == null) return;
+      HapticFeedback.mediumImpact();
+      refreshPlay(ref.invalidate);
+      await showDoneSheet(
+        context,
+        title: "You're playing",
+        body: 'You hold a spot at ${a.title} and you are still the organizer.',
+        rows: [
+          ('Paid', 'S\$${money(paid.totalCents)}'),
+          ('Paid with', paid.paidWith),
+          ('Receipt', paid.receiptNo),
+        ],
+        next: 'See my schedule',
+        onNext: () => context.go(Routes.schedule(hosting: true)),
+      );
+      return;
     }
     setState(() => _busy = true);
     try {
@@ -1034,7 +1045,10 @@ class _HostCardState extends ConsumerState<_HostCard> {
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    final fee = a.hostSpotCents;
+    // Nothing is charged until payments are on.
+    final fee = (ref.watch(paymentsEnabledProvider).value ?? false)
+        ? a.hostSpotCents
+        : 0;
     final going = a.spotsTaken;
     final playing = a.hostPlaying;
     return Container(
@@ -1208,6 +1222,24 @@ class _BottomBar extends StatelessWidget {
               border: c.borderControl,
             ),
           ],
+          MyStatus.offered => [
+            pill(
+              'A spot opened. Pay to take it',
+              onTap: onJoin,
+              bg: OgColors.ink,
+              fg: Colors.white,
+              expand: true,
+            ),
+          ],
+          MyStatus.reserved => [
+            pill(
+              'Finish paying for your spot',
+              onTap: onJoin,
+              bg: OgColors.ink,
+              fg: Colors.white,
+              expand: true,
+            ),
+          ],
           MyStatus.requested => [
             Expanded(
               child: Text(
@@ -1312,57 +1344,34 @@ Future<void> startPayment(
   String? guestName,
   double? guestLevel,
 }) async {
-  // A guest of someone already going takes 1 more spot; otherwise the
-  // player pays for their own spot too.
-  final spots =
-      (a.myStatus == MyStatus.joined ? 0 : 1) + (guestName == null ? 0 : 1);
-  final fee = a.platformCents;
-  final total = (a.feeCents + fee) * spots;
+  // A place and its guest are bought together.
+  if (a.myStatus == MyStatus.joined && guestName != null) {
+    showOgToast(
+      context,
+      'Add your guest when you join. You can’t add one to a paid spot yet.',
+    );
+    return;
+  }
+  final spots = guestName == null ? 1 : 2;
   final host = a.host.displayName.split(' ').first;
-  final method = await showPaySheet(
+  final paid = await payForSpot(
     context,
-    kicker: switch (a.kind) {
-      ActivityKind.meet => guestName == null ? 'Join Meet' : 'You and a guest',
-      ActivityKind.tournament => 'Register',
-      ActivityKind.event => 'Ticket',
-    },
-    title: a.title,
+    ref,
+    a,
+    kicker: guestName == null ? 'Join Meet' : 'You and a guest',
     subtitle: '${meetWhen(a)} at ${a.venue.name}',
-    lines: [
-      (
-        spots == 1
-            ? (guestName == null ? 'Session' : 'Guest session')
-            : 'Session, 2 spots',
-        'S\$${money(a.feeCents * spots)}',
-      ),
-      ('Platform fee', 'S\$${money(fee * spots)}'),
-    ],
-    totalCents: total,
-    payee: a.host.displayName,
-    notes: [
-      'Cancel before it starts: all S\$${money(total)} back to your Wallet, '
-          'or S\$${money(a.feeCents * spots)} back to your card. The platform '
-          'fee is not returned to a card.',
-      "No refund once it starts or if you don't come. If $host cancels, you "
-          'get all S\$${money(total)} back.',
-      if (a.kind == ActivityKind.meet)
-        'Olympus holds your payment until $host marks attendance. You earn '
-            '4 points if you are Present.',
-    ],
+    priceLine: spots == 1
+        ? (guestName == null ? 'Session' : 'Guest session')
+        : 'Session, 2 spots',
+    payee: host,
+    qty: spots,
+    guestName: guestName,
+    guestLevel: guestLevel,
   );
-  if (method == null || !context.mounted) return;
+  refreshPlay(ref.invalidate);
+  if (paid == null || !context.mounted) return;
 
   try {
-    final email = (await ref.read(privateInfoProvider.future)).email;
-    final receipt = await ref
-        .read(paymentGatewayProvider)
-        .pay(
-          activity: a,
-          method: method,
-          guestName: guestName,
-          guestLevel: guestLevel,
-          email: email,
-        );
     HapticFeedback.mediumImpact();
     refreshPlay(ref.invalidate);
     if (!context.mounted) return;
@@ -1370,15 +1379,15 @@ Future<void> startPayment(
       context,
       title: guestName == null ? "You're in" : '$guestName is coming',
       body: guestName == null
-          ? 'Spot ${a.spotsTaken + 1} of ${a.capacity} at ${a.title}, '
+          ? 'Spot ${a.myStatus == MyStatus.none ? a.spotsTaken + 1 : a.spotsTaken} of ${a.capacity} at ${a.title}, '
                 '${meetWhen(a).toLowerCase().startsWith('tonight') ? 'tonight' : Fmt.day(a.startsAt)} at ${Fmt.time(a.startsAt)}.'
           : 'Spot ${a.spotsTaken + spots} of ${a.capacity}. $host sees them as '
                 'your guest on the attendance list.',
       rows: [
-        ('Paid', 'S\$${money(receipt.totalCents)}'),
-        ('Paid with', receipt.paidWith),
+        ('Paid', 'S\$${money(paid.totalCents)}'),
+        ('Paid with', paid.paidWith),
         ('Date', Fmt.day(DateTime.now())),
-        ('Receipt', receipt.receiptNo),
+        ('Receipt', paid.receiptNo),
       ],
       next: 'See my schedule',
       onNext: () => context.go(Routes.schedule()),
@@ -1497,26 +1506,29 @@ class _LeaveSheet extends ConsumerStatefulWidget {
 }
 
 class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
-  bool _toWallet = true;
   bool _busy = false;
   int? _refunded;
 
   Activity get a => widget.activity;
   bool get _org => a.iAmHost;
 
+  /// Nothing goes through the app until payments are on.
+  bool get _paidInApp => ref.watch(paymentsEnabledProvider).value ?? false;
+
   /// The organizer's spot cost the platform fee only.
-  int get _paid => _org ? a.hostSpotCents : a.totalCents;
+  int get _paid => !_paidInApp ? 0 : (_org ? a.hostSpotCents : a.totalCents);
   bool get _refundable => _paid > 0 && a.startsAt.isAfter(DateTime.now());
-  int get _amount =>
-      !_refundable ? 0 : (_org || _toWallet ? _paid : a.feeCents);
+
+  /// In time: the price without the fee (R-REF-2), or the host's S\$2.00.
+  int get _amount => !_refundable ? 0 : (_org ? _paid : a.feeCents);
 
   Future<void> _leave() async {
     setState(() => _busy = true);
     try {
       final repo = ref.read(playRepositoryProvider);
       final refund = _org
-          ? await repo.hostPlays(a.id, playing: false).then((_) => _amount)
-          : await repo.leave(a.id, toWallet: _toWallet);
+          ? await repo.hostPlays(a.id, playing: false)
+          : await repo.leave(a.id);
       HapticFeedback.mediumImpact();
       refreshPlay(ref.invalidate);
       if (mounted) setState(() => _refunded = refund);
@@ -1532,13 +1544,12 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
     final c = context.og;
     final t = context.tones;
     final host = a.host.displayName.split(' ').first;
-    final refundTo = !_org && !_toWallet ? 'your card' : 'your Wallet';
     if (_refunded case final refunded?) {
       return _DoneSheet(
         title: 'Spot released',
         body: [
           if (refunded > 0)
-            'S\$${money(refunded)} is on its way back to $refundTo.',
+            'S\$${money(refunded)} is on its way back to how you paid.',
           _org
               ? 'You are organizing only now. You can take a spot again while one is open.'
               : 'You can join again while spots are open.',
@@ -1547,22 +1558,20 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
       );
     }
     final head = !_refundable
-        ? (a.isFree ? 'Nothing to refund' : 'No refund')
-        : _org
-        ? 'Back to your Wallet'
-        : _toWallet
-        ? 'All of it back to your Wallet'
-        : 'Back to your card';
+        ? (_paid == 0 ? 'Nothing to refund' : 'No refund')
+        : 'Back to how you paid';
     final sub = !_refundable
-        ? (a.isFree
-              ? 'It was free to join.'
+        ? (_paid == 0
+              ? (a.isFree || !_paidInApp
+                    ? 'Nothing was paid in the app.'
+                    : 'It was free to join.')
               : 'It has started, so the payment stays with the organizer.')
         : _org
-        ? 'Platform fees go back to your Wallet, instantly.'
-        : _toWallet
-        ? 'Platform fee included. Spend it on Olympus or withdraw it to your bank.'
-        : 'The S\$${money(a.platformCents)} platform fee is not '
-              'returned to a card. It arrives in 3 to 5 working days.';
+        ? 'Your S\$${money(_paid)} goes back to your card or PayNow.'
+        : a.feeCents == 0
+        ? 'The S\$${money(a.platformCents)} platform fee is not returned.'
+        : 'The S\$${money(a.platformCents)} platform fee is not returned. '
+              'PayNow takes minutes, and a card takes 3 to 5 working days.';
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1586,21 +1595,6 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
             '${a.title}, ${meetWhen(a).split(',').first.toLowerCase().startsWith('tonight') ? 'tonight' : Fmt.day(a.startsAt)} at ${Fmt.time(a.startsAt)}',
             style: OgText.body(15, color: c.textMuted),
           ),
-          if (_refundable && !_org) ...[
-            const SizedBox(height: 12),
-            KitChoiceRow(
-              title: 'Wallet',
-              subtitle: 'S\$${money(_paid)} · instant',
-              selected: _toWallet,
-              onTap: () => setState(() => _toWallet = true),
-            ),
-            KitChoiceRow(
-              title: 'Card',
-              subtitle: 'S\$${money(a.feeCents)} · 3 to 5 days',
-              selected: !_toWallet,
-              onTap: () => setState(() => _toWallet = false),
-            ),
-          ],
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(16),

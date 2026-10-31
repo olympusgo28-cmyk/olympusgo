@@ -19,7 +19,7 @@ import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/domain/activity.dart';
-import '../../wallet/application/wallet_providers.dart';
+import '../../earnings/application/earnings_providers.dart';
 import '../../play/presentation/create_screens.dart' show showCreateMenu;
 import '../application/venue_providers.dart';
 import '../domain/venue_models.dart';
@@ -693,9 +693,8 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
       totalCents: court + fee,
       payee: v.name,
       notes: const [
-        'Cancel more than 24 hours before: all of it back to your Wallet, '
-            'or the court price to your card. The platform fee is not '
-            'returned to a card.',
+        'Cancel more than 24 hours before: the court price back to how you '
+            'paid. The platform fee is not returned.',
         "Inside 24 hours, or if you don't come: no refund. If the venue "
             'cancels, you get all of it back.',
       ],
@@ -1113,7 +1112,6 @@ class CancelCourtBookingScreen extends ConsumerStatefulWidget {
 
 class _CancelCourtBookingScreenState
     extends ConsumerState<CancelCourtBookingScreen> {
-  bool _toWallet = true;
   bool _understood = false;
   bool _busy = false;
   int? _refunded;
@@ -1121,14 +1119,12 @@ class _CancelCourtBookingScreenState
   Future<void> _cancel(CourtBooking b) async {
     setState(() => _busy = true);
     try {
-      final refund = await ref
-          .read(venueRepositoryProvider)
-          .cancel(b.id, toWallet: _toWallet);
+      final refund = await ref.read(venueRepositoryProvider).cancel(b.id);
       HapticFeedback.mediumImpact();
       ref.invalidate(courtBookingProvider(b.id));
       ref.invalidate(myCourtBookingsProvider);
       ref.invalidate(courtSlotsProvider);
-      ref.invalidate(walletSummaryProvider);
+      ref.invalidate(pointsSummaryProvider);
       if (mounted) setState(() => _refunded = refund);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
@@ -1175,8 +1171,8 @@ class _CancelCourtBookingScreenState
                   refunded == 0
                       ? 'It was inside 24 hours, so the venue keeps the fee. '
                             'The court is free for others to book.'
-                      : 'It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. '
-                            'The court is free for others to book.',
+                      : 'It goes back to how you paid. The court is free for '
+                            'others to book.',
                   style: OgText.body(15, height: 1.45, color: c.textMuted),
                 ),
               ],
@@ -1228,35 +1224,16 @@ class _CancelCourtBookingScreenState
           ],
         ),
         if (free)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Where should the refund go?', style: OgText.heading(22)),
-              const SizedBox(height: 8),
-              KitChoiceRow(
-                title: 'Wallet',
-                subtitle: 'All S\$${money(b.paidCents)} · instant',
-                selected: _toWallet,
-                onTap: () => setState(() => _toWallet = true),
-              ),
-              KitChoiceRow(
-                title: 'Card',
-                subtitle:
-                    'S\$${money(b.courtCents)} · the S\$${money(b.feeCents)} platform fee stays · 3 to 5 working days',
-                selected: !_toWallet,
-                onTap: () => setState(() => _toWallet = false),
-              ),
-            ],
+          Text(
+            'The S\$${money(b.feeCents)} platform fee is not returned.',
+            style: OgText.body(14, height: 1.45, color: c.textMuted),
           )
         else
           KitNote(
             'It is less than 24 hours before, so the venue keeps the fee.',
             tone: KitTone.warn,
           ),
-        KitKeyValue(
-          'You get back',
-          'S\$${money(b.refundTo(wallet: _toWallet))}',
-        ),
+        KitKeyValue('You get back', 'S\$${money(b.refundDueCents)}'),
         KitConfirmBox(
           label: 'I understand the court is released to other players',
           checked: _understood,

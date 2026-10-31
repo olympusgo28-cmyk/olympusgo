@@ -35,6 +35,12 @@ class AdminShell extends StatelessWidget {
         if (s.role == null || session.has(s.role!)) s,
     ];
     final index = visible.indexWhere((s) => location.startsWith(s.path));
+    // Staff land on the first section their role can open.
+    if (index < 0 && visible.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go(visible.first.path);
+      });
+    }
     return Scaffold(
       body: Row(
         children: [

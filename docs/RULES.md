@@ -37,7 +37,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-FEE-5 | The organizer who plays in her own Meet pays only the S$2.00 platform fee, no session fee. | Decided | MET-7 |
 | R-FEE-6 | Shop: the buyer pays no platform fee. The seller pays a commission (8% assumed). Creators earn 5% on gear sold from their videos (assumed). | Assumed | PRD assumed rules |
 | R-FEE-7 | Court booking: 10% platform fee on top, minimum S$2.00. | Assumed | PRD assumed rules |
-| R-FEE-8 | Wallet withdrawals and top-ups carry no platform fee. | Designed | WalletWithdraw |
+| R-FEE-8 | **Superseded by owner decision, 30 Oct (Q45): no Wallet.** | Decided | Q45 |
 
 **Fee examples (use as test cases)**
 
@@ -69,8 +69,8 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 
 | Id | Who cancels | What the player gets back | Where it goes | Status | Source |
 | --- | --- | --- | --- | --- | --- |
-| R-REF-1 | Organizer, venue or shop | Everything paid, fee included | Player's choice: Wallet (instant) or the card or PayNow used (3 to 5 working days) | Decided | PAY-2 |
-| R-REF-2 | Player, in time | To the Wallet: everything, fee included. To the card: the price without the fee | Player's choice, Wallet selected by default | Decided | PAY-3, MET-6 |
+| R-REF-1 | Organizer, venue or shop | Everything paid, fee included | The card or PayNow used (Q45) | Decided | PAY-2 |
+| R-REF-2 | Player, in time | The price without the fee | The card or PayNow used (Q45) | Decided | PAY-3, MET-6 |
 | R-REF-3 | Player, late, or does not come | Nothing | — | Decided | RefundRules |
 | R-REF-4 | Shop orders | Everything (there is no buyer fee), to either destination | Player's choice | Designed | OrderCancel |
 
@@ -96,7 +96,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-15 | Tournament: withdrawal for injury or illness with a medical note gets everything back at any time. | Designed | TournamentWithdraw |
 | R-REF-16 | Tournament: an event below its minimum entries when registration closes is cancelled and refunded in full. | Decided | TRN-5 |
 | R-REF-17 | Tournament: when the organizer changes dates, venue or fees, entrants may withdraw for a full refund within 48 hours of the change. | Designed | TournamentManage |
-| R-REF-18 | Deleting an account refunds upcoming bookings in full, fee included, and pays the Wallet balance to the bank. | Decided | Architecture 9.3, DeleteAccount |
+| R-REF-18 | Deleting an account refunds upcoming bookings in full, fee included. | Decided | Architecture 9.3, DeleteAccount |
 | R-REF-19 | Shop: a fault reported within 7 days of delivery is refundable. An order not delivered within 14 days is refunded in full. | Assumed | AdminRefunds |
 | R-REF-20 | Refund rules are shown on the payment sheet before paying, and on the Refund rules page. A rule not shown before payment does not apply. | Decided | PAY-1, PAY-4 |
 
@@ -104,15 +104,13 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 
 | Case | Paid | Destination | Refund | Organizer effect |
 | --- | --- | --- | --- | --- |
-| Player gives up Meet spot before start | S$8.00 (S$6 + S$2) | Wallet | S$8.00 | Nothing released for this spot |
-| Player gives up Meet spot before start | S$8.00 | Card | S$6.00 | Nothing released for this spot |
-| Organizer gives up her own playing spot | S$2.00 fee | Wallet only | S$2.00 | — |
+| Player gives up Meet spot before start | S$8.00 (S$6 + S$2) | Card or PayNow | S$6.00 | Nothing released for this spot |
+| Organizer gives up their own playing spot | S$2.00 fee | Card or PayNow | S$2.00 (owner, 31 Oct) | No card fee charged to them |
 | Organizer cancels Meet, player paid by card | S$8.00 | Card | S$8.00 | Card fee on that payment taken from earnings |
-| Organizer cancels Meet, player paid by Wallet | S$8.00 | Wallet | S$8.00 | No card fee |
+| Organizer cancels Meet, player paid by PayNow | S$8.00 | PayNow | S$8.00 | No card fee (Q70) |
 | Withdraw from tournament before registration closes | S$33.00 (S$30 + S$3) | Card | S$30.00 | — |
 | Withdraw from tournament, injury with medical note | S$33.00 | Card | S$33.00 | — |
-| Cancel court more than 24 hours before | S$48.40 (S$44 + S$4.40) | Wallet | S$48.40 | — |
-| Cancel court more than 24 hours before | S$48.40 | Card | S$44.00 | — |
+| Cancel court more than 24 hours before | S$48.40 (S$44 + S$4.40) | Card or PayNow | S$44.00 | — |
 | Cancel court inside 24 hours | S$48.40 | — | S$0.00 | Venue keeps the price |
 | Cancel shop order before shipping | S$42.50 | Card | S$42.50 | — |
 | Paid ticket refund asked 6 hours before | S$12.00 | — | S$0.00 (organizer may agree) | — |
@@ -122,9 +120,9 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | Id | Rule | Status | Source |
 | --- | --- | --- | --- |
 | R-WAL-1 | **Superseded by owner decision, 30 Oct (Q45): no Wallet. Refunds go to the original PayNow or card.** Formerly: the Wallet holds refunds and rewards. | Superseded | Q45 |
-| R-WAL-2 | No top-up at launch. The top-up screen exists but nothing links to it; it sits behind the `wallet.topup` flag, off. | Decided | PAY-5 |
-| R-WAL-3 | Withdrawals are free: to a bank in 1 to 2 working days, or PayNow within minutes. | Designed | WalletWithdraw |
-| R-WAL-4 | The Wallet can pay only when the balance covers the whole total. Splitting a payment between Wallet and card is not designed. | Assumed | Payment sheet, Q18 |
+| R-WAL-2 | **Superseded by owner decision, 30 Oct (Q45).** Formerly: No top-up at launch. The top-up screen exists but nothing links to it; it sits behind the `wallet.topup` flag, off. | Decided | PAY-5 |
+| R-WAL-3 | **Superseded by owner decision, 30 Oct (Q45).** Formerly: Withdrawals are free: to a bank in 1 to 2 working days, or PayNow within minutes. | Designed | WalletWithdraw |
+| R-WAL-4 | **Superseded by owner decision, 30 Oct (Q45).** Formerly: The Wallet can pay only when the balance covers the whole total. Splitting a payment between Wallet and card is not designed. | Assumed | Payment sheet, Q18 |
 | R-PAY-1 | Organizer payouts run every Monday (the organizer can choose monthly, or off and pay out by hand). Free to a bank; instant PayNow costs S$0.50. | Assumed | PAY-10, PayoutAccount |
 | R-PAY-2 | Each payout run is approved by staff. A second staff member approves runs above a threshold. | Designed / threshold Open | ADM-2, Q9 |
 | R-PAY-3 | Only the owner of a club or academy can set or change its payout account. Admins and coaches can see earnings. | Designed | PayoutAccount |

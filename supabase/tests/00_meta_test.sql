@@ -2,7 +2,7 @@
 -- without RLS or a definer function without a fixed search path.
 begin;
 \ir helpers/setup.psql
-select plan(6);
+select plan(7);
 
 select is_empty($$
   select c.relname from pg_class c
@@ -35,6 +35,14 @@ select is_empty($$
     and (has_function_privilege('anon', p.oid, 'execute')
       or has_function_privilege('authenticated', p.oid, 'execute'))
 $$, 'sign-in limit functions are for the Edge Function only');
+
+select is_empty($$
+  select p.proname from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname like 'money\_svc\_%'
+    and (has_function_privilege('anon', p.oid, 'execute')
+      or has_function_privilege('authenticated', p.oid, 'execute'))
+$$, 'webhook and worker functions are for the Edge Functions only');
 
 select is_empty($$
   select table_name from information_schema.role_table_grants

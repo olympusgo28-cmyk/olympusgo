@@ -275,7 +275,7 @@ void main() {
         2,
       );
 
-      await b.withdraw(id, toWallet: true, injury: false);
+      await b.withdraw(id, injury: false);
       expect(await host.entries(id, 'XD'), isEmpty);
       expect((await a.info(id)).mine, isNull);
     },

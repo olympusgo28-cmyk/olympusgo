@@ -285,7 +285,7 @@ class Order {
   /// 'requested', 'accepted' or 'declined' once a return is asked for.
   final String? returnState;
 
-  /// "Wrong size · Refund to Wallet".
+  /// "Wrong size · Refund to card".
   final String? returnReason;
 
   int get itemsCents => lines.fold(0, (a, l) => a + l.priceCents * l.qty);
@@ -362,5 +362,5 @@ class SellerSummary {
   final String voucher;
 }
 
-/// Olympus keeps 8% of shop sales; buyers pay no platform fee.
-int shopCommission(int cents) => (cents * 0.08).round();
+/// Olympus keeps 10% of shop sales; buyers pay no platform fee.
+int shopCommission(int cents) => (cents + 5) ~/ 10;

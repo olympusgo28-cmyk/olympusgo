@@ -38,3 +38,24 @@ verify_jwt = true
 
 [functions.send-push]
 verify_jwt = false
+
+[functions.create-payment-intent]
+verify_jwt = true
+
+[functions.save-card]
+verify_jwt = true
+
+[functions.vendor-onboard]
+verify_jwt = true
+
+# Stripe signs these, and the function checks the signature.
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Answers 404 anywhere but a local stack.
+[functions.stripe-local]
+verify_jwt = false
+
+# Called by pg_cron with a secret from Vault.
+[functions.money-worker]
+verify_jwt = false

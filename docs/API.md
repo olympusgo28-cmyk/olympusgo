@@ -116,3 +116,30 @@ All amounts are integer minor units with a currency.
 | `leaderboards_refresh()` | Service role only | Rebuilds snapshots |
 | `staff_preset_save(...)`, `staff_level_save(...)` | Staff, content | A-05, through `admin-action` |
 | `score_view(p_score)`, `my_meet_results(p_activity)`, `meet_disputes(p_activity)` | Players in the match, organizer | The only client reads of scores and results. Ids match what the roster shows that viewer |
+
+## Money, as built in Phase 4a
+
+These replace the `money.*`, `payouts.*` and `wallet.*` rows above. There is no Wallet (Q45). Every amount is integer minor units.
+
+| Name | Kind | Input | Result | Rule |
+| --- | --- | --- | --- | --- |
+| `money_quote` | RPC, pure | purpose, price, qty, currency | Price, fee, total, per unit | R-FEE-1 to R-FEE-7 |
+| `money_refund_quote` | RPC, pure | reason, price, fee, method | Refund, and whether the organizer bears the card fee | R-REF-1 to R-REF-18 |
+| `activity_quote` | RPC | activity, qty | The quote plus the refund rule text | R-REF-20 |
+| `activity_reserve` | RPC | activity, key, qty, guest | A hold and a pending payment, or `waitlist` | PAY-1, R-MET |
+| `payment_begin` | RPC | payment, method | Called by `create-payment-intent` as the player | PAY-1 |
+| `payment_status`, `payment_abandon` | RPC | payment | Progress, or give it up | PAY-1 |
+| `create-payment-intent` | Edge | payment, method | Client secret. The amount comes from the database | PAY-1 |
+| `stripe-webhook` | Edge | Stripe event | The only thing that confirms a payment. Idempotent on event id | Golden rule 4 |
+| `stripe-local` | Edge | test action | 404 anywhere but a local stack | P4a-03 |
+| `money-worker` | Edge | timer, secret header | Makes the Stripe calls the database asked for | P4a-06 |
+| `save-card` | Edge | none | Starts saving a card | R-FEE-3 |
+| `vendor-onboard` | Edge | none | Starts Stripe's checks | R-PAY-4 |
+| `leave_activity` | RPC | activity | Refund in minor units. No Wallet choice | R-REF-2, R-REF-5 |
+| `organizer_debt_reserve` | RPC | key | A payment for organizer fees owed | Owner, 31 Oct |
+| `money_my_payments`, `money_my_earnings`, `money_my_card` | RPC | none | The caller's own records | PAY |
+| `resolve_qr` | RPC | token | `player`, `group`, `venue` or `vendor`. Refused for under-18s | P4a-09 |
+| `staff_money_overview`, `staff_payment_list`, `staff_payment_get`, `staff_refund_list`, `staff_held_list`, `staff_payout_list`, `staff_dispute_list`, `staff_alert_list` | RPC, payments staff | | A-06 reads | A-06 |
+| `staff_refund_issue`, `staff_refund_retry`, `staff_refund_void`, `staff_refund_manual`, `staff_hold_decide`, `staff_payout_approve`, `staff_alert_close` | admin-action, payments staff | with a reason | A-06 writes, audited | A-06 |
+
+`money_svc_*` functions are for Edge Functions with the service key, and closed to every client role.

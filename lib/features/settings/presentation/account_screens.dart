@@ -21,8 +21,7 @@ import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../profile/domain/profile.dart';
-import '../../wallet/application/wallet_providers.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/application/earnings_providers.dart';
 import '../../safety/presentation/legal_screens.dart' show CountryRules;
 import '../application/settings_providers.dart';
 
@@ -135,9 +134,8 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
           KitNavTile(
             icon: OgIcons.walletCard,
             title: 'Payment methods',
-            subtitle: 'Card ending 4242, PayNow',
-            onTap: () =>
-                showOgToast(context, 'Cards are added when you first pay.'),
+            subtitle: ref.watch(savedCardProvider).value ?? 'No card saved',
+            onTap: () => context.push(Routes.paymentMethods),
           ),
           KitNavTile(
             icon: OgIcons.clipboardList,
@@ -471,7 +469,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
           Text('Delete your account?', style: OgText.heading(24)),
           const SizedBox(height: 8),
           Text(
-            'Your Wallet money goes to your bank, your Meets are refunded, and '
+            'Your upcoming Meets are refunded, and '
             'linked children’s accounts close with yours. You have 30 days to '
             'undo it.',
             style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
@@ -516,7 +514,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final t = context.tones;
-    final wallet = ref.watch(walletSummaryProvider).value;
+    final wallet = ref.watch(pointsSummaryProvider).value;
     final upcoming = (ref.watch(myScheduleProvider).value ?? const <Activity>[])
         .where((a) => a.myStatus == MyStatus.joined && !a.isFree)
         .toList();
@@ -594,13 +592,6 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
           'Before you go',
           lead: 'We sort these out for you when you delete. Check that each one is what you want.',
         ),
-        if ((wallet?.balanceCents ?? 0) > 0)
-          item(
-            '${cash(wallet!.balanceCents)} in your Wallet',
-            'We send it to your bank account first, free of charge.',
-            action: 'Withdraw it now instead',
-            onAction: () => context.push(Routes.walletWithdraw),
-          ),
         if (upcoming.isNotEmpty)
           item(
             '${upcoming.length} upcoming paid ${upcoming.length == 1 ? 'session' : 'sessions'}',

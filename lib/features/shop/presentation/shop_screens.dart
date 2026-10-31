@@ -15,8 +15,8 @@ import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/application/wallet_providers.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/application/earnings_providers.dart';
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
@@ -943,7 +943,7 @@ class ProductPageScreen extends ConsumerWidget {
     final c = context.og;
     final t = context.tones;
     final d = ref.watch(productDetailProvider(id));
-    final points = ref.watch(walletSummaryProvider).value?.points ?? 0;
+    final points = ref.watch(pointsSummaryProvider).value?.points ?? 0;
     final value = d.value;
     if (value == null) {
       return KitScaffold(

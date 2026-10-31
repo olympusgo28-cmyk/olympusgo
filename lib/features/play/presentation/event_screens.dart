@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
@@ -17,7 +18,6 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/application/social_providers.dart';
@@ -26,6 +26,7 @@ import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import '../domain/event_models.dart';
+import 'pay_flow.dart';
 import 'meet_detail_screen.dart' show showDoneSheet;
 import 'create_meet_screens.dart' show editActivity;
 import 'tournament_screens.dart'
@@ -839,46 +840,49 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
     final nav = Navigator.of(context);
     final outer = Navigator.of(context, rootNavigator: true).context;
     if (!a.isFree) {
-      nav.pop();
-      final method = await showPaySheet(
-        outer,
+      // This sheet stays open underneath: payForSpot uses its ref.
+      final paid = await payForSpot(
+        context,
+        ref,
+        a,
         kicker: 'Tickets',
-        title: a.title,
         subtitle: '${Fmt.dayTimeComma(a.startsAt)} · ${a.venue.name}',
-        lines: [
-          (
-            'Ticket · S\$${money(a.feeCents)} × $_qty',
-            'S\$${money(a.feeCents * _qty)}',
-          ),
-          (
-            'Platform fee · S\$${money(a.platformCents)} × $_qty',
-            'S\$${money(a.platformCents * _qty)}',
-          ),
-        ],
-        totalCents: a.totalCents * _qty,
+        priceLine: 'Ticket · S\$${money(a.feeCents)} × $_qty',
         payee: a.host.displayName,
-        notes: [
-          'Cancel by the day before: all of it back to your Wallet, or the '
-              'ticket price to your card. The platform fee is not returned to '
-              'a card.',
-          'You earn ${4 * _qty} points after your ticket is scanned.',
-        ],
+        qty: _qty,
       );
-      if (method == null || !outer.mounted) return;
-      await _buy(outer);
+      if (!mounted) return;
+      refreshCompetition(ref.invalidate);
+      refreshPlay(ref.invalidate);
+      if (paid == null) return;
+      HapticFeedback.mediumImpact();
+      final qty = _qty;
+      nav.pop();
+      if (!outer.mounted) return;
+      await showDoneSheet(
+        outer,
+        title: qty == 1 ? 'You have a ticket' : 'You have $qty tickets',
+        body: '${a.title}. Show the code at the door.',
+        rows: [
+          ('Paid', 'S\$${money(paid.totalCents)}'),
+          ('Receipt', paid.receiptNo),
+        ],
+        next: 'Show my ticket',
+        onNext: () => outer.push(Routes.eventTicket(a.id)),
+      );
       return;
     }
     setState(() => _busy = true);
-    nav.pop();
-    await _buy(outer);
+    await _buy(nav, outer);
   }
 
-  Future<void> _buy(BuildContext outer) async {
+  Future<void> _buy(NavigatorState nav, BuildContext outer) async {
     try {
       final t = await ref.read(eventRepositoryProvider).buy(a.id, qty: _qty);
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       refreshPlay(ref.invalidate);
+      nav.pop();
       if (!outer.mounted) return;
       await showDoneSheet(
         outer,
@@ -886,10 +890,7 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
         body: '${a.title}. Show the code at the door.',
         rows: [
           if (a.isFree) ('Tickets', '$_qty · free entry'),
-          (
-            'Paid',
-            a.isFree ? 'Nothing to pay' : 'S\$${money(a.totalCents * _qty)}',
-          ),
+          if (a.isFree) ('Paid', 'Nothing to pay'),
         ],
         next: 'Show my ticket',
         onNext: () => outer.push(Routes.eventTicket(a.id)),
@@ -1093,7 +1094,8 @@ class EventTicketScreen extends ConsumerWidget {
                   : 'S\$${money(tk.paidCents)}, fee included',
             ),
             KitKeyValue('Booking', tk.code),
-            KitKeyValue('Points', '${tk.points} after you are scanned in'),
+            if (!Env.hasSupabase)
+              KitKeyValue('Points', '${tk.points} after you are scanned in'),
           ],
         ),
         Text(

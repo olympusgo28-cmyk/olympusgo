@@ -60,8 +60,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   /// Event tickets: `olympusgo:ticket:<event id>:<booking code>`.
   static final _ticket = RegExp(r'^olympusgo:ticket:([^:]+):(.+)$');
 
-  /// My QR: `olympusgo:player:<token>`. The token means nothing on its own.
-  static final _token = RegExp(r'^olympusgo:player:([0-9a-z]{16,64})$');
+  /// My QR, or a group's, venue's or vendor's code:
+  /// `olympusgo:player:<token>`, `olympusgo:place:<token>`. The token means
+  /// nothing on its own.
+  static final _token = RegExp(
+    r'^olympusgo:(?:player|place):([0-9a-z]{16,64})$',
+  );
 
   bool get _cameraWanted => _visible && !_myCode;
 
@@ -103,8 +107,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     HapticFeedback.mediumImpact();
     await _camera.stop();
     try {
-      final username = await ref.read(playRepositoryProvider).resolveQr(token);
-      if (mounted) await context.push(Routes.scannedPlayer(username));
+      final (kind, id) = await ref
+          .read(playRepositoryProvider)
+          .resolveQr(token);
+      if (mounted) {
+        await context.push(switch (kind) {
+          'group' => Routes.club(id),
+          'venue' => Routes.venue(id),
+          _ => Routes.scannedPlayer(id),
+        });
+      }
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     }
@@ -287,11 +299,12 @@ class _Scanner extends StatelessWidget {
         'Scan the organizer’s code at the court',
         Routes.checkIn('ts-social'),
       ),
-      (
-        'Use points at a partner shop',
-        'Scan at the counter to take S\$ off',
-        Routes.points,
-      ),
+      if (demo)
+        (
+          'Use points at a partner shop',
+          'Scan at the counter to take S\$ off',
+          Routes.points,
+        ),
       (
         'Add a player',
         'Scan their code to follow or message them',

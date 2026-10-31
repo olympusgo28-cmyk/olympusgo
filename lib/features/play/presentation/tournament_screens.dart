@@ -16,7 +16,6 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/application/social_providers.dart';
@@ -1381,31 +1380,13 @@ class _TournamentRegisterScreenState
 
   Future<void> _pay(TournamentInfo t, int entry, int fee) async {
     final a = t.activity;
-    final picked = t.divisions.where((d) => _picked.contains(d.id)).toList();
     if (entry > 0) {
-      final method = await showPaySheet(
+      showOgToast(
         context,
-        kicker: 'Register',
-        title: a.title,
-        subtitle:
-            '${picked.length} ${picked.length == 1 ? 'event' : 'events'} · ${tournamentDates(a)}',
-        lines: [
-          for (final d in picked)
-            d.full
-                ? ('${d.name} (waitlist)', 'Charged if a spot opens')
-                : (d.name, 'S\$${money(d.feeCents)}'),
-          if (fee > 0) ('Platform fee', 'S\$${money(fee)}'),
-        ],
-        totalCents: entry + fee,
-        payee: t.host,
-        notes: [
-          'Withdraw before registration closes: all of it back to your '
-              'Wallet, or the entry fee to your card. The platform fee is not '
-              'returned to a card.',
-          'You earn ${fee ~/ 50} points after you check in.',
-        ],
+        'Paid tournament entries aren’t open yet. They open once payments are '
+        'switched on.',
       );
-      if (method == null || !mounted) return;
+      return;
     }
     setState(() => _busy = true);
     try {
@@ -1690,10 +1671,9 @@ class _TournamentRegisterScreenState
           entry == 0
               ? 'Free to enter. Withdraw any time before registration closes. '
                     'Doubles entries are confirmed when your partner says yes.'
-              : 'Withdraw before registration closes: all of it back to your Wallet, '
-                    'or the entry fee to your card. If your partner declines, you get '
-                    'all of it back. Nothing is charged until you confirm on the next '
-                    'step.',
+              : 'Withdraw before registration closes: the entry fee back to how '
+                    'you paid. If your partner declines, you get all of it back. '
+                    'Nothing is charged until you confirm on the next step.',
           style: OgText.body(13, height: 1.45, color: c.textMuted),
         ),
       ],
@@ -1721,7 +1701,6 @@ class TournamentWithdrawScreen extends ConsumerStatefulWidget {
 class _TournamentWithdrawScreenState
     extends ConsumerState<TournamentWithdrawScreen> {
   String? _why;
-  bool _toWallet = true;
   bool _busy = false;
   int? _refunded;
 
@@ -1730,7 +1709,7 @@ class _TournamentWithdrawScreenState
     try {
       final back = await ref
           .read(tournamentRepositoryProvider)
-          .withdraw(id, toWallet: _toWallet, injury: _why == 'injury');
+          .withdraw(id, injury: _why == 'injury');
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       refreshPlay(ref.invalidate);
@@ -1771,8 +1750,7 @@ class _TournamentWithdrawScreenState
                 const SizedBox(height: 4),
                 Text(
                   [
-                    if (back > 0)
-                      'It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}.',
+                    if (back > 0) 'It goes back to how you paid.',
                     if (partner != null) '$partner has been told.',
                   ].join(' '),
                   style: OgText.body(15, height: 1.45, color: c.textMuted),
@@ -1796,7 +1774,7 @@ class _TournamentWithdrawScreenState
     final refundable = open || _why == 'injury';
     final back = !refundable
         ? 0
-        : (_toWallet ? mine.paidCents : mine.entryCents);
+        : (_why == 'injury' ? mine.paidCents : mine.entryCents);
     return KitScaffold(
       header: const KitHeader(title: 'Withdraw'),
       bottom: [
@@ -1850,25 +1828,11 @@ class _TournamentWithdrawScreenState
           ],
         ),
         if (refundable && mine.paidCents > 0)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Where should the refund go?', style: OgText.heading(20)),
-              const SizedBox(height: 6),
-              KitChoiceRow(
-                title: 'Wallet',
-                subtitle: 'All S\$${money(mine.paidCents)} · instant',
-                selected: _toWallet,
-                onTap: () => setState(() => _toWallet = true),
-              ),
-              KitChoiceRow(
-                title: 'Card',
-                subtitle:
-                    'S\$${money(mine.entryCents)} · the S\$${money(mine.feeCents)} platform fee stays · 3 to 5 working days',
-                selected: !_toWallet,
-                onTap: () => setState(() => _toWallet = false),
-              ),
-            ],
+          Text(
+            _why == 'injury'
+                ? 'With a medical note you get all of it back.'
+                : 'The S\$${money(mine.feeCents)} platform fee is not returned.',
+            style: OgText.body(14, height: 1.45, color: c.textMuted),
           )
         else if (!refundable)
           const KitNote(

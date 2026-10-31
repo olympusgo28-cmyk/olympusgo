@@ -449,7 +449,7 @@ final class PaymentGatewayProvider
   }
 }
 
-String _$paymentGatewayHash() => r'61c25fb9fd62ba64effafaa7108453b030901591';
+String _$paymentGatewayHash() => r'96f568b4eeb43eeacecd5806a896b6e5f81b0873';
 
 @ProviderFor(tournamentRepository)
 final tournamentRepositoryProvider = TournamentRepositoryProvider._();
@@ -621,53 +621,55 @@ final class ShopRepositoryProvider
   }
 }
 
-String _$shopRepositoryHash() => r'148fea8484d9a3197d1682d0552141c34e09fa68';
+String _$shopRepositoryHash() => r'4cfda882762e655a6f499c09683ac7a05578d3c5';
 
-@ProviderFor(walletRepository)
-final walletRepositoryProvider = WalletRepositoryProvider._();
+@ProviderFor(earningsRepository)
+final earningsRepositoryProvider = EarningsRepositoryProvider._();
 
-final class WalletRepositoryProvider
+final class EarningsRepositoryProvider
     extends
         $FunctionalProvider<
-          WalletRepository,
-          WalletRepository,
-          WalletRepository
+          EarningsRepository,
+          EarningsRepository,
+          EarningsRepository
         >
-    with $Provider<WalletRepository> {
-  WalletRepositoryProvider._()
+    with $Provider<EarningsRepository> {
+  EarningsRepositoryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'walletRepositoryProvider',
+        name: r'earningsRepositoryProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$walletRepositoryHash();
+  String debugGetCreateSourceHash() => _$earningsRepositoryHash();
 
   @$internal
   @override
-  $ProviderElement<WalletRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<EarningsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  WalletRepository create(Ref ref) {
-    return walletRepository(ref);
+  EarningsRepository create(Ref ref) {
+    return earningsRepository(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(WalletRepository value) {
+  Override overrideWithValue(EarningsRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<WalletRepository>(value),
+      providerOverride: $SyncValueProvider<EarningsRepository>(value),
     );
   }
 }
 
-String _$walletRepositoryHash() => r'4545be1c0e07289c098c3bd559541cb7f90c7f23';
+String _$earningsRepositoryHash() =>
+    r'01c7465739a7b60002267093346b059567bb8344';
 
 @ProviderFor(venueRepository)
 final venueRepositoryProvider = VenueRepositoryProvider._();

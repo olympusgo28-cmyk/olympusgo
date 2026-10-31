@@ -145,8 +145,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           children: switch (updates) {
                             AsyncData(:final value) when value.isEmpty => [
                               const _Empty(
-                                'Nothing new. Updates about your Meets, clubs '
-                                'and points land here.',
+                                'Nothing new. Updates about your Meets and '
+                                'clubs land here.',
                               ),
                             ],
                             AsyncData(:final value) => [

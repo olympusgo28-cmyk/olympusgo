@@ -12,7 +12,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/game_providers.dart';
 import '../domain/game_models.dart';
 

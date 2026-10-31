@@ -14,6 +14,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/place_code.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/club_providers.dart';
 import '../domain/club_models.dart';
@@ -192,6 +193,19 @@ class ClubSettingsScreen extends ConsumerWidget {
                     ? null
                     : '${club.activeInvites} active',
                 onTap: () => context.push(Routes.clubInvite(id)),
+              ),
+              _countTile(
+                context,
+                icon: OgIcons.link,
+                title: 'Group code',
+                sub: 'Players scan it to open this group',
+                onTap: () => showPlaceCode(
+                  context,
+                  title: club.name,
+                  load: (rotate) => ref
+                      .read(playRepositoryProvider)
+                      .groupCode(id, rotate: rotate),
+                ),
               ),
               if (owner || can.contains(ClubPermission.members))
                 _countTile(

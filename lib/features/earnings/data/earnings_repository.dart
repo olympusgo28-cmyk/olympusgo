@@ -1,31 +1,15 @@
+import 'package:og_money/og_money.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/env.dart';
 import '../../auth/data/auth_repository.dart';
 
-/// Wallet money (refunds land here) and points earned by playing.
-class WalletSummary {
-  const WalletSummary({
-    this.balanceCents = 0,
-    this.points = 0,
-    this.pendingPoints = 0,
-  });
+/// Points earned by playing. Nothing earns them on a real backend until 4b.
+class PointsSummary {
+  const PointsSummary({this.points = 0, this.pendingPoints = 0});
 
-  final int balanceCents;
   final double points;
   final double pendingPoints;
-}
-
-/// A line in the Wallet's Recent list.
-class WalletEntry {
-  const WalletEntry(this.title, this.sub, this.cents, this.at);
-  final String title;
-
-  /// "Meet", "Hannah cancelled, fee included".
-  final String sub;
-
-  /// Money in is positive.
-  final int cents;
-  final DateTime at;
 }
 
 /// A way to use points: a product and how many points it takes.
@@ -82,7 +66,7 @@ class ReceiptRecord {
   final int totalCents;
   final String paidWith;
 
-  /// "Refunded S$8.00 to Wallet".
+  /// "Refunded S$8.00".
   final String? refund;
 }
 
@@ -100,10 +84,18 @@ class Earnings {
     this.heldCents = 0,
     this.monthCents = 0,
     this.yearCents = 0,
+    this.owedCents = 0,
+    this.feeDebtCents = 0,
     this.sources = const [],
   });
 
   final int readyCents;
+
+  /// Fees and card costs bigger than earnings, taken from later payouts.
+  final int owedCents;
+
+  /// Organizer fees that couldn't be charged. Blocks organizer-pays Meets.
+  final int feeDebtCents;
 
   /// Waiting for attendance to be marked.
   final int heldCents;
@@ -135,193 +127,219 @@ class EarningsBreakdown {
   final List<(String, String, String)> players;
 }
 
+/// Stripe collects the bank details and runs the checks, so Olympus only
+/// knows how far along they are.
 class PayoutAccount {
-  const PayoutAccount({
-    this.holder = '',
-    this.bank = '',
-    this.number = '',
-    this.payNow = '',
-    this.auto = 'Every Monday',
-  });
+  const PayoutAccount({this.status = 'none', this.auto = 'Every Monday'});
 
-  final String holder;
-  final String bank;
-  final String number;
-  final String payNow;
+  /// none, pending, verified, rejected.
+  final String status;
 
   /// Every Monday, Every month, Off.
   final String auto;
 
-  bool get isSet =>
-      holder.isNotEmpty && (number.isNotEmpty || payNow.isNotEmpty);
+  bool get isSet => status == 'verified';
 
-  /// "[Bank] ending 1234".
-  String get label => number.length >= 4
-      ? '$bank ending ${number.substring(number.length - 4)}'
-      : (payNow.isNotEmpty ? 'PayNow $payNow' : 'Not set');
+  String get label => switch (status) {
+    'verified' => 'Checked, ready for payouts',
+    'pending' => 'Waiting for your checks',
+    'rejected' => 'Checks didn’t pass',
+    _ => 'Not set up',
+  };
 }
 
-abstract interface class WalletRepository {
-  Future<WalletSummary> summary();
-  Future<List<WalletEntry>> activity();
-
-  /// Sends [cents] to the bank. Returns the new balance.
-  Future<int> withdraw(int cents);
+abstract interface class EarningsRepository {
+  Future<PointsSummary> summary();
   Future<PointsInfo> points();
   Future<List<ReceiptRecord>> receipts();
   Future<Earnings> earnings();
   Future<EarningsBreakdown> earningsDetail(String sourceId);
-  Future<void> payout(int cents);
   Future<PayoutAccount> payoutAccount();
-  Future<void> savePayoutAccount(PayoutAccount account);
+
+  /// Starts Stripe's checks. Returns the page to open, if there is one.
+  Future<String?> startPayouts();
+  Future<void> setPayoutSchedule(String auto);
+
+  /// "Visa ending 4242", or null with no saved card.
+  Future<String?> savedCard();
+
+  /// Starts saving a card with Stripe.
+  Future<void> saveCard();
 }
 
-const _soon = AuthFailure(
-  "Payouts and withdrawals aren't switched on yet. They open once payments "
-  'are connected.',
-);
+String _scheduleOf(String? value) => switch (value) {
+  'monthly' => 'Every month',
+  'off' => 'Off',
+  _ => 'Every Monday',
+};
 
-class SupabaseWalletRepository implements WalletRepository {
-  SupabaseWalletRepository(this._client);
+class SupabaseEarningsRepository implements EarningsRepository {
+  SupabaseEarningsRepository(this._client);
   final SupabaseClient _client;
 
-  @override
-  Future<WalletSummary> summary() async {
-    final me = _client.auth.currentUser?.id;
-    if (me == null) return const WalletSummary();
-    // Refunds from leave_activity and court cancellations are the only
-    // wallet credits so far; the Wallet phase adds a ledger with top-ups and
-    // withdrawals.
-    final rows = await _client
-        .from('payments')
-        .select('amount_cents')
-        .eq('user_id', me)
-        .eq('status', 'refunded');
-    final courts = await _client
-        .from('court_bookings')
-        .select('refund_cents')
-        .eq('user_id', me)
-        .eq('refund_to', 'wallet');
-    final balance = [
-      for (final r in rows) r['amount_cents'] as int,
-      for (final r in courts) r['refund_cents'] as int,
-    ].fold(0, (a, b) => a + b);
-    return WalletSummary(balanceCents: balance);
+  Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      throw AuthFailure(
+        e.code == 'P0001' ? e.message : 'Something went wrong. Try again.',
+      );
+    } on FunctionException catch (e) {
+      final detail = e.details;
+      throw AuthFailure(
+        detail is Map && detail['error'] is String
+            ? detail['error'] as String
+            : 'Something went wrong. Try again.',
+      );
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
   }
 
   @override
-  Future<List<WalletEntry>> activity() async {
-    final me = _client.auth.currentUser?.id;
-    if (me == null) return const [];
-    final rows = await _client
-        .from('payments')
-        .select('amount_cents, status, created_at, activities(title, kind)')
-        .eq('user_id', me)
-        .order('created_at', ascending: false)
-        .limit(30);
-    return [
-      for (final r in rows)
-        WalletEntry(
-          r['status'] == 'refunded'
-              ? 'Refund, ${(r['activities'] as Map?)?['title'] ?? 'payment'}'
-              : ((r['activities'] as Map?)?['title'] as String? ?? 'Payment'),
-          r['status'] == 'refunded' ? 'Back to your Wallet' : 'Paid by card',
-          r['status'] == 'refunded'
-              ? r['amount_cents'] as int
-              : -(r['amount_cents'] as int),
-          DateTime.parse(r['created_at'] as String).toLocal(),
-        ),
-    ];
-  }
-
-  @override
-  Future<int> withdraw(int cents) => throw _soon;
+  Future<PointsSummary> summary() async => const PointsSummary();
 
   @override
   Future<PointsInfo> points() async => const PointsInfo(points: 0);
 
   @override
-  Future<List<ReceiptRecord>> receipts() async {
-    final me = _client.auth.currentUser?.id;
-    if (me == null) return const [];
-    final rows = await _client
-        .from('payments')
-        .select(
-          'id, amount_cents, platform_fee_cents, method, status, created_at, '
-          'activities(title, kind)',
-        )
-        .eq('user_id', me)
-        .order('created_at', ascending: false);
+  Future<List<ReceiptRecord>> receipts() => _guard(() async {
+    final rows = await _client.rpc<List<dynamic>>('money_my_payments');
     return [
-      for (final r in rows)
+      for (final r in rows.cast<Map<String, dynamic>>())
         ReceiptRecord(
-          id: r['id'] as String,
-          title: (r['activities'] as Map?)?['title'] as String? ?? 'Payment',
-          kind: switch ((r['activities'] as Map?)?['kind']) {
+          id: r['payment_id'] as String,
+          title: r['title'] as String? ?? 'Fees',
+          kind: switch (r['purpose']) {
+            'ticket' => 'Event',
             'tournament' => 'Tournament',
-            'event' => 'Event',
+            'organizer_fee' || 'debt' => 'Fees',
             _ => 'Meet',
           },
           at: DateTime.parse(r['created_at'] as String).toLocal(),
-          no: (r['id'] as String).substring(0, 8).toUpperCase(),
+          no: r['receipt_no'] as String,
           lines: [
-            (
-              'Price',
-              'S\$${((r['amount_cents'] as int) - (r['platform_fee_cents'] as int)) / 100}',
-            ),
-            ('Platform fee', 'S\$${(r['platform_fee_cents'] as int) / 100}'),
+            if ((r['price_minor'] as num) > 0)
+              ('Price', '${Money((r['price_minor'] as num).toInt())}'),
+            ('Platform fee', '${Money((r['fee_minor'] as num).toInt())}'),
           ],
-          totalCents: r['amount_cents'] as int,
-          paidWith: r['method'] == 'wallet' ? 'Wallet' : 'Card',
-          refund: r['status'] == 'refunded' ? 'Refunded' : null,
+          totalCents: (r['amount_minor'] as num).toInt(),
+          paidWith: r['method'] == 'paynow' ? 'PayNow' : 'Card',
+          refund: (r['refunded_minor'] as num) > 0
+              ? 'Refunded ${Money((r['refunded_minor'] as num).toInt())}'
+              : null,
         ),
     ];
-  }
+  });
+
+  Future<Map<String, dynamic>> _earnings() =>
+      _client.rpc<Map<String, dynamic>>('money_my_earnings');
 
   @override
-  Future<Earnings> earnings() async => const Earnings();
+  Future<Earnings> earnings() => _guard(() async {
+    final r = await _earnings();
+    int cents(String key) => (r[key] as num).toInt();
+    return Earnings(
+      readyCents: cents('available_minor'),
+      heldCents: cents('held_minor'),
+      monthCents: cents('month_minor'),
+      yearCents: cents('year_minor'),
+      owedCents: cents('owed_minor'),
+      feeDebtCents: cents('fee_debt_minor'),
+      sources: [
+        for (final a in (r['activities'] as List).cast<Map<String, dynamic>>())
+          EarningSource(
+            a['activity_id'] as String,
+            a['title'] as String,
+            a['released'] == true ? 'Released' : 'Held until attendance',
+            (a['price_minor'] as num).toInt(),
+          ),
+      ],
+    );
+  });
 
   @override
-  Future<EarningsBreakdown> earningsDetail(String sourceId) => throw _soon;
+  Future<EarningsBreakdown> earningsDetail(String sourceId) =>
+      throw const AuthFailure("This breakdown isn't available yet.");
 
   @override
-  Future<void> payout(int cents) => throw _soon;
+  Future<PayoutAccount> payoutAccount() => _guard(() async {
+    final vendor = (await _earnings())['vendor'] as Map<String, dynamic>?;
+    if (vendor == null) return const PayoutAccount();
+    return PayoutAccount(
+      status: vendor['status'] as String,
+      auto: _scheduleOf(vendor['schedule'] as String?),
+    );
+  });
 
   @override
-  Future<PayoutAccount> payoutAccount() async => const PayoutAccount();
+  Future<String?> startPayouts() => _guard(() async {
+    final res = await _client.functions.invoke('vendor-onboard');
+    final url = (res.data as Map?)?['onboarding_url'] as String?;
+    if (url == null && Env.localStandIn) {
+      await _client.functions.invoke(
+        'stripe-local',
+        body: {
+          'action': 'vendor_verified',
+          'owner_id': _client.auth.currentUser?.id,
+        },
+      );
+    }
+    return url;
+  });
 
   @override
-  Future<void> savePayoutAccount(PayoutAccount account) => throw _soon;
+  Future<void> setPayoutSchedule(String auto) => _guard(
+    () => _client.rpc<void>(
+      'vendor_set_schedule',
+      params: {
+        'p_schedule': switch (auto) {
+          'Every month' => 'monthly',
+          'Off' => 'off',
+          _ => 'weekly',
+        },
+      },
+    ),
+  );
+
+  @override
+  Future<String?> savedCard() => _guard(() async {
+    final card = await _client.rpc<Map<String, dynamic>?>('money_my_card');
+    if (card == null || card['last4'] == null) return null;
+    final brand = (card['brand'] as String? ?? 'Card');
+    return '${brand[0].toUpperCase()}${brand.substring(1)} ending ${card['last4']}';
+  });
+
+  @override
+  Future<void> saveCard() => _guard(() async {
+    final res = await _client.functions.invoke('save-card');
+    if (!Env.localStandIn) {
+      throw const AuthFailure("Saving a card isn't switched on yet.");
+    }
+    await _client.functions.invoke(
+      'stripe-local',
+      body: {
+        'action': 'save_card',
+        'customer': (res.data as Map)['customer'],
+        'user_id': _client.auth.currentUser?.id,
+      },
+    );
+  });
 }
 
-class DemoWalletRepository implements WalletRepository {
-  int _balance = 2400;
+class DemoEarningsRepository implements EarningsRepository {
   double _points = 21.2;
-  int _ready = 31200;
-  var _account = const PayoutAccount(
-    holder: 'Aaron Ng',
-    bank: 'DBS',
-    number: '0123456789',
-    auto: 'Every Monday',
-  );
-  final _entries = <WalletEntry>[];
+  var _account = const PayoutAccount(status: 'verified');
   final _pointsLog = <(String, String, double)>[];
   final _receipts = <ReceiptRecord>[];
 
-  DemoWalletRepository() {
+  DemoEarningsRepository() {
     final now = DateTime.now();
     DateTime ago(int d) => now.subtract(Duration(days: d));
-    _entries.addAll([
-      WalletEntry('Doubles Social', 'Meet', -800, ago(0)),
-      WalletEntry('Withdrawn to bank', 'DBS ending 6789', -3000, ago(4)),
-      WalletEntry(
-        'Refund, Morning Singles',
-        'Hannah cancelled, fee included',
-        800,
-        ago(6),
-      ),
-      WalletEntry('Overgrip, pack of 3', 'Court Supply Co.', -600, ago(8)),
-    ]);
     _pointsLog.addAll([
       ('Doubles Social', 'Present · ${_day(ago(3))}', 4),
       ('Overgrip, pack of 3', 'Used at Court Supply Co.', -3),
@@ -337,7 +355,7 @@ class DemoWalletRepository implements WalletRepository {
         no: 'OG-20261002-0047',
         lines: const [('Session', 'S\$6.00'), ('Platform fee', 'S\$2.00')],
         totalCents: 800,
-        paidWith: 'Wallet',
+        paidWith: 'PayNow',
       ),
       ReceiptRecord(
         id: 'r2',
@@ -371,7 +389,7 @@ class DemoWalletRepository implements WalletRepository {
         lines: const [('Session', 'S\$6.00'), ('Platform fee', 'S\$2.00')],
         totalCents: 800,
         paidWith: 'Card ending 4242',
-        refund: 'Refunded S\$8.00 to Wallet, Hannah cancelled',
+        refund: 'Refunded S\$8.00 to your card, Hannah cancelled',
       ),
       ReceiptRecord(
         id: 'r5',
@@ -381,7 +399,7 @@ class DemoWalletRepository implements WalletRepository {
         no: 'OG-20260924-0019',
         lines: const [('Items', 'S\$9.00'), ('Points used', '−S\$3.00')],
         totalCents: 600,
-        paidWith: 'Wallet',
+        paidWith: 'PayNow',
       ),
     ]);
   }
@@ -392,51 +410,23 @@ class DemoWalletRepository implements WalletRepository {
 
   Future<void> _tick() => Future.delayed(const Duration(milliseconds: 200));
 
-  /// Used by the demo shop: spend from the Wallet or points.
-  void spend(String title, String sub, {int cents = 0, double points = 0}) {
-    _balance -= cents;
+  /// Used by the demo shop: spend points.
+  void spend(String title, String sub, {double points = 0}) {
     _points -= points;
-    if (cents > 0) {
-      _entries.insert(0, WalletEntry(title, sub, -cents, DateTime.now()));
-    }
     if (points > 0) _pointsLog.insert(0, (title, 'Used at $sub', -points));
   }
 
-  /// Used by the demo shop: refunds and points back.
-  void credit(String title, String sub, {int cents = 0, double points = 0}) {
-    _balance += cents;
+  /// Used by the demo shop: points back.
+  void credit(String title, String sub, {double points = 0}) {
     _points += points;
-    if (cents > 0) {
-      _entries.insert(0, WalletEntry(title, sub, cents, DateTime.now()));
-    }
     if (points > 0) _pointsLog.insert(0, (title, 'Points returned', points));
   }
 
   void addReceipt(ReceiptRecord r) => _receipts.insert(0, r);
 
   @override
-  Future<WalletSummary> summary() async =>
-      WalletSummary(balanceCents: _balance, points: _points, pendingPoints: 4);
-
-  @override
-  Future<List<WalletEntry>> activity() async {
-    await _tick();
-    return List.of(_entries);
-  }
-
-  @override
-  Future<int> withdraw(int cents) async {
-    await _tick();
-    if (cents <= 0 || cents > _balance) {
-      throw const AuthFailure('That is more than your balance.');
-    }
-    _balance -= cents;
-    _entries.insert(
-      0,
-      WalletEntry('Withdrawn to bank', _account.label, -cents, DateTime.now()),
-    );
-    return _balance;
-  }
+  Future<PointsSummary> summary() async =>
+      PointsSummary(points: _points, pendingPoints: 4);
 
   @override
   Future<PointsInfo> points() async {
@@ -466,7 +456,7 @@ class DemoWalletRepository implements WalletRepository {
   Future<Earnings> earnings() async {
     await _tick();
     return Earnings(
-      readyCents: _ready,
+      readyCents: 31200,
       heldCents: 9600,
       monthCents: 128400,
       yearCents: 794000,
@@ -522,28 +512,32 @@ class DemoWalletRepository implements WalletRepository {
       ],
       players: [
         ('Aaron Ng', 'Paid by card · Present', 'S\$6.00'),
-        ('Priya Raman', 'Paid by Wallet · Present', 'S\$6.00'),
+        ('Priya Raman', 'Paid by PayNow · Present', 'S\$6.00'),
         ('Daniel Tan', 'Paid by card · Absent, no refund', 'S\$6.00'),
-        ('Mei Ling', 'Left before start, refunded to her Wallet', 'Refunded'),
+        ('Mei Ling', 'Left before start, refunded', 'Refunded'),
       ],
     );
-  }
-
-  @override
-  Future<void> payout(int cents) async {
-    await _tick();
-    if (cents <= 0 || cents > _ready) {
-      throw const AuthFailure('That is more than is ready to pay out.');
-    }
-    _ready -= cents;
   }
 
   @override
   Future<PayoutAccount> payoutAccount() async => _account;
 
   @override
-  Future<void> savePayoutAccount(PayoutAccount account) async {
+  Future<String?> startPayouts() async {
     await _tick();
-    _account = account;
+    _account = const PayoutAccount(status: 'verified');
+    return null;
   }
+
+  @override
+  Future<void> setPayoutSchedule(String auto) async {
+    await _tick();
+    _account = PayoutAccount(status: _account.status, auto: auto);
+  }
+
+  @override
+  Future<String?> savedCard() async => 'Visa ending 4242';
+
+  @override
+  Future<void> saveCard() => _tick();
 }

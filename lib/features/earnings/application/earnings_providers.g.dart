@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'wallet_providers.dart';
+part of 'earnings_providers.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,85 +9,44 @@ part of 'wallet_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(walletSummary)
-final walletSummaryProvider = WalletSummaryProvider._();
+@ProviderFor(pointsSummary)
+final pointsSummaryProvider = PointsSummaryProvider._();
 
-final class WalletSummaryProvider
+final class PointsSummaryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<WalletSummary>,
-          WalletSummary,
-          FutureOr<WalletSummary>
+          AsyncValue<PointsSummary>,
+          PointsSummary,
+          FutureOr<PointsSummary>
         >
-    with $FutureModifier<WalletSummary>, $FutureProvider<WalletSummary> {
-  WalletSummaryProvider._()
+    with $FutureModifier<PointsSummary>, $FutureProvider<PointsSummary> {
+  PointsSummaryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'walletSummaryProvider',
+        name: r'pointsSummaryProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$walletSummaryHash();
+  String debugGetCreateSourceHash() => _$pointsSummaryHash();
 
   @$internal
   @override
-  $FutureProviderElement<WalletSummary> $createElement(
+  $FutureProviderElement<PointsSummary> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<WalletSummary> create(Ref ref) {
-    return walletSummary(ref);
+  FutureOr<PointsSummary> create(Ref ref) {
+    return pointsSummary(ref);
   }
 }
 
-String _$walletSummaryHash() => r'8064b3d8d9e687ce11715d5761f2466b39da5b1f';
-
-@ProviderFor(walletActivity)
-final walletActivityProvider = WalletActivityProvider._();
-
-final class WalletActivityProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<WalletEntry>>,
-          List<WalletEntry>,
-          FutureOr<List<WalletEntry>>
-        >
-    with
-        $FutureModifier<List<WalletEntry>>,
-        $FutureProvider<List<WalletEntry>> {
-  WalletActivityProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'walletActivityProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$walletActivityHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<WalletEntry>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<WalletEntry>> create(Ref ref) {
-    return walletActivity(ref);
-  }
-}
-
-String _$walletActivityHash() => r'1b47d9801ab9767ae7c98cccb371d1491f927e79';
+String _$pointsSummaryHash() => r'981132831507d29e1107032d1b095c160faf528d';
 
 @ProviderFor(pointsInfo)
 final pointsInfoProvider = PointsInfoProvider._();
@@ -125,7 +84,7 @@ final class PointsInfoProvider
   }
 }
 
-String _$pointsInfoHash() => r'b0f7d72d068f763637040d625d9d122ec19d2408';
+String _$pointsInfoHash() => r'b6ac8c3d8e16fb83ad235bed34e9a37740661a13';
 
 @ProviderFor(receipts)
 final receiptsProvider = ReceiptsProvider._();
@@ -166,7 +125,7 @@ final class ReceiptsProvider
   }
 }
 
-String _$receiptsHash() => r'22bba093b4242b303cb3904f4ebaa3451f8f370f';
+String _$receiptsHash() => r'52899386a91b11ada56f2457551a6445a73dcccd';
 
 @ProviderFor(earnings)
 final earningsProvider = EarningsProvider._();
@@ -200,7 +159,7 @@ final class EarningsProvider
   }
 }
 
-String _$earningsHash() => r'0c66eada42d144e500e32cc985a211406b38c1ea';
+String _$earningsHash() => r'f97520ba86e766da98cb0d5d37674f3477be968e';
 
 @ProviderFor(earningsDetail)
 final earningsDetailProvider = EarningsDetailFamily._();
@@ -259,7 +218,7 @@ final class EarningsDetailProvider
   }
 }
 
-String _$earningsDetailHash() => r'2f63ecd065512f6ce01db93d2b0a2f3ef5dd35de';
+String _$earningsDetailHash() => r'c4243c952a959c3b2632e3b658855c80a6d915c5';
 
 final class EarningsDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<EarningsBreakdown>, String> {
@@ -316,4 +275,37 @@ final class PayoutAccountProvider
   }
 }
 
-String _$payoutAccountHash() => r'4d5ae82b674d321e6590f7dd676d9e71d2416cff';
+String _$payoutAccountHash() => r'fc3647e6579653b9de2af7ba8b978f78de2bb0ba';
+
+@ProviderFor(savedCard)
+final savedCardProvider = SavedCardProvider._();
+
+final class SavedCardProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  SavedCardProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'savedCardProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$savedCardHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    return savedCard(ref);
+  }
+}
+
+String _$savedCardHash() => r'b3aa16261eab6ebf1b9828a6261e30fe69875628';

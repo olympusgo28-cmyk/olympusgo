@@ -191,7 +191,7 @@ void main() {
       );
       await seller.markShipped(order.id, courier: 'Ninja Van', tracking: 'NV1');
       await expectLater(
-        buyer.cancelOrder(order.id, reason: 'Late', toWallet: true),
+        buyer.cancelOrder(order.id, reason: 'Late'),
         throwsA(isA<Object>()),
       );
       await buyer.confirmReceived(order.id);
@@ -240,14 +240,7 @@ void main() {
         only: CartLine(id: 'x', product: racket),
       )).single;
       expect(second.deliveryCents, 0);
-      expect(
-        await buyer.cancelOrder(
-          second.id,
-          reason: 'Changed my mind',
-          toWallet: true,
-        ),
-        0,
-      );
+      expect(await buyer.cancelOrder(second.id, reason: 'Changed my mind'), 0);
       expect((await buyer.order(second.id)).step, OrderStep.cancelled);
       expect(
         (await seller.sellerProducts())

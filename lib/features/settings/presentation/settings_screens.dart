@@ -75,9 +75,9 @@ class SettingsScreen extends StatelessWidget {
           children: [
             NavRow(
               icon: OgIcons.wallet,
-              title: 'Wallet and points',
-              subtitle: 'Refunds, withdrawals and points',
-              onTap: () => context.push(Routes.wallet),
+              title: 'Earnings and receipts',
+              subtitle: 'What you’ve paid and what you’ve earned',
+              onTap: () => context.push(Routes.earnings),
             ),
             NavRow(
               icon: OgIcons.bag,
@@ -844,7 +844,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     ),
     (
       'Where is my refund?',
-      'Refunds go to your Wallet first, then to your card or bank if you ask.',
+      'Refunds go back to the card or PayNow you paid with. PayNow takes minutes, and a card takes 3 to 5 working days.',
     ),
     (
       'How do I block or report someone?',

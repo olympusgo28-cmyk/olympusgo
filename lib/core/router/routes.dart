@@ -221,15 +221,13 @@ abstract final class Routes {
   static String gearItem(String id) => '/gear/$id';
   static String gearEdit(String id) => '/gear/$id/edit';
 
-  // Wallet.
-  static const wallet = '/wallet';
-  static const walletWithdraw = '/wallet/withdraw';
-  static const points = '/wallet/points';
-  static const receipts = '/wallet/receipts';
-  static const earnings = '/wallet/earnings';
-  static String earningsDetail(String id) => '/wallet/earnings/$id';
-  static const payout = '/wallet/payout';
-  static const payoutAccount = '/wallet/payout-account';
+  // Earnings and receipts.
+  static const points = '/points';
+  static const receipts = '/receipts';
+  static const earnings = '/earnings';
+  static String earningsDetail(String id) => '/earnings/$id';
+  static const payoutAccount = '/earnings-payout-account';
+  static const paymentMethods = '/payment-methods';
 
   // Shop.
   static const shop = '/shop';

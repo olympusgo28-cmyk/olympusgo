@@ -959,7 +959,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
           ],
           Text(
             'Platform fee: 10%, minimum S\$2. '
-            '${!paid && !d.playersPayFee ? 'If a player leaves before the Meet starts, your S\$2 for them is refunded.' : 'Players who leave before the Meet starts get all of it back to their Wallet, or the price without the platform fee to their card. If you cancel, they get all of it back and card fees come off your earnings.'}',
+            '${!paid && !d.playersPayFee ? 'If a player leaves before the Meet starts, your S\$2 for them is refunded.' : 'Players who leave before the Meet starts get the price back, without the platform fee. If you cancel, they get all of it back and card fees come off your earnings.'}',
             style: OgText.body(13, height: 1.45, color: c.textMuted),
           ),
         ],
@@ -973,8 +973,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
         tone: KitTone.info,
       ),
       Text(
-        'You mark attendance at the Meet. Present players get Passport credit '
-        'and points.',
+        'You mark attendance at the Meet. Present players get Passport credit.',
         style: OgText.body(14, height: 1.45, color: c.textMuted),
       ),
       CreateSection(

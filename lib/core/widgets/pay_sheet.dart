@@ -75,10 +75,11 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
   String get _total => 'S\$${money(widget.totalCents)}';
 
   Future<void> _confirm() async {
-    // Demo mode skips the device check, so a simulator never asks for its
-    // passcode.
+    // Demo mode and the local stand-in skip the device check, so a simulator
+    // never asks for its passcode.
     final ok =
         !Env.hasSupabase ||
+        Env.localStandIn ||
         await ref
             .read(biometricVaultProvider)
             .authenticate('Pay $_total to ${widget.payee}');

@@ -24,6 +24,7 @@ environment:
 workspace:
   - packages/og_design
   - packages/match_engine
+  - packages/og_money
   - admin
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -59,6 +60,8 @@ dependencies:
     path: packages/og_design
   match_engine:
     path: packages/match_engine
+  og_money:
+    path: packages/og_money
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
   geolocator: ^14.1.2

@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
-import '../../wallet/data/wallet_repository.dart';
+import '../../earnings/data/earnings_repository.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
 
@@ -43,11 +43,7 @@ abstract interface class ShopRepository {
   Future<void> confirmReceived(String id);
 
   /// Cancels before shipping. Returns the refund in cents.
-  Future<int> cancelOrder(
-    String id, {
-    required String reason,
-    required bool toWallet,
-  });
+  Future<int> cancelOrder(String id, {required String reason});
 
   Future<Order> bookService(
     String productId, {
@@ -483,11 +479,7 @@ class SupabaseShopRepository implements ShopRepository {
   });
 
   @override
-  Future<int> cancelOrder(
-    String id, {
-    required String reason,
-    required bool toWallet,
-  }) => _guard(
+  Future<int> cancelOrder(String id, {required String reason}) => _guard(
     () async =>
         await _rpc('shop_cancel', {'p_order': id, 'p_reason': reason}) as int,
   );
@@ -654,7 +646,7 @@ class DemoShopRepository implements ShopRepository {
     _seedOrders();
   }
 
-  final DemoWalletRepository? _wallet;
+  final DemoEarningsRepository? _wallet;
   static const myShop = 'm-racket';
 
   Future<void> _tick() => Future.delayed(const Duration(milliseconds: 200));
@@ -1253,13 +1245,6 @@ class DemoShopRepository implements ShopRepository {
       );
     }
     final spent = pointsCents - pointsLeft;
-    if (paidWith == 'Wallet') {
-      _wallet?.spend(
-        'Shop order',
-        placed.map((o) => o.mallName).join(', '),
-        cents: placed.fold(0, (a, o) => a + o.totalCents),
-      );
-    }
     if (spent > 0) {
       _wallet?.spend('Shop order', placed.first.mallName, points: spent / 100);
     }
@@ -1286,11 +1271,7 @@ class DemoShopRepository implements ShopRepository {
   }
 
   @override
-  Future<int> cancelOrder(
-    String id, {
-    required String reason,
-    required bool toWallet,
-  }) async {
+  Future<int> cancelOrder(String id, {required String reason}) async {
     await _tick();
     final i = _orders.indexWhere((o) => o.id == id);
     final o = _orders[i];
@@ -1301,15 +1282,8 @@ class DemoShopRepository implements ShopRepository {
     _orders[i] = o.copyWith(
       step: OrderStep.cancelled,
       refundCents: back,
-      refundTo: toWallet ? 'Wallet' : 'Card ending 4242',
+      refundTo: 'Card ending 4242',
     );
-    if (toWallet) {
-      _wallet?.credit(
-        'Refund, ${o.summary}',
-        '${o.mallName}, order cancelled',
-        cents: back,
-      );
-    }
     if (o.pointsCents > 0) {
       _wallet?.credit(
         'Refund, ${o.summary}',

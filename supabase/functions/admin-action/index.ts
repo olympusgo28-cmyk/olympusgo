@@ -19,6 +19,15 @@ const ACTIONS = new Set<string>([
   "staff_preset_save",
   "staff_level_save",
   "staff_result_correct",
+  "staff_refund_issue",
+  "staff_refund_retry",
+  "staff_refund_void",
+  "staff_refund_manual",
+  "staff_hold_decide",
+  "staff_payout_approve",
+  "staff_alert_close",
+  "staff_suspense_clear",
+  "staff_venue_qr",
 ]);
 
 const cors = {

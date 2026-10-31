@@ -17,7 +17,7 @@ import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/academy_providers.dart';
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';

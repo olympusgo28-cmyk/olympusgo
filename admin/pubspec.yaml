@@ -14,6 +14,8 @@ dependencies:
   go_router: ^18.0.2
   og_design:
     path: ../packages/og_design
+  og_money:
+    path: ../packages/og_money
   supabase_flutter: ^2.18.3
 
 dev_dependencies:

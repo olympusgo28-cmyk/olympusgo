@@ -30,11 +30,7 @@ abstract interface class TournamentRepository {
   });
 
   /// Withdraws. Returns the refund in cents.
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  });
+  Future<int> withdraw(String id, {required bool injury});
 
   /// The invited partner says yes or no.
   Future<void> answerInvite(String id, String entryId, {required bool accept});
@@ -370,13 +366,9 @@ class SupabaseTournamentRepository implements TournamentRepository {
   });
 
   @override
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  }) async {
+  Future<int> withdraw(String id, {required bool injury}) async {
     await _guard(() => _rpc('tournament_withdraw', {'p_activity': id}));
-    return _play.leave(id, toWallet: toWallet);
+    return _play.leave(id);
   }
 
   @override
@@ -1202,11 +1194,7 @@ class DemoTournamentRepository implements TournamentRepository {
   }
 
   @override
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  }) async {
+  Future<int> withdraw(String id, {required bool injury}) async {
     await _tick();
     final a = _a(id);
     final mine = _mine.remove(id);
@@ -1219,7 +1207,7 @@ class DemoTournamentRepository implements TournamentRepository {
         a.registrationClosesAt == null ||
         DateTime.now().isBefore(a.registrationClosesAt!);
     if (!open && !injury) return 0;
-    return toWallet ? mine.paidCents : mine.entryCents;
+    return mine.entryCents;
   }
 
   @override

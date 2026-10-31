@@ -48,3 +48,7 @@ values ('00000000-0000-4000-a000-0000000000a1', '00000000-0000-4000-a000-0000000
   '{"sub": "00000000-0000-4000-a000-0000000000a1", "email": "admin@test.local"}', 'email', now(), now(), now());
 insert into public.staff (user_id, role) values ('00000000-0000-4000-a000-0000000000a1', 'super');
 
+-- The money worker's timer. The secret matches the local stand-in, and hosted
+-- projects hold their own in Vault.
+select vault.create_secret('http://supabase_kong_olympusGO:8000/functions/v1/money-worker', 'money_worker_url');
+select vault.create_secret('local-worker-secret', 'money_worker_secret');

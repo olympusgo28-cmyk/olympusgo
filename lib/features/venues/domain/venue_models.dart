@@ -118,7 +118,6 @@ abstract class CourtBooking with _$CourtBooking {
 
   bool get canCancelFree => DateTime.now().isBefore(freeCancelUntil);
 
-  /// Back to the Wallet: all of it. To a card: the court price only.
-  int refundTo({required bool wallet}) =>
-      !canCancelFree ? 0 : (wallet ? paidCents : courtCents);
+  /// In time, the court price without the fee (R-REF-8).
+  int get refundDueCents => canCancelFree ? courtCents : 0;
 }

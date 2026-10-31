@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/format.dart';
@@ -13,11 +14,13 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../../core/widgets/place_code.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../play/domain/activity.dart' show money;
-import '../application/wallet_providers.dart';
-import '../data/wallet_repository.dart';
+import '../../play/presentation/pay_flow.dart';
+import '../application/earnings_providers.dart';
+import '../data/earnings_repository.dart';
 
 /// "S$24.00", "−S$8.00", "+S$8.00".
 String cash(int cents, {bool sign = false}) {
@@ -36,13 +39,11 @@ class _BalanceCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.note,
-    this.action,
   });
 
   final String label;
   final String value;
   final String note;
-  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +76,6 @@ class _BalanceCard extends StatelessWidget {
             note,
             style: OgText.body(14, height: 1.4, color: const Color(0xFFC9C6BC)),
           ),
-          if (action != null) ...[const SizedBox(height: 14), action!],
         ],
       ),
     );
@@ -135,197 +135,6 @@ class MoneyRow extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Wallet: balance, points, recent movements and the refund rules.
-class WalletScreen extends ConsumerWidget {
-  const WalletScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final s = ref.watch(walletSummaryProvider).value;
-    final recent = ref.watch(walletActivityProvider).value;
-    return KitScaffold(
-      header: KitHeader(
-        title: 'Wallet',
-        trailing: KitLink(
-          'Receipts',
-          onPressed: () => context.push(Routes.receipts),
-        ),
-      ),
-      children: [
-        _BalanceCard(
-          label: 'Balance',
-          value: s == null ? '…' : cash(s.balanceCents),
-          note:
-              'Refunds and rewards land here. Spend it on Olympus or withdraw '
-              'it to your bank.',
-          action: KitButton(
-            label: 'Withdraw to my bank',
-            style: KitButtonStyle.gold,
-            onPressed: s == null || s.balanceCents <= 0
-                ? null
-                : () => context.push(Routes.walletWithdraw),
-          ),
-        ),
-        KitCard(
-          children: [
-            KitNavTile(
-              icon: OgIcons.pointsStar,
-              title: '${s?.points.toStringAsFixed(1) ?? '…'} points',
-              subtitle: 'Worth S\$1 off each at partner shops',
-              onTap: () => context.push(Routes.points),
-            ),
-            KitNavTile(
-              icon: OgIcons.walletCard,
-              title: 'Earnings and payouts',
-              subtitle: 'What your Meets, tournaments and events made',
-              onTap: () => context.push(Routes.earnings),
-            ),
-          ],
-        ),
-        Text('Recent', style: OgText.heading(20)),
-        if (recent == null)
-          const CupertinoActivityIndicator()
-        else if (recent.isEmpty)
-          Text('Nothing yet.', style: OgText.body(14, color: c.textMuted))
-        else
-          KitCard(
-            children: [
-              for (final e in recent)
-                MoneyRow(
-                  title: e.title,
-                  sub: '${e.sub} · ${Fmt.day(e.at)}',
-                  amount: cash(e.cents, sign: true),
-                  good: e.cents > 0,
-                ),
-            ],
-          ),
-        const KitNote(
-          'When you cancel in time, you choose: all of it back here, '
-          'instantly, or the price without the platform fee back to your '
-          'card. If the organizer cancels, you get all of it back either way. '
-          'You can’t add money to the wallet yourself yet.',
-        ),
-      ],
-    );
-  }
-}
-
-/// Picks an amount out of [max]: all of it, or two rounder amounts.
-List<int> _amounts(int max) => [
-  max,
-  for (final x in const [20000, 10000, 5000, 2000, 1000])
-    if (x < max) x,
-].take(3).toList();
-
-/// Send Wallet money to the bank.
-class WithdrawScreen extends ConsumerStatefulWidget {
-  const WithdrawScreen({super.key});
-
-  @override
-  ConsumerState<WithdrawScreen> createState() => _WithdrawScreenState();
-}
-
-class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
-  int? _amount;
-  bool _busy = false;
-  int? _done;
-
-  Future<void> _go(int cents) async {
-    setState(() => _busy = true);
-    try {
-      await ref.read(walletRepositoryProvider).withdraw(cents);
-      HapticFeedback.mediumImpact();
-      refreshWallet(ref.invalidate);
-      if (mounted) setState(() => _done = cents);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final s = ref.watch(walletSummaryProvider).value;
-    final account = ref.watch(payoutAccountProvider).value;
-    if (_done case final sent?) {
-      return KitScaffold(
-        header: const KitHeader(title: 'Withdraw'),
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-        bottom: [
-          KitButton(label: 'Back to Wallet', onPressed: () => context.pop()),
-        ],
-        children: [
-          const KitDoneBanner(title: 'On its way'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '${cash(sent)} to ${account?.label ?? 'your bank'}. Your wallet '
-              'balance is updated now. You get a message when the money lands.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
-            ),
-          ),
-        ],
-      );
-    }
-    if (s == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Withdraw'),
-        children: [CupertinoActivityIndicator()],
-      );
-    }
-    final options = _amounts(s.balanceCents);
-    final amount = _amount ?? options.first;
-    return KitScaffold(
-      header: const KitHeader(title: 'Withdraw'),
-      bottom: [
-        KitButton(
-          label: 'Withdraw ${cash(amount)}',
-          loading: _busy,
-          onPressed: account?.isSet == true ? () => _go(amount) : null,
-        ),
-      ],
-      children: [
-        KitTitle(
-          'Withdraw to your bank',
-          lead: '${cash(s.balanceCents)} is in your wallet.',
-        ),
-        Column(
-          children: [
-            for (final (i, a) in options.indexed)
-              KitChoiceRow(
-                title: i == 0 ? 'All, ${cash(a)}' : cash(a),
-                selected: amount == a,
-                onTap: () => setState(() => _amount = a),
-              ),
-          ],
-        ),
-        Text('Send to', style: OgText.heading(20)),
-        KitCard(
-          children: [
-            KitNavTile(
-              icon: OgIcons.walletCard,
-              title: account?.isSet == true
-                  ? 'Bank account'
-                  : 'Add a bank account',
-              subtitle: account?.label ?? '…',
-              onTap: () => context.push(Routes.payoutAccount),
-            ),
-          ],
-        ),
-        const KitKeyValue('Arrives', '1 to 2 working days'),
-        const KitKeyValue('Fee', 'Free'),
-        Text(
-          'Points can’t be withdrawn. They stay in your points wallet.',
-          style: OgText.body(13, color: c.textMuted),
-        ),
-      ],
     );
   }
 }
@@ -458,7 +267,7 @@ class PointsWalletScreen extends ConsumerWidget {
         ),
         Text(
           '1 point takes S\$1 off. Each item has its own limit. Points left '
-          'over stay in your wallet.',
+          'over stay with you.',
           style: OgText.body(13, color: c.textMuted),
         ),
         Text('Activity', style: OgText.heading(20)),
@@ -641,15 +450,17 @@ class EarningsScreen extends ConsumerWidget {
         _BalanceCard(
           label: 'Ready to pay out',
           value: cash(e.readyCents),
-          note: 'Paid to your bank every Monday, or take it out now.',
-          action: KitButton(
-            label: 'Pay out now',
-            style: KitButtonStyle.gold,
-            onPressed: e.readyCents > 0
-                ? () => context.push(Routes.payout)
-                : null,
-          ),
+          note: account?.isSet == true
+              ? 'Paid to your bank each week, once our team approves the run.'
+              : 'Set up your payout account so we can pay you.',
         ),
+        if (e.owedCents > 0)
+          KitNote(
+            'Fees of ${cash(e.owedCents)} are more than your earnings. They '
+            'come off your next payouts.',
+            tone: KitTone.warn,
+          ),
+        if (e.feeDebtCents > 0) _FeesOwed(cents: e.feeDebtCents),
         Row(
           children: [
             tile(cash(e.heldCents), 'held until attendance'),
@@ -691,12 +502,59 @@ class EarningsScreen extends ConsumerWidget {
           children: [
             KitNavTile(
               icon: OgIcons.walletCard,
-              title: 'Bank account',
+              title: 'Payout account',
               subtitle: account?.label ?? '…',
               onTap: () => context.push(Routes.payoutAccount),
             ),
+            KitNavTile(
+              icon: OgIcons.clipboardList,
+              title: 'Receipts',
+              subtitle: 'What you’ve paid and had back',
+              onTap: () => context.push(Routes.receipts),
+            ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Organizer fees that couldn't be charged, and a way to clear them.
+class _FeesOwed extends ConsumerStatefulWidget {
+  const _FeesOwed({required this.cents});
+
+  final int cents;
+
+  @override
+  ConsumerState<_FeesOwed> createState() => _FeesOwedState();
+}
+
+class _FeesOwedState extends ConsumerState<_FeesOwed> {
+  bool _busy = false;
+
+  Future<void> _pay() async {
+    setState(() => _busy = true);
+    try {
+      await payFeesOwed(context, ref, widget.cents);
+      refreshEarnings(ref.invalidate);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KitNote(
+          'We couldn’t charge ${cash(widget.cents)} of organizer fees to your '
+          'card. Your players keep their spots. Clear it to publish another '
+          'Meet where you cover the fee.',
+          tone: KitTone.warn,
+        ),
+        const SizedBox(height: 8),
+        KitButton(label: 'Pay it now', loading: _busy, onPressed: _pay),
       ],
     );
   }
@@ -757,118 +615,8 @@ class EarningsDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Take earnings out now.
-class PayoutScreen extends ConsumerStatefulWidget {
-  const PayoutScreen({super.key});
-
-  @override
-  ConsumerState<PayoutScreen> createState() => _PayoutScreenState();
-}
-
-class _PayoutScreenState extends ConsumerState<PayoutScreen> {
-  int? _amount;
-  bool _instant = false;
-  bool _busy = false;
-  int? _done;
-
-  Future<void> _go(int cents) async {
-    setState(() => _busy = true);
-    try {
-      await ref.read(walletRepositoryProvider).payout(cents);
-      HapticFeedback.mediumImpact();
-      refreshWallet(ref.invalidate);
-      if (mounted) setState(() => _done = cents);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final e = ref.watch(earningsProvider).value;
-    final account = ref.watch(payoutAccountProvider).value;
-    if (_done case final sent?) {
-      return KitScaffold(
-        header: const KitHeader(title: 'Pay out'),
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-        bottom: [
-          KitButton(label: 'Back to earnings', onPressed: () => context.pop()),
-        ],
-        children: [
-          const KitDoneBanner(title: 'On its way'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '${cash(sent)} to ${_instant ? 'PayNow' : account?.label ?? 'your bank'}. You get a message when it lands. It also shows under Earnings.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
-            ),
-          ),
-        ],
-      );
-    }
-    if (e == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Pay out'),
-        children: [CupertinoActivityIndicator()],
-      );
-    }
-    final options = _amounts(e.readyCents);
-    final amount = _amount ?? options.first;
-    return KitScaffold(
-      header: const KitHeader(title: 'Pay out'),
-      bottom: [
-        KitButton(
-          label: 'Pay out ${cash(amount)}',
-          loading: _busy,
-          onPressed: account?.isSet == true ? () => _go(amount) : null,
-        ),
-      ],
-      children: [
-        KitTitle(
-          'Take out your earnings',
-          lead: '${cash(e.readyCents)} is ready.',
-        ),
-        Column(
-          children: [
-            for (final (i, a) in options.indexed)
-              KitChoiceRow(
-                title: i == 0 ? 'All, ${cash(a)}' : cash(a),
-                selected: amount == a,
-                onTap: () => setState(() => _amount = a),
-              ),
-          ],
-        ),
-        Text('Send to', style: OgText.heading(20)),
-        KitChoiceRow(
-          title: 'Bank account',
-          subtitle: account?.label ?? '…',
-          tag: 'Free',
-          selected: !_instant,
-          onTap: () => setState(() => _instant = false),
-        ),
-        KitChoiceRow(
-          title: 'PayNow, instant',
-          subtitle: account?.payNow.isNotEmpty == true
-              ? account!.payNow
-              : 'Add PayNow in your payout account',
-          tag: 'S\$0.50',
-          selected: _instant,
-          onTap: () => setState(() => _instant = true),
-        ),
-        KitKeyValue(
-          'Arrives',
-          _instant ? 'Within minutes' : '1 to 2 working days',
-        ),
-        KitKeyValue('Fee', _instant ? 'S\$0.50' : 'Free'),
-      ],
-    );
-  }
-}
-
-/// Where Olympus pays you. Opens with Face ID.
+/// Where Olympus pays you. Stripe collects the bank details and runs the
+/// checks (R-PAY-4), and only the owner gets here (R-PAY-3). Opens with Face ID.
 class PayoutAccountScreen extends ConsumerStatefulWidget {
   const PayoutAccountScreen({super.key});
 
@@ -879,12 +627,6 @@ class PayoutAccountScreen extends ConsumerStatefulWidget {
 
 class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
   bool? _unlocked;
-  final _holder = TextEditingController();
-  final _bank = TextEditingController();
-  final _number = TextEditingController();
-  final _payNow = TextEditingController();
-  String _auto = 'Every Monday';
-  bool _loaded = false;
   bool _busy = false;
 
   @override
@@ -904,34 +646,13 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
     if (mounted) setState(() => _unlocked = ok);
   }
 
-  @override
-  void dispose() {
-    _holder.dispose();
-    _bank.dispose();
-    _number.dispose();
-    _payNow.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
+  Future<void> _start() async {
     setState(() => _busy = true);
     try {
-      await ref
-          .read(walletRepositoryProvider)
-          .savePayoutAccount(
-            PayoutAccount(
-              holder: _holder.text.trim(),
-              bank: _bank.text.trim(),
-              number: _number.text.replaceAll(' ', ''),
-              payNow: _payNow.text.trim(),
-              auto: _auto,
-            ),
-          );
+      final url = await ref.read(earningsRepositoryProvider).startPayouts();
       HapticFeedback.mediumImpact();
-      refreshWallet(ref.invalidate);
-      if (!mounted) return;
-      showOgToast(context, 'Saved. It applies from the next payout.');
-      context.pop();
+      refreshEarnings(ref.invalidate);
+      if (url != null) await launchUrl(Uri.parse(url));
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -939,19 +660,20 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
     }
   }
 
+  Future<void> _schedule(String auto) async {
+    try {
+      await ref.read(earningsRepositoryProvider).setPayoutSchedule(auto);
+      refreshEarnings(ref.invalidate);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.og;
     final a = ref.watch(payoutAccountProvider).value;
-    if (a != null && !_loaded) {
-      _loaded = true;
-      _holder.text = a.holder;
-      _bank.text = a.bank;
-      _number.text = a.number;
-      _payNow.text = a.payNow;
-      _auto = a.auto;
-    }
-    if (_unlocked != true) {
+    if (_unlocked != true || a == null) {
       return KitScaffold(
         header: const KitHeader(title: 'Payout account'),
         children: [
@@ -968,39 +690,96 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
     }
     return KitScaffold(
       header: const KitHeader(title: 'Payout account'),
-      bottom: [KitButton(label: 'Save', loading: _busy, onPressed: _save)],
+      bottom: [
+        if (!a.isSet)
+          KitButton(
+            label: a.status == 'none' ? 'Set up payouts' : 'Continue set-up',
+            loading: _busy,
+            onPressed: _start,
+          ),
+      ],
       children: [
-        const KitTitle(
-          'Where we pay you',
-          lead: 'Changes take effect from the next payout.',
-        ),
-        KitInput(label: 'Account holder name', controller: _holder),
-        KitInput(label: 'Bank', controller: _bank, hint: 'DBS, OCBC, UOB'),
-        KitInput(
-          label: 'Account number',
-          controller: _number,
-          keyboardType: TextInputType.number,
-        ),
-        KitInput(
-          label: 'PayNow mobile or UEN',
-          controller: _payNow,
-          hint: 'Optional',
-        ),
-        Text('Automatic payout', style: OgText.heading(20)),
-        Column(
-          children: [
-            for (final o in const ['Every Monday', 'Every month', 'Off'])
-              KitChoiceRow(
-                title: o,
-                selected: _auto == o,
-                onTap: () => setState(() => _auto = o),
-              ),
-          ],
-        ),
+        KitTitle('Where we pay you', lead: a.label),
+        if (a.isSet) ...[
+          KitButton.outline(
+            label: 'Show my code',
+            onPressed: () => showPlaceCode(
+              context,
+              title: 'My code',
+              load: (rotate) =>
+                  ref.read(playRepositoryProvider).vendorCode(rotate: rotate),
+            ),
+          ),
+          Text('Automatic payout', style: OgText.heading(20)),
+          Column(
+            children: [
+              for (final o in const ['Every Monday', 'Every month', 'Off'])
+                KitChoiceRow(
+                  title: o,
+                  selected: a.auto == o,
+                  onTap: () => _schedule(o),
+                ),
+            ],
+          ),
+        ] else
+          const KitNote(
+            'Our payment partner, Stripe, checks who you are and takes your '
+            'bank details. OlympusGO never sees your full account number.',
+          ),
         Text(
           'For a club or academy, the owner sets this. Admins and coaches can '
           'see earnings but can’t change the account.',
           style: OgText.body(13, height: 1.4, color: c.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+/// The card organizer-pays Meets charge. Cards are never stored by Olympus.
+class PaymentMethodsScreen extends ConsumerStatefulWidget {
+  const PaymentMethodsScreen({super.key});
+
+  @override
+  ConsumerState<PaymentMethodsScreen> createState() =>
+      _PaymentMethodsScreenState();
+}
+
+class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
+  bool _busy = false;
+
+  Future<void> _save() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(earningsRepositoryProvider).saveCard();
+      HapticFeedback.mediumImpact();
+      refreshEarnings(ref.invalidate);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final card = ref.watch(savedCardProvider);
+    return KitScaffold(
+      header: const KitHeader(title: 'Payment methods'),
+      bottom: [
+        KitButton(
+          label: card.value == null ? 'Save a card' : 'Replace this card',
+          loading: _busy,
+          onPressed: card.isLoading ? null : _save,
+        ),
+      ],
+      children: [
+        KitTitle(
+          card.value ?? 'No card saved',
+          lead:
+              'If you cover the S\$2.00 fee on a free Meet, it’s charged to '
+              'this card each time a player joins. You can pay for anything '
+              'else with a card or PayNow when you book.',
         ),
       ],
     );

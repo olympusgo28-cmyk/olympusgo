@@ -305,8 +305,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
                   title: 'Pay in app',
                   subtitle:
                       'They get a payment request for '
-                      'S\$${money(a.feeCents + fee)}, fee included. Points go '
-                      'to whoever pays, after you mark them Present.',
+                      'S\$${money(a.feeCents + fee)}, fee included.',
                   selected: !_cash,
                   onTap: () => setState(() => _cash = false),
                 ),
@@ -314,8 +313,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
                   title: 'Cash to organizer',
                   subtitle:
                       'You collect S\$${money(a.feeCents)} yourself. The '
-                      'S\$${money(fee)} platform fee is charged to the club, '
-                      'and the club earns the points.',
+                      'S\$${money(fee)} platform fee is charged to the club.',
                   selected: _cash,
                   onTap: () => setState(() => _cash = true),
                 ),
@@ -1069,13 +1067,6 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
           children: [CupertinoActivityIndicator()],
         );
       }
-      final present =
-          ref
-              .watch(meetPlayersProvider(a.id))
-              .value
-              ?.where((x) => x.attendance == Attendance.present && !x.isHost)
-              .length ??
-          0;
       return KitScaffold(
         header: const KitHeader(title: 'Cancel Meet'),
         bottom: [
@@ -1136,19 +1127,13 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
                   'Card fees, from your earnings',
                   'S\$${money(p.cardFeeCents)}',
                 ),
-                KitKeyValue(
-                  'Points',
-                  present == 0
-                      ? 'None, nobody was marked Present'
-                      : '$present present keep theirs',
-                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Each player picks their Wallet or card. Card companies keep '
-                  'their fee when a card payment is refunded, so the '
-                  'S\$${money(p.cardFeeCents)} for ${p.cardPayments} card '
-                  '${p.cardPayments == 1 ? 'payment' : 'payments'} comes off '
-                  'your earnings.',
+                  'Money goes back to the card or PayNow each player used. Card '
+                  'companies keep their fee when a card payment is refunded, '
+                  'so the S\$${money(p.cardFeeCents)} for ${p.cardPayments} '
+                  'card ${p.cardPayments == 1 ? 'payment' : 'payments'} comes '
+                  'off your earnings.',
                   style: OgText.body(13, height: 1.45, color: c.textMuted),
                 ),
               ],

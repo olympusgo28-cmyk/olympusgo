@@ -181,7 +181,7 @@ class RefundRulesScreen extends StatelessWidget {
           title: 'If the organizer cancels',
           child: KitCheckList([
             'You get back everything you paid, platform fee included',
-            'You choose: your Wallet, instantly, or your card or PayNow, in 3 to 5 working days',
+            'It goes back to the card or PayNow you used, in minutes for PayNow and 3 to 5 working days for a card',
             'The same if the venue closes or the session can’t go ahead',
           ]),
         ),
@@ -191,8 +191,8 @@ class RefundRulesScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const KitCheckList([
-                'To your Wallet: all of it, platform fee included, instantly',
-                'To your card or PayNow: the price without the platform fee, in 3 to 5 working days',
+                'You get the price back, without the platform fee',
+                'It goes back to the card or PayNow you used',
               ]),
               const SizedBox(height: 8),
               for (final (k, v) in const [
@@ -228,14 +228,6 @@ class RefundRulesScreen extends StatelessWidget {
           child: Text(
             'Olympus holds your payment until the organizer marks attendance, or until 24 hours after the end if they don’t. If something goes wrong, report it before then and we hold the money while we look.',
           ),
-        ),
-        const KitBlock(
-          title: 'Your wallet',
-          child: KitCheckList([
-            'Holds refunds and rewards',
-            'Spend it on Olympus, or withdraw it to your bank for free',
-            'You can’t add money to it yourself yet',
-          ]),
         ),
         const KitNote(
           'These rules are part of the Terms. Your rights under the law in your country come first.',

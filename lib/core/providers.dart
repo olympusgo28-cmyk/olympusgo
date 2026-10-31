@@ -19,7 +19,7 @@ import '../features/play/data/payment_gateway.dart';
 import '../features/play/data/play_repository.dart';
 import '../features/settings/data/settings_repository.dart';
 import '../features/shop/data/shop_repository.dart';
-import '../features/wallet/data/wallet_repository.dart';
+import '../features/earnings/data/earnings_repository.dart';
 import '../features/social/data/chat_repository.dart';
 import '../features/social/data/social_repository.dart';
 import 'config/env.dart';
@@ -82,7 +82,7 @@ DiscoverRepository discoverRepository(Ref ref) => Env.hasSupabase
 
 @Riverpod(keepAlive: true)
 PaymentGateway paymentGateway(Ref ref) => Env.hasSupabase
-    ? SupabasePaymentGateway()
+    ? SupabasePaymentGateway(Supabase.instance.client)
     : DemoPaymentGateway(
         ref.watch(playRepositoryProvider) as DemoPlayRepository,
       );
@@ -121,13 +121,13 @@ ClubRepository clubRepository(Ref ref) => Env.hasSupabase
 ShopRepository shopRepository(Ref ref) => Env.hasSupabase
     ? SupabaseShopRepository(Supabase.instance.client)
     : DemoShopRepository(
-        ref.watch(walletRepositoryProvider) as DemoWalletRepository,
+        ref.watch(earningsRepositoryProvider) as DemoEarningsRepository,
       );
 
 @Riverpod(keepAlive: true)
-WalletRepository walletRepository(Ref ref) => Env.hasSupabase
-    ? SupabaseWalletRepository(Supabase.instance.client)
-    : DemoWalletRepository();
+EarningsRepository earningsRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseEarningsRepository(Supabase.instance.client)
+    : DemoEarningsRepository();
 
 @Riverpod(keepAlive: true)
 VenueRepository venueRepository(Ref ref) => Env.hasSupabase

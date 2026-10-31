@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
@@ -19,7 +20,7 @@ import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../shell/main_shell.dart';
 import '../../social/application/social_providers.dart';
-import '../../wallet/application/wallet_providers.dart';
+import '../../earnings/application/earnings_providers.dart';
 import '../domain/profile.dart';
 
 const _muted = Color(0xFFC9C6BC);
@@ -35,7 +36,7 @@ class ProfileScreen extends ConsumerWidget {
     ref.invalidate(mySummaryProvider);
     ref.invalidate(mySocialProvider);
     ref.invalidate(myScheduleProvider);
-    ref.invalidate(walletSummaryProvider);
+    ref.invalidate(pointsSummaryProvider);
   }
 
   @override
@@ -45,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
     final summary = ref.watch(mySummaryProvider).value;
     final sports = ref.watch(mySportsProvider).value ?? const [];
     final social = ref.watch(mySocialProvider).value;
-    final wallet = ref.watch(walletSummaryProvider).value;
+    final wallet = ref.watch(pointsSummaryProvider).value;
     final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
     final teams = ref.watch(teamListProvider(ClubTab.mine)).value ?? const [];
     final upcoming = (ref.watch(myScheduleProvider).value ?? const [])
@@ -136,7 +137,7 @@ class ProfileScreen extends ConsumerWidget {
                       localRank: summary?.localRank,
                       area: summary?.area,
                     ),
-                  if (wallet != null)
+                  if (wallet != null && !Env.hasSupabase)
                     Pressable(
                       semanticLabel:
                           '${wallet.points.toStringAsFixed(1)} points. Use points',
@@ -253,10 +254,9 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push(Routes.passport),
                         ),
                         _ListRow(
-                          title: 'Wallet',
-                          subtitle:
-                              'S\$${money(wallet?.balanceCents ?? 0)} · refunds, withdraw, history',
-                          onTap: () => context.push(Routes.wallet),
+                          title: 'Earnings and receipts',
+                          subtitle: 'What you’ve paid and what you’ve earned',
+                          onTap: () => context.push(Routes.earnings),
                         ),
                         _ListRow(
                           title: 'Followers and following',

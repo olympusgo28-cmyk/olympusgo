@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:og_money/og_money.dart';
 
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
@@ -60,7 +61,7 @@ enum ActivityFormat {
 }
 
 /// Where the viewer stands with an activity.
-enum MyStatus { none, joined, waitlist, requested }
+enum MyStatus { none, joined, waitlist, requested, offered, reserved }
 
 @freezed
 abstract class Venue with _$Venue {
@@ -184,8 +185,8 @@ abstract class Activity with _$Activity {
 
   bool get isFree => totalCents == 0;
 
-  /// The organizer's own spot: no session fee, just the platform fee.
-  int get hostSpotCents => feeCents > 0 ? platformFee(feeCents) : 200;
+  /// The organizer's own spot: no session fee, just S\$2.00 (R-FEE-5).
+  int get hostSpotCents => 200;
   int get openSeats => capacity - reservedSlots;
   bool get isFull => spotsTaken >= openSeats;
   int get spotsLeft => (openSeats - spotsTaken).clamp(0, capacity);
@@ -239,14 +240,11 @@ abstract class Activity with _$Activity {
 
 /// "8", "8.00", "86.40".
 String money(int cents, {bool decimals = true}) =>
-    decimals ? (cents / 100).toStringAsFixed(2) : (cents ~/ 100).toString();
+    decimals ? Money(cents).decimal : (cents ~/ 100).toString();
 
-/// The platform fee on anything paid: 10%, minimum S\$2.
-int platformFee(int cents) {
-  if (cents <= 0) return 0;
-  final tenth = (cents * 0.1).round();
-  return tenth < 200 ? 200 : tenth;
-}
+/// The platform fee on anything paid, for lists. The server's quote decides
+/// what's charged.
+int platformFee(int cents) => estimatedFeeMinor(cents);
 
 /// Banner colours to pick from, with the ink each one uses.
 const bannerColors = [

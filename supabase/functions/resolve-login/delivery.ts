@@ -10,9 +10,7 @@ export interface Delivery {
 
 const TEST_CODE = "123456";
 
-export function isLocalStack(supabaseUrl: string): boolean {
-  return ["kong", "127.0.0.1", "localhost"].includes(new URL(supabaseUrl).hostname);
-}
+export { isLocalStack } from "../_shared/stack.ts";
 
 export function randomCode(): string {
   const value = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;

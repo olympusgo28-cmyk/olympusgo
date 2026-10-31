@@ -16,7 +16,7 @@ import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash, cashShort;
+import '../../earnings/presentation/earnings_screens.dart' show cash, cashShort;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';

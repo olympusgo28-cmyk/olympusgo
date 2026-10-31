@@ -19,11 +19,11 @@ import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../shell/main_shell.dart';
 import '../social/application/social_providers.dart';
-import '../wallet/application/wallet_providers.dart';
+import '../earnings/application/earnings_providers.dart';
 import 'application/home_categories.dart';
 import 'home_rows.dart';
 
-/// Home: hero, search, categories, Wallet and points, then rows of Meets,
+/// Home: hero, search, categories, points, then rows of Meets,
 /// events, tournaments, clubs, players, malls and popular items.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -35,7 +35,7 @@ class HomeScreen extends ConsumerWidget {
     ref.invalidate(clubListProvider);
     ref.invalidate(teamListProvider);
     ref.invalidate(suggestedPlayersProvider);
-    ref.invalidate(walletSummaryProvider);
+    ref.invalidate(pointsSummaryProvider);
   }
 
   @override
@@ -329,8 +329,9 @@ class _Balances extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
-    final t = context.tones;
-    final w = ref.watch(walletSummaryProvider).value;
+    // Nothing earns points until 4b, so a real account has none to show.
+    if (Env.hasSupabase) return const SizedBox.shrink();
+    final w = ref.watch(pointsSummaryProvider).value;
     Widget card({
       required Color bg,
       required String label,
@@ -391,20 +392,6 @@ class _Balances extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
       child: Row(
         children: [
-          card(
-            bg: t.soft,
-            label: 'Wallet',
-            labelColor: c.textMuted,
-            icon: OgIcons.walletCard,
-            iconColor: c.text,
-            stroke: 1.8,
-            value: 'S\$${money(w?.balanceCents ?? 0)}',
-            valueColor: c.text,
-            note: 'Refunds and history',
-            noteColor: c.textMuted,
-            route: Routes.wallet,
-          ),
-          const SizedBox(width: 12),
           card(
             bg: c.inverseCard,
             label: 'Points',

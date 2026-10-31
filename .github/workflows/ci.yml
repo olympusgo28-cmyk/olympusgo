@@ -43,6 +43,8 @@ jobs:
       - run: flutter test
       - run: flutter test
         working-directory: packages/match_engine
+      - run: flutter test
+        working-directory: packages/og_money
 
   database:
     runs-on: ubuntu-latest
@@ -54,6 +56,7 @@ jobs:
       - run: supabase start
       - run: supabase db reset
       - run: supabase test db
+      - run: bash supabase/tests/races/refund_vs_release.sh 25
       # Advisory: the linter cannot see the temp table shop_checkout makes at
       # run time, so it reports a false error there.
       - run: supabase db lint --level error
@@ -68,7 +71,7 @@ jobs:
           deno-version: '2.9.8'
       - run: deno fmt --line-width 110 --check supabase/functions
       - run: deno lint supabase/functions
-      - run: deno check supabase/functions/resolve-login/index.ts
+      - run: deno check supabase/functions/*/index.ts
       - run: deno test --no-check=remote -A supabase/functions
 
   integration:

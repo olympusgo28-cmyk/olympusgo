@@ -16,8 +16,8 @@ import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/application/wallet_providers.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/application/earnings_providers.dart';
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
@@ -184,7 +184,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final delivery = Delivery.options[_delivery];
     final items = lines.fold(0, (a, l) => a + l.totalCents);
     final cap = lines.fold(0, (a, l) => a + l.product.maxPoints * 100 * l.qty);
-    final points = ref.read(walletSummaryProvider).value;
+    final points = ref.read(pointsSummaryProvider).value;
     final have = ((points?.points ?? 0) * 100).floor();
     final usable = [have, cap, items].reduce((a, b) => a < b ? a : b);
     final result = await showKitSheet<(int, String)>(
@@ -193,7 +193,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         items: items,
         delivery: delivery.cents,
         usablePoints: usable,
-        walletCents: points?.balanceCents ?? 0,
       ),
     );
     if (result == null || !mounted) return;
@@ -210,7 +209,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           );
       HapticFeedback.mediumImpact();
       refreshShop(ref.invalidate);
-      refreshWallet(ref.invalidate);
+      refreshEarnings(ref.invalidate);
       if (mounted) setState(() => _placed = placed);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
@@ -268,7 +267,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cartLines = ref.watch(cartProvider).value;
     final lines = widget.only == null ? cartLines : [widget.only!];
     final addresses = ref.watch(addressesProvider).value;
-    final points = ref.watch(walletSummaryProvider).value?.points ?? 0;
+    final points = ref.watch(pointsSummaryProvider).value?.points ?? 0;
     final address =
         _address ??
         addresses?.where((a) => a.isDefault).firstOrNull ??
@@ -459,7 +458,6 @@ class _PaySheet extends ConsumerStatefulWidget {
     required this.items,
     required this.delivery,
     required this.usablePoints,
-    required this.walletCents,
   });
 
   final int items;
@@ -467,7 +465,6 @@ class _PaySheet extends ConsumerStatefulWidget {
 
   /// In cents: 1 point is S$1.
   final int usablePoints;
-  final int walletCents;
 
   @override
   ConsumerState<_PaySheet> createState() => _PaySheetState();
@@ -502,7 +499,6 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    final walletOk = widget.walletCents >= _total;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -536,7 +532,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Card, Wallet and points payments are coming. For now nothing '
+              'Card, PayNow and points payments are coming. For now nothing '
               'is charged in the app.',
               style: OgText.body(13, color: c.textMuted),
             ),
@@ -549,7 +545,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                 title:
                     'Use ${(widget.usablePoints / 100).toStringAsFixed(1)} points',
                 subtitle:
-                    'Takes ${cash(widget.usablePoints)} off. The rest stay in your wallet.',
+                    'Takes ${cash(widget.usablePoints)} off. The rest stay with you.',
                 value: _usePoints,
                 onChanged: (v) => setState(() => _usePoints = v),
               ),
@@ -560,16 +556,6 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
               subtitle: 'Default card',
               selected: _method == 'Card ending 4242',
               onTap: () => setState(() => _method = 'Card ending 4242'),
-            ),
-            KitChoiceRow(
-              title: 'Wallet',
-              subtitle: walletOk
-                  ? 'Balance ${cash(widget.walletCents)}'
-                  : 'Not enough in your wallet',
-              selected: _method == 'Wallet',
-              onTap: walletOk
-                  ? () => setState(() => _method = 'Wallet')
-                  : () {},
             ),
             KitChoiceRow(
               title: 'PayNow',
@@ -1139,7 +1125,6 @@ class OrderCancelScreen extends ConsumerStatefulWidget {
 
 class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
   String? _why;
-  bool _toWallet = true;
   bool _busy = false;
   int? _done;
 
@@ -1148,10 +1133,10 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
     try {
       final back = await ref
           .read(shopRepositoryProvider)
-          .cancelOrder(widget.id, reason: _why!, toWallet: _toWallet);
+          .cancelOrder(widget.id, reason: _why!);
       HapticFeedback.mediumImpact();
       refreshShop(ref.invalidate);
-      refreshWallet(ref.invalidate);
+      refreshEarnings(ref.invalidate);
       if (mounted) setState(() => _done = back);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
@@ -1190,7 +1175,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
             child: Text(
               Env.hasSupabase
                   ? 'Nothing was charged, so there is nothing to refund. The shop has been told.'
-                  : '${cash(back)} refunded. It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. Points you used are back in your wallet.',
+                  : '${cash(back)} refunded. It goes back to how you paid. Points you used are back with you.',
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
           ),
@@ -1246,22 +1231,9 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
             style: OgText.body(13, height: 1.45, color: c.textMuted),
           )
         else ...[
-          Text('Where should the refund go?', style: OgText.heading(20)),
-          KitChoiceRow(
-            title: 'Wallet',
-            subtitle: '${cash(o.totalCents)} · instant',
-            selected: _toWallet,
-            onTap: () => setState(() => _toWallet = true),
-          ),
-          KitChoiceRow(
-            title: 'Card ending 4242',
-            subtitle: '${cash(o.totalCents)} · 3 to 5 working days',
-            selected: !_toWallet,
-            onTap: () => setState(() => _toWallet = false),
-          ),
           Text(
             'You can cancel free until the shop ships. Shop orders have no '
-            'platform fee, so you get all of it back either way.',
+            'platform fee, so all of it goes back to how you paid.',
             style: OgText.body(13, height: 1.45, color: c.textMuted),
           ),
         ],
@@ -1320,17 +1292,13 @@ class RefundStatusScreen extends ConsumerWidget {
         children: [CupertinoActivityIndicator()],
       );
     }
-    final wallet = o.refundTo == 'Wallet';
     final steps = [
       ('Order cancelled', 'Today'),
       ('Refund approved', 'Automatic before shipping'),
-      ('Sent to ${wallet ? 'your Wallet' : 'your card'}', 'Today'),
-      (
-        'In your account',
-        wallet ? 'Already there' : 'Card refunds take 3 to 5 working days',
-      ),
+      ('Sent back to how you paid', 'Today'),
+      ('In your account', 'Card refunds take 3 to 5 working days'),
     ];
-    final done = wallet ? 4 : 3;
+    const done = 3;
     return KitScaffold(
       header: const KitHeader(title: 'Refund'),
       bottom: [
@@ -1346,7 +1314,7 @@ class RefundStatusScreen extends ConsumerWidget {
       ],
       children: [
         KitTitle(
-          wallet ? 'Refunded' : 'On its way',
+          'On its way',
           lead: '${cash(o.refundCents)} · ${o.summary} · ${o.mallName}',
         ),
         KitCard(
@@ -1403,11 +1371,11 @@ class RefundStatusScreen extends ConsumerWidget {
         if (o.pointsCents > 0)
           KitKeyValue(
             'Points returned',
-            '${(o.pointsCents / 100).toStringAsFixed(1)}, already in your wallet',
+            '${(o.pointsCents / 100).toStringAsFixed(1)}, already back with you',
           ),
         KitKeyValue('Reference', 'RF-${o.id.toUpperCase()}'),
         Text(
-          'Wallet refunds are instant. Card and PayNow refunds depend on your bank.',
+          'Card and PayNow refunds depend on your bank.',
           style: OgText.body(13, color: c.textMuted),
         ),
       ],
