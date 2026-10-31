@@ -23,6 +23,7 @@ const ACTIONS = new Set<string>([
   "staff_refund_retry",
   "staff_refund_void",
   "staff_refund_manual",
+  "staff_refund_settle",
   "staff_hold_decide",
   "staff_payout_approve",
   "staff_alert_close",

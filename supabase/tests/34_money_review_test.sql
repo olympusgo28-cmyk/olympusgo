@@ -75,7 +75,7 @@ select t.as_user('a5000000-0000-0000-0000-000000000001');
 select public.cancel_activity(t.id('m3'), false, null);
 select t.reset();
 select is(t.refunded(t.id('p4')), 0::bigint, 'a dispute holds the refund');
-select is((select refund_owed from public.payments where id = t.id('p4')), 'organizer_cancelled', 'and remembers it');
+select is((select refund_owed -> 0 ->> 'reason' from public.payments where id = t.id('p4')), 'organizer_cancelled', 'and remembers it');
 select t.event('charge.dispute.closed', jsonb_build_object('id', 'dp_rev1', 'status', 'won', 'amount', 800));
 select is(t.refunded(t.id('p4')), 800::bigint, 'winning the dispute issues the refund');
 update public.activities set starts_at = now() - interval '3 days', ends_at = now() - interval '2 days' where id = t.id('m3');
@@ -269,10 +269,15 @@ select throws_like($$select public.money_svc_event('{"id":"evt_early","type":"ch
 select is((select count(*)::int from public.stripe_events where id = 'evt_early'), 0, 'and isn''t recorded as seen');
 
 -- Lease.
-update private.worker_lease set until = '-infinity';
-select ok(public.money_svc_lease(300), 'the first worker gets the lease');
-select ok(not public.money_svc_lease(300), 'the second doesn''t');
-select ok(public.money_svc_lease(0), 'it can be given back');
+update private.worker_lease set until = '-infinity' where id;
+update private.worker_lease set token = null;
+create temp table lease on commit drop as select public.money_svc_lease(300) as token;
+select ok((select token from lease) is not null, 'the first worker gets the lease');
+select is(public.money_svc_lease(300), null, 'the second doesn''t');
+select public.money_svc_lease(0, gen_random_uuid());
+select is(public.money_svc_lease(300), null, 'someone else''s token can''t give it back');
+select public.money_svc_lease(0, (select token from lease));
+select ok(public.money_svc_lease(300) is not null, 'its own can');
 
 -- Card details stay out of the event log.
 select t.event('setup_intent.succeeded', jsonb_build_object('id', 'seti_rev', 'customer', 'cus_rev', 'payment_method', 'pm_rev',

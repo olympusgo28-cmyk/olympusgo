@@ -91,6 +91,6 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q79 | Stripe lists PayNow as unsupported for in-app payments, and on a phone the customer saves a QR image and uploads it to their bank app. Does the real PayNow flow open a hosted Stripe page instead of an in-app sheet? | Stripe test keys | Decide with test keys. The app's `PaymentGateway` hides this choice | Open |
 | Q80 | A player already on a paid Meet can't add a guest yet, because a guest needs a second held seat on the same place. Should that be built? | Paid join | Refused with a clear message. Add a guest when you join | Open |
 | Q81 | Walk-ins added by a host on a free Meet where the organizer pays: is the S$2.00 owed for them? R-HOLD-5 says cash walk-ins are attendance only | Organizer pays | No fee on walk-ins | Open |
-| Q82 | Releasing some, not all, free tickets when the organizer's fee failed and became a debt: the debt isn't reduced per ticket until all of them are released | Organizer pays | Reversed in full on full release only | Open |
+| Q82 | Releasing some, not all, free tickets when the organizer's fee is still being charged or failed and became a debt: it isn't reduced per ticket until all of them are released | Organizer pays | Reversed in full on full release only | Open |
 | Q83 | A lost chargeback stays in `disputes_open` and the organizer is still paid, so Olympus carries the loss (Q72). How should staff write that off? | Disputes | Stays open on the books until finance decides | Open |
 

@@ -337,6 +337,18 @@ class _RefundsTab extends ConsumerWidget {
       }
     }
 
+    Future<void> settle(String id, String status) async {
+      if (await _act(
+        context,
+        ref,
+        'Record what Stripe says',
+        'staff_refund_settle',
+        {'p_refund': id, 'p_status': status},
+      )) {
+        onChanged();
+      }
+    }
+
     return _ListTab(
       function: 'staff_refund_list',
       emptyText: 'No refunds yet.',
@@ -369,6 +381,20 @@ class _RefundsTab extends ConsumerWidget {
                       r['id'] as String,
                     ),
                     child: const Text('Void'),
+                  ),
+                ],
+              )
+            : r['status'] == 'processing'
+            ? Wrap(
+                spacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: () => settle(r['id'] as String, 'succeeded'),
+                    child: const Text('Stripe says paid'),
+                  ),
+                  TextButton(
+                    onPressed: () => settle(r['id'] as String, 'failed'),
+                    child: const Text('Stripe says failed'),
                   ),
                 ],
               )

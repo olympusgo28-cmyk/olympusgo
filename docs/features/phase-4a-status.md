@@ -23,6 +23,7 @@
 - Points. Screens that promised them are hidden on a real backend until 4b. The demo mode still shows them.
 - Stripe's own payment sheet in the app. `canCollect` is false on a hosted project, so even with the flag on the app says paying isn't open, rather than holding a spot it can't take money for.
 - Adding a guest to a paid spot you already hold (Q80).
+- A screen in the admin app for venue codes.
 
 ## Differences from the documents
 
@@ -49,6 +50,8 @@ Two reviewers who hadn't seen the work reported about 50 issues between them, wi
 - A dispute during a cancellation could end with the organizer paid and the player not.
 - A guest was shown at S$8.00 and charged S$16.00.
 - Webhooks carry ids, not objects, so real card fees would never have been recorded. The stand-in had hidden this.
+
+A third reviewer then attacked those fixes and found 14 more, three of them high: Stripe events arriving out of order could send a refund twice or never, a bounced refund paid by hand stayed open in the ledger, and a partial ticket release during a dispute refunded too much. These are fixed in `20261104140000_money_review_fixes_2.sql`, with tests in `35_money_review_2_test.sql`. That last set of fixes has had no outside review, and no person has reviewed any of 4a. AGENTS.md needs two human reviewers for money.
 
 ## Fixed along the way
 

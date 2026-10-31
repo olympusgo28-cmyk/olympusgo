@@ -107,9 +107,11 @@ export function timingSafeEqual(a: string, b: string): boolean {
 // Only our own ids, whatever else metadata holds.
 // deno-lint-ignore no-explicit-any
 function ourMetadata(metadata: any) {
-  const { payment_id, refund_id, user_id, owner_id } = metadata ?? {};
+  const { payment_id, refund_id, attempt, user_id, owner_id } = metadata ?? {};
   return Object.fromEntries(
-    Object.entries({ payment_id, refund_id, user_id, owner_id }).filter(([, value]) => value !== undefined),
+    Object.entries({ payment_id, refund_id, attempt, user_id, owner_id }).filter(([, value]) =>
+      value !== undefined
+    ),
   );
 }
 
@@ -186,9 +188,13 @@ export function localStripe(webhookUrl: string): Stripe {
     createIntent: ({ paymentId }) =>
       Promise.resolve({ intentId: `pi_local_${paymentId}`, clientSecret: `local_secret_${paymentId}` }),
     cancelIntent: () => Promise.resolve(),
-    async createRefund({ refundId }) {
-      const id = `re_local_${refundId}`;
-      await fire("refund.updated", { id, status: "succeeded", metadata: { refund_id: refundId } });
+    async createRefund({ refundId, attempt }) {
+      const id = `re_local_${refundId}_${attempt}`;
+      await fire("refund.updated", {
+        id,
+        status: "succeeded",
+        metadata: { refund_id: refundId, attempt: String(attempt) },
+      });
       return { id, status: "succeeded" };
     },
     async chargeOffSession({ paymentId, amountMinor, currency, paymentMethod }) {
@@ -251,10 +257,11 @@ export function liveStripe(env: (key: string) => string | undefined): Stripe | n
     });
     const data = await response.json();
     if (response.ok) return data;
-    // 409 is a clash on an idempotency key and 429 is rate limiting, so the
-    // first call may still land. Only a plain refusal is final.
-    const refused = response.status >= 400 && response.status < 500 && ![409, 429].includes(response.status);
-    if (refused) throw new StripeError(data?.error?.code ?? "stripe_refused");
+    // A plain refusal is final. A clash on an idempotency key, rate limiting or
+    // a bad key says nothing about the money, so those stay queued.
+    if ([400, 402, 404].includes(response.status)) {
+      throw new StripeError(data?.error?.code ?? "stripe_refused");
+    }
     throw new Error(`Stripe answered ${response.status}`);
   }
 
@@ -278,6 +285,7 @@ export function liveStripe(env: (key: string) => string | undefined): Stripe | n
         payment_intent: intentId,
         amount: String(amountMinor),
         "metadata[refund_id]": refundId,
+        "metadata[attempt]": String(attempt),
       }, `refund:${refundId}:${attempt}`);
       return { id: refund.id, status: refund.status };
     },
@@ -322,10 +330,15 @@ export function liveStripe(env: (key: string) => string | undefined): Stripe | n
       return { accountId, onboardingUrl: link.url };
     },
     async createTransfer({ itemId, amountMinor, currency, account }) {
+      // Idempotency keys expire after a day and a transfer has no webhook, so
+      // look before sending: an earlier try may have worked.
+      const earlier = await call("GET", `transfers?transfer_group=${itemId}&limit=1`);
+      if (earlier.data?.[0]) return { id: earlier.data[0].id };
       const transfer = await call("POST", "transfers", {
         amount: String(amountMinor),
         currency: currency.toLowerCase(),
         destination: account,
+        transfer_group: itemId,
         "metadata[item_id]": itemId,
       }, `transfer:${itemId}`);
       return { id: transfer.id };

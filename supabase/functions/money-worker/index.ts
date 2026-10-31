@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
   // One worker at a time: a slow batch must not overlap the next tick.
   const { data: lease } = await service.rpc("money_svc_lease", { p_seconds: 300 });
-  if (lease !== true) return Response.json({ skipped: true });
+  if (!lease) return Response.json({ skipped: true });
 
   const { data: work, error } = await service.rpc("money_svc_work");
   if (error) return new Response("Try again", { status: 500 });
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
   // Stripe's answer and our record of it fail separately. If Stripe worked but
   // the record didn't, the item stays queued and repeats on its idempotency key.
   // Only a plain refusal from Stripe counts as failed. One bad item never stops
-  // the rest, and the worst an unrecorded success does is wait for its webhook.
+  // the rest.
   const attempt = async (
     kind: string,
     id: string,
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       return { ref: transfer.id };
     });
   }
-  await service.rpc("money_svc_lease", { p_seconds: 0 });
+  await service.rpc("money_svc_lease", { p_seconds: 0, p_token: lease });
   return Response.json({
     cancelled: work.cancel.length,
     refunds: work.refunds.length,
