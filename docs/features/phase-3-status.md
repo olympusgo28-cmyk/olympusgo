@@ -11,7 +11,7 @@
 | P3-05 Profile and history | History chart, band plus number, provisional note. R-STA-1 and R-STA-2 statistics by scoring level are not built, because nothing yet records point-by-point scoring |
 | P3-06 Tournaments | Knockout and groups with knockout tested at every size from 3 to 33, round robin at 3, 4, 5, 8, 9, 16 and 33. Parallel entries on the last place tested. Corrections and retirements tested. Staff use the Scores screen in the admin app (Q53) |
 | P3-07 Leaderboards | Proven at the database: hourly snapshots by sport and country, minors out unless a guardian opts in. Rules in R-LDR-1 and R-LDR-2 beyond the checklist are not built (Q54) |
-| A-05 Rules | Proven at the database. The screen builds and analyses, but **the admin web app has still never been opened in a browser** |
+| A-05 Rules | Proven at the database. The screen builds and analyses, and on 1 Nov the admin web app opened in a browser for the first time, with this section loading its presets and levels. Editing them there hasn't been tried |
 
 ## Differences from the plan
 

@@ -99,6 +99,41 @@ void main() {
     });
   });
 
+  testWidgets('A-06 alerts read as sentences, and empty holds stay out', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      _Api({
+        'staff_money_overview': _overview,
+        'staff_alert_list': [
+          {
+            'id': 'a1',
+            'kind': 'refund_failed',
+            'created_at': '2026-11-01T10:00:00Z',
+            'detail': {'code': 'card_declined'},
+          },
+        ],
+        'staff_held_list': [
+          {
+            'activity_id': 'a2',
+            'title': 'Refunded Meet',
+            'ends_at': '2026-11-01T10:00:00Z',
+            'held_minor': 0,
+            'oldest': '2026-10-30T10:00:00Z',
+            'hold_id': null,
+          },
+        ],
+      }),
+    );
+    expect(find.text('Refund failed'), findsOneWidget);
+    expect(find.textContaining('code: card_declined'), findsOneWidget);
+    await tester.tap(find.text('Held money'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Refunded Meet'), findsNothing);
+    expect(find.text('Nothing is held.'), findsOneWidget);
+  });
+
   testWidgets('A-06 a run over the limit asks for a second approval', (
     tester,
   ) async {

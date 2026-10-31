@@ -13,7 +13,7 @@
 | P4a-07 Payouts | Proven at the database. Weekly run, one approver up to S$5,000, a second different approver above, fees owed netted first |
 | P4a-08 Reconciliation | The comparison and alert are proven, including an injected mismatch. Against real Stripe data it has never run |
 | P4a-09 Scan | Proven at the database: player, group, venue and vendor codes, rotation, blocks, no minor can resolve. Group managers and verified vendors can show their code in the app. Venue codes exist only as a staff function, with no admin screen. There's no separate Pay mode: scanning a vendor or venue opens their page and charges nothing |
-| A-06 Payments admin | Widget tests with a fake API only. **The admin web app has still never been opened in a browser** |
+| A-06 Payments admin | Proven in a browser on 1 Nov against the local stack: every tab showed real data, and a hold decision, a payout approval and a refund retry went through `admin-action`, reached the worker and landed in the audit log. Payments-only and moderator accounts saw only their own sections |
 
 ## Not built
 

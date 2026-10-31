@@ -10,6 +10,61 @@ String _money(Object? minor) => '${Money((minor as num? ?? 0).toInt())}';
 
 String _day(Object? at) => at == null ? '—' : (at as String).substring(0, 10);
 
+/// Falls back to the raw word, so a new kind still shows something.
+String _named(Map<String, String> names, Object? key) =>
+    names[key] ?? '$key'.replaceAll('_', ' ');
+
+const _alertNames = {
+  'dispute': 'Card dispute opened',
+  'hold_aging': 'Money held for 75 days',
+  'organizer_shortfall': 'Organizer owes more than they earned',
+  'payout_failed': 'Payout failed',
+  'reconcile_missing': 'Daily reconciliation didn’t run',
+  'reconciliation': 'Stripe and the ledger disagree',
+  'refund_after_close': 'Stripe sent a refund we had closed',
+  'refund_blocked_by_dispute': 'Refund waiting on a dispute',
+  'refund_failed': 'Refund failed',
+  'refund_old_attempt': 'Late answer about an old refund attempt',
+  'refund_stuck': 'Refund hasn’t moved in 6 hours',
+  'refund_unknown': 'Stripe reported a refund we don’t know',
+  'release_failed': 'Money couldn’t be released',
+  'seat_failed': 'Paid, but the spot couldn’t be given',
+  'suspense': 'Money that matches no payment',
+  'vendor_unverified': 'Earnings waiting on payout checks',
+  'worker_unconfigured': 'The money worker isn’t set up',
+};
+
+const _reasonNames = {
+  'account_deleted': 'Account deleted',
+  'blocked': 'Player blocked or suspended',
+  'change_by_organizer': 'Organizer changed it',
+  'event_below_minimum': 'Too few entries',
+  'host_spot': 'Host gave up their spot',
+  'late_no_spot': 'Paid too late for a spot',
+  'medical': 'Medical note',
+  'organizer_cancelled': 'Organizer cancelled',
+  'partner_declined': 'Partner declined',
+  'player_in_time': 'Player left in time',
+  'player_left': 'Player left, organizer’s fee',
+  'removed_from_club': 'Removed from the club',
+  'staff': 'Staff refund',
+};
+
+const _purposeNames = {
+  'debt': 'Fees owed',
+  'host_spot': 'Host’s spot',
+  'meet': 'Meet',
+  'organizer_fee': 'Organizer’s fee',
+  'ticket': 'Tickets',
+  'tournament': 'Tournament',
+};
+
+/// "code: card_declined · refund: 805bbddf…", with ids cut short.
+String _detail(Object? detail) => [
+  for (final MapEntry(:key, :value) in (detail as Map? ?? const {}).entries)
+    '$key: ${value is String && value.length > 30 ? '${value.substring(0, 8)}…' : value}',
+].join(' · ');
+
 /// Held money, refunds, payouts, disputes and alerts. Payments staff only:
 /// the database checks the role and MFA on every call.
 class MoneyScreen extends ConsumerStatefulWidget {
@@ -130,11 +185,13 @@ class _ListTab extends ConsumerStatefulWidget {
     required this.function,
     required this.emptyText,
     required this.row,
+    this.keep,
   });
 
   final String function;
   final String emptyText;
   final Widget Function(Map<String, dynamic> row) row;
+  final bool Function(Map<String, dynamic> row)? keep;
 
   @override
   ConsumerState<_ListTab> createState() => _ListTabState();
@@ -144,7 +201,12 @@ class _ListTabState extends ConsumerState<_ListTab> {
   late final Future<List<dynamic>> _rows = ref
       .read(staffApiProvider)
       .read(widget.function)
-      .then((r) => r as List<dynamic>);
+      .then(
+        (r) => [
+          for (final row in r as List<dynamic>)
+            if (widget.keep?.call(row as Map<String, dynamic>) ?? true) row,
+        ],
+      );
 
   @override
   Widget build(BuildContext context) => Loaded<List<dynamic>>(
@@ -166,8 +228,13 @@ class _AlertsTab extends ConsumerWidget {
     function: 'staff_alert_list',
     emptyText: 'No open alerts.',
     row: (a) => ListTile(
-      title: Text(a['kind'] as String),
-      subtitle: Text('${_day(a['created_at'])} · ${a['detail']}'),
+      title: Text(_named(_alertNames, a['kind'])),
+      subtitle: Text(
+        [
+          _day(a['created_at']),
+          _detail(a['detail']),
+        ].where((part) => part.isNotEmpty).join(' · '),
+      ),
       trailing: Wrap(
         spacing: 8,
         children: [
@@ -227,10 +294,13 @@ class _HeldTab extends ConsumerWidget {
     return _ListTab(
       function: 'staff_held_list',
       emptyText: 'Nothing is held.',
+      // Fully refunded activities have nothing left to decide.
+      keep: (h) => (h['held_minor'] as num) > 0 || h['hold_id'] != null,
       row: (h) => ListTile(
         title: Text('${h['title']} · ${_money(h['held_minor'])}'),
         subtitle: Text(
-          'Ended ${_day(h['ends_at'])} · held since ${_day(h['oldest'])}'
+          '${DateTime.parse(h['ends_at'] as String).isAfter(DateTime.now()) ? 'Ends' : 'Ended'} '
+          '${_day(h['ends_at'])} · held since ${_day(h['oldest'])}'
           '${h['hold_id'] == null ? '' : ' · held by a report'}',
         ),
         trailing: h['hold_id'] == null
@@ -267,7 +337,8 @@ class _PayoutsTab extends ConsumerWidget {
       return ListTile(
         title: Text('Week of ${p['week_start']} · ${_money(p['total_minor'])}'),
         subtitle: Text(
-          '${p['status']} · ${(p['items'] as List).length} payees'
+          '${p['status']} · ${(p['items'] as List).length} '
+          '${(p['items'] as List).length == 1 ? 'payee' : 'payees'}'
           '${p['needs_second'] == true ? ' · needs a second approver' : ''}',
         ),
         trailing: waiting
@@ -353,7 +424,9 @@ class _RefundsTab extends ConsumerWidget {
       function: 'staff_refund_list',
       emptyText: 'No refunds yet.',
       row: (r) => ListTile(
-        title: Text('${_money(r['amount_minor'])} · ${r['reason']}'),
+        title: Text(
+          '${_money(r['amount_minor'])} · ${_named(_reasonNames, r['reason'])}',
+        ),
         subtitle: Text(
           '${r['status']} · ${_day(r['created_at'])}'
           '${r['failure_code'] == null ? '' : ' · ${r['failure_code']}'}',
@@ -413,7 +486,9 @@ class _PaymentsTab extends ConsumerWidget {
     function: 'staff_payment_list',
     emptyText: 'No payments yet.',
     row: (p) => ListTile(
-      title: Text('${_money(p['amount_minor'])} · ${p['purpose']}'),
+      title: Text(
+        '${_money(p['amount_minor'])} · ${_named(_purposeNames, p['purpose'])}',
+      ),
       subtitle: Text(
         '${p['receipt_no']} · ${p['status']} · ${p['method'] ?? 'no method'} · '
         '${_day(p['created_at'])}'
