@@ -281,10 +281,10 @@ void main() {
       expect(s.notes.first.text, 'Work on the forehand clear.');
 
       await expectLater(
-        coach.setFilmingConsent(ethan.id, own: true, train: false),
+        coach.setFilmingConsent(ethan.id, own: true),
         throwsA(isA<Object>()),
       );
-      await parent.setFilmingConsent(ethan.id, own: true, train: false);
+      await parent.setFilmingConsent(ethan.id, own: true);
       expect((await parent.student(ethan.id)).filmingConsent, isTrue);
 
       // Settings.

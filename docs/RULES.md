@@ -271,6 +271,18 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-FIT-9 | An AI request holds no name, username, email, mobile, birthday, age, exact date or free text the player typed. It holds only their goal, days a week, and their sets, reps, times and weights by our own exercise names. Prompts and answers are neither stored nor logged. | Decided | P5-05 |
 | R-FIT-10 | An AI plan is a draft labelled as advisory. It sets no weights, makes no calorie or medical claims, and is checked by a schema and again by the database. | Decided | P5-05, Q186 |
 
+## 11d. Video analysis
+
+| Id | Rule | Status | Source |
+| --- | --- | --- | --- |
+| R-VID-1 | Every video of a child has a consent row from a linked parent. With no live consent, nothing runs. | Decided | P5-01, Q204 |
+| R-VID-2 | A clip is kept 90 days. A parent can list, extend or delete. Withdrawing stops the work at once, and the file goes within 7 days. | Open | P5-01, ACD-13, Q196, Q197 |
+| R-VID-3 | Clips are private. No client can read a video, only the owner or a linked parent can read its court frame, and staff can read neither. | Decided | P5-01 |
+| R-VID-4 | When an account or clip goes, its files go too. | Decided | P5-01 |
+| R-VID-5 | A worker holds no service-role key. It gets a token for one job, and short signed URLs. | Decided | P5-02 |
+| R-VID-6 | Analysis is singles, the player's own side. Only that side's numbers are stored, and a report holds no image. | Decided | P5-03, Q203 |
+| R-VID-7 | Analysis never changes a rating, score or Passport. | Decided | P5-03 |
+
 ## 12. Notifications and messages
 
 | Id | Rule | Status | Source |

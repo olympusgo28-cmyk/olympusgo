@@ -1,6 +1,7 @@
 // Runs on a timer. The database writes what should happen, and this makes the
 // Stripe calls, because nothing may call Stripe inside a transaction.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sweepClips } from "../_shared/clips.ts";
 import { assertMinor } from "../_shared/money.ts";
 import { reconcile } from "../_shared/reconcile.ts";
 import { isLocalStack } from "../_shared/stack.ts";
@@ -12,12 +13,25 @@ const stripe = stripeFor(url, (key) => Deno.env.get(key));
 const workerSecret = isLocalStack(url) ? LOCAL_WORKER_SECRET : Deno.env.get("MONEY_WORKER_SECRET");
 
 Deno.serve(async (req) => {
-  if (!stripe || !workerSecret) return new Response("Not configured", { status: 503 });
+  if (!workerSecret) return new Response("Not configured", { status: 503 });
   if (!timingSafeEqual(req.headers.get("x-worker-secret") ?? "", workerSecret)) {
     return new Response("Not found", { status: 404 });
   }
 
   const service = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const body = await req.json().catch(() => ({}));
+
+  // Removing clips can't wait on Stripe being set up.
+  if (body.task === "clips") {
+    try {
+      return Response.json(await sweepClips(service));
+    } catch (e) {
+      console.error("clip sweep failed", (e as Error).message);
+      return new Response("Try again", { status: 500 });
+    }
+  }
+  if (!stripe) return new Response("Not configured", { status: 503 });
+
   const result = async (kind: string, id: string, ok: boolean, ref?: string, code?: string) => {
     const { error } = await service.rpc("money_svc_result", {
       p_kind: kind,
@@ -29,7 +43,6 @@ Deno.serve(async (req) => {
     if (error) throw error;
   };
 
-  const body = await req.json().catch(() => ({}));
   if (body.task === "reconcile") {
     const since = new Date(Date.now() - 7 * 86_400_000);
     const { data: rows, error } = await service.rpc("money_svc_ledger_rows", {

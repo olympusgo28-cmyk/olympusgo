@@ -567,6 +567,18 @@ All in `public`, with no client access. Every read and write goes through the fu
 
 `programs.source` is `player` or `ai`. `consents.kind` also allows `ai_plans`.
 
+## Video analysis
+
+All in `public`, with no client access. Files are in the private `analysis-clips` bucket, as `<owner>/<clip>.mp4` and `<owner>/<clip>.frame.jpg`.
+
+| Table | Holds |
+| --- | --- |
+| `video_clips` | One clip: owner, the person in it, status, side, corners, `purge_at`, `file_gone_at` |
+| `video_consents` | One row per clip of a child: parent, wording version, when it was given and withdrawn |
+| `analysis_jobs` | `court` and `analyse` jobs. Only a hash of the token is kept |
+| `analysis_reports` | Distance, speeds, moving time and a 13 by 6 heatmap grid. No image, and nothing about an opponent |
+| `storage_deletions` | Paths still to remove. Filled when a clip's row goes or its time is up |
+
 ## Tests every migration in this file needs
 
 - RLS on for every table (CI meta-test).

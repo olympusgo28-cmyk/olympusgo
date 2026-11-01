@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config.dart';
 import 'core/ui.dart';
+import 'features/analysis/analysis_screen.dart';
 import 'features/academy/lessons_screen.dart';
 import 'features/academy/services_screen.dart';
 import 'features/academy/verification_screen.dart';
@@ -49,6 +50,7 @@ const sections = [
     'content',
     also: 'payments',
   ),
+  Section('/analysis', 'Analysis jobs', Icons.videocam_outlined, 'content'),
   Section('/money', 'Payments', Icons.payments_outlined, 'payments'),
   Section('/orders', 'Orders', Icons.receipt_long_outlined, 'payments'),
   Section('/lessons', 'Lessons', Icons.event_available_outlined, 'payments'),
@@ -73,6 +75,7 @@ final _router = GoRouter(
         ),
         GoRoute(path: '/services', builder: (_, _) => const ServicesScreen()),
         GoRoute(path: '/campaigns', builder: (_, _) => const CampaignsScreen()),
+        GoRoute(path: '/analysis', builder: (_, _) => const AnalysisScreen()),
         GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),

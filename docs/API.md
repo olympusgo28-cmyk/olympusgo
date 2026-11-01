@@ -234,5 +234,21 @@ The phone calls the `ai-plan` Edge Function with `client_key`, `goal` and `days`
 | `ai_plan_svc_allowed(p_request)` | Whether the player's data may still be sent, asked before a second try | Service role |
 | `ai_plan_svc_fail(p_request, p_model, p_input_tokens, p_output_tokens)` | Marks a request failed | Service role |
 
+### Video analysis, as built in Phase 5c
+
+| Function | Does | Who |
+| --- | --- | --- |
+| `analysis_status()` | Whether analysis is open to the caller, and the limits | Player |
+| `clip_create(p_clip, p_subject, p_ext, p_seconds, p_bytes, p_everyone_agreed, p_consent_version)` | Starts a clip. The phone makes the id. A clip of a child writes its consent row | Adult or linked parent |
+| `clip_uploaded(p_clip)` | The file is in, so queue the court job | Owner |
+| `clip_confirm_court(p_clip, p_corners, p_side)` | Checks the daily caps and queues the analysis | Owner |
+| `clip_list()`, `child_clip_list(p_child)`, `clip_get(p_clip)` | Clips and reports | Owner or linked parent |
+| `clip_delete(p_clip)`, `clip_extend(p_clip)` | Deletes a clip and its report, or extends it once | Owner or linked parent |
+| `consent_withdraw(p_clip)` | Stops all work on a child's clip, and the file goes at the next sweep | Owner or linked parent |
+| `analysis_svc_claim()`, `analysis_svc_result(...)`, `analysis_svc_may_continue(...)`, `analysis_svc_frame_path(...)`, `analysis_svc_sweep()`, `analysis_svc_orphans()`, `analysis_svc_removed(p_ids)` | The worker's side | Service role |
+| `staff_analysis_overview()`, `staff_analysis_retry(p_job, p_reason)` | The jobs monitor | Content staff |
+
+The worker calls the `analysis-worker` Edge Function with `x-worker-secret`. `{"action": "claim"}` gives `{"job": ...}` with a token and a signed clip URL. `{"action": "continue", ...}` says whether to carry on, and a worker asks between stages. `{"action": "result", ...}` sends the outcome, with a court job's frame as base64. A worker can't write to Storage. Set `ANALYSIS_WORKER_SECRET`, and `ANALYSIS_PUBLIC_URL` if the worker reaches Storage on a different address. The money worker runs the sweep with `{"task": "clips"}`.
+
 These functions aren't marked `stable`. The API runs a stable function in a read-only transaction, where the request gate can't record a rate-limit hit.
 

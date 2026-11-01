@@ -86,11 +86,7 @@ abstract interface class AcademyRepository {
     required Map<String, SkillStatus> skills,
     required String note,
   });
-  Future<void> setFilmingConsent(
-    String studentId, {
-    required bool own,
-    required bool train,
-  });
+  Future<void> setFilmingConsent(String studentId, {required bool own});
   Future<List<AttendanceLine>> attendance(String studentId);
 }
 
@@ -692,13 +688,10 @@ class SupabaseAcademyRepository implements AcademyRepository {
   });
 
   @override
-  Future<void> setFilmingConsent(
-    String studentId, {
-    required bool own,
-    required bool train,
-  }) => _guard(() async {
-    await _rpc('academy_filming', {'p_student': studentId, 'p_own': own});
-  });
+  Future<void> setFilmingConsent(String studentId, {required bool own}) =>
+      _guard(() async {
+        await _rpc('academy_filming', {'p_student': studentId, 'p_own': own});
+      });
 
   @override
   Future<List<AttendanceLine>> attendance(String studentId) => _guard(() async {
@@ -1620,11 +1613,7 @@ class DemoAcademyRepository implements AcademyRepository {
   }
 
   @override
-  Future<void> setFilmingConsent(
-    String studentId, {
-    required bool own,
-    required bool train,
-  }) async {
+  Future<void> setFilmingConsent(String studentId, {required bool own}) async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     final s = _students[studentId];
     if (s != null) _students[studentId] = s.copyWith(filmingConsent: own);

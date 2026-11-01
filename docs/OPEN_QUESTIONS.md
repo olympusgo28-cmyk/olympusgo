@@ -202,3 +202,19 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q190 | There is no board for AI plan screens | AI plans | Built from the kit, and needs a UX review | Open |
 | Q191 | Consent to AI plans | AI plans | Asked once, recorded in `consents`, withdrawable in Privacy and safety. Nothing is sent without it (owner, 1 Nov) | Decided |
 | Q192 | Which model writes AI plans | AI plans | `claude-opus-5-5` to start, in `ai_plans.model`, so it can change without a release (owner, 1 Nov) | Decided |
+| Q193 | Clip length and size | Video analysis | 3 minutes and 200 MB, in `video.max_seconds` and `video.max_mb`. The worker's own measure of length is what counts | Open |
+| Q194 | Job timeout | Video analysis | 15 minutes, in `analysis.job_timeout_seconds`, with 1 retry | Open |
+| Q195 | Daily caps on analysis | Video analysis | 10 minutes of clip per player and 10 hours across the app, in 24 hours | Open |
+| Q196 | How far a parent can extend a clip | Video analysis | Once, by 90 days. The checklist says they can extend, with no number | Open |
+| Q197 | Keeping adults' clips | Video analysis | 90 days, as for children | Open |
+| Q198 | People in a clip who didn't agree | Video analysis | A tick box that everyone agreed, the clip is private to the uploader, and no opponent's numbers are stored. The lawyer should check this (PRD open item) | Open |
+| Q199 | Rallies in the report | Video analysis | Left out. Good-Badminton counts rallies from broadcast cuts, which a tripod never has. Add as beta only if a movement-based count passes on real clips | Open |
+| Q200 | "Use clips to improve the camera system" on the filming screen | Academy | Removed. It was collected and dropped, and nothing trains on clips | Open |
+| Q201 | Moderating uploaded analysis clips | Video analysis | None, as they're private to the uploader. Abuse-image matching comes with the feed in 5d | Open |
+| Q202 | Which staff role owns the jobs monitor | Admin | Content staff, and it shows no clip, frame or player | Open |
+| Q203 | Doubles clips | Video analysis | Singles only, your own side only, and only that side's numbers are stored (owner, 2 Nov) | Decided |
+| Q204 | Who adds a clip of an under-18 | Video analysis | A linked parent, with one consent row per video. Teens can't upload. Off until Gate F (owner, 2 Nov) | Decided |
+| Q205 | Should a child see their own report? | Video analysis | No, only the parent who added it, for now | Open |
+| Q206 | A parent link ends, or a child turns 18 | Video analysis | The clip and its report are deleted at the next sweep, because the parent who added it no longer has a claim. That holds even if another parent is still linked, and the child can't get them either | Open |
+| Q207 | Does withdrawing consent remove the report? | Video analysis | No. The clip goes, and the numbers stay, as the filming screen says. A parent can delete the report too | Open |
+| Q208 | The account deletion job (P1-14), when it's built | Privacy | It must delete `video_clips`, not anonymise them, or the files are left behind. The sweep's check for files with no clip is the safety net | Open |

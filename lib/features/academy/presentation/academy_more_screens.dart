@@ -1722,13 +1722,12 @@ class FilmingConsentScreen extends ConsumerStatefulWidget {
 
 class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
   bool? _own;
-  bool _train = false;
   bool _busy = false;
   DateTime? _signed;
 
   Future<void> _save(Student s) async {
     final own = _own ?? s.filmingConsent;
-    if (own || _train) {
+    if (own) {
       final ok =
           !Env.hasSupabase ||
           await ref
@@ -1740,7 +1739,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
     try {
       await ref
           .read(academyRepositoryProvider)
-          .setFilmingConsent(s.id, own: own, train: _train);
+          .setFilmingConsent(s.id, own: own);
       HapticFeedback.mediumImpact();
       ref.invalidate(studentProvider(s.id));
       if (mounted) setState(() => _signed = DateTime.now());
@@ -1771,7 +1770,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'What it is used for',
-        'Counting rallies and showing $name’s movement so the coach can explain what to work on.',
+        'Showing $name’s movement so the coach can explain what to work on.',
       ),
       (
         'Who can see it',
@@ -1779,11 +1778,11 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'How long it is kept',
-        'Clips are deleted after 90 days. The numbers in the progress report stay.',
+        'Clips are kept for 90 days, or longer if you extend them once. The numbers in the progress report stay.',
       ),
     ];
     final outcome = own
-        ? '$name’s classes will be filmed for the progress report${_train ? ', and blurred clips may help improve the camera system.' : '. Clips will not be used for model training.'}'
+        ? '$name’s classes will be filmed for the progress report.'
         : '$name still joins every class. Clips are not analysed or kept, and progress is tracked by the coach only.';
     return KitScaffold(
       header: const KitHeader(title: 'Filming consent'),
@@ -1791,9 +1790,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
         KitButton(
           label: _signed != null
               ? 'Saved'
-              : (own || _train
-                    ? 'Confirm with Face ID'
-                    : 'Save without filming'),
+              : (own ? 'Confirm with Face ID' : 'Save without filming'),
           loading: _busy,
           onPressed: _signed != null ? () => context.pop() : () => _save(s),
         ),
@@ -1861,11 +1858,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
               ),
             ],
           ),
-        Text('Your choices', style: OgText.heading(20)),
-        Text(
-          'Two separate choices. You can say yes to one and no to the other.',
-          style: OgText.body(13, color: c.textMuted),
-        ),
+        Text('Your choice', style: OgText.heading(20)),
         SwitchRow(
           compact: true,
           title: 'Film $name for their own progress',
@@ -1873,16 +1866,6 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
           value: own,
           onChanged: (v) => setState(() {
             _own = v;
-            _signed = null;
-          }),
-        ),
-        SwitchRow(
-          compact: true,
-          title: 'Use $name’s clips to improve the camera system',
-          subtitle: 'Faces are blurred first. Saying no changes nothing about classes or reports. Optional.',
-          value: _train,
-          onChanged: (v) => setState(() {
-            _train = v;
             _signed = null;
           }),
         ),

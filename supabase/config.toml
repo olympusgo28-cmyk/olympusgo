@@ -25,6 +25,10 @@ subject = "Your OlympusGO code"
 content_path = "./supabase/templates/code_email.html"
 
 # Sign-in is public, so the function checks nothing about the caller's token.
+# Clips go up to 200 MB. The bucket holds the real limit.
+[storage]
+file_size_limit = "200MiB"
+
 [functions.resolve-login]
 verify_jwt = false
 
@@ -60,5 +64,13 @@ verify_jwt = false
 verify_jwt = false
 
 # Called by pg_cron with a secret from Vault.
+# Checks its own secret.
+[functions.analysis-worker]
+verify_jwt = false
+
+# Answers 404 anywhere but a local stack.
+[functions.analysis-local]
+verify_jwt = false
+
 [functions.money-worker]
 verify_jwt = false
