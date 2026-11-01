@@ -2,6 +2,33 @@
 
 The build split into tickets an agent can finish in one pull request. Phases follow `ARCHITECTURE.md` section 25 (from ACR-001 and ACR-018): phases 0 to 7 are fixed; from phase 8 they can reorder once their dependencies are done.
 
+## Status now
+
+Last updated 2 Nov 2026. **Build from `DEVELOPER_CHECKLIST.md`, not the tables below.** The checklist is newer and outranks this file (`AGENTS.md`, sources of truth). Its six phases are what's being built, split into twelve parts. Each built part has a status page in `docs/features` with what's proven, what's left out and the known gaps.
+
+"Built" means built and tested locally. Nothing is pushed, nothing is on a hosted project, and the feature flags stay off. Payments run against a local stand-in for Stripe, and AI plans against a local stand-in for Claude.
+
+| Phase | Part | Covers | Status | Page |
+| --- | --- | --- | --- | --- |
+| 0 | 0 | Set-up and first compile | Built for iOS. Android isn't built yet, and CI has never run | `phase-1-status.md` |
+| 1 | 1 | Sign-up, profiles, parent linking, Play hosting | Built. No real SMS provider is connected | `phase-1-status.md` |
+| 2 | 2 | Discover, Group, Inbox, moderation, admin sports | Built, except leagues (Q50). Push doesn't reach a phone yet | `phase-2-status.md` |
+| 3 | 3 | Match generator, scoring, ratings, tournaments | Built | `phase-3-status.md` |
+| 4 | 4a | Payments, ledger, refunds, payouts, Scan | Built | `phase-4a-status.md` |
+| 4 | 4b | Shop, self-collect handover, points | Built | `phase-4b-status.md` |
+| 4 | 4c | Academy verification, lessons, assessments, Services | Built | `phase-4c-status.md` |
+| 4 | 4d | Campaigns, organizer rewards, vouchers, Game tab | Built | `phase-4d-status.md` |
+| 5 | 5a | Fitness | Built | `phase-5a-status.md` |
+| 5 | 5b | AI plans | Built | `phase-5b-status.md` |
+| 5 | 5c | Video storage and consent, analysis worker and screens, A-10 | To do. Needs real tripod clips from the owner | |
+| 5 | 5d | Video feed | To do. Needs moderation providers and the lawyer | |
+
+Release gates are in `DEVELOPER_CHECKLIST.md` section 12. Gates B to F all need outside work that isn't done, such as a penetration test, the lawyer or real Stripe.
+
+**The tables below are the earlier 13-phase plan, kept for its ticket detail.** Their numbers don't match the checklist: this file's Phase 5 is matches, and the checklist's Phase 5 is Fitness, AI and video (Q173). Their statuses weren't updated as work was done, so a ticket marked To do may already be built. Check the table above and the status pages instead.
+
+---
+
 **How to use a ticket.** Give the agent the ticket id. It reads the requirements and rules named, builds the deliverables, proves the acceptance criteria with tests, and sets the status here.
 
 **Status values:** To do · In progress · In review · Done · Blocked (name the question).
