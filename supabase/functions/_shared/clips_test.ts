@@ -80,16 +80,40 @@ function fake(
 
 Deno.test("a sweep removes files, then clears them", async () => {
   const removed: string[][] = [];
-  const f = fake({ analysis_svc_sweep: [{ id: 1, path: "a/b.mp4" }] }, removed);
+  const f = fake({ analysis_svc_sweep: [{ id: 1, bucket: "analysis-clips", path: "a/b.mp4" }] }, removed);
   assertEquals(await sweepClips(f.client), { removed: 1 });
   assertEquals(removed, [["a/b.mp4"]]);
   assertEquals(f.called, ["analysis_svc_orphans", "analysis_svc_sweep", "analysis_svc_removed"]);
 });
 
 Deno.test("a failed removal stays queued", async () => {
-  const f = fake({ analysis_svc_sweep: [{ id: 1, path: "a/b.mp4" }] }, [], true);
+  const f = fake({ analysis_svc_sweep: [{ id: 1, bucket: "analysis-clips", path: "a/b.mp4" }] }, [], true);
   await assertRejects(() => sweepClips(f.client));
   assertEquals(f.called, ["analysis_svc_orphans", "analysis_svc_sweep"]);
+});
+
+Deno.test("a failing bucket leaves the other bucket's removals done", async () => {
+  const cleared: unknown[] = [];
+  const service = {
+    rpc: (name: string, args?: { p_ids: number[] }) => {
+      if (name === "analysis_svc_removed") cleared.push(args?.p_ids);
+      const data = name === "analysis_svc_sweep"
+        ? [
+          { id: 1, bucket: "analysis-clips", path: "a/b.mp4" },
+          { id: 2, bucket: "feed-videos", path: "c/d.mp4" },
+          { id: 3, bucket: "feed-videos", path: "e/f.mp4" },
+        ]
+        : null;
+      return Promise.resolve({ data, error: null });
+    },
+    storage: {
+      from: (bucket: string) => ({
+        remove: () => Promise.resolve({ error: bucket === "analysis-clips" ? new Error("no") : null }),
+      }),
+    },
+  } as unknown as SupabaseClient;
+  await assertRejects(() => sweepClips(service));
+  assertEquals(cleared, [[2, 3]]);
 });
 
 Deno.test("an empty sweep touches nothing", async () => {

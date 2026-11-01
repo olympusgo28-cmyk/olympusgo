@@ -126,13 +126,23 @@ export async function sweepClips(service: SupabaseClient): Promise<{ removed: nu
   await service.rpc("analysis_svc_orphans");
   const { data, error } = await service.rpc("analysis_svc_sweep");
   if (error) throw new Error(`sweep failed: ${error.code}`);
-  const due = data as { id: number; path: string }[];
+  const due = data as { id: number; bucket: string; path: string }[];
   if (due.length === 0) return { removed: 0 };
-  const { error: removeError } = await service.storage.from(CLIPS_BUCKET).remove(due.map((d) => d.path));
-  if (removeError) throw new Error("remove failed");
-  const { error: doneError } = await service.rpc("analysis_svc_removed", { p_ids: due.map((d) => d.id) });
-  if (doneError) throw new Error(`removed failed: ${doneError.code}`);
-  return { removed: due.length };
+  // One bucket's failure leaves its own files queued, not the other's.
+  const gone: number[] = [];
+  let failed = false;
+  for (const bucket of new Set(due.map((d) => d.bucket))) {
+    const files = due.filter((d) => d.bucket === bucket);
+    const { error: removeError } = await service.storage.from(bucket).remove(files.map((d) => d.path));
+    if (removeError) failed = true;
+    else gone.push(...files.map((d) => d.id));
+  }
+  if (gone.length > 0) {
+    const { error: doneError } = await service.rpc("analysis_svc_removed", { p_ids: gone });
+    if (doneError) throw new Error(`removed failed: ${doneError.code}`);
+  }
+  if (failed) throw new Error("remove failed");
+  return { removed: gone.length };
 }
 
 /** A plain drawn court, for the local stand-in. It shows no person. */
