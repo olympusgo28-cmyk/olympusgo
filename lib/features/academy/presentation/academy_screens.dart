@@ -22,6 +22,8 @@ import '../../play/domain/activity.dart' show money;
 import '../application/academy_providers.dart';
 import '../data/academy_repository.dart';
 import '../domain/academy_models.dart';
+import '../domain/lesson_models.dart';
+import 'lesson_screens.dart' show payForLesson;
 
 const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -92,6 +94,8 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
     final top = MediaQuery.of(context).padding.top;
     final list = ref.watch(academyListProvider);
     final kids = ref.watch(myStudentsProvider).value ?? const [];
+    final invites =
+        ref.watch(coachInvitesProvider).value ?? const <(String, String)>[];
     final coaching = (list.value ?? const <Academy>[])
         .where((a) => a.isCoach)
         .toList();
@@ -183,6 +187,16 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                       ink: t.onSuccessFill,
                       padding: EdgeInsets.zero,
                       onTap: () => context.push(Routes.studentHome(s.id)),
+                    ),
+                  for (final (id, name) in invites)
+                    KitNavTile(
+                      icon: OgIcons.clipboardList,
+                      title: 'Coach at $name?',
+                      subtitle: 'They’ve asked you to join',
+                      tile: OgColors.ink,
+                      ink: OgColors.orange300,
+                      padding: EdgeInsets.zero,
+                      onTap: () => context.push(Routes.coachInvite(id)),
                     ),
                   for (final a in coaching)
                     KitNavTile(
@@ -518,6 +532,8 @@ class AcademyPageScreen extends ConsumerWidget {
         ],
       ),
     );
+    final slots =
+        ref.watch(openSlotsProvider(id)).value ?? const <LessonSlot>[];
     return Scaffold(
       backgroundColor: c.bg,
       bottomNavigationBar: KitBottomBar(
@@ -679,51 +695,74 @@ class AcademyPageScreen extends ConsumerWidget {
                       Text('Coaches', style: OgText.heading(22)),
                       const SizedBox(height: 8),
                       for (final co in a.coaches)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            children: [
-                              SolidAvatar.forId(
-                                co.name,
-                                initials: co.initials,
-                                size: 44,
-                                fontSize: 14,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      co.name,
-                                      style: OgText.body(
-                                        15,
-                                        weight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${co.role}${co.nroc ? ' · NROC licensed' : ''}',
-                                      style: OgText.body(
-                                        13,
-                                        color: c.textMuted,
-                                      ),
-                                    ),
-                                  ],
+                        Pressable(
+                          semanticLabel: co.name,
+                          onPressed: co.nroc && co.id.isNotEmpty
+                              ? () => context.push(Routes.coachPage(co.id))
+                              : null,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                SolidAvatar.forId(
+                                  co.name,
+                                  initials: co.initials,
+                                  size: 44,
+                                  fontSize: 14,
                                 ),
-                              ),
-                              if (co.nroc)
-                                KitTag(
-                                  'NROC',
-                                  height: 22,
-                                  fontSize: 11,
-                                  background: OgColors.ink,
-                                  foreground: OgColors.orange300,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        co.name,
+                                        style: OgText.body(
+                                          15,
+                                          weight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${co.role}${co.nroc ? ' · NROC licensed' : ''}',
+                                        style: OgText.body(
+                                          13,
+                                          color: c.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                            ],
+                                if (co.nroc)
+                                  KitTag(
+                                    'NROC',
+                                    height: 22,
+                                    fontSize: 11,
+                                    background: OgColors.ink,
+                                    foreground: OgColors.orange300,
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                     ],
                   ),
+                  if (slots.isNotEmpty)
+                    KitNavTile(
+                      icon: OgIcons.calendar,
+                      title: 'Book a one-to-one',
+                      subtitle: 'With one of the academy’s coaches',
+                      padding: EdgeInsets.zero,
+                      onTap: () => context.push(Routes.oneToOne(a.id)),
+                    ),
+                  if (a.classes.any((x) => x.dropinPriceCents != null))
+                    KitNavTile(
+                      icon: OgIcons.calendar,
+                      title: 'Come to one class',
+                      subtitle: 'Pay for a single class',
+                      padding: EdgeInsets.zero,
+                      onTap: () => context.push(Routes.academyDropIn(a.id)),
+                    ),
                   KitCheckList([
                     if (a.verified) 'Business licence checked by Olympus',
                     '${a.billing.label} billing, ${a.makeupsPerMonth} make-up classes each month',
@@ -752,12 +791,9 @@ class AcademyEnrolScreen extends ConsumerStatefulWidget {
 }
 
 class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
-  static const _other = 'Someone else';
   String? _who;
   String? _classId;
   String _note = '';
-  String _otherName = '';
-  int? _otherAge;
   bool _busy = false;
   bool _sent = false;
 
@@ -769,8 +805,7 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           .requestEnrol(
             academyId: a.id,
             classId: _classId!,
-            student: _who == _other ? _otherName.trim() : _who!,
-            age: _who == _other ? _otherAge : null,
+            playerId: _who!,
             note: _note,
           );
       HapticFeedback.mediumImpact();
@@ -787,7 +822,7 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final a = ref.watch(academyProvider(widget.id)).value;
-    final kids = ref.watch(myStudentsProvider).value ?? const [];
+    final players = ref.watch(myPlayersProvider);
     if (a == null) {
       return const KitScaffold(
         header: KitHeader(title: 'Ask to enrol'),
@@ -795,6 +830,8 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
       );
     }
     final cls = a.classes.where((x) => x.id == _classId).firstOrNull;
+    final people = players.value ?? const <EnrolPlayer>[];
+    final who = people.where((p) => p.id == _who).firstOrNull;
     if (_sent) {
       return KitScaffold(
         header: const KitHeader(title: 'Ask to enrol'),
@@ -810,27 +847,22 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              'For ${_who == _other ? _otherName.trim() : _who}, ${cls!.name}. '
+              'For ${who?.name}, ${cls!.name}. '
               '${a.name} answers within 2 working days. '
-              '${Env.hasSupabase ? 'If they accept, you pay the academy directly.' : 'You pay the first ${a.billing.unit} only after they accept.'}',
+              'If they accept, you pay the academy directly.',
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
           ),
         ],
       );
     }
-    final names = <String>{for (final k in kids) k.name, 'Myself', _other};
-    final ready =
-        _who != null &&
-        _classId != null &&
-        (_who != _other || _otherName.trim().isNotEmpty);
     return KitScaffold(
       header: const KitHeader(title: 'Ask to enrol'),
       bottom: [
         KitButton(
           label: 'Send request',
           loading: _busy,
-          onPressed: ready ? () => _send(a) : null,
+          onPressed: _who != null && _classId != null ? () => _send(a) : null,
         ),
         KitButton.outline(label: 'Cancel', onPressed: () => kitPop(context)),
       ],
@@ -839,38 +871,18 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
           'Who is joining?',
           size: 28,
           lead:
-              '${a.name} replies within 2 working days. '
-              '${Env.hasSupabase ? 'If they accept, you pay the academy directly' : 'You pay only after they accept'}.',
+              '${a.name} replies within 2 working days. If they accept, you '
+              'pay the academy directly.',
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Student', style: OgText.body(15, weight: FontWeight.w600)),
-            for (final n in names)
-              KitChoiceRow(
-                title: n,
-                subtitle: n == 'Myself'
-                    ? 'Adult'
-                    : n == _other
-                    ? 'A child or someone you look after'
-                    : 'Your child${kids.firstWhere((k) => k.name == n).age == null ? '' : ' · age ${kids.firstWhere((k) => k.name == n).age}'}',
-                selected: _who == n,
-                onTap: () => setState(() => _who = n),
-              ),
-            if (_who == _other) ...[
-              const SizedBox(height: 8),
-              KitInput(
-                label: 'Their name',
-                onChanged: (v) => setState(() => _otherName = v),
-                maxLength: 80,
-              ),
-              const SizedBox(height: 8),
-              KitInput(
-                label: 'Age',
-                keyboardType: TextInputType.number,
-                onChanged: (v) => _otherAge = int.tryParse(v.trim()),
-              ),
-            ],
+            PlayerChoices(
+              players: players,
+              selected: _who,
+              onSelect: (id) => setState(() => _who = id),
+            ),
           ],
         ),
         Column(
@@ -890,9 +902,63 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
         KitTextArea(
           label: 'Anything the coach should know?',
           optional: true,
-          hint: 'Experience, health notes, days that don’t work',
+          hint: 'Experience, days that don’t work',
           onChanged: (v) => _note = v,
         ),
+      ],
+    );
+  }
+}
+
+/// Yourself, or a child linked to your account. A child with no link goes
+/// through the parent code first, so their age comes from their own account.
+class PlayerChoices extends StatelessWidget {
+  const PlayerChoices({
+    super.key,
+    required this.players,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final AsyncValue<List<EnrolPlayer>> players;
+  final String? selected;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    if (players.hasError) {
+      return Text(
+        'Can’t load this right now. Check your connection.',
+        style: OgText.body(14, color: c.textMuted),
+      );
+    }
+    if (!players.hasValue) return const CupertinoActivityIndicator();
+    final people = players.requireValue;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final p in people)
+          KitChoiceRow(
+            title: p.self ? 'Myself' : p.name,
+            subtitle: p.self
+                ? 'Adult'
+                : 'Your child${p.age == null ? '' : ' · age ${p.age}'}',
+            selected: selected == p.id,
+            onTap: () => onSelect(p.id),
+          ),
+        if (people.isEmpty)
+          Text(
+            'A parent needs to do this for you.',
+            style: OgText.body(14, color: c.textMuted),
+          )
+        else ...[
+          const SizedBox(height: 8),
+          KitLink(
+            'Link a child to your account',
+            onPressed: () => context.push(Routes.enterChildCode),
+          ),
+        ],
       ],
     );
   }
@@ -901,9 +967,12 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
 // ─── Trial class ───────────────────────────────────────────────────────────
 
 class TrialClassScreen extends ConsumerStatefulWidget {
-  const TrialClassScreen({super.key, required this.id});
+  const TrialClassScreen({super.key, required this.id, this.dropIn = false});
 
   final String id;
+
+  /// One class without enrolling, rather than a first trial.
+  final bool dropIn;
 
   @override
   ConsumerState<TrialClassScreen> createState() => _TrialClassScreenState();
@@ -915,32 +984,54 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
   bool _busy = false;
   bool _done = false;
 
-  Future<void> _pay(Academy a) async {
+  LessonKind get _kind => widget.dropIn ? LessonKind.dropIn : LessonKind.trial;
+  int? _price(MakeupSlot s) =>
+      widget.dropIn ? s.dropinPriceCents : s.trialPriceCents;
+
+  Future<void> _book(Academy a, EnrolPlayer who) async {
     final s = _slot!;
-    final fee = academyFee(trialCents);
-    // Payments are off: the trial is booked and paid at the class.
-    final Object? method = Env.hasSupabase
-        ? true
-        : await showPaySheet(
-            context,
-            kicker: 'Trial class',
-            title: s.className,
-            subtitle: '${Fmt.dayTimeComma(s.at)} · ${s.coach} · for $_who',
-            lines: [
-              ('Trial class', 'S\$${money(trialCents)}'),
-              ('Platform fee', 'S\$${money(fee)}'),
-            ],
-            totalCents: trialCents + fee,
-            payee: a.name,
-            notes: [
-              'Full refund if you cancel 24 hours before the class.',
-              'The S\$${money(trialCents)} comes off the first ${a.billing.unit} if you enrol within 7 days.',
-            ],
-          );
-    if (method == null || !mounted) return;
     setState(() => _busy = true);
     try {
-      await ref.read(academyRepositoryProvider).bookTrial(a.id, s, _who!);
+      if (!Env.hasSupabase) {
+        await _demoPay(a, s, who);
+        return;
+      }
+      if (_price(s) != null) {
+        final q = await ref
+            .read(lessonRepositoryProvider)
+            .quote(_kind, s.classId, s.at);
+        if (!mounted) return;
+        if (q.enabled) {
+          final id = await payForLesson(
+            context,
+            ref,
+            kind: _kind,
+            lessonRef: s.classId,
+            at: s.at,
+            studentId: who.id,
+            studentName: who.name,
+            academyName: a.name,
+          );
+          ref.invalidate(myLessonsProvider);
+          ref.invalidate(academyProvider(a.id));
+          if (id != null && mounted) {
+            context.pushReplacement(Routes.lesson(id));
+          }
+          return;
+        }
+      }
+      if (widget.dropIn) {
+        if (mounted) {
+          showOgToast(
+            context,
+            'Paying in the app isn’t open yet. It opens once payments are '
+            'switched on.',
+          );
+        }
+        return;
+      }
+      // Payments are off: the trial is booked and paid at the class.
+      await ref.read(academyRepositoryProvider).bookTrial(a.id, s, who.id);
       HapticFeedback.mediumImpact();
       if (mounted) setState(() => _done = true);
     } on AuthFailure catch (e) {
@@ -950,22 +1041,51 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
     }
   }
 
+  Future<void> _demoPay(Academy a, MakeupSlot s, EnrolPlayer who) async {
+    final price = _price(s) ?? trialCents;
+    final fee = academyFee(price);
+    final method = await showPaySheet(
+      context,
+      kicker: _kind.label,
+      title: s.className,
+      subtitle: '${Fmt.dayTimeComma(s.at)} · ${s.coach} · for ${who.name}',
+      lines: [
+        (_kind.label, 'S\$${money(price)}'),
+        ('Platform fee', 'S\$${money(fee)}'),
+      ],
+      totalCents: price + fee,
+      payee: a.name,
+      notes: const ['Cancel 24 hours before the class for the price back.'],
+    );
+    if (method == null || !mounted) return;
+    await ref.read(academyRepositoryProvider).bookTrial(a.id, s, who.id);
+    HapticFeedback.mediumImpact();
+    if (mounted) setState(() => _done = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.og;
+    final title = _kind.label;
     final a = ref.watch(academyProvider(widget.id)).value;
-    final kids = ref.watch(myStudentsProvider).value ?? const [];
-    final slots = ref.watch(trialSlotsProvider(widget.id)).value;
+    final players = ref.watch(myPlayersProvider);
+    final slots = ref
+        .watch(trialSlotsProvider(widget.id))
+        .value
+        ?.where((s) => !widget.dropIn || s.dropinPriceCents != null)
+        .toList();
     if (a == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Trial class'),
-        children: [CupertinoActivityIndicator()],
+      return KitScaffold(
+        header: KitHeader(title: title),
+        children: const [CupertinoActivityIndicator()],
       );
     }
+    final people = players.value ?? const <EnrolPlayer>[];
+    final who = people.where((p) => p.id == _who).firstOrNull;
     if (_done) {
       final s = _slot!;
       return KitScaffold(
-        header: const KitHeader(title: 'Trial class'),
+        header: KitHeader(title: title),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
           KitButton(
@@ -986,7 +1106,7 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${s.coach} is expecting $_who.',
+                  '${s.coach} is expecting ${who?.name}.',
                   style: OgText.body(15, height: 1.45, color: c.textMuted),
                 ),
               ],
@@ -995,23 +1115,23 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
         ],
       );
     }
-    final who = [for (final k in kids) k.name, 'Myself'];
     return KitScaffold(
-      header: const KitHeader(title: 'Trial class'),
+      header: KitHeader(title: title),
       bottom: [
         KitButton(
-          label: _slot == null ? 'Pick a class' : 'Continue to pay',
+          label: _slot == null ? 'Pick a class' : 'Continue',
           loading: _busy,
-          onPressed: _slot == null || _who == null ? null : () => _pay(a),
+          onPressed: _slot == null || who == null ? null : () => _book(a, who),
         ),
       ],
       children: [
         KitTitle(
-          'Try one class first',
+          widget.dropIn ? 'Come to one class' : 'Try one class first',
           size: 28,
-          lead:
-              'One paid trial per child. If you enrol within 7 days, the trial '
-              'fee comes off the first ${a.billing.unit}.',
+          lead: widget.dropIn
+              ? 'Pay for one class, with no term to sign up to.'
+              : 'If you enrol within 7 days, ask ${a.name} to take the trial '
+                    'fee off your first ${a.billing.unit}.',
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1020,12 +1140,11 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
               'Who is it for?',
               style: OgText.body(15, weight: FontWeight.w600),
             ),
-            for (final n in who)
-              KitChoiceRow(
-                title: n,
-                selected: _who == n,
-                onTap: () => setState(() => _who = n),
-              ),
+            PlayerChoices(
+              players: players,
+              selected: _who,
+              onSelect: (id) => setState(() => _who = id),
+            ),
           ],
         ),
         Column(
@@ -1047,7 +1166,9 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
                 title: '${s.className}, ${Fmt.day(s.at)}',
                 subtitle:
                     '${Fmt.time(s.at)} · ${s.coach} · ${s.spots} ${s.spots == 1 ? 'spot' : 'spots'}',
-                tag: 'S\$${money(trialCents, decimals: false)}',
+                tag: _price(s) == null
+                    ? null
+                    : 'S\$${money(_price(s)!, decimals: false)}',
                 selected: _slot == s,
                 onTap: () => setState(() => _slot = s),
               ),

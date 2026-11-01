@@ -41,6 +41,26 @@ class StaffApi {
       );
     }
   }
+
+  /// A link to a verification file, good for a minute.
+  Future<String> documentUrl(String path) async {
+    try {
+      return await _client.storage
+          .from('verification-docs')
+          .createSignedUrl(path, 60);
+    } on StorageException {
+      throw const StaffFailure('We couldn\'t open that file.');
+    }
+  }
+
+  /// Files go once the check is done.
+  Future<void> removeDocument(String path) async {
+    try {
+      await _client.storage.from('verification-docs').remove([path]);
+    } on StorageException {
+      throw const StaffFailure('We couldn\'t delete that file. Try again.');
+    }
+  }
 }
 
 final staffApiProvider = Provider((ref) => StaffApi(Supabase.instance.client));

@@ -116,3 +116,28 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q104 | A shop can tap Start work on a service days before the slot, which ends the buyer's right to cancel | Shop services | Allowed. The buyer can still report a problem | Open |
 | Q105 | A buyer can read `shop_minor` on their own refund rows, so a shop's share is visible through a direct read | Privacy | Accepted: commercial data, not personal | Open |
 | Q106 | A shop marks an order ready late. Should the buyer get a full `shop.release_hours` from then | Shop | Yes: payout waits for the later of `release_at` and ready plus 48 hours | Open |
+| Q107 | Monthly and term fees: when does the money reach the academy, and what does a mid-term withdrawal get back? | Academy fees (ACD-9) | Paid to the academy directly, not in the app. Owner, 1 Nov: trials and one-off lessons only for now | Open |
+| Q108 | A trial fee is "taken off the first month" (R-ACD-4), but months are now paid directly | Trials | The academy honours it itself, and the app says to ask them | Open |
+| Q109 | Trial and lesson prices. R-ACD-4's S$15.00 is Assumed | Lessons | Set per class or slot by the academy. Nothing is offered until a price is set | Open |
+| Q110 | Does a paid trial still need the academy to accept it? (ACD-2) | Trials | No, it's instant, and a decline is an academy cancel with a full refund | Open |
+| Q111 | Can an under-18 book their own lesson? | Lessons, minors | No, a linked parent books | Open |
+| Q112 | An under-18 alone with a coach on a one-to-one | Minors | Allowed if a parent books. No chat is added. Worth a safeguarding view before launch | Open |
+| Q113 | A place given up late: can it be sold again? | Lessons | No, it stays taken | Open |
+| Q114 | A coach marks Present and it's found later the lesson didn't happen. Attendance releases at once, so the payer may have no time to report | Lessons | Staff can refund after release, as Q93, and it comes from the owner's earnings | Open |
+| Q115 | A substitute coach on a one-to-one | Lessons | Not supported. The academy cancels with a full refund | Open |
+| Q116 | Limit on trials per student | Lessons | None | Open |
+| Q117 | A one-to-one slot that overlaps the coach's weekly class | Lessons | Allowed. The database stops overlapping slots only | Open |
+| Q118 | A weekly class moves in `time` mode after someone has paid for that date. R-REF-17 gives a full refund on an organizer change | Lessons | Payers are told. `academy_save_class` refuses a move, but a one-off notice doesn't refund | Open |
+| Q119 | Who can make assessment templates? | Assessments | The head coach | Open |
+| Q120 | Can a coach correct an assessment? | Assessments | Yes, only the coach who wrote it, and it shows as edited | Open |
+| Q121 | Assessments after the assigning coach leaves | Assessments | The coach loses access, and the player and parent keep it. A new coach can't see the history | Open |
+| Q122 | The head coach can't read an assessment they didn't assign. Is that what you want? | Assessments | Yes, as the checklist says | Open |
+| Q123 | How long a child's assessments are kept once they leave an academy | Children's data | Until the account is deleted. The lawyer's children's data review should set this | Open |
+| Q124 | Licence expiry | Coaches | Stops new classes and slots, and existing classes stay. Staff enter nothing: the coach states the date and staff check it | Open |
+| Q125 | Which staff role reviews business and coach documents? | Verification | `content` | Open |
+| Q126 | Must every coach hold an NROC licence, for every sport? R-ACD-1 says so, but NROC is Singapore only | Malaysia, New Zealand | Yes, Singapore only for now | Open |
+| Q127 | Who can close an academy that has an owner and a different head coach? | Academy | The head coach, as before. The owner of the payout account isn't asked | Open |
+| Q128 | Can a minor tap a physio referral? | Services | 18 and over only | Open |
+| Q129 | How the reference code reaches the partner | Services | A `ref` link parameter, one code per partner, so no person is identified | Open |
+| Q130 | Does a partner pay for referrals, and how long are referrals kept? | Services | No fee recorded. Kept until the account is deleted | Open |
+| Q131 | Shop services list recovery (SHP-7), while the checklist makes physio a referral only | Shop, Services | Physio goes through referrals, not the Shop. Other Shop services are unchanged | Open |

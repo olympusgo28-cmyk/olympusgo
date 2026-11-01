@@ -163,3 +163,31 @@ These replace `shop_open`, `shop_checkout`, `shop_cancel`, `shop_confirm_receive
 | `staff_shop_save`, `staff_product_list`, `staff_product_save`, `staff_product_stock` | RPC or `admin-action`, content | as named | Stock moves by an amount, so an edit can't wipe stock held for someone paying | A-07 |
 | `staff_order_list`, `staff_order_get`, `staff_order_decide`, `staff_shop_commission_set`, `staff_shop_link_owner`, `staff_points_block` | RPC or `admin-action`, payments | as named | `staff_order_decide` takes `[{line, qty}]` and a `p_key`, so a repeat does nothing. An empty list releases to the shop, only once it's reported or past its date. Refunding part of an order still waiting leaves the rest waiting | A-07 |
 
+## Academy, lessons, assessments and services, as built in Phase 4c
+
+All in `public`, authenticated only, unless it says staff. Migrations `20261106090000` to `20261106120000`.
+
+| Function | What it does |
+| --- | --- |
+| `academy_coach_answer(academy, accept)`, `academy_my_coach_invites()` | A coach says yes or no. Nobody coaches without it |
+| `coach_profile_save`, `coach_profile_get(user)` | A coach's page. Only an adult with a current licence at a verified academy is listed |
+| `coach_licence_submit(number, expires, path)`, `coach_licence_my()` | The coach's own licence. No file path comes back |
+| `academy_submit_business(academy, uen, path)`, `academy_verification(academy)` | The owner's submission, and the checklist for the head coach |
+| `academy_my_players()`, `academy_request(class, player, note, trial_at)` | Who can be enrolled: yourself or a linked child. Replaces the typed name |
+| `lesson_quote(kind, ref, at)` | Server price, fee, total, refund rule and whether paying is open. `kind` is `trial`, `class` or `one_to_one`. `ref` is a class or slot |
+| `lesson_reserve(kind, ref, at, student, key, expected_minor)` | Holds the place for `lesson.hold_minutes` and returns the payment. Idempotent on the key. A wrong total raises `price_changed`. Then the usual `payment_begin` and webhook |
+| `lesson_cancel(booking, reason)` | The payer. In time gives the price back, late gives nothing |
+| `lesson_academy_cancel(booking, reason)` | The coach or head. Everything back, with the card fee on the owner |
+| `lesson_mark_attendance(booking, present)` | After the start. Saves and releases |
+| `lesson_report(booking, note)` | The payer, after the start and before release. Held for staff |
+| `lesson_my()`, `lesson_get(booking)`, `lesson_academy_list(academy)` | Reads |
+| `lesson_slot_add`, `lesson_slot_withdraw`, `lesson_slots_open(academy)`, `lesson_slots_mine(academy)` | One-to-one times |
+| `assessment_template_list`, `assessment_template_save`, `assessment_template_archive` | Head coach writes. Criteria freeze once used |
+| `assessment_save(p)`, `assessment_list(player)` | The coach writes or corrects. The list returns only what the caller may read, oldest first |
+| `service_partner_list()`, `service_referral_make(partner)` | Live partners, and the link to open. 18 and over |
+| `staff_verification_list`, `staff_academy_decide`, `staff_licence_decide`, `staff_doc_removed` | Staff, role `content` |
+| `staff_lesson_list`, `staff_lesson_decide(booking, refund, reason)` | Staff, role `payments`. The only way to refund a lesson |
+| `staff_service_list`, `staff_service_save` | Staff, role `content`. Counts per partner, never who |
+
+Staff writes go through `admin-action`.
+

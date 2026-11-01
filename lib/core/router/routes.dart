@@ -304,6 +304,24 @@ abstract final class Routes {
   static String studentFees(String id) => '/students/$id/fees';
   static String studentMakeup(String id) => '/students/$id/makeup';
   static String studentProgress(String id) => '/students/$id/progress';
+  static const lessons = '/lessons';
+  static String lesson(String id) => '/lessons/$id';
+  static String academyLessons(String id) => '/academies/$id/lessons';
+  static String lessonSlots(String id) => '/academies/$id/lessons/times';
+  static String lessonSlotNew(String id) => '/academies/$id/lessons/times/new';
+  static String oneToOne(String id) => '/academies/$id/one-to-one';
+  static String academyDropIn(String id) => '/academies/$id/single-class';
+  static String academyVerify(String id) => '/academies/$id/verify';
+  static String coachInvite(String id) => '/academies/$id/coach-invite';
+  static String coachPage(String id) => '/coaches/$id';
+  static const coachMe = '/coach/me';
+  static String assessmentTemplates(String id) => '/academies/$id/templates';
+  static String assessmentTemplateNew(String id) =>
+      '/academies/$id/templates/new';
+  static String assess(String studentId, {String? edit}) =>
+      '/students/$studentId/assess${edit == null ? '' : '?edit=$edit'}';
+  static String assessments(String playerId, {String? student}) =>
+      '/assessments/$playerId${student == null ? '' : '?student=$student'}';
 
   // Venues.
   static const venues = '/venues';

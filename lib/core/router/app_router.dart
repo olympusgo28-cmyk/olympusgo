@@ -4,6 +4,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/academy/presentation/academy_admin_screens.dart';
 import '../../features/academy/presentation/academy_screens.dart';
+import '../../features/academy/presentation/assessment_screens.dart';
+import '../../features/academy/presentation/lesson_screens.dart';
+import '../../features/academy/presentation/verification_screens.dart';
+import '../../features/services/presentation/services_screen.dart';
 import '../../features/academy/presentation/coach_screens.dart';
 import '../../features/academy/presentation/create_academy_screens.dart';
 import '../../features/academy/presentation/parent_screens.dart';
@@ -169,15 +173,7 @@ GoRouter appRouter(Ref ref) {
       // Game.
       page(Routes.game, (_) => const GameHomeScreen()),
       page(Routes.find, (_) => const FindScreen()),
-      page(
-        Routes.services,
-        (_) => const EmptyCategoryScreen(
-          title: 'Services',
-          message:
-              'Partner physios and other services will be listed here. '
-              'None are open yet.',
-        ),
-      ),
+      page(Routes.services, (_) => const ServicesScreen()),
       page(
         Routes.fitness,
         (_) => const EmptyCategoryScreen(
@@ -544,6 +540,57 @@ GoRouter appRouter(Ref ref) {
       page('/academies/:id', (s) => AcademyPageScreen(id: id(s))),
       page('/academies/:id/enrol', (s) => AcademyEnrolScreen(id: id(s))),
       page('/academies/:id/trial', (s) => TrialClassScreen(id: id(s))),
+      page(
+        '/academies/:id/single-class',
+        (s) => TrialClassScreen(id: id(s), dropIn: true),
+      ),
+      page(
+        '/academies/:id/one-to-one',
+        (s) => OneToOneScreen(academyId: id(s)),
+      ),
+      page('/academies/:id/verify', (s) => AcademyVerifyScreen(id: id(s))),
+      page(
+        '/academies/:id/coach-invite',
+        (s) => CoachInviteScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons',
+        (s) => AcademyLessonsScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons/times',
+        (s) => LessonSlotsScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons/times/new',
+        (s) => LessonSlotEditScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/templates',
+        (s) => AssessmentTemplatesScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/templates/new',
+        (s) => AssessmentTemplateEditScreen(academyId: id(s)),
+      ),
+      page(Routes.lessons, (_) => const MyLessonsScreen()),
+      page('/lessons/:id', (s) => LessonDetailScreen(id: id(s))),
+      page(Routes.coachMe, (_) => const CoachMeScreen()),
+      page('/coaches/:id', (s) => CoachPageScreen(id: id(s))),
+      page(
+        '/students/:id/assess',
+        (s) => AssessStudentScreen(
+          studentId: id(s),
+          editId: s.uri.queryParameters['edit'],
+        ),
+      ),
+      page(
+        '/assessments/:id',
+        (s) => AssessmentHistoryScreen(
+          playerId: id(s),
+          studentId: s.uri.queryParameters['student'],
+        ),
+      ),
       page('/academies/:id/today', (s) => AcademyTodayScreen(id: id(s))),
       page('/academies/:id/classes', (s) => AcademyClassesScreen(id: id(s))),
       page('/academies/:id/requests', (s) => EnrolRequestsScreen(id: id(s))),

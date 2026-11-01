@@ -153,13 +153,27 @@ class AcademySettingsScreen extends ConsumerWidget {
                 subtitle: switch (a.verification) {
                   'verified' => 'Business licence checked',
                   'submitted' => 'Sent for review',
+                  'rejected' => 'Needs another look',
                   _ => 'Not verified yet',
                 },
                 chevron: head,
                 onTap: head
-                    ? () => showAcademyVerification(context, ref, a)
+                    ? () => context.push(Routes.academyVerify(a.id))
                     : () {},
               ),
+              KitNavTile(
+                icon: OgIcons.calendar,
+                title: 'Lessons',
+                subtitle: 'Paid lessons and one-to-one times',
+                onTap: () => context.push(Routes.academyLessons(a.id)),
+              ),
+              if (head)
+                KitNavTile(
+                  icon: OgIcons.clipboardList,
+                  title: 'Assessment templates',
+                  subtitle: 'What your coaches score',
+                  onTap: () => context.push(Routes.assessmentTemplates(a.id)),
+                ),
               KitNavTile(
                 icon: OgIcons.people,
                 title: 'Coaches',
@@ -200,7 +214,7 @@ class AcademySettingsScreen extends ConsumerWidget {
                 KitNavTile(
                   icon: OgIcons.trash,
                   title: 'Close academy',
-                  subtitle: 'Stop classes and refund unused lessons',
+                  subtitle: 'Stop classes and refund lessons still to come',
                   danger: true,
                   onTap: () => context.push(Routes.academyClose(a.id)),
                 ),

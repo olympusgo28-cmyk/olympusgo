@@ -58,6 +58,10 @@ abstract class AcademyClass with _$AcademyClass {
     /// This week's lesson, and the skill it works on (a [Skill.id]).
     @Default('') String lesson,
     @Default('') String focusSkill,
+
+    /// What one class costs to try or drop into. Null means it isn't offered.
+    int? trialPriceCents,
+    int? dropinPriceCents,
   }) = _AcademyClass;
 
   const AcademyClass._();
@@ -173,6 +177,12 @@ abstract class Student with _$Student {
     int? age,
     required String academyId,
     required String classId,
+
+    /// Their account. Empty on old rows, which can't be assessed.
+    @Default('') String playerId,
+
+    /// False for a child reading their own page.
+    @Default(true) bool canAct,
     @Default('') String parent,
     @Default([]) List<Skill> skills,
     @Default(100) int attendancePct,
@@ -241,6 +251,10 @@ abstract class MakeupSlot with _$MakeupSlot {
     required String coach,
     required String lesson,
     required int spots,
+
+    /// What the class costs to try or drop into.
+    int? trialPriceCents,
+    int? dropinPriceCents,
   }) = _MakeupSlot;
 }
 
@@ -295,7 +309,6 @@ abstract class AcademyDraft with _$AcademyDraft {
     @Default(true) bool template,
     @Default(Billing.month) Billing billing,
     @Default(2) int makeups,
-    @Default({}) Set<String> documents,
     @Default([]) List<String> coachEmails,
   }) = _AcademyDraft;
 }

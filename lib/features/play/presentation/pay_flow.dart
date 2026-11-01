@@ -15,6 +15,16 @@ import '../data/payment_gateway.dart';
 import '../domain/activity.dart';
 import '../domain/meet_ops.dart' show newClientKey;
 
+/// What's being paid for, which words the wait.
+enum PayingFor {
+  spot('spot'),
+  order('order'),
+  lesson('lesson');
+
+  const PayingFor(this.noun);
+  final String noun;
+}
+
 /// How a payment came out.
 class PaidSpot {
   const PaidSpot({
@@ -127,14 +137,13 @@ Future<PaidSpot?> payFeesOwed(
   }
 }
 
-/// Starts the held payment and waits for the webhook. [shop] words the wait
-/// for an order rather than a spot.
+/// Starts the held payment and waits for the webhook.
 Future<PaidSpot?> finishPayment(
   BuildContext context,
   PaymentGateway gateway,
   PaymentHold hold,
   PayMethod chosen, {
-  bool shop = false,
+  PayingFor paying = PayingFor.spot,
 }) async {
   // A live payment keeps the method it started with.
   final started = hold.method;
@@ -148,7 +157,7 @@ Future<PaidSpot?> finishPayment(
       .push<PaymentProgress>(
         CupertinoPageRoute(
           fullscreenDialog: true,
-          builder: (_) => PaymentWaitingScreen(hold: hold, shop: shop),
+          builder: (_) => PaymentWaitingScreen(hold: hold, paying: paying),
         ),
       );
   if (done?.state != PaymentState.paid) return null;
@@ -165,13 +174,11 @@ class PaymentWaitingScreen extends ConsumerStatefulWidget {
   const PaymentWaitingScreen({
     super.key,
     required this.hold,
-    this.shop = false,
+    this.paying = PayingFor.spot,
   });
 
   final PaymentHold hold;
-
-  /// Paying for a Shop order rather than a spot.
-  final bool shop;
+  final PayingFor paying;
 
   @override
   ConsumerState<PaymentWaitingScreen> createState() =>
@@ -274,7 +281,8 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final gateway = ref.watch(paymentGatewayProvider);
-    final shop = widget.shop;
+    final noun = widget.paying.noun;
+    final spot = widget.paying == PayingFor.spot;
     final left = _left;
     final time =
         '${left.inMinutes}:${(left.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -286,14 +294,11 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
           KitTitle(
             _refunded ? 'Your payment is coming back' : 'This payment ended',
             lead: _refunded
-                ? shop
-                      ? 'We couldn’t keep your order, so everything you paid '
-                            'goes back to where it came from.'
-                      : 'We couldn’t keep your spot, so everything you paid goes back '
-                            'to where it came from.'
-                : shop
-                ? 'You weren’t charged. Try again if you still want it.'
-                : 'You weren’t charged. Try again if you still want the spot.',
+                ? 'We couldn’t keep your $noun, so everything you paid goes '
+                      'back to where it came from.'
+                : spot
+                ? 'You weren’t charged. Try again if you still want the spot.'
+                : 'You weren’t charged. Try again if you still want it.',
           ),
         ],
       );
@@ -309,33 +314,34 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
         KitTitle(
           'Waiting for payment',
           lead: left == Duration.zero
-              ? shop
-                    ? 'Your hold ran out. If your payment still lands, we’ll '
-                          'send it all back.'
-                    : 'Your hold ran out. If your payment still lands, we’ll give you '
+              ? spot
+                    ? 'Your hold ran out. If your payment still lands, we’ll give you '
                           'a spot if there is one, or send it all back.'
-              : shop
-              ? 'We’re holding your order for $time.'
-              : 'We’re holding your spot for $time.',
+                    : 'Your hold ran out. If your payment still lands, we’ll '
+                          'send it all back.'
+              : 'We’re holding your $noun for $time.',
         ),
         if (_failed)
           KitNote(
             'That didn’t go through. You can try again while your '
-            '${shop ? 'order' : 'spot'} is held.',
+            '$noun is held.',
             tone: KitTone.warn,
           ),
         Text(
           '${Money(widget.hold.totalCents)} to OlympusGO',
           style: OgText.heading(24),
         ),
-        Text(
-          shop
-              ? 'OlympusGO holds your payment until you collect. Your order is '
-                    'placed as soon as your bank or card confirms it.'
-              : 'OlympusGO holds your payment until the organizer marks attendance. '
-                    'You’re in as soon as your bank or card confirms it.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
-        ),
+        Text(switch (widget.paying) {
+          PayingFor.order =>
+            'OlympusGO holds your payment until you collect. Your order is '
+                'placed as soon as your bank or card confirms it.',
+          PayingFor.lesson =>
+            'OlympusGO holds your payment until the coach marks attendance. '
+                'You’re booked as soon as your bank or card confirms it.',
+          PayingFor.spot =>
+            'OlympusGO holds your payment until the organizer marks attendance. '
+                'You’re in as soon as your bank or card confirms it.',
+        }, style: OgText.body(14, height: 1.45, color: c.textMuted)),
       ],
     );
   }

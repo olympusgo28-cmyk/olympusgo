@@ -21,7 +21,7 @@ import '../../earnings/application/earnings_providers.dart';
 import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../../play/data/payment_gateway.dart' show PaymentHold;
 import '../../play/domain/meet_ops.dart' show newClientKey;
-import '../../play/presentation/pay_flow.dart' show finishPayment;
+import '../../play/presentation/pay_flow.dart' show PayingFor, finishPayment;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
@@ -259,7 +259,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           );
       orderId = id;
       if (!mounted) return;
-      await finishPayment(context, gateway, hold, method, shop: true);
+      await finishPayment(
+        context,
+        gateway,
+        hold,
+        method,
+        paying: PayingFor.order,
+      );
     } on AuthFailure catch (e) {
       if (mounted) {
         if (e.message == 'price_changed') {
@@ -722,7 +728,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           method: o.paymentMethod,
         ),
         method,
-        shop: true,
+        paying: PayingFor.order,
       );
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);

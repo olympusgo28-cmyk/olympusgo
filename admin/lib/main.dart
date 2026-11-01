@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config.dart';
 import 'core/ui.dart';
+import 'features/academy/lessons_screen.dart';
+import 'features/academy/services_screen.dart';
+import 'features/academy/verification_screen.dart';
 import 'features/audit/audit_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/mfa_screen.dart';
@@ -36,8 +39,11 @@ const sections = [
   Section('/sports', 'Sports', Icons.sports_tennis, 'content'),
   Section('/rules', 'Rating and scoring', Icons.rule, 'content'),
   Section('/catalogue', 'Catalogue', Icons.storefront_outlined, 'content'),
+  Section('/verification', 'Verification', Icons.verified_outlined, 'content'),
+  Section('/services', 'Services', Icons.medical_services_outlined, 'content'),
   Section('/money', 'Payments', Icons.payments_outlined, 'payments'),
   Section('/orders', 'Orders', Icons.receipt_long_outlined, 'payments'),
+  Section('/lessons', 'Lessons', Icons.event_available_outlined, 'payments'),
   Section('/audit', 'Audit log', Icons.history, 'super'),
 ];
 
@@ -52,6 +58,12 @@ final _router = GoRouter(
         GoRoute(path: '/money', builder: (_, _) => const MoneyScreen()),
         GoRoute(path: '/catalogue', builder: (_, _) => const CatalogueScreen()),
         GoRoute(path: '/orders', builder: (_, _) => const OrdersScreen()),
+        GoRoute(path: '/lessons', builder: (_, _) => const LessonsScreen()),
+        GoRoute(
+          path: '/verification',
+          builder: (_, _) => const VerificationScreen(),
+        ),
+        GoRoute(path: '/services', builder: (_, _) => const ServicesScreen()),
         GoRoute(path: '/users', builder: (_, _) => const UsersScreen()),
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),

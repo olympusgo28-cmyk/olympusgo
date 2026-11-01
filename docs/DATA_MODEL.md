@@ -524,7 +524,23 @@ create view money.balances with (security_invoker = true) as
 - `private.order_unreserve` is the only place stock and points come back, guarded by `orders.unreserved_at`.
 - Lock order: the buyer's advisory lock, then the order, the payment, then products by id.
 
-## Tests every migration in this file needs
+## Academy, lessons, assessments and services
+
+**Built in Phase 4c, in `public`.** See `supabase/migrations/20261106090000_academy_verification.sql` onwards. `field_registry` doesn't exist yet (Q100), so sensitivity is noted here.
+
+- `academies` gains `uen` (P2), `licence_path` (P3, cleared after the check), `rejected_reason` and `closed_at`. Closing is soft, so records outlive the academy.
+- `coach_licences` holds one row per person: `nroc_number` (P2), `expires_on`, `status`, `file_path` (P3, cleared after the check). `verified_at` is set once, so a renewal under review keeps the classes a coach has.
+- `coach_profiles` is public text a coach writes about themself (P1).
+- `academy_coaches.accepted_at` is null until the coach says yes.
+- `academy_students.player_id` links to the account (P2, a child's). Old rows without one can't be booked or assessed.
+- `academy_makeup_credits` gives each credit its own expiry, and `source` is unique so each cause gives one.
+- `lesson_slots` has an exclusion constraint on coach and time. `lesson_slot_add` takes a per-coach lock first, because two overlapping inserts would otherwise deadlock.
+- `lesson_bookings` has no foreign keys, as money outlives everything, and carries name snapshots. `private.lesson_transitions` lists the allowed steps. Partial unique indexes stop a slot or seat being sold twice.
+- `payments.lesson_booking_id` is a third owner beside `activity_id` and `order_id`, and `held_owner` is the coalesce of the three.
+- `assessments` and `assessment_scores` hold a child's record (P3) with their own name snapshots and no foreign key to the academy. Writes are revoked from clients, and reads go through RLS.
+- `service_referrals` has five columns only, by design (P3, it implies a health interest).
+
+
 
 - RLS on for every table (CI meta-test).
 - For each table, a read test as: the owner, another member, an outsider, a blocked user, a minor, a suspended user, anonymous.

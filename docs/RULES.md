@@ -83,7 +83,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-7 | Tournament entry | Until registration closes | Decided | PAY-3, TRN-5 |
 | R-REF-8 | Court booking | More than 24 hours before | Assumed | PRD assumed rules |
 | R-REF-9 | Shop order | Until collected, or until a service is started. Sports equipment is final once collected, pending the lawyer's check at Gate D | Decided (owner, 1 Nov) | Checklist P4b-04 |
-| R-REF-10 | Trial class | At least 24 hours before the class | Designed | TrialClass |
+| R-REF-10 | Trial class, single class or one-to-one | At least 24 hours before it starts. The price comes back, without the fee (R-REF-2). If the academy cancels, everything comes back (R-REF-1). | Designed | TrialClass, owner 1 Nov |
 
 **Special cases**
 
@@ -233,11 +233,15 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 
 | Id | Rule | Status | Source |
 | --- | --- | --- | --- |
-| R-ACD-1 | Verification: business licence (UEN), an NROC licence for every coach, and a payout account; reviewed in 1 to 3 working days. Coaches get no classes until their licence is verified. | Decided | ACD-3, ACD-10 |
+| R-ACD-1 | Verification: business licence (UEN), an NROC licence for every coach, and a payout account; reviewed in 1 to 3 working days. Coaches get no classes until their licence is verified. An academy isn't listed until it's verified, and a coach joins only by accepting, with no access to children before their licence is verified. | Decided | ACD-3, ACD-10 |
 | R-ACD-2 | A class change notifies every parent by app, then by SMS if unread after 2 hours. | Decided | ACD-6 |
 | R-ACD-3 | Make-up credits: a parent who taps Can't make it gets one; a cancelled class gives everyone one. Credits last 30 days and book any class of the same level with space, at least 24 hours ahead. | Decided | ACD-7 |
-| R-ACD-4 | Trial class: S$15.00 plus the S$2.00 fee, taken off the first month if the child enrols within 7 days. | Assumed | PRD assumed rules |
-| R-ACD-5 | Academy fee example: S$180 a month plus the 10% fee, paid by the parent. | Assumed | PRD assumed rules |
+| R-ACD-4 | Trial class: S$15.00 plus the S$2.00 fee, taken off the first month if the child enrols within 7 days. The price is set per class, and the academy applies the discount itself while months are paid directly (Q108, Q109). | Assumed | PRD assumed rules |
+| R-ACD-5 | Academy fee example: S$180 a month plus the 10% fee, paid by the parent. Monthly and term fees are paid to the academy directly for now (owner, 1 Nov; Q107). | Assumed | PRD assumed rules |
+| R-ACD-6 | Trials, single classes and one-to-ones are paid in the app and work like a Meet: 10% fee with a S$2.00 minimum on top, held until attendance is saved or 24 hours after the end, and paid to the academy's owner. | Decided | Owner, 1 Nov |
+| R-ACD-7 | A student is the account holder, or a child linked by parent code. A minor never enrols or books themself. | Decided | Owner, 1 Nov |
+| R-ACD-8 | Assessments are readable by the player, a minor's parent and the assigning coach, and writable only by that coach. | Decided | P4c-02 |
+| R-ACD-9 | A referral records that it was made and the partner's reference code, and nothing about a condition. Booking happens on the partner's own site. | Decided | P4c-03 |
 
 ## 12. Notifications and messages
 

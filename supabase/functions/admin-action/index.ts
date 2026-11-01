@@ -36,6 +36,11 @@ const ACTIONS = new Set<string>([
   "staff_product_stock",
   "staff_order_decide",
   "staff_points_block",
+  "staff_academy_decide",
+  "staff_licence_decide",
+  "staff_doc_removed",
+  "staff_lesson_decide",
+  "staff_service_save",
 ]);
 
 const cors = {

@@ -901,9 +901,23 @@ class StudentProgressScreen extends ConsumerWidget {
                     label: 'Note for ${s.firstName}’s parent',
                     onPressed: () => context.push(Routes.parentNote(s.id)),
                   ),
+                  if (s.playerId.isNotEmpty)
+                    KitButton.outline(
+                      label: 'Assess ${s.firstName}',
+                      onPressed: () => context.push(Routes.assess(s.id)),
+                    ),
                 ]
               : null,
           children: [
+            if (s.playerId.isNotEmpty)
+              KitNavTile(
+                icon: OgIcons.clipboardList,
+                title: 'Assessments',
+                subtitle: 'Scores and improvement',
+                padding: EdgeInsets.zero,
+                onTap: () =>
+                    context.push(Routes.assessments(s.playerId, student: s.id)),
+              ),
             Row(
               children: [
                 SolidAvatar.forId(

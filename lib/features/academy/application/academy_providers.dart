@@ -5,8 +5,12 @@ import '../../../core/config/env.dart';
 
 import '../../../core/providers.dart';
 import '../data/academy_repository.dart';
+import '../data/assessment_repository.dart';
+import '../data/coach_repository.dart';
+import '../data/lesson_repository.dart';
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';
+import '../domain/lesson_models.dart';
 
 part 'academy_providers.g.dart';
 
@@ -113,3 +117,68 @@ Future<List<AttendanceLine>> attendance(Ref ref, String studentId) =>
 @riverpod
 Future<List<CoverCoach>> coverCoaches(Ref ref, String classId) =>
     ref.watch(academyRepositoryProvider).coverCoaches(classId);
+
+@Riverpod(keepAlive: true)
+LessonRepository lessonRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseLessonRepository(Supabase.instance.client)
+    : DemoLessonRepository();
+
+@Riverpod(keepAlive: true)
+CoachRepository coachRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseCoachRepository(Supabase.instance.client)
+    : DemoCoachRepository();
+
+@Riverpod(keepAlive: true)
+AssessmentRepository assessmentRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseAssessmentRepository(Supabase.instance.client)
+    : DemoAssessmentRepository();
+
+@riverpod
+Future<List<EnrolPlayer>> myPlayers(Ref ref) =>
+    ref.watch(academyRepositoryProvider).myPlayers();
+
+@riverpod
+Future<List<LessonBooking>> myLessons(Ref ref) =>
+    ref.watch(lessonRepositoryProvider).mine();
+
+@riverpod
+Future<LessonBooking> lessonBooking(Ref ref, String id) =>
+    ref.watch(lessonRepositoryProvider).get(id);
+
+@riverpod
+Future<List<LessonBooking>> academyLessons(Ref ref, String academyId) =>
+    ref.watch(lessonRepositoryProvider).academyLessons(academyId);
+
+@riverpod
+Future<List<LessonSlot>> openSlots(Ref ref, String academyId) =>
+    ref.watch(lessonRepositoryProvider).openSlots(academyId);
+
+@riverpod
+Future<List<LessonSlot>> mySlots(Ref ref, String academyId) =>
+    ref.watch(lessonRepositoryProvider).mySlots(academyId);
+
+@riverpod
+Future<CoachProfile> coachProfile(Ref ref, String userId) =>
+    ref.watch(coachRepositoryProvider).profile(userId);
+
+@riverpod
+Future<CoachLicence> myLicence(Ref ref) =>
+    ref.watch(coachRepositoryProvider).myLicence();
+
+@riverpod
+Future<AcademyChecklist> academyChecklist(Ref ref, String academyId) =>
+    ref.watch(coachRepositoryProvider).checklist(academyId);
+
+@riverpod
+Future<List<(String, String)>> coachInvites(Ref ref) =>
+    ref.watch(coachRepositoryProvider).coachInvites();
+
+@riverpod
+Future<List<AssessmentTemplate>> assessmentTemplates(
+  Ref ref,
+  String academyId,
+) => ref.watch(assessmentRepositoryProvider).templates(academyId);
+
+@riverpod
+Future<List<Assessment>> playerAssessments(Ref ref, String playerId) =>
+    ref.watch(assessmentRepositoryProvider).list(playerId);

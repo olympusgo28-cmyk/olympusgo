@@ -152,7 +152,7 @@ Only if the spike passed (Q24). Otherwise it moves after launch. Tickets are wri
 
 | Id | Ticket | Requirements | Status |
 | --- | --- | --- | --- |
-| P11-01 | Create and verify an academy | ACD-3, ACD-10 | To do |
+| P11-01 | Create and verify an academy | ACD-3, ACD-10 | Done locally, see `docs/features/phase-4c-status.md` |
 | P11-02 | Find an academy, trial, enrol | ACD-1, ACD-2 | To do |
 | P11-03 | Coach today, classes, session marking | ACD-4 | To do |
 | P11-04 | Curriculum, lesson plans, drill library | ACD-5 | To do |

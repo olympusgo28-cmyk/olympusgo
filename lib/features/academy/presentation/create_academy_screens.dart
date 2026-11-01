@@ -370,7 +370,7 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
 
 // ─── 4 Verification ────────────────────────────────────────────────────────
 
-class NewAcademyVerifyScreen extends ConsumerWidget {
+class NewAcademyVerifyScreen extends StatelessWidget {
   const NewAcademyVerifyScreen({super.key});
 
   static const _docs = [
@@ -380,11 +380,9 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final c = context.og;
     final t = context.tones;
-    final d = ref.watch(academyDraftControllerProvider);
-    final draft = ref.read(academyDraftControllerProvider.notifier);
     return KitScaffold(
       header: const _Header(4, 'Verification'),
       bottom: [
@@ -399,8 +397,9 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
           size: 28,
           lead:
               'The academy needs a business licence. Everyone who coaches '
-              'needs an NROC licence. We review within 1 – 3 working days. You '
-              'can set up classes while you wait.',
+              'needs an NROC licence. You add these right after creating the '
+              'academy, and we review within 1 – 3 working days. Parents can’t '
+              'find you until then, and you can set up classes while you wait.',
         ),
         for (var i = 0; i < _docs.length; i++)
           Container(
@@ -434,22 +433,6 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (d.documents.contains(_docs[i].$1))
-                  KitTag(
-                    'In review',
-                    background: t.warnFill,
-                    foreground: t.onWarnFill,
-                  )
-                else
-                  KitLink(
-                    'Add',
-                    // shortcut: marks the step done; document upload to
-                    // storage comes with the academy backend.
-                    onPressed: () => draft.edit(
-                      (x) =>
-                          x.copyWith(documents: {...x.documents, _docs[i].$1}),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -494,6 +477,7 @@ class _NewAcademyCoachesScreenState
       if (!mounted) return;
       showOgToast(context, 'Academy created');
       context.go(Routes.academyToday(id));
+      context.push(Routes.academyVerify(id));
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {

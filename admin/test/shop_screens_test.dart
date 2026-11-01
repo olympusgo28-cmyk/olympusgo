@@ -20,6 +20,12 @@ class _Api implements StaffApi {
   }
 
   @override
+  Future<String> documentUrl(String path) async => 'https://example.com/$path';
+
+  @override
+  Future<void> removeDocument(String path) async {}
+
+  @override
   Future<Object?> act(String action, Map<String, dynamic> params) async {
     acted[action] = params;
     return null;

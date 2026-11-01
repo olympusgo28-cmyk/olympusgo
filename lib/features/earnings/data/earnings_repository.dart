@@ -315,6 +315,13 @@ class SupabaseEarningsRepository implements EarningsRepository {
             a['released'] == true ? 'Released' : 'Held until attendance',
             (a['price_minor'] as num).toInt(),
           ),
+        for (final l in (r['lessons'] as List? ?? const []).cast<Map>())
+          EarningSource(
+            l['booking_id'] as String,
+            l['title'] as String,
+            l['released'] == true ? 'Released' : 'Held until attendance',
+            (l['price_minor'] as num).toInt(),
+          ),
       ],
     );
   });

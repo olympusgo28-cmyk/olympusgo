@@ -7,6 +7,7 @@ import '../../onboarding/domain/sport.dart';
 import '../../play/domain/activity.dart' show platformFee;
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';
+import '../domain/lesson_models.dart';
 
 /// Academies, their classes, students, fees and coaching records.
 abstract interface class AcademyRepository {
@@ -25,14 +26,16 @@ abstract interface class AcademyRepository {
   Future<void> requestEnrol({
     required String academyId,
     required String classId,
-    required String student,
-    int? age,
+    required String playerId,
     String note,
   });
 
+  /// Who this person may enrol: themself if adult, and linked children.
+  Future<List<EnrolPlayer>> myPlayers();
+
   /// Trial classes in the next two weeks with space.
   Future<List<MakeupSlot>> trialSlots(String academyId);
-  Future<void> bookTrial(String academyId, MakeupSlot slot, String student);
+  Future<void> bookTrial(String academyId, MakeupSlot slot, String playerId);
 
   // Coaches.
   Future<List<CoachAlert>> alerts(String academyId);
@@ -44,12 +47,7 @@ abstract interface class AcademyRepository {
 
   /// Adds a class, or edits it when [cls] has an id.
   Future<String> saveClass(String academyId, AcademyClass cls);
-  Future<void> updateAcademy(
-    String id, {
-    Billing? billing,
-    int? makeups,
-    Set<String>? documents,
-  });
+  Future<void> updateAcademy(String id, {Billing? billing, int? makeups});
 
   /// Adds a coach by username, or removes them.
   Future<void> setCoach(String academyId, String username, {required bool add});
@@ -165,6 +163,8 @@ class SupabaseAcademyRepository implements AcademyRepository {
     termWeeks: r['term_weeks'] as int? ?? 10,
     lesson: r['lesson'] as String? ?? '',
     focusSkill: r['focus_skill'] as String? ?? '',
+    trialPriceCents: r['trial_price_cents'] as int?,
+    dropinPriceCents: r['dropin_price_cents'] as int?,
   );
 
   static Academy _academy(Map<String, dynamic> r) => Academy(
@@ -195,8 +195,7 @@ class SupabaseAcademyRepository implements AcademyRepository {
           initials: _initials(k['name'] as String),
           role: k['role'] as String? ?? 'Coach',
           head: k['head'] as bool? ?? false,
-          // Licences aren't checked in the app yet.
-          nroc: false,
+          nroc: k['licensed'] as bool? ?? false,
         ),
     ],
     invitedCoaches: [for (final e in r['invited'] as List? ?? []) e as String],
@@ -215,6 +214,8 @@ class SupabaseAcademyRepository implements AcademyRepository {
       age: r['age'] as int?,
       academyId: r['academy_id'] as String,
       classId: r['class_id'] as String,
+      playerId: r['player_id'] as String? ?? '',
+      canAct: r['can_act'] as bool? ?? true,
       parent: r['parent'] as String? ?? '',
       skills: [
         for (final k in (r['skills'] as List? ?? const []).cast<Map>())
@@ -338,23 +339,29 @@ class SupabaseAcademyRepository implements AcademyRepository {
   Future<void> requestEnrol({
     required String academyId,
     required String classId,
-    required String student,
-    int? age,
+    required String playerId,
     String note = '',
   }) => _guard(() async {
     await _rpc('academy_request', {
       'p_class': classId,
-      'p_student': student == 'Myself' ? _myName() : student,
-      'p_age': age,
+      'p_player': playerId,
       'p_note': note,
       'p_trial_at': null,
     });
   });
 
-  String _myName() {
-    final meta = _client.auth.currentUser?.userMetadata;
-    return (meta?['full_name'] as String?) ?? 'Myself';
-  }
+  @override
+  Future<List<EnrolPlayer>> myPlayers() => _guard(() async {
+    return [
+      for (final r in await _list('academy_my_players'))
+        EnrolPlayer(
+          id: r['id'] as String,
+          name: r['name'] as String? ?? '',
+          age: r['age'] as int?,
+          self: r['self'] as bool? ?? false,
+        ),
+    ];
+  });
 
   @override
   Future<List<MakeupSlot>> trialSlots(String academyId) => _guard(() async {
@@ -369,17 +376,18 @@ class SupabaseAcademyRepository implements AcademyRepository {
           coach: c.coach,
           lesson: c.lesson,
           spots: c.spotsLeft,
+          trialPriceCents: c.trialPriceCents,
+          dropinPriceCents: c.dropinPriceCents,
         ),
     ]..sort((x, y) => x.at.compareTo(y.at));
   });
 
   @override
-  Future<void> bookTrial(String academyId, MakeupSlot slot, String student) =>
+  Future<void> bookTrial(String academyId, MakeupSlot slot, String playerId) =>
       _guard(() async {
         await _rpc('academy_request', {
           'p_class': slot.classId,
-          'p_student': student == 'Myself' ? _myName() : student,
-          'p_age': null,
+          'p_player': playerId,
           'p_note': '',
           'p_trial_at': slot.at.toUtc().toIso8601String(),
         });
@@ -460,7 +468,6 @@ class SupabaseAcademyRepository implements AcademyRepository {
         'venues': draft.venues,
         'billing': draft.billing.name,
         'makeups': draft.makeups,
-        'documents': draft.documents.toList(),
         'coaches': draft.coachEmails,
       },
     }) as String,
@@ -485,26 +492,20 @@ class SupabaseAcademyRepository implements AcademyRepository {
         'coach_id': cls.coachId,
         'court': cls.court,
         'term_weeks': cls.termWeeks,
+        'trial_price_cents': cls.trialPriceCents,
+        'dropin_price_cents': cls.dropinPriceCents,
       },
     }) as String,
   );
 
   @override
-  Future<void> updateAcademy(
-    String id, {
-    Billing? billing,
-    int? makeups,
-    Set<String>? documents,
-  }) => _guard(() async {
-    await _rpc('academy_update', {
-      'p_academy': id,
-      'p': {
-        'billing': ?billing?.name,
-        'makeups': ?makeups,
-        if (documents != null) 'documents': documents.toList(),
-      },
-    });
-  });
+  Future<void> updateAcademy(String id, {Billing? billing, int? makeups}) =>
+      _guard(() async {
+        await _rpc('academy_update', {
+          'p_academy': id,
+          'p': {'billing': ?billing?.name, 'makeups': ?makeups},
+        });
+      });
 
   @override
   Future<void> setCoach(
@@ -1216,16 +1217,16 @@ class DemoAcademyRepository implements AcademyRepository {
   Future<void> requestEnrol({
     required String academyId,
     required String classId,
-    required String student,
-    int? age,
+    required String playerId,
     String note = '',
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
+    final players = await myPlayers();
     _requests.add(
       EnrolRequest(
         id: 'r-${++_n}-mine',
         academyId: academyId,
-        student: student,
+        student: players.firstWhere((p) => p.id == playerId).name,
         parent: 'Aaron Ng',
         classId: classId,
         className: _class(classId).name,
@@ -1233,6 +1234,12 @@ class DemoAcademyRepository implements AcademyRepository {
       ),
     );
   }
+
+  @override
+  Future<List<EnrolPlayer>> myPlayers() async => const [
+    EnrolPlayer(id: 'p-me', name: 'Aaron Ng', self: true),
+    EnrolPlayer(id: 'p-mia', name: 'Mia Ng', age: 9),
+  ];
 
   @override
   Future<List<MakeupSlot>> trialSlots(String academyId) async {
@@ -1247,12 +1254,14 @@ class DemoAcademyRepository implements AcademyRepository {
           coach: c.coach,
           lesson: c.lesson,
           spots: c.spotsLeft,
+          trialPriceCents: c.trialPriceCents ?? trialCents,
+          dropinPriceCents: c.dropinPriceCents ?? trialCents * 2,
         ),
     ]..sort((a, b) => a.at.compareTo(b.at));
   }
 
   @override
-  Future<void> bookTrial(String academyId, MakeupSlot slot, String student) =>
+  Future<void> bookTrial(String academyId, MakeupSlot slot, String playerId) =>
       Future.delayed(const Duration(milliseconds: 500));
 
   @override
@@ -1658,16 +1667,12 @@ class DemoAcademyRepository implements AcademyRepository {
     String id, {
     Billing? billing,
     int? makeups,
-    Set<String>? documents,
   }) async {
     await _tick();
     final a = _find(id);
     _academies[id] = a.copyWith(
       billing: billing ?? a.billing,
       makeupsPerMonth: makeups ?? a.makeupsPerMonth,
-      verification: documents != null && documents.isNotEmpty
-          ? (a.verified ? 'verified' : 'submitted')
-          : a.verification,
     );
   }
 

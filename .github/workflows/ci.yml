@@ -65,6 +65,7 @@ jobs:
       - run: supabase test db
       - run: bash supabase/tests/races/refund_vs_release.sh 25
       - run: bash supabase/tests/races/shop_races.sh 25
+      - run: bash supabase/tests/races/lesson_races.sh 25
       # Advisory: the linter cannot see the temp table shop_checkout makes at
       # run time, so it reports a false error there.
       - run: supabase db lint --level error
@@ -115,7 +116,7 @@ jobs:
             curl -sf -X OPTIONS http://127.0.0.1:54321/functions/v1/stripe-local > /dev/null && break
             sleep 2
           done
-          LOCAL_MONEY_TESTS=1 flutter test -j 1 test/supabase_money_local_test.dart test/supabase_shop_local_test.dart
+          LOCAL_MONEY_TESTS=1 flutter test -j 1 test/supabase_money_local_test.dart test/supabase_shop_local_test.dart test/supabase_lesson_local_test.dart
       - name: Show the functions' log if that failed
         if: failure()
         run: cat functions.log
