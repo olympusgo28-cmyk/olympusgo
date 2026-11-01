@@ -31,10 +31,11 @@ Deno.serve(async (req) => {
 
   // Asked between stages, so a withdrawal stops the work as well as the result.
   if (body.action === "continue") {
-    const { data } = await service.rpc("analysis_svc_may_continue", {
+    const { data, error } = await service.rpc("analysis_svc_may_continue", {
       p_job: body.job_id,
       p_token: body.token,
     });
+    if (error) return new Response("Try again", { status: 500 });
     return Response.json({ continue: data === true });
   }
 

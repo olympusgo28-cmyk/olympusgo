@@ -21,6 +21,8 @@ jobs:
             echo 'A secret or service-role reference is in app code.'
             exit 1
           fi
+      - name: Analysis worker image, its tests, model hashes and no Ultralytics
+        run: docker build -t olympus-worker workers/analysis
       - name: No env file committed
         run: |
           if git ls-files | grep -E '(^|/)(env\.json|\.env(\.[a-z]+)?)$' | grep -v '\.example'; then

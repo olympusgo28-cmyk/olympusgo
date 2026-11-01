@@ -72,10 +72,12 @@ export async function finishCourt(
 ): Promise<{ status: string } | { error: string; code?: string }> {
   // The path comes from the database, so a worker can only ever write its own
   // job's frame.
-  const { data: path } = await service.rpc("analysis_svc_frame_path", {
+  const { data: path, error: pathError } = await service.rpc("analysis_svc_frame_path", {
     p_job: body.job_id,
     p_token: body.token,
   });
+  // A database hiccup isn't a verdict on the token, so the worker tries again.
+  if (pathError && pathError.code !== "P0001") return { error: "Try again" };
   if (typeof path !== "string") return { error: "Bad token.", code: "P0001" };
   const files = service.storage.from(CLIPS_BUCKET);
   const { error: uploadError } = await files.upload(path, frame, {
