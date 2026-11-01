@@ -83,13 +83,13 @@ Deno.test("a sweep removes files, then clears them", async () => {
   const f = fake({ analysis_svc_sweep: [{ id: 1, bucket: "analysis-clips", path: "a/b.mp4" }] }, removed);
   assertEquals(await sweepClips(f.client), { removed: 1 });
   assertEquals(removed, [["a/b.mp4"]]);
-  assertEquals(f.called, ["analysis_svc_orphans", "analysis_svc_sweep", "analysis_svc_removed"]);
+  assertEquals(f.called, ["analysis_svc_orphans", "feed_svc_sweep", "analysis_svc_sweep", "analysis_svc_removed"]);
 });
 
 Deno.test("a failed removal stays queued", async () => {
   const f = fake({ analysis_svc_sweep: [{ id: 1, bucket: "analysis-clips", path: "a/b.mp4" }] }, [], true);
   await assertRejects(() => sweepClips(f.client));
-  assertEquals(f.called, ["analysis_svc_orphans", "analysis_svc_sweep"]);
+  assertEquals(f.called, ["analysis_svc_orphans", "feed_svc_sweep", "analysis_svc_sweep"]);
 });
 
 Deno.test("a failing bucket leaves the other bucket's removals done", async () => {

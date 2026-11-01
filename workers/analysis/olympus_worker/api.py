@@ -76,3 +76,25 @@ class Api:
                 if time.monotonic() > deadline:
                     raise OutOfTime()
                 out.write(chunk)
+
+
+class FeedApi(Api):
+    """Talks to the feed-worker function. Providers are called from there, so
+    this holds only the fleet secret too."""
+
+    def __init__(self, url, secret):
+        super().__init__(url, secret)
+        self._url = url.rstrip("/") + "/functions/v1/feed-worker"
+
+    def finish(self, job, ok, seconds, result=None, code=None, frame=None):
+        body = {
+            "action": "check",
+            "job_id": job["job_id"],
+            "token": job["token"],
+            "ok": ok,
+            "code": code,
+            "worker_seconds": int(seconds),
+        }
+        if result is not None:
+            body["frames"] = [base64.b64encode(jpeg).decode() for jpeg in result]
+        return self._post(body)

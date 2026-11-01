@@ -122,8 +122,10 @@ export async function claimJob(service: SupabaseClient, publicUrl?: string): Pro
 
 /** Removes files that are due. A failed removal stays queued for the next run. */
 export async function sweepClips(service: SupabaseClient): Promise<{ removed: number }> {
-  // Only the safety net, so its failure can't stop a purge.
+  // Only the safety net and the feed's own tidying, so a failure in either
+  // can't stop a purge.
   await service.rpc("analysis_svc_orphans");
+  await service.rpc("feed_svc_sweep");
   const { data, error } = await service.rpc("analysis_svc_sweep");
   if (error) throw new Error(`sweep failed: ${error.code}`);
   const due = data as { id: number; bucket: string; path: string }[];
