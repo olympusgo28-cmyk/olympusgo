@@ -149,3 +149,20 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q137 | A coach's licence expires after a lesson is booked | Lessons | The booking stands. A refused licence ends it, an expired one doesn't | Open |
 | Q138 | A voided refund on an expired Shop order has no way out, as on a lesson before this fix | Shop | Unfixed in the Shop, and only an alert shows it. It needs a staff path like `staff_lesson_decide` | Open |
 | Q139 | Account deletion: `academies.owner_id` and `academy_students.parent_id` cascade, which would take a child's records, and `assessments.coach_name` outlives the coach | Account deletion | No deletion flow exists yet. Must be settled before one is built | Open |
+| Q140 | Voucher A's amount and which shop funds it (decision 17) | Organizer rewards | Set per voucher type in admin. Nothing is issued until a type exists, and a shop must agree in writing | Open |
+| Q141 | The same few friends meeting 6 times to farm vouchers | Organizer rewards | No extra limit at launch. Staff can see every game and flag the account | Open |
+| Q142 | Attendance corrected after a game has counted | Organizer rewards | The count stands and no voucher is taken back | Open |
+| Q143 | A voucher already used when a game is found to be wrong | Vouchers | It stays used, and staff handle it | Open |
+| Q144 | Partial refund of the item a voucher was used on | Vouchers | Refund what was paid. The voucher comes back only if the whole order is cancelled | Open |
+| Q145 | A shop stops being a partner while its vouchers are live | Vouchers | They stay in the wallet and can't be used. Nothing tells the holder yet | Open |
+| Q146 | An organizer's own QR check-in | Organizer rewards | Not required when they took a paid spot | Open |
+| Q147 | Quest rewards in points | Campaigns | None, as points come only from playing (R-PTS) | Open |
+| Q148 | Under-18s on the Game tab | Campaigns | They see campaigns and can't join (decision 10) | Open |
+| Q149 | Voucher B's expiry when court booking opens | Vouchers | Expiry days start that day | Open |
+| Q150 | Do sessions before joining a campaign count? | Campaigns | No, only from the day you join | Open |
+| Q151 | Difference between play and attend sessions in quests | Campaigns | Play is Meets and tournaments. Attend is any activity | Open |
+| Q152 | A voucher's terms when staff edit its type | Vouchers | Only the name, active and reward switch can change. Issued vouchers keep their amount | Open |
+| Q153 | Voucher B when courts aren't booked in the app | Organizer rewards | Issued and held, redeemed once court booking exists | **Decided (owner, 1 Nov).** Issue it, redeem later |
+| Q154 | Who earns the rewards, and must they pay? | Organizer rewards | The organizer | **Decided (owner, 1 Nov).** The organizer earns them. They needn't pay the S$2.00 unless they want to count towards the 6 Present. Participants must pay the platform fee |
+| Q155 | The reward ladder after game 24 | Organizer rewards | Carries on | **Decided (owner, 1 Nov).** Every 4th game gives 3 Voucher A, and every 8th also gives 1 Voucher B |
+| Q156 | The old Club reward (R-CLB-7) | Clubs | Removed | **Decided (owner, 1 Nov).** Removed, replaced by organizer rewards |

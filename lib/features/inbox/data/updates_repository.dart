@@ -139,17 +139,6 @@ class DemoUpdatesRepository implements UpdatesRepository {
         at: ago(4, 12),
         read: true,
       ),
-      InboxUpdate(
-        id: 'u-reward',
-        title: 'Club reward: 2 of 4 Meets',
-        body: 'Tampines Smashers is halfway to discounted shuttles',
-        mark: 'Cl',
-        color: 0xFFDCEEE6,
-        ink: 0xFF0A4F3A,
-        link: Routes.clubReward('c-ts'),
-        at: ago(5, 18),
-        read: true,
-      ),
     ];
   }
 

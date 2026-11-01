@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
+import '../../../core/config/env.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_text.dart';
@@ -159,7 +160,8 @@ class _GameHomeScreenState extends ConsumerState<GameHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    final all = ref.watch(campaignsProvider).value;
+    final campaigns = ref.watch(campaignsProvider);
+    final all = campaigns.value;
     final shown = (all ?? const <Campaign>[])
         .where((x) => x.state == _tab)
         .toList();
@@ -176,17 +178,31 @@ class _GameHomeScreenState extends ConsumerState<GameHomeScreen> {
         KitCard(
           children: [
             KitNavTile(
-              icon: OgIcons.running,
-              title: 'My workouts',
-              subtitle: 'Camera-counted challenges you joined',
-              onTap: () => context.push(Routes.campaign('legs-sprint')),
+              icon: OgIcons.giftBox,
+              title: 'My vouchers',
+              subtitle: 'What you’ve earned and when it runs out',
+              onTap: () => context.push(Routes.wallet),
             ),
             KitNavTile(
-              icon: OgIcons.flag,
-              title: 'Creator challenges',
-              subtitle: 'Run your own when you reach 1,000 followers',
-              onTap: () => context.push(Routes.creatorChallenges),
+              icon: OgIcons.trophyCup,
+              title: 'Organizer rewards',
+              subtitle: 'Counted games and your next voucher',
+              onTap: () => context.push(Routes.organizerRewards),
             ),
+            if (!Env.hasSupabase) ...[
+              KitNavTile(
+                icon: OgIcons.running,
+                title: 'My workouts',
+                subtitle: 'Camera-counted challenges you joined',
+                onTap: () => context.push(Routes.campaign('legs-sprint')),
+              ),
+              KitNavTile(
+                icon: OgIcons.flag,
+                title: 'Creator challenges',
+                subtitle: 'Run your own when you reach 1,000 followers',
+                onTap: () => context.push(Routes.creatorChallenges),
+              ),
+            ],
           ],
         ),
         KitUnderlineTabs(
@@ -196,7 +212,16 @@ class _GameHomeScreenState extends ConsumerState<GameHomeScreen> {
           padding: EdgeInsets.zero,
           onSelect: (i) => setState(() => _tab = CampaignState.values[i]),
         ),
-        if (all == null)
+        if (campaigns.hasError && all == null) ...[
+          const KitNote(
+            'Can’t load campaigns right now. Check your connection.',
+            tone: KitTone.warn,
+          ),
+          KitButton(
+            label: 'Try again',
+            onPressed: () => ref.invalidate(campaignsProvider),
+          ),
+        ] else if (all == null)
           const CupertinoActivityIndicator()
         else if (shown.isEmpty)
           DashedBox(

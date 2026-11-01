@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
@@ -41,14 +42,17 @@ abstract interface class GameRepository {
 
   Future<List<Gear>> gear();
   Future<Gear> saveGear(Gear gear);
+
+  Future<List<GameVoucher>> vouchers();
+  Future<OrganizerRewards> organizerRewards();
 }
 
 const _soon = AuthFailure(
   'Game campaigns open with the next release. Your Meets already count.',
 );
 
-/// Gear and leaderboards are real. Campaigns and creator challenges have no
-/// tables yet: lists are empty and actions explain why.
+/// Campaigns, vouchers, gear and leaderboards are real. Workout and creator
+/// challenges have no tables yet: actions explain why.
 class SupabaseGameRepository implements GameRepository {
   SupabaseGameRepository(this._client);
   final SupabaseClient _client;
@@ -95,11 +99,106 @@ class SupabaseGameRepository implements GameRepository {
   };
 
   @override
-  Future<List<Campaign>> campaigns() async => const [];
+  Future<List<Campaign>> campaigns() => _guard(() async {
+    final rows = await _client.rpc('campaign_list') as List? ?? [];
+    return [for (final r in rows.cast<Map>()) _campaign(r.cast())];
+  });
+
   @override
-  Future<Campaign> campaign(String id) => throw _soon;
+  Future<Campaign> campaign(String id) => _guard(() async {
+    final r = await _client.rpc('campaign_get', params: {'p_campaign': id});
+    return _campaign((r as Map).cast());
+  });
+
   @override
-  Future<void> join(String id) => throw _soon;
+  Future<void> join(String id) => _guard(() async {
+    await _client.rpc('campaign_join', params: {'p_campaign': id});
+  });
+
+  static String _task(String type, int n) => switch (type) {
+    'play_sessions' => 'Play $n ${n == 1 ? 'session' : 'sessions'}',
+    'attend_sessions' => 'Attend $n ${n == 1 ? 'session' : 'sessions'}',
+    _ => 'Organize $n counted ${n == 1 ? 'game' : 'games'}',
+  };
+
+  static Campaign _campaign(Map<String, dynamic> r) {
+    final quests = (r['quests'] as List? ?? const []).cast<Map>();
+    String prize(Map q) =>
+        q['voucher'] as String? ?? q['badge'] as String? ?? '';
+    final first = quests.firstOrNull;
+    final ends = DateTime.parse(r['ends_at'] as String).toLocal();
+    final players = r['players'] as int? ?? 0;
+    return Campaign(
+      id: r['id'] as String,
+      kind: CampaignKind.meets,
+      state: CampaignState.values.byName(r['state'] as String? ?? 'live'),
+      title: r['title'] as String,
+      task: first == null
+          ? ''
+          : _task(first['type'] as String, first['target'] as int),
+      meta: 'Ends ${Fmt.day(ends)} · $players in',
+      reward: first == null ? '' : prize(first),
+      color: (r['color'] as num).toInt(),
+      ink: (r['ink'] as num).toInt(),
+      endsAt: ends,
+      about: r['about'] as String? ?? r['blurb'] as String? ?? '',
+      target: first?['target'] as int? ?? 0,
+      progress: first?['count'] as int? ?? 0,
+      joined: r['joined'] as bool? ?? false,
+      players: players,
+      rewards: [
+        for (final q in quests)
+          Reward(_task(q['type'] as String, q['target'] as int), prize(q)),
+      ],
+      rules: const [
+        'Sessions count from the day you join.',
+        'A campaign never changes your rating.',
+      ],
+    );
+  }
+
+  @override
+  Future<List<GameVoucher>> vouchers() => _guard(() async {
+    final rows = await _client.rpc('voucher_my') as List? ?? [];
+    return [
+      for (final v in rows.cast<Map>())
+        GameVoucher(
+          id: v['id'] as String,
+          name: v['name'] as String,
+          code: v['code'] as String,
+          status: v['status'] as String,
+          amountCents: (v['amount_minor'] as num).toInt(),
+          where: v['where'] as String? ?? '',
+          expiresAt: v['expires_at'] == null
+              ? null
+              : DateTime.parse(v['expires_at'] as String).toLocal(),
+        ),
+    ];
+  });
+
+  @override
+  Future<OrganizerRewards> organizerRewards() => _guard(() async {
+    final r = await _client.rpc('organizer_rewards_my') as Map;
+    final next = r['next'] as Map?;
+    return OrganizerRewards(
+      counted: r['counted'] as int? ?? 0,
+      nextGame: next?['game'] as int?,
+      nextA: next?['voucher_a'] as int? ?? 0,
+      nextB: next?['voucher_b'] as int? ?? 0,
+      open: r['open'] as bool? ?? false,
+      waiting: r['waiting'] as int? ?? 0,
+      games: [
+        for (final g in (r['games'] as List? ?? const []).cast<Map>())
+          OrganizerGame(
+            title: g['title'] as String? ?? '',
+            at: DateTime.parse(g['at'] as String).toLocal(),
+            counted: g['counted'] as bool? ?? false,
+            reason: g['reason'] as String? ?? '',
+            gameNo: g['game_no'] as int?,
+          ),
+      ],
+    );
+  });
   @override
   Future<AttemptResult> finishAttempt(
     String id, {
@@ -212,6 +311,50 @@ class SupabaseGameRepository implements GameRepository {
 }
 
 class DemoGameRepository implements GameRepository {
+  @override
+  Future<List<GameVoucher>> vouchers() async => [
+    GameVoucher(
+      id: 'dv-1',
+      name: 'S\$8 off at Racket Lab',
+      code: 'A1B2C3D4E5F6',
+      status: 'issued',
+      amountCents: 800,
+      where: 'Racket Lab',
+      expiresAt: DateTime.now().add(const Duration(days: 60)),
+    ),
+    const GameVoucher(
+      id: 'dv-2',
+      name: 'S\$6 off a court',
+      code: '0F1E2D3C4B5A',
+      status: 'held',
+      amountCents: 600,
+      where: 'Our Tampines Hub',
+    ),
+  ];
+
+  @override
+  Future<OrganizerRewards> organizerRewards() async => OrganizerRewards(
+    counted: 3,
+    nextGame: 4,
+    nextA: 1,
+    open: true,
+    games: [
+      OrganizerGame(
+        title: 'Doubles Social',
+        at: DateTime(2026, 10, 20),
+        counted: true,
+        reason: 'counted',
+        gameNo: 3,
+      ),
+      OrganizerGame(
+        title: 'Morning Singles',
+        at: DateTime(2026, 10, 12),
+        counted: false,
+        reason: 'not_scanned',
+      ),
+    ],
+  );
+
   DemoGameRepository() {
     _seed();
   }

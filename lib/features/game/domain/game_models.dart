@@ -315,3 +315,82 @@ class Gear {
 
   String get name => '$brand $model';
 }
+
+/// A voucher in someone's wallet. Only its owner ever sees the code.
+class GameVoucher {
+  const GameVoucher({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.status,
+    required this.amountCents,
+    required this.where,
+    this.expiresAt,
+  });
+
+  final String id;
+  final String name;
+  final String code;
+
+  /// issued, held, used or expired.
+  final String status;
+  final int amountCents;
+
+  /// The shop or venue that funds it.
+  final String where;
+  final DateTime? expiresAt;
+
+  bool get usable => status == 'issued';
+}
+
+/// A Meet the organizer ran: whether it counted, and why not if it didn't.
+class OrganizerGame {
+  const OrganizerGame({
+    required this.title,
+    required this.at,
+    required this.counted,
+    required this.reason,
+    this.gameNo,
+  });
+
+  final String title;
+  final DateTime at;
+  final bool counted;
+  final String reason;
+  final int? gameNo;
+
+  String get why => switch (reason) {
+    'counted' => 'Counted',
+    'under_six' => 'Fewer than 6 players were Present',
+    'unpaid' => 'Not everyone paid the platform fee',
+    'not_scanned' => 'Not everyone was scanned in by QR',
+    'cancelled' => 'This Meet was cancelled',
+    'organizer_minor' => 'Organizers earn rewards from 18',
+    _ => 'Our team is looking at this',
+  };
+}
+
+/// Where an organizer stands on the reward ladder.
+class OrganizerRewards {
+  const OrganizerRewards({
+    required this.counted,
+    this.nextGame,
+    this.nextA = 0,
+    this.nextB = 0,
+    this.open = false,
+    this.waiting = 0,
+    this.games = const [],
+  });
+
+  final int counted;
+  final int? nextGame;
+  final int nextA;
+  final int nextB;
+
+  /// Vouchers are being issued.
+  final bool open;
+
+  /// Earned, and not issued yet.
+  final int waiting;
+  final List<OrganizerGame> games;
+}

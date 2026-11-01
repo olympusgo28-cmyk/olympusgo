@@ -680,26 +680,6 @@ class SupabaseClubRepository implements ClubRepository {
       });
 
   @override
-  Future<ClubReward> reward(String clubId) => _guard(() async {
-    final now = DateTime.now();
-    final played = await _play.forClub(
-      clubId,
-      from: DateTime(now.year, now.month),
-    );
-    return ClubReward(
-      meets: [
-        for (final a in played)
-          if (a.kind == ActivityKind.meet && a.startsAt.isBefore(now))
-            RewardMeet(
-              title: a.title,
-              at: a.startsAt,
-              paidPresent: a.spotsTaken,
-            ),
-      ],
-    );
-  });
-
-  @override
   Future<void> updateClub(Club club) => _guard(
     () => _rpc('club_update', {
       'p_club': club.id,

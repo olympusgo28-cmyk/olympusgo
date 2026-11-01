@@ -542,6 +542,18 @@ create view money.balances with (security_invoker = true) as
 
 
 
+## Game
+
+**Built in Phase 4d, in `public`.** See `supabase/migrations/20261107090000_game_engine.sql`.
+
+- `organizer_games` has one row per Meet looked at, once its money has settled, with `reason` and a lifetime `game_no` on counted games. The group ranking reads it, so one rule decides both. `campaign_game_log` stays as the first-save record.
+- `reward_grants.key` is unique, which is what stops a retry issuing twice. A grant waits as `pending` until the reward opens and a default type exists.
+- `vouchers.source` is unique for the same reason. `code` (P3) goes only to the owner. `expires_at` is null while `held`.
+- `voucher_redemptions` is append-only: who, which shop, which order, when, and no code.
+- `order_lines.unit_voucher` holds what the voucher took off one unit. `orders.voucher_id` is what `private.order_unreserve` hands back.
+
+## Tests every migration in this file needs
+
 - RLS on for every table (CI meta-test).
 - For each table, a read test as: the owner, another member, an outsider, a blocked user, a minor, a suspended user, anonymous.
 - Clients cannot insert, update or delete protected tables directly.

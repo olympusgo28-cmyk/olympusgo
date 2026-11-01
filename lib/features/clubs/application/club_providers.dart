@@ -64,10 +64,6 @@ Future<ClubLeaderboard> clubLeaderboard(
 ) => ref.watch(clubRepositoryProvider).leaderboard(clubId, sport);
 
 @riverpod
-Future<ClubReward> clubReward(Ref ref, String clubId) =>
-    ref.watch(clubRepositoryProvider).reward(clubId);
-
-@riverpod
 Future<List<InviteCandidate>> inviteCandidates(Ref ref) =>
     ref.watch(clubRepositoryProvider).inviteCandidates();
 

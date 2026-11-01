@@ -1408,50 +1408,6 @@ class DemoClubRepository implements ClubRepository {
   }
 
   @override
-  Future<ClubReward> reward(String clubId) async {
-    await _tick();
-    final now = DateTime.now();
-    final month = now.month;
-    String monthName(int m) => const [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ][(m - 1) % 12];
-    return ClubReward(
-      meets: [
-        RewardMeet(
-          title: 'Doubles Social',
-          at: _daysAgo(12, 20),
-          paidPresent: 9,
-        ),
-        RewardMeet(
-          title: 'Morning Singles',
-          at: _daysAgo(11, 9),
-          paidPresent: 6,
-        ),
-        RewardMeet(
-          title: 'Beginner Rotation',
-          at: _daysAgo(8, 19),
-          paidPresent: 5,
-        ),
-      ],
-      past: [
-        (monthName(month - 1 + 12), 'S\$20 shuttle voucher, used'),
-        (monthName(month - 2 + 12), 'Not reached, 3 of 4'),
-      ],
-    );
-  }
-
-  @override
   Future<void> updateClub(Club club) async {
     await _tick();
     final before = _clubs[club.id]!;

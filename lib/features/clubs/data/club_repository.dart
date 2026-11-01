@@ -110,7 +110,6 @@ abstract interface class ClubRepository {
 
   // Club info and settings.
   Future<ClubLeaderboard> leaderboard(String clubId, ClubSport sport);
-  Future<ClubReward> reward(String clubId);
   Future<void> updateClub(Club club);
 
   /// A member's 1 to 5 stars and a short review. Rating again replaces it.

@@ -225,7 +225,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-CLB-4 | A declined join request can reapply after 30 days. | Decided | GRP-6 |
 | R-CLB-5 | The Owner role cannot be changed or deleted. Every club keeps at least one owner. Only an owner grants money permissions. Roles are assigned to up to 30 members at a time. | Decided | GRP-7 |
 | R-CLB-6 | The audit log keeps 90 days and is shown to holders of View audit log. | Decided | GRP-10 |
-| R-CLB-7 | Club reward: a Meet counts when 6 or more players paid and were marked Present. Example: 4 counted Meets unlock shuttles at S$40 instead of S$49. | Decided | GRP-12 |
+| R-CLB-7 | **Replaced by organizer rewards (owner, 1 Nov; Q156).** | Decided | Q156 |
 | R-TEM-1 | A team has exactly one sport and picks players only from linked clubs of that sport. Under-18 invites need a parent's confirmation. | Decided | GRP-14 |
 | R-TEM-2 | Lineups lock 24 hours before each fixture or tie. Only available players can be picked. | Decided | GRP-16, TRN-7 |
 
@@ -242,6 +242,17 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-ACD-7 | A student is the account holder, or a child linked by parent code. A minor never enrols or books themself. | Decided | Owner, 1 Nov |
 | R-ACD-8 | Assessments are readable by the player, a minor's parent and the assigning coach, and writable only by that coach. | Decided | P4c-02 |
 | R-ACD-9 | A referral records that it was made and the partner's reference code, and nothing about a condition. Booking happens on the partner's own site. | Decided | P4c-03 |
+
+## 11b. Game
+
+| Id | Rule | Status | Source |
+| --- | --- | --- | --- |
+| R-GAM-1 | A Meet counts when 6 or more players are Present, every participant paid the platform fee themselves, and every participant was scanned in by QR. Organizer-pays Meets don't count. | Decided | Checklist P4d-02, Q154 |
+| R-GAM-2 | The organizer earns the rewards, from 18. They needn't pay or play. To count towards the 6 they take a spot for the S$2.00 fee, and they needn't scan themself. | Decided | Q154 |
+| R-GAM-3 | Reward ladder, lifetime and never reset: game 2 and 4 give 1 Voucher A, 8 gives 2 A and 1 B, 12 gives 2 A, 16 gives 3 A and 1 B, then every 4th game gives 3 A and every 8th also 1 B. | Decided | Checklist, Q155 |
+| R-GAM-4 | A voucher is tied to one account, redeemed only in the app, and expires (default 90 days). One discount per item: a voucher or points. | Decided | P4d-03 |
+| R-GAM-5 | The shop funds Voucher A: commission is on the price after the voucher. Voucher B is held until court booking exists. | Decided | Decisions 6 and 7, Q153 |
+| R-GAM-6 | Campaigns and quests never change a rating, and are for adults. | Decided | P4d-01, decision 10 |
 
 ## 12. Notifications and messages
 

@@ -319,29 +319,6 @@ abstract class ClubLeaderboard with _$ClubLeaderboard {
   }) = _ClubLeaderboard;
 }
 
-@freezed
-abstract class RewardMeet with _$RewardMeet {
-  const factory RewardMeet({
-    required String title,
-    required DateTime at,
-    required int paidPresent,
-  }) = _RewardMeet;
-}
-
-@freezed
-abstract class ClubReward with _$ClubReward {
-  const factory ClubReward({
-    @Default(4) int target,
-    @Default(6) int minPlayers,
-    @Default('S\$20 shuttle voucher') String prize,
-    @Default([]) List<RewardMeet> meets,
-    @Default([]) List<(String, String)> past,
-  }) = _ClubReward;
-
-  const ClubReward._();
-  int get done => meets.where((m) => m.paidPresent >= minPlayers).length;
-}
-
 /// A player you have played with, offered when inviting.
 @freezed
 abstract class InviteCandidate with _$InviteCandidate {

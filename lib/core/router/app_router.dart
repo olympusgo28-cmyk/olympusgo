@@ -7,6 +7,7 @@ import '../../features/academy/presentation/academy_screens.dart';
 import '../../features/academy/presentation/assessment_screens.dart';
 import '../../features/academy/presentation/lesson_screens.dart';
 import '../../features/academy/presentation/verification_screens.dart';
+import '../../features/game/presentation/reward_screens.dart';
 import '../../features/services/presentation/services_screen.dart';
 import '../../features/academy/presentation/coach_screens.dart';
 import '../../features/academy/presentation/create_academy_screens.dart';
@@ -182,6 +183,8 @@ GoRouter appRouter(Ref ref) {
         ),
       ),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
+      page(Routes.wallet, (_) => const WalletScreen()),
+      page(Routes.organizerRewards, (_) => const OrganizerRewardsScreen()),
       page('/game/:id', (s) => CampaignScreen(id: s.pathParameters['id']!)),
       page(
         '/game/:id/setup',
@@ -659,7 +662,6 @@ GoRouter appRouter(Ref ref) {
         '/clubs/:id/announcements/new',
         (s) => NewAnnouncementScreen(clubId: id(s)),
       ),
-      page('/clubs/:id/reward', (s) => ClubRewardScreen(id: id(s))),
       page('/clubs/:id/moderation', (s) => ChatModerationScreen(clubId: id(s))),
       page('/clubs/:id/report', (s) => ReportContentScreen.club(clubId: id(s))),
       page(

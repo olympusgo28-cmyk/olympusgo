@@ -191,3 +191,17 @@ All in `public`, authenticated only, unless it says staff. Migrations `202611060
 
 Staff writes go through `admin-action`.
 
+## Game, as built in Phase 4d
+
+Authenticated only. Migrations `20261107090000` and `20261107100000`.
+
+| Function | What it does |
+| --- | --- |
+| `campaign_list()`, `campaign_get(campaign)`, `campaign_join(campaign)` | Live campaigns, with the caller's progress. Joining is for adults |
+| `voucher_my()` | The caller's wallet. The only place a code is returned |
+| `badge_my()` | The caller's badges |
+| `organizer_rewards_my()` | Counted games, next milestone, and why a game didn't count |
+| `shop_quote(mall, only, points, voucher)` | Adds `voucher_minor`, `voucher_id` and the `vouchers` usable here |
+| `shop_reserve(..., slot, voucher)` | Spends the voucher in the same transaction as stock and points |
+| `staff_campaign_list`, `staff_campaign_save`, `staff_campaign_status`, `staff_badge_save`, `staff_voucher_type_save`, `staff_organizer_games`, `staff_redemptions` | Staff, role `content`. Writes through `admin-action` |
+

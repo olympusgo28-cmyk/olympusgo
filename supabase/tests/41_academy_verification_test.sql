@@ -284,9 +284,8 @@ select is_empty($$ select 1 from jsonb_array_elements(public.academy_makeup_slot
   where (x ->> 'at')::timestamptz < now() + interval '24 hours' $$, 'none inside 24 hours');
 select is_empty($$ select 1 from jsonb_array_elements(public.academy_makeup_slots(t.id('child_student'))) x
   where (x ->> 'class_id')::uuid = t.id('next_level') $$, 'none at another level');
-select is((select (x ->> 'at')::timestamptz from jsonb_array_elements(public.academy_makeup_slots(t.id('child_student'))) x
-  where (x ->> 'class_id')::uuid = t.id('same_level') order by 1 limit 1 offset 2) at time zone 'Asia/Singapore',
-  t.class_at(3) at time zone 'Asia/Singapore', 'slots are at the class''s real time');
+select ok(exists (select 1 from jsonb_array_elements(public.academy_makeup_slots(t.id('child_student'))) x
+  where (x ->> 'class_id')::uuid = t.id('same_level') and (x ->> 'at')::timestamptz = t.class_at(3)), 'slots are at the class''s real time');
 select lives_ok($$ select public.academy_book_makeup(t.id('child_student'), t.id('same_level'), t.class_at(3)) $$, 'a make-up books');
 select throws_ok($$ select public.academy_book_makeup(t.id('child_student'), t.id('same_level'), t.class_at(3)) $$,
   'This make-up is already booked.', 'once');

@@ -381,3 +381,83 @@ final class MyGearProvider
 }
 
 String _$myGearHash() => r'5d63febdbdff144c1c08372a3762789b9e3e9b15';
+
+@ProviderFor(myVouchers)
+final myVouchersProvider = MyVouchersProvider._();
+
+final class MyVouchersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GameVoucher>>,
+          List<GameVoucher>,
+          FutureOr<List<GameVoucher>>
+        >
+    with
+        $FutureModifier<List<GameVoucher>>,
+        $FutureProvider<List<GameVoucher>> {
+  MyVouchersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myVouchersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myVouchersHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GameVoucher>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GameVoucher>> create(Ref ref) {
+    return myVouchers(ref);
+  }
+}
+
+String _$myVouchersHash() => r'833406c67daae7f28a46accb63dc3b957bd4095a';
+
+@ProviderFor(organizerRewards)
+final organizerRewardsProvider = OrganizerRewardsProvider._();
+
+final class OrganizerRewardsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<OrganizerRewards>,
+          OrganizerRewards,
+          FutureOr<OrganizerRewards>
+        >
+    with $FutureModifier<OrganizerRewards>, $FutureProvider<OrganizerRewards> {
+  OrganizerRewardsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'organizerRewardsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$organizerRewardsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<OrganizerRewards> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<OrganizerRewards> create(Ref ref) {
+    return organizerRewards(ref);
+  }
+}
+
+String _$organizerRewardsHash() => r'4d0126415fd1540eb994565af09d19de53c4517a';

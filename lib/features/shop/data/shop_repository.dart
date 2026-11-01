@@ -28,7 +28,12 @@ abstract interface class ShopRepository {
   Future<void> setQty(String lineId, int qty);
 
   /// The final price of this shop's part of the cart, or of [only].
-  Future<ShopQuote> quote(String mallId, {CartLine? only, int pointsCents = 0});
+  Future<ShopQuote> quote(
+    String mallId, {
+    CartLine? only,
+    int pointsCents = 0,
+    String? voucherId,
+  });
 
   /// Holds stock and points and starts a payment for [expectedCents]. The same
   /// [key] returns the same hold, and a changed price refuses rather than
@@ -39,6 +44,7 @@ abstract interface class ShopRepository {
     required int expectedCents,
     int pointsCents = 0,
     CartLine? only,
+    String? voucherId,
   });
   Future<List<Order>> orders();
   Future<Order> order(String id);
@@ -149,7 +155,11 @@ class SupabaseShopRepository implements ShopRepository {
 
   // Orders from before payments have no unit amounts, and a shop isn't shown them.
   static int _linePrice(Map l) {
-    final paid = ((l['unit_paid'] as num) + (l['unit_points'] as num)).toInt();
+    final paid =
+        ((l['unit_paid'] as num) +
+                (l['unit_points'] as num) +
+                (l['unit_voucher'] as num? ?? 0))
+            .toInt();
     return paid > 0 ? paid : (l['price_cents'] as num).toInt();
   }
 
@@ -169,6 +179,7 @@ class SupabaseShopRepository implements ShopRepository {
             id: l['id'] as String,
             productId: l['product_id'] as String? ?? '',
             pointsCents: (l['unit_points'] as num).toInt(),
+            voucherCents: (l['unit_voucher'] as num? ?? 0).toInt(),
             shopCents: (l['unit_shop'] as num).toInt(),
             refundedQty: l['refunded_qty'] as int? ?? 0,
             art: l['art'] == 'racquet' ? ProductArt.racquet : ProductArt.bag,
@@ -379,12 +390,14 @@ class SupabaseShopRepository implements ShopRepository {
     String mallId, {
     CartLine? only,
     int pointsCents = 0,
+    String? voucherId,
   }) => _guard(() async {
     final r = _m(
       await _rpc('shop_quote', {
         'p_mall': mallId,
         'p_only': _only(only),
         'p_points': pointsCents,
+        'p_voucher': voucherId,
       }),
     );
     int n(String k) => (r[k] as num? ?? 0).toInt();
@@ -395,9 +408,22 @@ class SupabaseShopRepository implements ShopRepository {
             name: l['name'] as String,
             variant: l['variant'] as String? ?? '',
             qty: l['qty'] as int,
-            priceCents: ((l['unit_paid'] as num) + (l['unit_points'] as num))
-                .toInt(),
+            priceCents:
+                ((l['unit_paid'] as num) +
+                        (l['unit_points'] as num) +
+                        (l['unit_voucher'] as num? ?? 0))
+                    .toInt(),
             pointsCents: (l['unit_points'] as num).toInt(),
+            voucherCents: (l['unit_voucher'] as num? ?? 0).toInt(),
+          ),
+      ],
+      voucherId: r['voucher_id'] as String?,
+      vouchers: [
+        for (final v in (r['vouchers'] as List? ?? const []).cast<Map>())
+          CheckoutVoucher(
+            id: v['id'] as String,
+            name: v['name'] as String,
+            amountCents: (v['amount_minor'] as num).toInt(),
           ),
       ],
       totalCents: n('total_minor'),
@@ -418,6 +444,7 @@ class SupabaseShopRepository implements ShopRepository {
     required int expectedCents,
     int pointsCents = 0,
     CartLine? only,
+    String? voucherId,
   }) => _guard(() async {
     final r = _m(
       await _rpc('shop_reserve', {
@@ -427,6 +454,7 @@ class SupabaseShopRepository implements ShopRepository {
         'p_points': pointsCents,
         'p_only': _only(only),
         'p_slot': only?.slot?.toUtc().toIso8601String(),
+        'p_voucher': voucherId,
       }),
     );
     return (SupabasePaymentGateway.holdFrom(r), r['order_id'] as String);
@@ -948,6 +976,7 @@ class DemoShopRepository implements ShopRepository {
     String mallId, {
     CartLine? only,
     int pointsCents = 0,
+    String? voucherId,
   }) async {
     await _tick();
     var left = pointsCents;
@@ -996,6 +1025,7 @@ class DemoShopRepository implements ShopRepository {
     required int expectedCents,
     int pointsCents = 0,
     CartLine? only,
+    String? voucherId,
   }) async {
     await _tick();
     final q = await quote(mallId, only: only, pointsCents: pointsCents);

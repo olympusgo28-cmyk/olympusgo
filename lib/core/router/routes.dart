@@ -191,7 +191,6 @@ abstract final class Routes {
   static String clubSettings(String id) => '/clubs/$id/settings';
   static String clubOverview(String id, {String tab = 'about'}) =>
       '/clubs/$id/overview?tab=$tab';
-  static String clubReward(String id) => '/clubs/$id/reward';
   static String clubBans(String id) => '/clubs/$id/bans';
   static String clubTransfer(String id) => '/clubs/$id/transfer';
   static String clubLeave(String id) => '/clubs/$id/leave';
@@ -211,6 +210,8 @@ abstract final class Routes {
   static String attempt(String id) => '/game/$id/attempt';
   static String attemptReview(String id) => '/game/$id/review';
   static const leaderboards = '/game/leaderboards';
+  static const wallet = '/game/wallet';
+  static const organizerRewards = '/game/organizer';
   static String creator(String id) => '/creators/$id';
   static const creatorEarnings = '/creators/me/earnings';
   static const creatorChallenges = '/creators/me/challenges';

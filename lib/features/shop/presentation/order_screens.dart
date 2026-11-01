@@ -168,6 +168,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   ShopQuote? _quote;
   String? _error;
   bool _usePoints = false;
+  String? _voucherId;
   bool _busy = false;
   bool _pricing = true;
   int _ask = 0;
@@ -187,7 +188,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     setState(() => _pricing = true);
     final repo = ref.read(shopRepositoryProvider);
     try {
-      var q = await repo.quote(widget.mallId, only: widget.only);
+      var q = await repo.quote(
+        widget.mallId,
+        only: widget.only,
+        voucherId: _voucherId,
+      );
       if (_usePoints && q.canRedeem) {
         var points = q.pointsBalanceCents < q.pointsCapCents
             ? q.pointsBalanceCents
@@ -196,6 +201,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           widget.mallId,
           only: widget.only,
           pointsCents: points,
+          voucherId: _voucherId,
         );
         // Points come off whole units, so a little may not fit.
         while (q.pointsLeftCents > 0) {
@@ -204,6 +210,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             widget.mallId,
             only: widget.only,
             pointsCents: points,
+            voucherId: _voucherId,
           );
         }
       }
@@ -223,6 +230,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _error = e.message;
         } else {
           _usePoints = _quote!.pointsCents > 0;
+          _voucherId = _quote!.voucherId;
         }
       });
       if (_quote != null) showOgToast(context, e.message, error: true);
@@ -238,6 +246,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       subtitle: q.collectAddress,
       lines: [
         ('Items', cash(q.itemsCents)),
+        if (q.voucherCents > 0) ('Voucher', '−${cash(q.voucherCents)}'),
         if (q.pointsCents > 0) ('Points used', '−${cash(q.pointsCents)}'),
       ],
       totalCents: q.totalCents,
@@ -256,6 +265,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             expectedCents: q.totalCents,
             pointsCents: q.pointsCents,
             only: widget.only,
+            voucherId: q.voucherId,
           );
       orderId = id;
       if (!mounted) return;
@@ -340,6 +350,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 const SizedBox(height: 10),
                 KitKeyValue('Collect from', o.collectAddress),
+                if (o.voucherCents > 0)
+                  KitKeyValue('Voucher', '−${cash(o.voucherCents)}'),
                 if (o.pointsCents > 0)
                   KitKeyValue('Points used', pointsText(o.pointsCents)),
               ],
@@ -458,6 +470,32 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
           ],
         ),
+        if (q.vouchers.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Use a voucher',
+                style: OgText.body(15, weight: FontWeight.w600),
+              ),
+              Text(
+                'One discount per item: a voucher or points.',
+                style: OgText.body(13, color: c.textMuted),
+              ),
+              for (final v in q.vouchers)
+                KitChoiceRow(
+                  title: v.name,
+                  tag: '−${cash(v.amountCents)}',
+                  selected: _voucherId == v.id,
+                  onTap: () {
+                    setState(
+                      () => _voucherId = _voucherId == v.id ? null : v.id,
+                    );
+                    _load();
+                  },
+                ),
+            ],
+          ),
         if (q.pointsCapCents > 0 && q.canRedeem && q.pointsBalanceCents > 0)
           SwitchRow(
             compact: true,
@@ -474,6 +512,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         Column(
           children: [
             KitKeyValue('Items', cash(q.itemsCents)),
+            if (q.voucherCents > 0)
+              KitKeyValue('Voucher', '−${cash(q.voucherCents)}'),
             if (q.pointsCents > 0)
               KitKeyValue('Points used', '−${cash(q.pointsCents)}'),
             KitKeyValue('Total', cash(q.totalCents)),
@@ -704,6 +744,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       subtitle: o.collectAddress,
       lines: [
         ('Items', cash(o.itemsCents)),
+        if (o.voucherCents > 0) ('Voucher', '−${cash(o.voucherCents)}'),
         if (o.pointsCents > 0) ('Points used', '−${cash(o.pointsCents)}'),
       ],
       totalCents: o.totalCents,
@@ -859,6 +900,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         Column(
           children: [
             KitKeyValue('Items', cash(o.itemsCents)),
+            if (o.voucherCents > 0)
+              KitKeyValue('Voucher', '−${cash(o.voucherCents)}'),
             if (o.pointsCents > 0)
               KitKeyValue('Points used', '−${cash(o.pointsCents)}'),
             KitKeyValue(

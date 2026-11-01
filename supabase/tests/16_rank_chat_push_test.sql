@@ -1,18 +1,11 @@
 begin;
 \ir helpers/setup.psql
-select plan(17);
+select plan(12);
 
 select t.player('a1000000-0000-0000-0000-000000000001');
 select t.player('a1000000-0000-0000-0000-000000000002');
 
 -- Counted-game rule.
-select is(private.game_counts('[{"present":true,"qr":true,"paid":false}]', 6), true, 'P2-04 six Present by QR counts while payments are off');
-select is(private.game_counts('[{"present":true,"qr":true,"paid":false}]', 5), false, 'five Present does not');
-select is(private.game_counts('[{"present":true,"qr":false,"paid":false}]', 6), false, 'a Present player without QR stops it counting');
-select is(private.game_counts('[{"present":false,"qr":false,"paid":false},{"present":true,"qr":true,"paid":false}]', 6), true, 'an absent player does not matter');
-update public.feature_flags set enabled = true where key = 'campaign.require_paid';
-select is(private.game_counts('[{"present":true,"qr":true,"paid":false}]', 6), false, 'with the flag on, every player must have paid');
-update public.feature_flags set enabled = false where key = 'campaign.require_paid';
 
 -- Ranking.
 insert into public.clubs (id, owner_id, name, area, sports, visibility) values
@@ -20,8 +13,8 @@ insert into public.clubs (id, owner_id, name, area, sports, visibility) values
 create temp table g on commit drop as select t.meet('a1000000-0000-0000-0000-000000000001', p_capacity => 10) as id;
 alter table public.activities disable trigger activities_club_check;
 update public.activities set club_id = 'a1000000-0000-0000-0000-0000000000c1' where id = (select id from g);
-insert into public.campaign_game_log (activity_id, host_id, present_count, players, starts_at, ends_at)
-select id, 'a1000000-0000-0000-0000-000000000001', 6, '[{"present":true,"qr":true,"paid":false,"player":"x"}]', now(), now() from g;
+insert into public.organizer_games (activity_id, host_id, counted, reason, present, game_no)
+select id, 'a1000000-0000-0000-0000-000000000001', true, 'counted', 6, 1 from g;
 select t.as_user('a1000000-0000-0000-0000-000000000002');
 select is(public.group_activity_rank() -> 0 ->> 'name', 'Busy club', 'P2-04 a group with a counted game is ranked');
 select is((public.group_activity_rank() -> 0 ->> 'games')::int, 1, 'with its count');

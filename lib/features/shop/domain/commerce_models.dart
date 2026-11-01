@@ -130,6 +130,7 @@ class OrderLine {
     this.id = '',
     this.productId = '',
     this.pointsCents = 0,
+    this.voucherCents = 0,
     this.shopCents = 0,
     this.refundedQty = 0,
     this.art = ProductArt.bag,
@@ -145,6 +146,9 @@ class OrderLine {
 
   /// Points taken off one, in cents.
   final int pointsCents;
+
+  /// A voucher taken off one, in cents.
+  final int voucherCents;
 
   /// What the shop gets for one.
   final int shopCents;
@@ -230,7 +234,8 @@ class Order {
 
   int get itemsCents => lines.fold(0, (a, l) => a + l.priceCents * l.qty);
   int get pointsCents => lines.fold(0, (a, l) => a + l.pointsCents * l.qty);
-  int get totalCents => itemsCents - pointsCents;
+  int get voucherCents => lines.fold(0, (a, l) => a + l.voucherCents * l.qty);
+  int get totalCents => itemsCents - pointsCents - voucherCents;
 
   /// What the shop gets for the order, after refunds. Only the shop sees this.
   int get shopCents => step.ended
@@ -303,17 +308,34 @@ class QuoteLine {
     required this.qty,
     required this.priceCents,
     required this.pointsCents,
+    this.voucherCents = 0,
   });
 
   final String name;
   final String variant;
   final int qty;
 
-  /// What the buyer pays for one, before points.
+  /// What the buyer pays for one, before any discount.
   final int priceCents;
 
   /// Points taken off one, in cents.
   final int pointsCents;
+
+  /// A voucher taken off one, in cents.
+  final int voucherCents;
+}
+
+/// A voucher that can be used at this checkout.
+class CheckoutVoucher {
+  const CheckoutVoucher({
+    required this.id,
+    required this.name,
+    required this.amountCents,
+  });
+
+  final String id;
+  final String name;
+  final int amountCents;
 }
 
 /// The final price before paying, from the same arithmetic as the charge.
@@ -328,6 +350,8 @@ class ShopQuote {
     required this.collectAddress,
     required this.refundRule,
     required this.canPay,
+    this.vouchers = const [],
+    this.voucherId,
   });
 
   final List<QuoteLine> lines;
@@ -344,6 +368,13 @@ class ShopQuote {
   final String refundRule;
   final bool canPay;
 
+  /// Vouchers this buyer could use at this shop.
+  final List<CheckoutVoucher> vouchers;
+
+  /// The voucher this price includes.
+  final String? voucherId;
+
   int get itemsCents => lines.fold(0, (a, l) => a + l.priceCents * l.qty);
   int get pointsCents => lines.fold(0, (a, l) => a + l.pointsCents * l.qty);
+  int get voucherCents => lines.fold(0, (a, l) => a + l.voucherCents * l.qty);
 }
