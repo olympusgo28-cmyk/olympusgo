@@ -66,13 +66,17 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                   b['academy'],
                   _stepNames[b['step']] ?? '${b['step']}',
                   '${b['starts_at']}'.substring(0, 10),
+                  if (b['cancel_reason'] != null &&
+                      '${b['cancel_reason']}'.isNotEmpty)
+                    'Cancelled: ${b['cancel_reason']}',
                   if (b['report_note'] != null) b['report_note'],
+                  if (b['owes_payer'] == true) 'Money is owed back',
                 ].join(' · '),
               ),
               trailing: Wrap(
                 spacing: 8,
                 children: [
-                  if (b['step'] == 'reported')
+                  if (b['step'] == 'reported' && b['owes_payer'] != true)
                     TextButton(
                       onPressed: () => _decide(
                         'Pay the academy',

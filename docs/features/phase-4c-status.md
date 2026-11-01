@@ -24,3 +24,8 @@
 - Parents with a typed name can no longer enrol. A child needs an account and a parent link first (owner, 1 Nov).
 - Attendance releases money at once, as with a Meet, so a report has to come before the coach saves it (Q114).
 - An invited email is held until that person next opens Academy, whether or not it has an account, so inviting can't be used to find out who's registered.
+
+## Checked by hand
+
+Walked through on the iPhone 17 Pro simulator on 1 Nov, against the local stack and stand-in: a parent books and pays for a linked child's one-to-one, a physio referral opens the partner's page and stores one row, the coach marks attendance and the held S$50.00 goes to the owner, and the coach assesses and sees the chart. The parent's reading of that chart is proven through the API, not by hand on the phone.
+

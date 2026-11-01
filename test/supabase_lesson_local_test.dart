@@ -334,6 +334,11 @@ void main() {
         path: path,
       );
       expect((await repo.myLicence()).status, 'submitted');
+      // While staff are looking at it, it can't be swapped.
+      await expectLater(
+        repo.uploadDocument(bytes, 'licence'),
+        throwsA(isA<Object>()),
+      );
       await expectLater(
         SupabaseCoachRepository(other).submitLicence(
           number: 'NROC-78',

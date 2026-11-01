@@ -109,6 +109,16 @@ select t.as_user('c5000000-0000-0000-0000-000000000009');
 select public.academy_claim_invites();
 select is(public.academy_my_coach_invites(), '[]'::jsonb, 'a minor doesn''t');
 select t.reset();
+select t.as_user('c5000000-0000-0000-0000-000000000005');
+select is((select count(*) from jsonb_array_elements_text(public.academy_get(t.id('new')) -> 'invited')), 3::bigint, 'after they look, all three emails still read the same');
+select is(public.academy_get(t.id('new')) -> 'pending_coaches', '[]'::jsonb, 'with no username against any');
+select t.reset();
+select t.as_user('c5000000-0000-0000-0000-00000000000a');
+select public.academy_coach_answer(t.id('new'), false);
+select t.reset();
+select t.as_user('c5000000-0000-0000-0000-000000000005');
+select is((select count(*) from jsonb_array_elements_text(public.academy_get(t.id('new')) -> 'invited')), 2::bigint, 'an answer ends the invitation');
+select t.reset();
 
 -- ─── What a coach writes is checked ────────────────────────────────────────
 
@@ -150,6 +160,9 @@ select lives_ok($$ select public.staff_doc_viewed('licence', 'c5000000-0000-0000
 select t.reset();
 select ok(exists (select 1 from public.admin_audit a where a.action = 'verification_file_viewed'), 'is audited');
 
+select ok(private.doc_in_use('c5000000-0000-0000-0000-000000000002/licence.jpg'), 'a file under review or verified is locked');
+select ok(not private.doc_in_use('c5000000-0000-0000-0000-000000000005/licence.jpg'), 'one that isn''t can be replaced');
+
 -- ─── Rejecting a verified academy ends its lessons ─────────────────────────
 
 insert into ids values ('upcoming', t.booked());
@@ -175,6 +188,13 @@ select t.as_staff('c5000000-0000-0000-0000-000000000008');
 select public.staff_refund_void(t.id('lapsed_refund'), 'Card closed');
 select t.reset();
 select is(t.lstep(t.id('lapsed')), 'reported', 'a voided refund on an expired booking comes back to staff');
+select t.as_staff('c5000000-0000-0000-0000-000000000008');
+select throws_ok($$ select public.staff_lesson_decide(t.id('lapsed'), false, 'Pay them') $$,
+  'This lesson wasn''t taught, so the money goes back.', 'and can''t be paid to the academy');
+select lives_ok($$ select public.staff_lesson_decide(t.id('lapsed'), true, 'Send it back') $$, 'staff send it back');
+select t.reset();
+select is(t.refunded(t.lpay(t.id('lapsed'))), 5500::bigint, 'all of it, as the late refund was');
+select is(t.bal('held', t.id('lapsed')), 0::bigint, 'with nothing held');
 
 -- ─── A void after the place was sold again ─────────────────────────────────
 
@@ -190,7 +210,9 @@ select t.settle_refunds(t.lpay(t.id('first')), 'failed');
 insert into ids select 'first_refund', id from public.refunds where payment_id = t.lpay(t.id('first'));
 select t.as_staff('c5000000-0000-0000-0000-000000000008');
 select lives_ok($$ select public.staff_refund_void(t.id('first_refund'), 'Card closed') $$, 'a void works after the place is sold again');
+select lives_ok($$ select public.staff_lesson_decide(t.id('first'), true, 'Send it back') $$, 'and staff can finish it');
 select t.reset();
+select is(t.refunded(t.lpay(t.id('first'))), 5000::bigint, 'without adding the fee the payer''s cancel kept');
 
 -- ─── Disputes and staff refunds ────────────────────────────────────────────
 
@@ -233,6 +255,23 @@ select public.lesson_academy_cancel(t.id('part'), 'Coach unwell');
 select t.reset();
 select is(t.lstep(t.id('part')), 'reported', 'a part-lost payment goes to staff');
 select is(t.refunded(t.lpay(t.id('part'))), 0::bigint, 'rather than refunding more than was left');
+select t.as_staff('c5000000-0000-0000-0000-000000000008');
+select throws_ok($$ select public.staff_lesson_decide(t.id('part'), false, 'Pay') $$,
+  'This lesson wasn''t taught, so the money goes back.', 'a cancelled lesson can''t be paid out');
+select lives_ok($$ select public.staff_lesson_decide(t.id('part'), true, 'What''s left') $$, 'staff send back what''s left');
+select t.reset();
+select is(t.refunded(t.lpay(t.id('part'))), 3500::bigint, 'S$55.00 less the S$20.00 the bank returned');
+select is(t.bal('held', t.id('part')), 0::bigint, 'with nothing held');
+
+-- A refund queued while a dispute is open, then only part of it lost.
+insert into ids values ('part_open', t.booked());
+select t.event('charge.dispute.created', jsonb_build_object('id', 'dp_o', 'charge', 'ch_' || t.lpay(t.id('part_open')), 'amount', 2000));
+select t.as_user('c5000000-0000-0000-0000-000000000002');
+select public.lesson_academy_cancel(t.id('part_open'), 'Coach unwell');
+select t.reset();
+select t.event('charge.dispute.closed', jsonb_build_object('id', 'dp_o', 'status', 'lost', 'amount', 2000));
+select is(t.refunded(t.lpay(t.id('part_open'))), 0::bigint, 'the queued full refund isn''t sent');
+select is(t.lstep(t.id('part_open')), 'reported', 'it goes to staff');
 
 -- ─── The screen's promise holds ────────────────────────────────────────────
 
@@ -285,6 +324,7 @@ select t.reset();
 update public.feature_flags set enabled = false where key = 'lessons.checkout';
 select t.as_user('c5000000-0000-0000-0000-000000000005');
 select ok(jsonb_array_length(public.academy_class_slots(t.id('academy'), 'trial')) > 0, 'with them off, it is, for free');
+select is(public.academy_class_slots(t.id('new'), 'trial'), '[]'::jsonb, 'an unverified academy offers nothing, even to its owner');
 select t.reset();
 
 -- ─── Earnings ──────────────────────────────────────────────────────────────

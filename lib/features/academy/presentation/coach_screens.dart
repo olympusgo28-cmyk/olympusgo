@@ -106,6 +106,12 @@ class AcademyTodayScreen extends ConsumerWidget {
               onTap: () => context.push(Routes.academyRequests(a.id)),
             ),
             KitNavTile(
+              icon: OgIcons.calendar,
+              title: 'Lessons',
+              subtitle: 'Paid lessons and one-to-one times',
+              onTap: () => context.push(Routes.academyLessons(a.id)),
+            ),
+            KitNavTile(
               icon: OgIcons.calendarBox,
               title: 'All classes',
               subtitle:
