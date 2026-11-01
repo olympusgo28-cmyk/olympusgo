@@ -11,6 +11,8 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../analysis/application/analysis_providers.dart';
+import '../../analysis/presentation/analysis_screens.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../discover/presentation/coming_screens.dart';
 import '../application/fitness_providers.dart';
@@ -188,7 +190,10 @@ class FitnessHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final open = ref.watch(fitnessOpenProvider);
+    final hasClips = ref.watch(myClipsProvider).value?.isNotEmpty ?? false;
     if (open.value == false) {
+      // Clips stay reachable, so they can still be deleted.
+      if (hasClips) return const MyClipsScreen();
       return const EmptyCategoryScreen(
         title: 'Fitness',
         message: 'Workouts will be here. None are open yet.',
@@ -197,6 +202,8 @@ class FitnessHomeScreen extends ConsumerWidget {
     final summary = ref.watch(workoutSummaryProvider(30));
     final programs = ref.watch(workoutProgramsProvider);
     final active = ref.watch(activeSessionProvider).value;
+    final analysisOpen =
+        (ref.watch(analysisStatusProvider).value?.open ?? false) || hasClips;
     final blocked =
         fitnessWaiting(open, 'My workouts', () {
           ref.invalidate(fitnessOpenProvider);
@@ -309,6 +316,16 @@ class FitnessHomeScreen extends ConsumerWidget {
               ruleAbove: true,
               onTap: () => context.push(Routes.fitnessCalculators),
             ),
+            if (analysisOpen)
+              KitNavTile(
+                icon: OgIcons.video,
+                title: 'Analyse my game',
+                subtitle: 'Distance, speed and where you moved',
+                padding: EdgeInsets.zero,
+                minHeight: 68,
+                ruleAbove: true,
+                onTap: () => context.push(Routes.analysis),
+              ),
           ],
         ),
         Text(

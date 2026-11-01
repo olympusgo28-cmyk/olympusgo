@@ -39,6 +39,10 @@ abstract final class Routes {
   static const fitnessLog = '/fitness/log';
   static const fitnessCalculators = '/fitness/calculators';
   static const fitnessAiPlan = '/fitness/ai-plan';
+  static const analysis = '/fitness/analysis';
+  static const analysisAdd = '/fitness/analysis/add';
+  static String analysisClip(String id) => '/fitness/analysis/$id';
+  static String childClips(String id) => '/parent-link/children/$id/clips';
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';

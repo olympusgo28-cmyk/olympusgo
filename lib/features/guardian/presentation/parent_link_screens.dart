@@ -11,6 +11,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../analysis/application/analysis_providers.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/guardian_providers.dart';
 import '../domain/guardian_models.dart';
@@ -324,6 +325,10 @@ class ChildDetailScreen extends ConsumerWidget {
     final posts = ref.watch(childPostsProvider(childId));
     final groups =
         ref.watch(childGroupRequestsProvider(childId)).value ?? const [];
+    // Clips stay reachable when this closes, so consent can still be withdrawn.
+    final clipsOpen =
+        (ref.watch(analysisStatusProvider).value?.childrenOpen ?? false) ||
+        (ref.watch(childClipsProvider(childId)).value?.isNotEmpty ?? false);
 
     Future<void> decide(GroupRequest group, bool approve) async {
       try {
@@ -361,6 +366,15 @@ class ChildDetailScreen extends ConsumerWidget {
             ),
           ],
         ),
+        if (clipsOpen)
+          KitNavTile(
+            icon: OgIcons.video,
+            title: 'Game clips',
+            subtitle: 'Clips and their reports',
+            padding: EdgeInsets.zero,
+            minHeight: 68,
+            onTap: () => context.push(Routes.childClips(childId), extra: link),
+          ),
         if (groups.isNotEmpty) const KitSection('Groups waiting for you'),
         for (final group in groups)
           KitCard(

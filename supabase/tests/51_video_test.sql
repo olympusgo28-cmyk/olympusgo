@@ -222,6 +222,7 @@ select is((select seconds from public.video_clips where id = t.c(1)), 58, 'the w
 
 select t.who('e3000000-0000-0000-0000-000000000001');
 select is(public.clip_get(t.c(1)) ->> 'status', 'court_ready', 'the owner sees the court');
+select is(public.clip_get(t.c(1)) ->> 'added_by_me', 'true', 'and is told they added it');
 select is(public.clip_get(t.c(1)) ->> 'frame', 'e3000000-0000-0000-0000-000000000001/' || t.c(1) || '.frame.jpg', 'and its frame');
 select throws_ok(format($$ select public.clip_confirm_court(%L, '[[1, 2]]', 'near') $$, t.c(1)), 'P0001',
   'Mark the four corners.', 'corners are checked');

@@ -20,7 +20,7 @@ Last updated 2 Nov 2026. **Build from `DEVELOPER_CHECKLIST.md`, not the tables b
 | 4 | 4d | Campaigns, organizer rewards, vouchers, Game tab | Built | `phase-4d-status.md` |
 | 5 | 5a | Fitness | Built | `phase-5a-status.md` |
 | 5 | 5b | AI plans | Built | `phase-5b-status.md` |
-| 5 | 5c | Video storage and consent, analysis worker and screens, A-10 | To do. Needs real tripod clips from the owner | |
+| 5 | 5c | Video storage and consent, analysis worker and screens, A-10 | Built. Accuracy waits on real tripod clips from the owner | `docs/features/phase-5c-status.md` |
 | 5 | 5d | Video feed | To do. Needs moderation providers and the lawyer | |
 
 Release gates are in `DEVELOPER_CHECKLIST.md` section 12. Gates B to F all need outside work that isn't done, such as a penetration test, the lawyer or real Stripe.

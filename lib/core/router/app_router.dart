@@ -1,3 +1,4 @@
+import '../../features/analysis/presentation/analysis_screens.dart';
 import '../../features/fitness/presentation/ai_plan_screen.dart';
 import '../../features/fitness/presentation/fitness_screens.dart';
 import '../../features/fitness/presentation/program_screens.dart';
@@ -198,6 +199,12 @@ GoRouter appRouter(Ref ref) {
       page(Routes.fitnessLog, (_) => const WorkoutLogScreen()),
       page(Routes.fitnessCalculators, (_) => const CalculatorsScreen()),
       page(Routes.fitnessAiPlan, (_) => const AiPlanScreen()),
+      page(Routes.analysis, (_) => const MyClipsScreen()),
+      page(
+        Routes.analysisAdd,
+        (s) => AddClipScreen(child: s.extra as (String, String)?),
+      ),
+      page('${Routes.analysis}/:id', (s) => ClipScreen(id: id(s))),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
       page(Routes.wallet, (_) => const WalletScreen()),
       page(Routes.organizerRewards, (_) => const OrganizerRewardsScreen()),
@@ -376,6 +383,13 @@ GoRouter appRouter(Ref ref) {
         (s) => ChildDetailScreen(
           childId: s.pathParameters['id']!,
           link: s.extra as GuardianLink?,
+        ),
+      ),
+      page(
+        '${Routes.children}/:id/clips',
+        (s) => ChildClipsScreen(
+          childId: s.pathParameters['id']!,
+          name: (s.extra as GuardianLink?)?.name,
         ),
       ),
       page(Routes.ready, (_) => const ReadyScreen()),

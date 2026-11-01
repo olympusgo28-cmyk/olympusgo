@@ -11,6 +11,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:olympus_go/features/analysis/data/analysis_repository.dart';
+import 'package:olympus_go/features/analysis/domain/analysis_models.dart';
+
 import 'support/local_accounts.dart';
 
 void main() {
@@ -464,5 +467,32 @@ void main() {
     await admin.auth.admin.deleteUser(me);
     await sweep();
     expect(await filesOf(me), isEmpty);
+  }, skip: skip);
+
+  test('the app\'s repository: a retry reaches the same clip', () async {
+    final owner = await player('repo', '1990-01-01');
+    final repo = SupabaseAnalysisRepository(owner);
+    final file = File('${Directory.systemTemp.path}/og-clip-${uuid()}.mp4')
+      ..writeAsBytesSync(video);
+    addTearDown(file.deleteSync);
+    final picked = PickedClip(path: file.path, ext: 'mp4', bytes: video.length);
+
+    final id = uuid();
+    await repo.addClip(id: id, file: picked, seconds: 30);
+    expect((await repo.clip(id)).status, ClipStatus.uploaded);
+    // The status has moved on, so nothing is sent twice.
+    await repo.addClip(id: id, file: picked, seconds: 30);
+    expect((await repo.clip(id)).status, ClipStatus.uploaded);
+    expect((await repo.clip(id)).addedByMe, isTrue);
+
+    // The file landed and the next step didn't. Storage calls that a conflict.
+    final late = uuid();
+    final row = await start(owner, clip: late);
+    await upload(owner, row['path'] as String);
+    await repo.addClip(id: late, file: picked, seconds: 30);
+    expect((await repo.clip(late)).status, ClipStatus.uploaded);
+
+    await repo.delete(id);
+    await repo.delete(late);
   }, skip: skip);
 }
