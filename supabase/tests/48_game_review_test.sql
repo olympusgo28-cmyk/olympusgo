@@ -347,6 +347,31 @@ select throws_ok(format($$ select public.staff_campaign_save(jsonb_build_object(
   'A live campaign can''t end sooner. End it instead.', 'a live campaign can''t be cut short');
 select t.reset();
 
+-- An edit changes only what it names, and a switched-off voucher can't be the reward.
+select t.as_staff('d3000000-0000-0000-0000-000000000006');
+select public.staff_voucher_type_save(jsonb_build_object('id', t.id('type2'), 'active', false), 'Shop withdrew');
+select t.reset();
+select is((select name from public.voucher_types where id = t.id('type2')), 'Renamed', 'an edit keeps what it leaves out');
+select t.as_staff('d3000000-0000-0000-0000-000000000006');
+select throws_ok(format($$ select public.staff_voucher_type_save(jsonb_build_object('id', %L, 'organizer_default', true), 'Mistake') $$, t.id('type2')),
+  'Switch this voucher on first.', 'a switched-off voucher can''t become the reward');
+select t.reset();
+select is((select organizer_default from public.voucher_types where id = t.id('type')), true, 'and the reward stays where it was');
+
+-- A kind with nothing to pay out doesn't crowd out one that has.
+insert into public.reward_grants (key, user_id, kind) select 'test-b-' || n, t.q(2), 'B' from generate_series(1, 600) n;
+insert into public.reward_grants (key, user_id, kind) values ('test-a-last', t.q(2), 'A');
+select private.organizer_sweep();
+select is((select status from public.reward_grants where key = 'test-a-last'), 'issued', 'grants with no voucher to pay don''t block the rest');
+
+-- Marked absent, a scan no longer counts.
+select t.open_now(t.id('confirm'));
+select t.as_user('d3000000-0000-0000-0000-000000000001');
+select public.save_attendance(t.id('confirm'), jsonb_build_object(t.q(5), ''));
+select t.reset();
+select is((select check_in_method from public.activity_participants where activity_id = t.id('confirm') and user_id = t.q(5)), null,
+  'marked absent keeps no scan');
+
 -- ─── Grants ─────────────────────────────────────────
 
 select is_empty($$ select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace

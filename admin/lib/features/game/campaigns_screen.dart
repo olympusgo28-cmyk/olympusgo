@@ -339,17 +339,14 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                 : Wrap(
                     spacing: 8,
                     children: [
-                      if (t['organizer_default'] != true)
+                      if (t['organizer_default'] != true &&
+                          t['active'] != false)
                         TextButton(
                           onPressed: () => _act(
                             'Make this the organizer reward',
                             'staff_voucher_type_save',
                             {
-                              'p': {
-                                'id': t['id'],
-                                'name': t['name'],
-                                'organizer_default': true,
-                              },
+                              'p': {'id': t['id'], 'organizer_default': true},
                             },
                           ),
                           child: const Text('Use as reward'),
@@ -363,8 +360,6 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                           {
                             'p': {
                               'id': t['id'],
-                              'name': t['name'],
-                              'organizer_default': t['organizer_default'],
                               'active': t['active'] == false,
                             },
                           },

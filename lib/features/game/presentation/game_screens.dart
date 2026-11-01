@@ -563,7 +563,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
             style: OgText.body(13, color: c.textMuted),
           ),
         Text(
-          '${_n(x.players)} players ${live ? 'have joined' : 'took part'}. Free to join.${workout ? ' Stop if you feel pain.' : ''}',
+          '${_n(x.players)} ${x.players == 1 ? 'player' : 'players'} ${live ? (x.players == 1 ? 'has joined' : 'have joined') : 'took part'}. Free to join.${workout ? ' Stop if you feel pain.' : ''}',
           style: OgText.body(13, color: c.textMuted),
         ),
       ],
