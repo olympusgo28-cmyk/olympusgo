@@ -29,3 +29,5 @@
 
 Walked through on the iPhone 17 Pro simulator on 1 Nov, against the local stack and stand-in: a parent books and pays for a linked child's one-to-one, a physio referral opens the partner's page and stores one row, the coach marks attendance and the held S$50.00 goes to the owner, and the coach assesses and sees the chart. The parent's reading of that chart is proven through the API, not by hand on the phone.
 
+Admin, in a compiled web build against the local stack on 1 Nov: a file opened from a signed link, a coach licence and an academy verified, with both files gone from storage and every step audited, a reported lesson refunded, and a partner added. The money screens for voids and part-lost disputes are proven by pgTAP only.
+

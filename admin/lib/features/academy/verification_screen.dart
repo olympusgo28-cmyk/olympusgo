@@ -105,12 +105,35 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     _refresh();
   }
 
-  Widget _fileButtons(String kind, String id, Object? path) => path == null
-      ? const SizedBox.shrink()
-      : TextButton(
-          onPressed: () => _show(kind, id, path as String),
-          child: const Text('View file'),
-        );
+  /// Clears a file left behind when deleting it failed after a decision.
+  Future<void> _deleteFile(String kind, String id, String path) async {
+    final reason = await askReason(context, 'Delete this file');
+    if (reason == null || !mounted) return;
+    try {
+      await _clearFile(kind, id, path, reason);
+      _refresh();
+    } on StaffFailure catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+  }
+
+  List<Widget> _fileButtons(
+    String kind,
+    String id,
+    Object? path, {
+    required bool waiting,
+  }) => [
+    if (path != null)
+      TextButton(
+        onPressed: () => _show(kind, id, path as String),
+        child: const Text('View file'),
+      ),
+    if (path != null && !waiting)
+      TextButton(
+        onPressed: () => _deleteFile(kind, id, path as String),
+        child: const Text('Delete file'),
+      ),
+  ];
 
   @override
   Widget build(BuildContext context) => StaffPage(
@@ -142,7 +165,12 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                 trailing: Wrap(
                   spacing: 8,
                   children: [
-                    _fileButtons('academy', a['id'] as String, a['file_path']),
+                    ..._fileButtons(
+                      'academy',
+                      a['id'] as String,
+                      a['file_path'],
+                      waiting: a['verification'] == 'submitted',
+                    ),
                     if (a['verification'] == 'submitted')
                       TextButton(
                         onPressed: () => _decide(
@@ -189,10 +217,11 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                 trailing: Wrap(
                   spacing: 8,
                   children: [
-                    _fileButtons(
+                    ..._fileButtons(
                       'licence',
                       l['user_id'] as String,
                       l['file_path'],
+                      waiting: l['status'] == 'submitted',
                     ),
                     if (l['status'] == 'submitted')
                       TextButton(

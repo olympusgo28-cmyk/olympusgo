@@ -65,7 +65,10 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                 [
                   b['academy'],
                   _stepNames[b['step']] ?? '${b['step']}',
-                  '${b['starts_at']}'.substring(0, 10),
+                  DateTime.parse(b['starts_at'] as String)
+                      .toLocal()
+                      .toString()
+                      .substring(0, 10),
                   if (b['cancel_reason'] != null &&
                       '${b['cancel_reason']}'.isNotEmpty)
                     'Cancelled: ${b['cancel_reason']}',

@@ -114,6 +114,13 @@ select is((select count(*) from jsonb_array_elements_text(public.academy_get(t.i
 select is(public.academy_get(t.id('new')) -> 'pending_coaches', '[]'::jsonb, 'with no username against any');
 select t.reset();
 select t.as_user('c5000000-0000-0000-0000-00000000000a');
+select public.academy_my_coach_invites();
+select t.reset();
+select t.as_user('c5000000-0000-0000-0000-000000000005');
+select public.academy_set_coach(t.id('new'), 'c5000000-0000-0000-0000-00000000000a', true);
+select is((select count(*) from jsonb_array_elements(public.academy_get(t.id('new')) -> 'pending_coaches')), 1::bigint, 'inviting a username shows as pending, as for anyone');
+select t.reset();
+select t.as_user('c5000000-0000-0000-0000-00000000000a');
 select public.academy_coach_answer(t.id('new'), false);
 select t.reset();
 select t.as_user('c5000000-0000-0000-0000-000000000005');
@@ -162,6 +169,8 @@ select ok(exists (select 1 from public.admin_audit a where a.action = 'verificat
 
 select ok(private.doc_in_use('c5000000-0000-0000-0000-000000000002/licence.jpg'), 'a file under review or verified is locked');
 select ok(not private.doc_in_use('c5000000-0000-0000-0000-000000000005/licence.jpg'), 'one that isn''t can be replaced');
+update public.coach_licences set file_path = null where user_id = 'c5000000-0000-0000-0000-000000000002';
+select ok(not private.doc_in_use('c5000000-0000-0000-0000-000000000002/licence.jpg'), 'and once staff clear it, a renewal can upload');
 
 -- ─── Rejecting a verified academy ends its lessons ─────────────────────────
 
@@ -262,6 +271,33 @@ select lives_ok($$ select public.staff_lesson_decide(t.id('part'), true, 'What''
 select t.reset();
 select is(t.refunded(t.lpay(t.id('part'))), 3500::bigint, 'S$55.00 less the S$20.00 the bank returned');
 select is(t.bal('held', t.id('part')), 0::bigint, 'with nothing held');
+
+-- That refund fails and is voided: it comes back, and sending it again balances.
+select t.settle_refunds(t.lpay(t.id('part')), 'failed');
+insert into ids select 'part_refund', id from public.refunds where payment_id = t.lpay(t.id('part'));
+select t.as_staff('c5000000-0000-0000-0000-000000000008');
+select public.staff_refund_void(t.id('part_refund'), 'Card closed');
+select t.reset();
+select is(t.lstep(t.id('part')), 'reported', 'a void after a part-lost dispute comes back to staff');
+select is((select owes_payer from public.lesson_bookings where id = t.id('part')), true, 'marked as owed');
+select t.as_staff('c5000000-0000-0000-0000-000000000008');
+select lives_ok($$ select public.staff_lesson_decide(t.id('part'), true, 'Second try') $$, 'staff send it again');
+select t.reset();
+select is(t.refunded(t.lpay(t.id('part'))), 3500::bigint, 'for what was left');
+select ok(t.all_balanced(), 'the ledger balances');
+
+-- One dispute lost, another open: nothing can be worked out yet.
+insert into ids values ('two', t.booked());
+select t.event('charge.dispute.created', jsonb_build_object('id', 'dp_a', 'charge', 'ch_' || t.lpay(t.id('two')), 'amount', 1000));
+select t.event('charge.dispute.closed', jsonb_build_object('id', 'dp_a', 'status', 'lost', 'amount', 1000));
+select t.as_user('c5000000-0000-0000-0000-000000000002');
+select public.lesson_academy_cancel(t.id('two'), 'Coach unwell');
+select t.reset();
+select t.event('charge.dispute.created', jsonb_build_object('id', 'dp_b', 'charge', 'ch_' || t.lpay(t.id('two')), 'amount', 1000));
+select t.as_staff('c5000000-0000-0000-0000-000000000008');
+select throws_ok($$ select public.staff_lesson_decide(t.id('two'), true, 'Too soon') $$,
+  'A dispute is open on this payment. Wait for it to close.', 'a second open dispute waits');
+select t.reset();
 
 -- A refund queued while a dispute is open, then only part of it lost.
 insert into ids values ('part_open', t.booked());
