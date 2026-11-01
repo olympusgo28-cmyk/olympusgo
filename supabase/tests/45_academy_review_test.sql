@@ -99,7 +99,7 @@ select throws_ok($$ select public.academy_create('{"name": "Too many", "coaches"
   'Invite up to 20 coaches at a time.', 'a list has a limit');
 select throws_ok($$ select public.academy_set_coach(t.id('new'), 'c5000000-0000-0000-0000-000000000009', true) $$, 'No player has that username.', 'a minor reads as nobody');
 select t.reset();
-select is((select count(*) from public.notifications where body = 'Open it to say yes or no.'), 0::bigint, 'and a stranger gets nothing from a list of emails');
+select is((select count(*) from public.notifications where user_id in ('c5000000-0000-0000-0000-00000000000a', 'c5000000-0000-0000-0000-000000000009')), 0::bigint, 'and a stranger gets nothing from a list of emails');
 
 select t.as_user('c5000000-0000-0000-0000-00000000000a');
 select public.academy_claim_invites();
