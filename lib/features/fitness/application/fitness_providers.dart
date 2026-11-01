@@ -16,7 +16,10 @@ Future<bool> fitnessOpen(Ref ref) =>
 Future<List<CatalogExercise>> exercises(Ref ref) =>
     ref.watch(fitnessRepositoryProvider).exercises();
 
-@riverpod
+Duration? _noRetry(int count, Object error) => null;
+
+// Fails straight away, so a paid plan isn't left waiting on a spinner.
+@Riverpod(retry: _noRetry)
 Future<List<WorkoutProgram>> workoutPrograms(Ref ref) =>
     ref.watch(fitnessRepositoryProvider).programs();
 
@@ -28,6 +31,54 @@ Future<WorkoutSummary> workoutSummary(Ref ref, int? days) =>
 @riverpod
 Future<ExerciseHistory> exerciseHistory(Ref ref, String id) =>
     ref.watch(fitnessRepositoryProvider).history(id);
+
+@riverpod
+Future<AiStatus> aiStatus(Ref ref) =>
+    ref.watch(fitnessRepositoryProvider).aiStatus();
+
+/// A plan that was asked for and hasn't reached the player yet.
+class AiPlanTicket {
+  const AiPlanTicket({
+    required this.key,
+    required this.goal,
+    required this.days,
+    this.programId,
+  });
+
+  /// Stays the same on a retry, so a dropped signal can't pay twice.
+  final String key;
+  final String goal;
+  final int days;
+
+  /// Set once the plan is saved, so opening it never asks again.
+  final String? programId;
+
+  AiPlanTicket saved(String id) =>
+      AiPlanTicket(key: key, goal: goal, days: days, programId: id);
+}
+
+/// Outlives the screen, so leaving during the wait can't lose a paid plan.
+@Riverpod(keepAlive: true)
+class AiPlanRequest extends _$AiPlanRequest {
+  @override
+  AiPlanTicket? build() {
+    // Each account has its own keys.
+    ref.watch(currentUserIdProvider.select((v) => v.value));
+    return null;
+  }
+
+  void start(AiPlanTicket ticket) => state = ticket;
+
+  /// A late answer only touches its own ticket, so it can't reach an account
+  /// that signed in since.
+  void saved(String key, String programId) {
+    if (state?.key == key) state = state!.saved(programId);
+  }
+
+  void clear(String key) {
+    if (state?.key == key) state = null;
+  }
+}
 
 /// A random id, made on the phone, so a retry reaches the same row.
 String newFitnessId() {

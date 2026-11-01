@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,13 +8,16 @@ import 'package:go_router/go_router.dart';
 import 'package:olympus_go/core/providers.dart';
 import 'package:olympus_go/core/router/routes.dart';
 import 'package:olympus_go/core/theme/og_theme.dart';
+import 'package:olympus_go/core/widgets/og_kit.dart';
 import 'package:olympus_go/features/auth/data/auth_repository.dart';
 import 'package:olympus_go/features/fitness/application/fitness_providers.dart';
 import 'package:olympus_go/features/fitness/data/fitness_repository.dart';
 import 'package:olympus_go/features/fitness/domain/fitness_models.dart';
+import 'package:olympus_go/features/fitness/presentation/ai_plan_screen.dart';
 import 'package:olympus_go/features/fitness/presentation/fitness_screens.dart';
 import 'package:olympus_go/features/fitness/presentation/program_screens.dart';
 import 'package:olympus_go/features/fitness/presentation/train_screen.dart';
+import 'package:olympus_go/features/settings/presentation/settings_screens.dart';
 
 class _Closed extends DemoFitnessRepository {
   @override
@@ -31,6 +37,116 @@ class _Recovers extends DemoFitnessRepository {
   Future<WorkoutSummary> summary({int? days = 30}) async {
     if (fail) throw const AuthFailure('Check your connection.');
     return super.summary(days: days);
+  }
+}
+
+class _NoAi extends DemoFitnessRepository {
+  @override
+  Future<AiStatus> aiStatus() async => const AiStatus();
+}
+
+class _AiStatusFails extends DemoFitnessRepository {
+  @override
+  Future<AiStatus> aiStatus() async =>
+      throw const AuthFailure('Check your connection.');
+}
+
+class _NoneLeft extends DemoFitnessRepository {
+  @override
+  Future<AiStatus> aiStatus() async =>
+      const AiStatus(open: true, agreed: true, left: 0);
+}
+
+class _CountsLists extends DemoFitnessRepository {
+  var calls = 0;
+
+  @override
+  Future<List<WorkoutProgram>> programs() async {
+    calls++;
+    throw const AuthFailure('Check your connection.');
+  }
+}
+
+class _SlowPlan extends DemoFitnessRepository {
+  final finish = Completer<void>();
+  var asks = 0;
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) async {
+    asks++;
+    await finish.future;
+    return super.askPlan(key: key, goal: goal, days: days);
+  }
+}
+
+class _RemembersGoal extends DemoFitnessRepository {
+  String? lastGoal;
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) {
+    lastGoal = goal;
+    return super.askPlan(key: key, goal: goal, days: days);
+  }
+}
+
+class _ClosedButAgreed extends DemoFitnessRepository {
+  var withdrawn = false;
+
+  @override
+  Future<AiStatus> aiStatus() async => AiStatus(agreed: !withdrawn);
+
+  @override
+  Future<void> setAiConsent(bool agreed) async => withdrawn = !agreed;
+}
+
+class _ListFails extends DemoFitnessRepository {
+  var failList = false;
+  var asks = 0;
+
+  @override
+  Future<List<WorkoutProgram>> programs() async {
+    if (failList) throw const AuthFailure('Check your connection.');
+    return super.programs();
+  }
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) async {
+    asks++;
+    final fail = failList;
+    failList = false;
+    final id = await super.askPlan(key: key, goal: goal, days: days);
+    failList = fail;
+    return id;
+  }
+}
+
+class _AiFails extends DemoFitnessRepository {
+  var offline = true;
+  final keys = <String>[];
+  final goals = <String>[];
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) async {
+    keys.add(key);
+    goals.add(goal);
+    if (offline) throw const AuthFailure('Check your connection.');
+    throw const AiPlanRefused('Couldn’t make a plan. Try again.');
   }
 }
 
@@ -100,6 +216,11 @@ Future<void> _pump(
         path: Routes.fitnessLog,
         builder: (_, _) => const WorkoutLogScreen(),
       ),
+      GoRoute(path: Routes.privacy, builder: (_, _) => const PrivacyScreen()),
+      GoRoute(
+        path: Routes.fitnessAiPlan,
+        builder: (_, _) => const AiPlanScreen(),
+      ),
       GoRoute(
         path: Routes.fitnessCalculators,
         builder: (_, _) => const CalculatorsScreen(),
@@ -109,6 +230,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [fitnessRepositoryProvider.overrideWithValue(repo)],
+      retry: (_, _) => null,
       child: MaterialApp.router(theme: OgTheme.light(), routerConfig: router),
     ),
   );
@@ -445,6 +567,248 @@ void main() {
     expect(find.text('Legs'), findsOne);
     expect(find.text('350 kg'), findsWidgets);
     expect(find.textContaining('46 min'), findsWidgets);
+  });
+
+  testWidgets('an adult sees Plan with AI, and others never do', (
+    tester,
+  ) async {
+    await _pump(tester, DemoFitnessRepository(), at: Routes.fitnessPrograms);
+    expect(find.text('Plan with AI'), findsOne);
+
+    await tester.pumpWidget(const SizedBox());
+    await _pump(tester, _NoAi(), at: Routes.fitnessPrograms);
+    expect(find.text('Plan with AI'), findsNothing);
+  });
+
+  testWidgets('AI plans stay hidden if the status can\'t load', (tester) async {
+    await _pump(tester, _AiStatusFails(), at: Routes.fitnessPrograms);
+    expect(find.text('Plan with AI'), findsNothing);
+  });
+
+  testWidgets('going straight to the screen is refused if it isn\'t open', (
+    tester,
+  ) async {
+    await _pump(tester, _NoAi(), at: Routes.fitnessAiPlan);
+    expect(find.textContaining('aren’t available'), findsOne);
+    expect(find.text('Make my plan'), findsNothing);
+    expect(find.text('Agree'), findsNothing);
+  });
+
+  testWidgets('the first plan asks first, and says what is sent', (
+    tester,
+  ) async {
+    final repo = DemoFitnessRepository();
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    expect(find.text('Before your first plan'), findsOne);
+    expect(find.textContaining('Anthropic'), findsOne);
+    expect(find.textContaining('outside'), findsOne);
+    expect(find.textContaining('name, username, email'), findsOne);
+    expect(find.text('Make my plan'), findsNothing);
+
+    await _tap(tester, 'Agree');
+    expect(find.text('Make my plan'), findsOne);
+    expect(find.text('3 plans left today.'), findsOne);
+    expect((await tester.runAsync(repo.aiStatus))!.agreed, isTrue);
+  });
+
+  testWidgets('a plan opens as a labelled draft', (tester) async {
+    final repo = _RemembersGoal();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    await _tap(tester, 'Get stronger');
+    await _tap(tester, '2');
+    await _tap(tester, 'Make my plan');
+    expect(repo.lastGoal, 'strength');
+    expect(find.textContaining('AI suggested this plan'), findsOne);
+    expect(find.textContaining('coach or a doctor'), findsOne);
+    expect(find.text('Save program'), findsOne);
+    final all = await tester.runAsync(repo.programs);
+    final mine = all!.where((p) => p.fromAi).single;
+    expect(mine.days, hasLength(2));
+  });
+
+  testWidgets('a dropped signal keeps the key and locks the choices', (
+    tester,
+  ) async {
+    final repo = _AiFails();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    await _tap(tester, 'Make my plan');
+    expect(find.text('Check your connection.'), findsOne);
+
+    await _tap(tester, 'Get stronger');
+    await _tap(tester, 'Make my plan');
+    expect(repo.keys[1], repo.keys[0]);
+    expect(repo.goals, ['speed', 'speed']);
+
+    repo.offline = false;
+    await _tap(tester, 'Make my plan');
+    expect(find.textContaining('Couldn’t make a plan'), findsOne);
+    await _tap(tester, 'Make my plan');
+    expect(repo.keys[3], isNot(repo.keys[2]));
+  });
+
+  testWidgets('leaving the screen keeps the key', (tester) async {
+    final repo = _AiFails();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    await _tap(tester, 'Make my plan');
+    final element = tester.element(find.byType(AiPlanScreen));
+    final c = ProviderScope.containerOf(element);
+    GoRouter.of(element).pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(AiPlanScreen), findsNothing);
+    expect(c.read(aiPlanRequestProvider)?.key, repo.keys.single);
+  });
+
+  testWidgets('a plan that finishes after leaving is kept, not paid again', (
+    tester,
+  ) async {
+    final repo = _SlowPlan();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    await tester.tap(find.text('Make my plan'));
+    await tester.pump();
+
+    final element = tester.element(find.byType(AiPlanScreen));
+    final router = GoRouter.of(element);
+    router.pop();
+    await tester.pumpAndSettle();
+    repo.finish.complete();
+    await tester.pumpAndSettle();
+
+    router.push(Routes.fitnessAiPlan);
+    await tester.pumpAndSettle();
+    expect(find.text('Open my plan'), findsOne);
+    expect(find.text('Your plan is ready.'), findsOne);
+    await _tap(tester, 'Open my plan');
+    expect(repo.asks, 1);
+    expect(find.textContaining('AI suggested this plan'), findsOne);
+  });
+
+  testWidgets('a plan paid for but not opened is never asked for again', (
+    tester,
+  ) async {
+    final repo = _ListFails();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.fitnessAiPlan);
+    repo.failList = true;
+    await tester.tap(find.text('Make my plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Check your connection.'), findsOne);
+    expect(find.text('Your plan is ready.'), findsOne);
+    expect(repo.asks, 1);
+
+    repo.failList = false;
+    await _tap(tester, 'Open my plan');
+    expect(repo.asks, 1);
+    expect(find.textContaining('AI suggested this plan'), findsOne);
+  });
+
+  testWidgets('the button stays off with none left, but a kept key can retry', (
+    tester,
+  ) async {
+    await _pump(tester, _NoneLeft(), at: Routes.fitnessAiPlan);
+    final button = tester.widget<KitButton>(
+      find.widgetWithText(KitButton, 'Make my plan'),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets('Privacy offers AI plans to adults when open', (tester) async {
+    final repo = DemoFitnessRepository();
+    await tester.runAsync(() => repo.setAiConsent(true));
+    await _pump(tester, repo, at: Routes.privacy);
+    expect(find.text('AI plans'), findsOne);
+    await tester.tap(find.byType(CupertinoSwitch).last);
+    await tester.pumpAndSettle();
+    expect((await tester.runAsync(repo.aiStatus))!.agreed, isFalse);
+  });
+
+  testWidgets('a ready plan still opens with none left today', (tester) async {
+    final repo = _NoneLeft();
+    await _pump(tester, repo, at: Routes.fitnessPrograms);
+    final c = ProviderScope.containerOf(
+      tester.element(find.byType(ProgramsScreen)),
+    );
+    c
+        .read(aiPlanRequestProvider.notifier)
+        .start(
+          const AiPlanTicket(
+            key: 'k',
+            goal: 'speed',
+            days: 2,
+            programId: 'ready',
+          ),
+        );
+    GoRouter.of(tester.element(find.byType(ProgramsScreen)))
+        .push(Routes.fitnessAiPlan);
+    await tester.pumpAndSettle();
+    final button = tester.widget<KitButton>(
+      find.widgetWithText(KitButton, 'Open my plan'),
+    );
+    expect(button.onPressed, isNotNull);
+  });
+
+  test('a late answer can\'t land on another ticket', () {
+    final c = ProviderContainer(
+      overrides: [fitnessRepositoryProvider.overrideWithValue(_NoAi())],
+    );
+    addTearDown(c.dispose);
+    final request = c.read(aiPlanRequestProvider.notifier);
+    request.start(const AiPlanTicket(key: 'b', goal: 'speed', days: 2));
+    request.saved('a', 'program-of-a');
+    expect(c.read(aiPlanRequestProvider)?.programId, isNull);
+    request.clear('a');
+    expect(c.read(aiPlanRequestProvider)?.key, 'b');
+    request.saved('b', 'program-of-b');
+    expect(c.read(aiPlanRequestProvider)?.programId, 'program-of-b');
+    request.clear('b');
+    expect(c.read(aiPlanRequestProvider), isNull);
+  });
+
+  test('the program list fails at once, with no retry', () async {
+    final repo = _CountsLists();
+    final c = ProviderContainer(
+      overrides: [fitnessRepositoryProvider.overrideWithValue(repo)],
+    );
+    addTearDown(c.dispose);
+    final sub = c.listen(workoutProgramsProvider, (_, _) {});
+    addTearDown(sub.close);
+    await expectLater(
+      c.read(workoutProgramsProvider.future),
+      throwsA(isA<AuthFailure>()),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    expect(repo.calls, 1);
+  });
+
+  testWidgets('Privacy says so when AI plans can\'t load', (tester) async {
+    await _pump(tester, _AiStatusFails(), at: Routes.privacy);
+    expect(find.textContaining('Can’t load AI plans'), findsOne);
+  });
+
+  testWidgets('Privacy hides AI plans from those who can\'t use them', (
+    tester,
+  ) async {
+    await _pump(tester, _NoAi(), at: Routes.privacy);
+    expect(find.text('AI plans'), findsNothing);
+  });
+
+  testWidgets('withdrawing stays possible once AI plans are switched off', (
+    tester,
+  ) async {
+    final repo = _ClosedButAgreed();
+    await _pump(tester, repo, at: Routes.privacy);
+    expect(find.text('AI plans'), findsOne);
+    await tester.tap(find.byType(CupertinoSwitch).last);
+    await tester.pumpAndSettle();
+    expect(repo.withdrawn, isTrue);
+  });
+
+  testWidgets('no plans left today says so', (tester) async {
+    await _pump(tester, _NoneLeft(), at: Routes.fitnessAiPlan);
+    expect(find.textContaining('made today’s plans'), findsOne);
   });
 
   testWidgets('an adult sees three calculators, with no health verdict', (

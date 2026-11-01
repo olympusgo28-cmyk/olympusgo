@@ -1,3 +1,4 @@
+import '../../features/fitness/presentation/ai_plan_screen.dart';
 import '../../features/fitness/presentation/fitness_screens.dart';
 import '../../features/fitness/presentation/program_screens.dart';
 import '../../features/fitness/presentation/train_screen.dart';
@@ -196,6 +197,7 @@ GoRouter appRouter(Ref ref) {
       page(Routes.fitnessTrain, (_) => const TrainScreen()),
       page(Routes.fitnessLog, (_) => const WorkoutLogScreen()),
       page(Routes.fitnessCalculators, (_) => const CalculatorsScreen()),
+      page(Routes.fitnessAiPlan, (_) => const AiPlanScreen()),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
       page(Routes.wallet, (_) => const WalletScreen()),
       page(Routes.organizerRewards, (_) => const OrganizerRewardsScreen()),

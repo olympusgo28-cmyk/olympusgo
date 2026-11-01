@@ -30,6 +30,8 @@ class ProgramsScreen extends ConsumerWidget {
     );
     if (blocked != null) return blocked;
     final mine = v.requireValue.where((p) => !p.template).toList();
+    // Stays hidden until the server says yes, so an under-18 never sees it.
+    final ai = ref.watch(aiStatusProvider).value;
     return KitScaffold(
       header: const KitHeader(title: 'My programs'),
       bottom: [
@@ -37,6 +39,12 @@ class ProgramsScreen extends ConsumerWidget {
           label: 'New program',
           onPressed: () => context.push(Routes.fitnessProgram('new')),
         ),
+        if (ai?.open ?? false)
+          KitButton(
+            label: 'Plan with AI',
+            style: KitButtonStyle.outline,
+            onPressed: () => context.push(Routes.fitnessAiPlan),
+          ),
       ],
       children: [
         if (mine.isEmpty)
@@ -78,6 +86,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
   var _count = 3;
   var _day = 0;
   var _busy = false;
+  var _fromAi = false;
   // Holds seven days, so lowering the count and raising it again loses nothing.
   var _days = List<ProgramDay>.generate(7, (i) => const ProgramDay());
 
@@ -91,6 +100,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
     _name.text = p.name;
     _isNew = copy;
     if (!copy) _id = p.id;
+    _fromAi = p.fromAi;
     _count = p.days.length.clamp(1, 7);
     _day = 0;
     _days = [
@@ -239,20 +249,29 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         ),
       ],
       children: [
+        if (_fromAi)
+          const KitNote(
+            'AI suggested this plan. It isn’t advice from a coach or a doctor. '
+            'Stop if you feel pain.',
+            tone: KitTone.info,
+          ),
         KitInput(label: 'Program name', controller: _name, maxLength: 60),
         const KitSection('Days a week'),
         Wrap(
           spacing: 8,
           children: [
             for (var n = 1; n <= 5; n++)
-              KitChip(
-                label: '$n',
-                height: 44,
-                selected: n == _count,
-                onTap: () => setState(() {
-                  _count = n;
-                  if (_day >= n) _day = n - 1;
-                }),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 44),
+                child: KitChip(
+                  label: '$n',
+                  height: 44,
+                  selected: n == _count,
+                  onTap: () => setState(() {
+                    _count = n;
+                    if (_day >= n) _day = n - 1;
+                  }),
+                ),
               ),
           ],
         ),

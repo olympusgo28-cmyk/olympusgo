@@ -7,6 +7,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/data/auth_repository.dart';
 import '../domain/fitness_models.dart';
 
+/// The server turned a plan down, so trying the same key again won't help.
+class AiPlanRefused extends AuthFailure {
+  const AiPlanRefused(super.message);
+}
+
 abstract class FitnessRepository {
   /// Whether Fitness has been switched on.
   Future<bool> open();
@@ -20,6 +25,19 @@ abstract class FitnessRepository {
   /// [days] null means all time.
   Future<WorkoutSummary> summary({int? days = 30});
   Future<ExerciseHistory> history(String exerciseId);
+
+  Future<AiStatus> aiStatus();
+
+  /// Records or withdraws the player's agreement to AI plans.
+  Future<void> setAiConsent(bool agreed);
+
+  /// Asks for a plan and gives the new program's id. [key] stays the same on a
+  /// retry, so a dropped signal can't pay for a second plan.
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  });
 
   /// The workout in progress, kept on the phone so a dropped signal or a
   /// closed app loses nothing.
@@ -41,6 +59,23 @@ class SupabaseFitnessRepository implements FitnessRepository {
       debugPrint('Fitness error: ${e.code}');
       if (e.code == 'P0001') throw AuthFailure(e.message);
       throw const AuthFailure('Something went wrong. Try again.');
+    } on FunctionException catch (e) {
+      final detail = e.details;
+      // Only a real refusal is final. A gateway error, a rate limit, a 503, or
+      // a 409 while the first try runs may still end in a plan, so the key
+      // stays.
+      if (e.status == 409 ||
+          e.status == 429 ||
+          e.status == 503 ||
+          detail is! Map ||
+          detail['error'] is! String) {
+        throw AuthFailure(
+          detail is Map && detail['error'] is String
+              ? detail['error'] as String
+              : 'Can’t reach OlympusGO. Check your connection and try again.',
+        );
+      }
+      throw AiPlanRefused(detail['error'] as String);
     } on AuthFailure {
       rethrow;
     } catch (e) {
@@ -121,6 +156,40 @@ class SupabaseFitnessRepository implements FitnessRepository {
       params: {'p_exercise': exerciseId},
     );
     return ExerciseHistory.fromJson(r as Map<String, dynamic>);
+  });
+
+  @override
+  Future<AiStatus> aiStatus() => _guard(() async {
+    final r = await _client.rpc('ai_plan_status');
+    return AiStatus.fromJson(r as Map<String, dynamic>);
+  });
+
+  @override
+  Future<void> setAiConsent(bool agreed) => _guard(() async {
+    if (agreed) {
+      await _client.rpc(
+        'consent_set',
+        params: {'p_kind': 'ai_plans', 'p_granted': true},
+      );
+    } else {
+      await _client.rpc('ai_plan_withdraw');
+    }
+  });
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) => _guard(() async {
+    // Longer than the function's own deadline. The key makes a retry safe.
+    final res = await _client.functions
+        .invoke(
+          'ai-plan',
+          body: {'client_key': key, 'goal': goal, 'days': days},
+        )
+        .timeout(const Duration(seconds: 140));
+    return (res.data as Map)['program_id'] as String;
   });
 
   @override
@@ -240,6 +309,8 @@ class DemoFitnessRepository implements FitnessRepository {
   ];
   final _log = <WorkoutEntry>[];
   ActiveWorkout? _active;
+  var _agreed = false;
+  var _plans = 0;
 
   @override
   Future<bool> open() async => true;
@@ -255,9 +326,18 @@ class DemoFitnessRepository implements FitnessRepository {
 
   @override
   Future<void> saveProgram(WorkoutProgram program) async {
+    final old = _programs.where((p) => p.id == program.id).firstOrNull;
     _programs
       ..removeWhere((p) => p.id == program.id)
-      ..insert(0, program);
+      ..insert(
+        0,
+        WorkoutProgram(
+          id: program.id,
+          name: program.name,
+          days: program.days,
+          source: old?.source ?? program.source,
+        ),
+      );
   }
 
   @override
@@ -312,6 +392,36 @@ class DemoFitnessRepository implements FitnessRepository {
   @override
   Future<ExerciseHistory> history(String exerciseId) async =>
       const ExerciseHistory();
+
+  @override
+  Future<AiStatus> aiStatus() async =>
+      AiStatus(open: true, agreed: _agreed, left: (3 - _plans).clamp(0, 3));
+
+  @override
+  Future<void> setAiConsent(bool agreed) async => _agreed = agreed;
+
+  @override
+  Future<String> askPlan({
+    required String key,
+    required String goal,
+    required int days,
+  }) async {
+    final id = 'ai-$key';
+    if (_programs.any((p) => p.id == id)) return id;
+    _plans++;
+    await saveProgram(
+      WorkoutProgram(
+        id: id,
+        name: 'My AI plan',
+        source: 'ai',
+        days: [
+          for (var d = 1; d <= days; d++)
+            ProgramDay(name: 'Day $d', items: _programs.last.days.first.items),
+        ],
+      ),
+    );
+    return id;
+  }
 
   @override
   Future<ActiveWorkout?> loadActive() async => _active;

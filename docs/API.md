@@ -220,5 +220,19 @@ All are for signed-in players, and refuse restricted and suspended accounts. The
 | `workout_summary(p_days int default 30)` | Totals, streak, recent workouts and personal bests. Null means all time. Lists at most 100 workouts | 300 |
 | `exercise_history(p_exercise uuid)` | The caller's best set, times done and last 30 sets | 300 |
 
+### AI plans, as built in Phase 5b
+
+The phone calls the `ai-plan` Edge Function with `client_key`, `goal` and `days`, and gets `program_id` back. It needs a signed-in player. A 409, 429 or 503 may still end in a plan, so keep the key. A 400 or 502 is final, so make a new key.
+
+| Function | Does | Who |
+| --- | --- | --- |
+| `ai_plan_status()` | Whether it's open to the caller, whether they've agreed, and how many are left today | Player, 300 an hour |
+| `consent_set('ai_plans', true)` | Records the agreement. Refuses under-18s | Player |
+| `ai_plan_withdraw()` | Withdraws it. Open to suspended and restricted players too | Player |
+| `ai_plan_begin(p_client_key, p_goal, p_days)` | Checks everything and returns the summary and catalogue. A key that ran gives its result, and spends nothing | Player, through the function, 20 an hour |
+| `ai_plan_svc_finish(p_request, p_plan, p_model, p_input_tokens, p_output_tokens)` | Checks the plan again and saves a draft program | Service role |
+| `ai_plan_svc_allowed(p_request)` | Whether the player's data may still be sent, asked before a second try | Service role |
+| `ai_plan_svc_fail(p_request, p_model, p_input_tokens, p_output_tokens)` | Marks a request failed | Service role |
+
 These functions aren't marked `stable`. The API runs a stable function in a read-only transaction, where the request gate can't record a rate-limit hit.
 

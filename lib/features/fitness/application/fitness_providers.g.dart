@@ -100,7 +100,7 @@ final class WorkoutProgramsProvider
     : super(
         from: null,
         argument: null,
-        retry: null,
+        retry: _noRetry,
         name: r'workoutProgramsProvider',
         isAutoDispose: true,
         dependencies: null,
@@ -122,7 +122,7 @@ final class WorkoutProgramsProvider
   }
 }
 
-String _$workoutProgramsHash() => r'7c6a74e64ae1af8b4ae1bff3100474ee6a6eaf37';
+String _$workoutProgramsHash() => r'7cbb5463a4fe26fb6766a9516edda0f036a7a9ea';
 
 /// [days] null means all time.
 
@@ -283,6 +283,98 @@ final class ExerciseHistoryFamily extends $Family
   String toString() => r'exerciseHistoryProvider';
 }
 
+@ProviderFor(aiStatus)
+final aiStatusProvider = AiStatusProvider._();
+
+final class AiStatusProvider
+    extends
+        $FunctionalProvider<AsyncValue<AiStatus>, AiStatus, FutureOr<AiStatus>>
+    with $FutureModifier<AiStatus>, $FutureProvider<AiStatus> {
+  AiStatusProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'aiStatusProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$aiStatusHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<AiStatus> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AiStatus> create(Ref ref) {
+    return aiStatus(ref);
+  }
+}
+
+String _$aiStatusHash() => r'9cd6864cc2998cd403bb1503017c19aee3b3e3ad';
+
+/// Outlives the screen, so leaving during the wait can't lose a paid plan.
+
+@ProviderFor(AiPlanRequest)
+final aiPlanRequestProvider = AiPlanRequestProvider._();
+
+/// Outlives the screen, so leaving during the wait can't lose a paid plan.
+final class AiPlanRequestProvider
+    extends $NotifierProvider<AiPlanRequest, AiPlanTicket?> {
+  /// Outlives the screen, so leaving during the wait can't lose a paid plan.
+  AiPlanRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'aiPlanRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$aiPlanRequestHash();
+
+  @$internal
+  @override
+  AiPlanRequest create() => AiPlanRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AiPlanTicket? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AiPlanTicket?>(value),
+    );
+  }
+}
+
+String _$aiPlanRequestHash() => r'3407a80c3d97b2574862fe02e13626ae211bdf23';
+
+/// Outlives the screen, so leaving during the wait can't lose a paid plan.
+
+abstract class _$AiPlanRequest extends $Notifier<AiPlanTicket?> {
+  AiPlanTicket? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AiPlanTicket?, AiPlanTicket?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AiPlanTicket?, AiPlanTicket?>,
+              AiPlanTicket?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// The workout in progress. Every change goes to the phone's storage first,
 /// one at a time, so a slow write can't lose a set.
 
@@ -314,7 +406,7 @@ final class ActiveSessionProvider
   ActiveSession create() => ActiveSession();
 }
 
-String _$activeSessionHash() => r'90bdd91dcbabb1cf253a0a80c1c95f929694f050';
+String _$activeSessionHash() => r'569e812d608d0dade15f83fd47896c7e191dfadb';
 
 /// The workout in progress. Every change goes to the phone's storage first,
 /// one at a time, so a slow write can't lose a set.

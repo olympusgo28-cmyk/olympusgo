@@ -193,3 +193,12 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q181 | Who can use AI plans | AI plans | Adults only, so no minor's data goes to an LLM (owner, 1 Nov) | Decided |
 | Q182 | When an account is deleted, must Fitness data go too? R-ACC-11 gives 30 days to undo, and support does this by hand today | Fitness, privacy | Yes. The support procedure must name `workouts` and `programs`, and removing the login clears them | Open |
 | Q183 | Workouts one player can save a day | Fitness | 20 in 24 hours, in `fitness.daily_workouts`. It protects the database, and no one should reach it | Open |
+| Q184 | AI plans one player can make a day | AI plans | 3 in 24 hours, in `ai_plans.daily_per_player`. A failed plan counts, because it still cost money | Open |
+| Q185 | AI plans across the app a day, to cap cost | AI plans | 200 in 24 hours, in `ai_plans.daily_total` | Open |
+| Q186 | Should an AI plan suggest weights? | AI plans | No. The player sets the weight, so the model never prescribes a load | Open |
+| Q187 | Goals offered | AI plans | Move faster on court, Get stronger, Keep mobile, All-round fitness. No weight-loss goal | Open |
+| Q188 | Workout logs going to an overseas AI provider (PDPA) | AI plans, privacy | Asked once, recorded, withdrawable. The lawyer must check the consent wording and the transfer | Open |
+| Q189 | Does the provider keep requests, and for how long? | AI plans, privacy | Check Anthropic's terms for this account before launch, and say so in the policy | Open |
+| Q190 | There is no board for AI plan screens | AI plans | Built from the kit, and needs a UX review | Open |
+| Q191 | Consent to AI plans | AI plans | Asked once, recorded in `consents`, withdrawable in Privacy and safety. Nothing is sent without it (owner, 1 Nov) | Decided |
+| Q192 | Which model writes AI plans | AI plans | `claude-opus-5-5` to start, in `ai_plans.model`, so it can change without a release (owner, 1 Nov) | Decided |

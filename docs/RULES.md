@@ -267,6 +267,9 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-FIT-5 | Weight is stored in whole grams. A workout's key is unique per player, so a retry saves once. | Decided | P5-04 |
 | R-FIT-6 | A workout in progress stays on the phone until it saves. | Decided | P5-04 |
 | R-FIT-7 | One-rep max and body mass index are hidden from under-18s. Anything typed into a calculator stays on the phone. | Open | P5-04, Q175 |
+| R-FIT-8 | AI plans are for adults who have agreed. Nothing goes to the provider without that agreement, and withdrawing stops it at once. | Decided | P5-05, Q181, Q191 |
+| R-FIT-9 | An AI request holds no name, username, email, mobile, birthday, age, exact date or free text the player typed. It holds only their goal, days a week, and their sets, reps, times and weights by our own exercise names. Prompts and answers are neither stored nor logged. | Decided | P5-05 |
+| R-FIT-10 | An AI plan is a draft labelled as advisory. It sets no weights, makes no calorie or medical claims, and is checked by a schema and again by the database. | Decided | P5-05, Q186 |
 
 ## 12. Notifications and messages
 

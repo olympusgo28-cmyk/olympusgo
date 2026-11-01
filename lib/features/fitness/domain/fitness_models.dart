@@ -162,12 +162,14 @@ class WorkoutProgram {
     required this.name,
     required this.days,
     this.template = false,
+    this.source = 'player',
   });
 
   factory WorkoutProgram.fromJson(Map<String, dynamic> r) => WorkoutProgram(
     id: r['id'] as String,
     name: r['name'] as String,
     template: r['template'] as bool? ?? false,
+    source: r['source'] as String? ?? 'player',
     days: [
       for (final d in r['days'] as List)
         ProgramDay.fromJson(d as Map<String, dynamic>),
@@ -177,7 +179,12 @@ class WorkoutProgram {
   final String id;
   final String name;
   final bool template;
+
+  /// `player`, or `ai` when AI wrote the first draft.
+  final String source;
   final List<ProgramDay> days;
+
+  bool get fromAi => source == 'ai';
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -351,6 +358,30 @@ class ActiveWorkout {
     'sets': [for (final s in done) s.toJson()],
   };
 }
+
+/// What a player can do with AI plans today.
+class AiStatus {
+  const AiStatus({this.open = false, this.agreed = false, this.left = 0});
+
+  factory AiStatus.fromJson(Map<String, dynamic> r) => AiStatus(
+    open: r['open'] as bool? ?? false,
+    agreed: r['agreed'] as bool? ?? false,
+    left: (r['left'] as num?)?.toInt() ?? 0,
+  );
+
+  /// Off for under-18s and until AI plans are switched on.
+  final bool open;
+  final bool agreed;
+  final int left;
+}
+
+/// The goals a plan can have, as the server's key and the screen's words.
+const aiGoals = [
+  ('speed', 'Move faster on court'),
+  ('strength', 'Get stronger'),
+  ('mobility', 'Keep mobile'),
+  ('general', 'All-round fitness'),
+];
 
 /// A saved workout, as the log lists it.
 class WorkoutEntry {

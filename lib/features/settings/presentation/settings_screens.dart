@@ -18,6 +18,7 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../fitness/application/fitness_providers.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
 import '../application/avatar_upload.dart';
@@ -683,6 +684,8 @@ class PrivacyScreen extends ConsumerWidget {
     final prefs =
         ref.watch(privacySettingsProvider).value ?? const PrivacyPrefs();
     final notifier = ref.read(privacySettingsProvider.notifier);
+    final aiStatus = ref.watch(aiStatusProvider);
+    final ai = aiStatus.value;
     Future<void> change(PrivacyPrefs Function(PrivacyPrefs) edit) async {
       try {
         await notifier.change(edit);
@@ -736,8 +739,43 @@ class PrivacyScreen extends ConsumerWidget {
               onChanged: (v) =>
                   change((p) => p.copyWith(shareLocationAtMeets: v)),
             ),
+            // Stays while they've agreed, so withdrawing is always possible.
+            if ((ai?.open ?? false) || (ai?.agreed ?? false))
+              SwitchRow(
+                title: 'AI plans',
+                subtitle: 'Sends a workout summary to our AI provider',
+                value: ai!.agreed,
+                onChanged: (v) async {
+                  if (v) {
+                    await context.push(Routes.fitnessAiPlan);
+                    return;
+                  }
+                  final container = ProviderScope.containerOf(
+                    context,
+                    listen: false,
+                  );
+                  try {
+                    await container
+                        .read(fitnessRepositoryProvider)
+                        .setAiConsent(false);
+                    container.invalidate(aiStatusProvider);
+                  } on AuthFailure catch (e) {
+                    if (context.mounted) {
+                      showOgToast(context, e.message, error: true);
+                    }
+                  }
+                },
+              ),
           ],
         ),
+        // Never hide a way to withdraw in silence.
+        if (aiStatus.hasError && !aiStatus.hasValue) ...[
+          const SizedBox(height: 12),
+          KitLink(
+            'Can’t load AI plans. Try again',
+            onPressed: () => ref.invalidate(aiStatusProvider),
+          ),
+        ],
       ],
       bottom: [
         Text(

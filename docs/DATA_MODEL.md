@@ -563,6 +563,9 @@ All in `public`, with no client access. Every read and write goes through the fu
 | `program_days`, `program_items` | Days, and the exercises on them. A day's name is optional |
 | `workouts` | The log. `client_key` is unique per player. `program_id` clears if the program is deleted |
 | `workout_sets` | Each finished set. Weight is `weight_g`, in whole grams |
+| `ai_plan_requests` | One row per AI plan: status, tokens and model. Never the prompt or the answer |
+
+`programs.source` is `player` or `ai`. `consents.kind` also allows `ai_plans`.
 
 ## Tests every migration in this file needs
 

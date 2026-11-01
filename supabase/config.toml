@@ -48,6 +48,9 @@ verify_jwt = true
 [functions.vendor-onboard]
 verify_jwt = true
 
+[functions.ai-plan]
+verify_jwt = true
+
 # Stripe signs these, and the function checks the signature.
 [functions.stripe-webhook]
 verify_jwt = false

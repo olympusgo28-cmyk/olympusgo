@@ -118,6 +118,7 @@ class TermsPrivacyScreen extends StatelessWidget {
             'Location is used for nearby results and check-in, never shown to others',
             'You choose who sees your sessions: everyone, your Circle, or nobody',
             'Filming needs your consent, and a parent’s consent for under-18s',
+            'AI plans are optional and for adults. If you agree, a summary of your workouts goes to Anthropic, our AI provider, and may be processed outside Singapore',
           ]),
         ),
         KitBlock(
