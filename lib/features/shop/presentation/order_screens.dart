@@ -224,8 +224,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } on AuthFailure catch (e) {
       if (!mounted || ask != _ask) return;
       // A voucher that can't be used any more would fail every price after
-      // this one, so it comes off and the cart is priced without it.
-      if (_voucherId != null) {
+      // this one, so it comes off and the cart is priced without it. Anything
+      // else, like a dropped connection, says nothing about the voucher.
+      if (_voucherId != null && e.message.contains('voucher')) {
         showOgToast(context, e.message, error: true);
         _voucherId = null;
         _load();
@@ -238,6 +239,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _error = e.message;
         } else {
           _usePoints = _quote!.pointsCents > 0;
+          _voucherId = _quote!.voucherId;
         }
       });
       if (_quote != null) showOgToast(context, e.message, error: true);
@@ -290,8 +292,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _load();
         } else {
           showOgToast(context, e.message, error: true);
-          // The voucher may be why: pricing again finds out.
-          if (q.voucherId != null) _load();
+          if (orderId == null && e.message.contains('voucher')) _load();
         }
       }
     }

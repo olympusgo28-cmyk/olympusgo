@@ -4,6 +4,7 @@ import 'package:og_money/og_money.dart';
 
 import '../../core/staff_api.dart';
 import '../../core/ui.dart';
+import '../auth/session.dart';
 
 String _money(Object? minor) => '${Money((minor as num? ?? 0).toInt())}';
 
@@ -56,6 +57,9 @@ class CampaignsScreen extends ConsumerStatefulWidget {
 }
 
 class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
+  StaffSession? _session;
+  bool _can(String role) => _session?.has(role) ?? false;
+
   late Future<Map<String, dynamic>> _data = _load();
   late Future<List<dynamic>> _games = _list('staff_organizer_games')..ignore();
   late Future<List<dynamic>> _used = _list('staff_redemptions')..ignore();
@@ -150,102 +154,107 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-    length: 4,
-    child: StaffPage(
-      title: 'Campaigns',
-      child: Column(
-        children: [
-          const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: 'Campaigns'),
-              Tab(text: 'Voucher types'),
-              Tab(text: 'Organizer games'),
-              Tab(text: 'Redemptions'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: TabBarView(
-              children: [
-                Loaded<Map<String, dynamic>>(
-                  future: _data,
-                  builder: (d) => _campaignTab(d),
-                ),
-                Loaded<Map<String, dynamic>>(
-                  future: _data,
-                  builder: (d) => _typeTab(d),
-                ),
-                Loaded<List<dynamic>>(
-                  future: _games,
-                  isEmpty: (r) => r.isEmpty,
-                  emptyText: 'No Meets looked at yet.',
-                  builder: (rows) => ListView(
-                    children: [
-                      for (final g in rows.cast<Map<String, dynamic>>())
-                        ListTile(
-                          title: Text('${g['title']} · ${g['organizer']}'),
-                          subtitle: Text(
-                            [
-                              _day(g['at']),
-                              _reasonNames[g['reason']] ?? '${g['reason']}',
-                              '${g['present']} Present',
-                              if (g['game_no'] != null) 'Game ${g['game_no']}',
-                            ].join(' · '),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Loaded<List<dynamic>>(
-                  future: _used,
-                  isEmpty: (r) => r.isEmpty,
-                  emptyText: 'No vouchers used yet.',
-                  builder: (rows) => ListView(
-                    children: [
-                      for (final r in rows.cast<Map<String, dynamic>>())
-                        ListTile(
-                          title: Text(
-                            '${r['voucher']} · ${_money(r['amount_minor'])}',
-                          ),
-                          subtitle: Text(
-                            [
-                              '${r['user']}',
-                              '${r['mall']}',
-                              _day(r['at']),
-                              r['kind'] == 'used' ? 'Used' : 'Returned',
-                            ].join(' · '),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+  Widget build(BuildContext context) {
+    _session = ref.watch(staffSessionProvider).value;
+    return DefaultTabController(
+      length: 4,
+      child: StaffPage(
+        title: 'Campaigns',
+        child: Column(
+          children: [
+            const TabBar(
+              isScrollable: true,
+              tabs: [
+                Tab(text: 'Campaigns'),
+                Tab(text: 'Voucher types'),
+                Tab(text: 'Organizer games'),
+                Tab(text: 'Redemptions'),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  Loaded<Map<String, dynamic>>(
+                    future: _data,
+                    builder: (d) => _campaignTab(d),
+                  ),
+                  Loaded<Map<String, dynamic>>(
+                    future: _data,
+                    builder: (d) => _typeTab(d),
+                  ),
+                  Loaded<List<dynamic>>(
+                    future: _games,
+                    isEmpty: (r) => r.isEmpty,
+                    emptyText: 'No Meets looked at yet.',
+                    builder: (rows) => ListView(
+                      children: [
+                        for (final g in rows.cast<Map<String, dynamic>>())
+                          ListTile(
+                            title: Text('${g['title']} · ${g['organizer']}'),
+                            subtitle: Text(
+                              [
+                                _day(g['at']),
+                                _reasonNames[g['reason']] ?? '${g['reason']}',
+                                '${g['present']} Present',
+                                if (g['game_no'] != null)
+                                  'Game ${g['game_no']}',
+                              ].join(' · '),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Loaded<List<dynamic>>(
+                    future: _used,
+                    isEmpty: (r) => r.isEmpty,
+                    emptyText: 'No vouchers used yet.',
+                    builder: (rows) => ListView(
+                      children: [
+                        for (final r in rows.cast<Map<String, dynamic>>())
+                          ListTile(
+                            title: Text(
+                              '${r['voucher']} · ${_money(r['amount_minor'])}',
+                            ),
+                            subtitle: Text(
+                              [
+                                '${r['user']}',
+                                '${r['mall']}',
+                                _day(r['at']),
+                                r['kind'] == 'used' ? 'Used' : 'Returned',
+                              ].join(' · '),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _campaignTab(Map<String, dynamic> d) {
     final rows = (d['campaigns'] as List).cast<Map<String, dynamic>>();
     return ListView(
       children: [
-        Wrap(
-          spacing: 8,
-          children: [
-            FilledButton(
-              onPressed: () => _editCampaign(d),
-              child: const Text('New campaign'),
-            ),
-            OutlinedButton(
-              onPressed: _addBadge,
-              child: const Text('New badge'),
-            ),
-          ],
-        ),
+        if (_can('content'))
+          Wrap(
+            spacing: 8,
+            children: [
+              FilledButton(
+                onPressed: () => _editCampaign(d),
+                child: const Text('New campaign'),
+              ),
+              OutlinedButton(
+                onPressed: _addBadge,
+                child: const Text('New badge'),
+              ),
+            ],
+          ),
         if (rows.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 16),
@@ -261,34 +270,36 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                 '${c['players']} in',
               ].join(' · '),
             ),
-            trailing: Wrap(
-              spacing: 8,
-              children: [
-                if (c['status'] != 'ended')
-                  TextButton(
-                    onPressed: () => _editCampaign(d, c),
-                    child: const Text('Edit'),
+            trailing: !_can('content')
+                ? null
+                : Wrap(
+                    spacing: 8,
+                    children: [
+                      if (c['status'] != 'ended')
+                        TextButton(
+                          onPressed: () => _editCampaign(d, c),
+                          child: const Text('Edit'),
+                        ),
+                      if (c['status'] == 'draft')
+                        TextButton(
+                          onPressed: () => _act(
+                            'Publish this campaign',
+                            'staff_campaign_status',
+                            {'p_campaign': c['id'], 'p_status': 'live'},
+                          ),
+                          child: const Text('Publish'),
+                        ),
+                      if (c['status'] == 'live')
+                        TextButton(
+                          onPressed: () => _act(
+                            'End this campaign',
+                            'staff_campaign_status',
+                            {'p_campaign': c['id'], 'p_status': 'ended'},
+                          ),
+                          child: const Text('End'),
+                        ),
+                    ],
                   ),
-                if (c['status'] == 'draft')
-                  TextButton(
-                    onPressed: () => _act(
-                      'Publish this campaign',
-                      'staff_campaign_status',
-                      {'p_campaign': c['id'], 'p_status': 'live'},
-                    ),
-                    child: const Text('Publish'),
-                  ),
-                if (c['status'] == 'live')
-                  TextButton(
-                    onPressed: () => _act(
-                      'End this campaign',
-                      'staff_campaign_status',
-                      {'p_campaign': c['id'], 'p_status': 'ended'},
-                    ),
-                    child: const Text('End'),
-                  ),
-              ],
-            ),
           ),
       ],
     );
@@ -298,13 +309,14 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
     final rows = (d['voucher_types'] as List).cast<Map<String, dynamic>>();
     return ListView(
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: FilledButton(
-            onPressed: () => _editType(d),
-            child: const Text('New voucher type'),
+        if (_can('payments'))
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton(
+              onPressed: () => _editType(d),
+              child: const Text('New voucher type'),
+            ),
           ),
-        ),
         if (rows.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 16),
@@ -318,25 +330,50 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                 'Voucher ${t['kind']}',
                 '${t['funder']}',
                 if (t['organizer_default'] == true) 'Organizer reward',
+                if (t['active'] == false) 'Switched off',
                 '${t['issued']} issued',
               ].join(' · '),
             ),
-            trailing: t['organizer_default'] == true
+            trailing: !_can('payments')
                 ? null
-                : TextButton(
-                    onPressed: () => _act(
-                      'Make this the organizer reward',
-                      'staff_voucher_type_save',
-                      {
-                        'p': {
-                          'id': t['id'],
-                          'name': t['name'],
-                          'kind': t['kind'],
-                          'organizer_default': true,
-                        },
-                      },
-                    ),
-                    child: const Text('Use as reward'),
+                : Wrap(
+                    spacing: 8,
+                    children: [
+                      if (t['organizer_default'] != true)
+                        TextButton(
+                          onPressed: () => _act(
+                            'Make this the organizer reward',
+                            'staff_voucher_type_save',
+                            {
+                              'p': {
+                                'id': t['id'],
+                                'name': t['name'],
+                                'organizer_default': true,
+                              },
+                            },
+                          ),
+                          child: const Text('Use as reward'),
+                        ),
+                      TextButton(
+                        onPressed: () => _act(
+                          t['active'] == false
+                              ? 'Switch this voucher on'
+                              : 'Switch this voucher off',
+                          'staff_voucher_type_save',
+                          {
+                            'p': {
+                              'id': t['id'],
+                              'name': t['name'],
+                              'organizer_default': t['organizer_default'],
+                              'active': t['active'] == false,
+                            },
+                          },
+                        ),
+                        child: Text(
+                          t['active'] == false ? 'Switch on' : 'Switch off',
+                        ),
+                      ),
+                    ],
                   ),
           ),
       ],
@@ -382,6 +419,11 @@ class _CampaignDialogState extends State<_CampaignDialog> {
 
   bool get _draft => widget.row == null || widget.row!['status'] == 'draft';
 
+  String? _unchanged(String typed, String field) {
+    final was = widget.row?[field];
+    return was != null && typed.trim() == _day(was) ? was as String : null;
+  }
+
   void _done() {
     final starts = _instant(_starts.text);
     final ends = _instant(_ends.text, end: true);
@@ -405,8 +447,9 @@ class _CampaignDialogState extends State<_CampaignDialog> {
         'title': title,
         'blurb': _blurb.text.trim(),
         'about': _about.text.trim(),
-        'starts_at': starts,
-        'ends_at': ends,
+        // A date left alone keeps its exact time, whatever day it shows as.
+        'starts_at': _unchanged(_starts.text, 'starts_at') ?? starts,
+        'ends_at': _unchanged(_ends.text, 'ends_at') ?? ends,
         'quests': [
           {
             'type': _type,

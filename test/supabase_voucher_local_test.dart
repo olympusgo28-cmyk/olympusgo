@@ -245,7 +245,7 @@ void main() {
             'title': 'Play one',
             'starts_at': DateTime.now()
                 .toUtc()
-                .subtract(const Duration(days: 1))
+                .subtract(const Duration(days: 7))
                 .toIso8601String(),
             'ends_at': DateTime.now()
                 .toUtc()
@@ -268,8 +268,17 @@ void main() {
       expect(await game.vouchers(), isEmpty);
 
       final venue = await admin.from('venues').select('id').limit(1).single();
-      // A session counts once it's over, so this one is over in seconds.
-      final start = DateTime.now().toUtc().add(const Duration(seconds: 2));
+      // A session counts once its day's attendance has closed.
+      await admin
+          .from('challenges')
+          .update({
+            'joined_at': DateTime.now()
+                .toUtc()
+                .subtract(const Duration(days: 5))
+                .toIso8601String(),
+          })
+          .eq('user_id', idOf(runner));
+      final start = DateTime.now().toUtc().subtract(const Duration(days: 3));
       final meet = await admin
           .from('activities')
           .insert({
@@ -280,7 +289,7 @@ void main() {
             'game_type': 'doubles',
             'format': 'open_play',
             'starts_at': start.toIso8601String(),
-            'ends_at': start.add(const Duration(seconds: 1)).toIso8601String(),
+            'ends_at': start.add(const Duration(hours: 1)).toIso8601String(),
             'venue_id': venue['id'],
             'capacity': 10,
           })
@@ -291,7 +300,6 @@ void main() {
         'user_id': idOf(runner),
         'status': 'joined',
       });
-      await Future<void>.delayed(const Duration(seconds: 4));
       await admin
           .from('activity_participants')
           .update({'attendance': 'present', 'check_in_method': 'qr'})

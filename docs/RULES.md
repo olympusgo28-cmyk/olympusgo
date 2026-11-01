@@ -253,7 +253,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-GAM-4 | A voucher is tied to one account, redeemed only in the app, and expires (default 90 days). One discount per item: a voucher or points. | Decided | P4d-03 |
 | R-GAM-5 | The shop funds Voucher A: commission is on the price after the voucher. Voucher B is held until court booking exists. | Decided | Decisions 6 and 7, Q153 |
 | R-GAM-6 | Campaigns and quests never change a rating, and are for adults. | Decided | P4d-01, decision 10 |
-| R-GAM-7 | A game is judged once attendance has closed for the day and its money has released. A session counts towards a quest once it's over, if the player kept their spot and was scanned or marked by the organizer. | Open | Q157 |
+| R-GAM-7 | A game is judged once attendance has closed for the day and its money has released. A session counts towards a quest once attendance has closed for the day, if the player kept their spot and the organizer scanned them or saved them on the list. | Open | Q157, Q167 |
 | R-GAM-8 | Games before payments open rank their group and earn nothing. | Open | Q158 |
 
 ## 12. Notifications and messages

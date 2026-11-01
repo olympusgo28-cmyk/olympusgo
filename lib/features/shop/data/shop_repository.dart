@@ -1192,6 +1192,7 @@ class DemoShopRepository implements ShopRepository {
         refundStatus: 'pending',
       ),
     );
+    if (o.voucherCents > 0) _voucherSpent = false;
     if (o.pointsCents > 0) {
       _wallet?.credit('Refund, ${o.summary}', o.mallName, minor: o.pointsCents);
     }
@@ -1250,6 +1251,7 @@ class DemoShopRepository implements ShopRepository {
         refundStatus: 'pending',
       ),
     );
+    if (o.voucherCents > 0) _voucherSpent = false;
     if (o.pointsCents > 0) {
       _wallet?.credit('Refund, ${o.summary}', o.mallName, minor: o.pointsCents);
     }

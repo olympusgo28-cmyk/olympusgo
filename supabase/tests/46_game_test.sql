@@ -244,12 +244,13 @@ create function t.attend(p_user uuid) returns void language plpgsql security def
 declare
   v uuid := t.meet('d1000000-0000-0000-0000-000000000098', 12, 48);
 begin
-  update public.activities set starts_at = now() - interval '12 hours', ends_at = now() - interval '10 hours' where id = v;
+  update public.activities set starts_at = now() - interval '30 hours', ends_at = now() - interval '29 hours' where id = v;
   insert into public.activity_participants (activity_id, user_id, status) values (v, p_user, 'joined');
   update public.activity_participants set attendance = 'present', check_in_method = 'qr' where activity_id = v and user_id = p_user;
 end;
 $$;
-update public.challenges set joined_at = now() - interval '13 hours' where user_id = t.p(5);
+update public.challenges set joined_at = now() - interval '31 hours' where user_id = t.p(5);
+update public.campaigns set starts_at = now() - interval '5 days' where id = t.id('campaign');
 select t.attend(t.p(5));
 select is((select count from public.challenge_progress where user_id = t.p(5)), 1, 'one session is one step');
 select t.attend(t.p(5));

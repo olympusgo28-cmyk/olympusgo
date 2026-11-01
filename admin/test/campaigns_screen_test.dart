@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:og_design/og_design.dart';
 import 'package:olympus_admin/core/staff_api.dart';
+import 'package:olympus_admin/features/auth/session.dart';
 import 'package:olympus_admin/features/game/campaigns_screen.dart';
 
 class _Api implements StaffApi {
@@ -80,13 +81,22 @@ const _data = {
   ],
 };
 
-Future<void> _pump(WidgetTester tester, _Api api) async {
+Future<void> _pump(
+  WidgetTester tester,
+  _Api api, {
+  List<String> roles = const ['super'],
+}) async {
   tester.view.physicalSize = const Size(1400, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [staffApiProvider.overrideWithValue(api)],
+      overrides: [
+        staffApiProvider.overrideWithValue(api),
+        staffSessionProvider.overrideWith(
+          (ref) => Stream.value(StaffSession(roles: roles, mfa: true)),
+        ),
+      ],
       child: MaterialApp(
         theme: OgTheme.light(),
         home: const Scaffold(body: CampaignsScreen()),
@@ -122,6 +132,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('S\$8.00 off'), findsOneWidget);
     expect(find.textContaining('Racket Lab'), findsOneWidget);
+  });
+
+  testWidgets('A-09 each role sees only what it can do', (tester) async {
+    await _pump(tester, _Api(_data), roles: const ['payments']);
+    expect(find.text('New campaign'), findsNothing);
+    expect(find.text('Publish'), findsNothing);
+    await tester.tap(find.text('Voucher types'));
+    await tester.pumpAndSettle();
+    expect(find.text('New voucher type'), findsOneWidget);
+    expect(find.text('Switch off'), findsOneWidget);
+  });
+
+  testWidgets('A-09 content staff can\'t change a voucher', (tester) async {
+    await _pump(tester, _Api(_data), roles: const ['content']);
+    expect(find.text('New campaign'), findsOneWidget);
+    await tester.tap(find.text('Voucher types'));
+    await tester.pumpAndSettle();
+    expect(find.text('New voucher type'), findsNothing);
+    expect(find.text('Switch off'), findsNothing);
   });
 
   testWidgets('A-09 organizer games say why', (tester) async {

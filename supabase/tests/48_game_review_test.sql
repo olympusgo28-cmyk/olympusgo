@@ -94,9 +94,45 @@ insert into public.activity_participants (activity_id, user_id, status, attendan
 values (t.id('future'), 'd3000000-0000-0000-0000-000000000002', 'joined', 'present', 'qr');
 select private.quest_sync('d3000000-0000-0000-0000-000000000002');
 select is(t.done('d3000000-0000-0000-0000-000000000002'), 0::bigint, 'nor a session that hasn''t happened');
-insert into ids select 's1', t.session('d3000000-0000-0000-0000-000000000002', 'host', 3);
+-- The organizer's scan or list confirms a check-in the player made themself.
+insert into ids select 'confirm', t.meet('d3000000-0000-0000-0000-000000000001', 12, 48);
+insert into public.activity_participants (activity_id, user_id, status) values
+  (t.id('confirm'), t.q(5), 'joined'), (t.id('confirm'), t.q(6), 'joined');
+update public.activity_participants set attendance = 'present', check_in_method = 'self' where activity_id = t.id('confirm');
+create function t.open_now(p_activity uuid) returns void language sql security definer as $$
+  update public.activities set starts_at = now(), ends_at = now() + interval '2 hours' where id = p_activity;
+$$;
+select t.open_now(t.id('confirm'));
+insert into public.player_qr_tokens (user_id, token) values (t.q(5), 'confirm-token-5')
+on conflict (user_id) do update set token = excluded.token;
+select t.as_user('d3000000-0000-0000-0000-000000000001');
+select public.host_check_in(t.id('confirm'), 'confirm-token-5');
+select public.save_attendance(t.id('confirm'), jsonb_build_object(t.q(6), 'present'));
+select t.reset();
+select results_eq($$ select check_in_method from public.activity_participants where activity_id = t.id('confirm') order by user_id $$,
+  $$ values ('qr'::text), ('host'::text) $$, 'a scan or the list confirms a player''s own check-in');
+
+-- A session is judged when its attendance has closed, by the sweep, once.
+create function t.scanned_early(p_user uuid) returns uuid language plpgsql security definer as $$
+declare
+  v uuid := t.meet('d3000000-0000-0000-0000-000000000004', 12, 48);
+begin
+  insert into public.activity_participants (activity_id, user_id, status) values (v, p_user, 'joined');
+  update public.activity_participants set attendance = 'present', check_in_method = 'qr' where activity_id = v and user_id = p_user;
+  return v;
+end;
+$$;
+create function t.back(p_activity uuid, p_ago interval) returns void language sql security definer as $$
+  update public.activities set starts_at = now() - p_ago, ends_at = now() - p_ago + interval '1 hour' where id = p_activity;
+$$;
+grant execute on all functions in schema t to anon, authenticated, service_role;
+insert into ids select 's1', t.scanned_early('d3000000-0000-0000-0000-000000000002');
+select is(t.done('d3000000-0000-0000-0000-000000000002'), 0::bigint, 'a scan alone finishes nothing');
+select t.back(t.id('s1'), '30 hours'::interval);
 select private.organizer_sweep();
-select is(t.done('d3000000-0000-0000-0000-000000000002'), 1::bigint, 'the sweep finishes it once a session is over');
+select is(t.done('d3000000-0000-0000-0000-000000000002'), 1::bigint, 'the sweep finishes it once attendance has closed');
+select is((select count(*) from private.quest_sessions_done where activity_id = t.id('s1')), 1::bigint, 'and marks the session');
+select lives_ok($$ select private.organizer_sweep() $$, 'running again changes nothing');
 
 -- A switched-off voucher waits, and isn't lost.
 insert into ids select 'type_off', t.vtype();
@@ -111,8 +147,8 @@ select t.session(t.q(1), 'qr');
 select private.quest_sync(t.q(1));
 select is(t.done(t.q(1)), 0::bigint, 'a quest waits for its voucher to be switched back on');
 select t.switch(t.id('type_off'), true);
-select private.quest_sync(t.q(1));
-select is((select count(*) from public.vouchers where owner_id = t.q(1)), 1::bigint, 'and then pays out');
+select private.organizer_sweep();
+select is((select count(*) from public.vouchers where owner_id = t.q(1)), 1::bigint, 'and the sweep pays out when it is');
 
 -- ─── Organizer games ─────────────────────────────────────
 
@@ -146,6 +182,16 @@ update public.activities set starts_at = date_trunc('day', now() at time zone 'A
 select private.organizer_sweep();
 select is((select count(*) from public.organizer_games where activity_id = t.id('today')), 0::bigint, 'a game isn''t judged while attendance is open');
 
+-- A cancelled Meet's money never releases, and it's still recorded.
+insert into ids select 'cancelled', t.game('d3000000-0000-0000-0000-000000000001', '3 days'::interval);
+create function t.cancelled(p_activity uuid) returns void language plpgsql security definer as $$
+begin
+  update public.payments set released_at = null where activity_id = p_activity;
+  update public.activities set status = 'cancelled' where id = p_activity;
+end;
+$$;
+select t.cancelled(t.id('cancelled'));
+
 -- Before payments open a game ranks, and earns nothing.
 update public.feature_flags set enabled = false where key in ('payments.enabled', 'campaign.require_paid');
 insert into ids select 'before', t.meet('d3000000-0000-0000-0000-000000000001', 12, 48);
@@ -153,6 +199,7 @@ update public.activities set starts_at = now() - interval '2 days', ends_at = no
 insert into public.activity_participants (activity_id, user_id, status, attendance, check_in_method)
 select t.id('before'), t.q(n), 'joined', 'present', 'qr' from generate_series(1, 6) n;
 select private.organizer_sweep();
+select is((select reason from public.organizer_games where activity_id = t.id('cancelled')), 'cancelled', 'a paid Meet that was cancelled is recorded as that');
 select results_eq($$ select counted, reason, game_no from public.organizer_games where activity_id = t.id('before') $$,
   $$ values (false, 'before_payments'::text, null::int) $$, 'a game before payments gets no number');
 update public.feature_flags set enabled = true where key = 'payments.enabled';
