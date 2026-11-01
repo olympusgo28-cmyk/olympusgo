@@ -51,8 +51,12 @@ Future<List<MakeupSlot>> makeupSlots(Ref ref, String studentId) =>
     ref.watch(academyRepositoryProvider).makeupSlots(studentId);
 
 @riverpod
-Future<List<MakeupSlot>> trialSlots(Ref ref, String academyId) =>
-    ref.watch(academyRepositoryProvider).trialSlots(academyId);
+Future<List<MakeupSlot>> trialSlots(
+  Ref ref,
+  String academyId, {
+  bool dropIn = false,
+}) =>
+    ref.watch(academyRepositoryProvider).trialSlots(academyId, dropIn: dropIn);
 
 @riverpod
 Future<List<CoachAlert>> coachAlerts(Ref ref, String academyId) =>

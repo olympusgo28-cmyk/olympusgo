@@ -79,18 +79,26 @@ class _AcademyVerifyScreenState extends ConsumerState<AcademyVerifyScreen> {
   }
 
   Future<void> _send() async {
+    final uen = _uen.text.trim().toUpperCase();
+    if (!RegExp(r'^[0-9A-Z]{9,10}$').hasMatch(uen)) {
+      showOgToast(
+        context,
+        'Enter your UEN. It has 9 or 10 characters.',
+        error: true,
+      );
+      return;
+    }
     setState(() => _busy = true);
     final repo = ref.read(coachRepositoryProvider);
     try {
-      final path = await repo.uploadDocument(_file!, 'image/jpeg');
-      await repo.submitBusiness(widget.id, uen: _uen.text, path: path);
+      final path = await repo.uploadDocument(_file!, 'business-${widget.id}');
+      await repo.submitBusiness(widget.id, uen: uen, path: path);
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       ref.invalidate(academyChecklistProvider(widget.id));
       ref.invalidate(academyProvider(widget.id));
-      if (mounted) {
-        setState(() => _file = null);
-        showOgToast(context, 'Sent for review');
-      }
+      setState(() => _file = null);
+      showOgToast(context, 'Sent for review');
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -212,7 +220,9 @@ class _CoachMeScreenState extends ConsumerState<CoachMeScreen> {
 
   Future<void> _pickExpiry() async {
     final now = DateTime.now();
-    final start = _expires ?? now.add(const Duration(days: 365));
+    final start = _expires != null && _expires!.isAfter(now)
+        ? _expires!
+        : now.add(const Duration(days: 365));
     final picked = await showOgPickerSheet<DateTime>(
       context: context,
       title: 'Licence expires',
@@ -232,8 +242,9 @@ class _CoachMeScreenState extends ConsumerState<CoachMeScreen> {
     try {
       await run();
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       ref.invalidate(myLicenceProvider);
-      if (mounted) showOgToast(context, done);
+      showOgToast(context, done);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -243,7 +254,7 @@ class _CoachMeScreenState extends ConsumerState<CoachMeScreen> {
 
   Future<void> _sendLicence() => _act(() async {
     final repo = ref.read(coachRepositoryProvider);
-    final path = await repo.uploadDocument(_file!, 'image/jpeg');
+    final path = await repo.uploadDocument(_file!, 'licence');
     await repo.submitLicence(
       number: _number.text,
       expires: _expires!,
@@ -340,11 +351,12 @@ class _CoachInviteScreenState extends ConsumerState<CoachInviteScreen> {
       await ref
           .read(coachRepositoryProvider)
           .answerInvite(widget.academyId, accept: accept);
+      if (!mounted) return;
       ref.invalidate(coachInvitesProvider);
       ref.invalidate(academyListProvider);
-      if (!mounted) return;
       if (accept) {
-        context.pushReplacement(Routes.academyToday(widget.academyId));
+        // Next they need to send their licence.
+        context.pushReplacement(Routes.coachMe);
       } else {
         kitPop(context);
       }
@@ -392,7 +404,8 @@ class _CoachInviteScreenState extends ConsumerState<CoachInviteScreen> {
           'Coach at $name?',
           size: 28,
           lead:
-              'You’ll see your classes once we’ve verified your NROC licence.',
+              'Say yes, then send us your NROC licence. You’ll see your '
+              'classes once we’ve verified it.',
         ),
       ],
     );

@@ -1012,11 +1012,10 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
             studentName: who.name,
             academyName: a.name,
           );
+          if (!mounted) return;
           ref.invalidate(myLessonsProvider);
           ref.invalidate(academyProvider(a.id));
-          if (id != null && mounted) {
-            context.pushReplacement(Routes.lesson(id));
-          }
+          if (id != null) context.pushReplacement(Routes.lesson(id));
           return;
         }
       }
@@ -1070,10 +1069,8 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
     final a = ref.watch(academyProvider(widget.id)).value;
     final players = ref.watch(myPlayersProvider);
     final slots = ref
-        .watch(trialSlotsProvider(widget.id))
-        .value
-        ?.where((s) => !widget.dropIn || s.dropinPriceCents != null)
-        .toList();
+        .watch(trialSlotsProvider(widget.id, dropIn: widget.dropIn))
+        .value;
     if (a == null) {
       return KitScaffold(
         header: KitHeader(title: title),
@@ -1158,7 +1155,7 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
               const CupertinoActivityIndicator()
             else if (slots.isEmpty)
               Text(
-                'No class has space in the next two weeks.',
+                'No class is open in the next two weeks.',
                 style: OgText.body(14, color: c.textMuted),
               ),
             for (final s in slots ?? const <MakeupSlot>[])

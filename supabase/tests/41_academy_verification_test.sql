@@ -138,7 +138,7 @@ select t.as_user('c1000000-0000-0000-0000-000000000001');
 select lives_ok($$ select public.academy_set_coach(t.id('academy'),
   (select username::text from public.profiles where id = 'c1000000-0000-0000-0000-000000000006'), true) $$, 'the head invites someone');
 select throws_ok($$ select public.academy_set_coach(t.id('academy'), 'c1000000-0000-0000-0000-000000000007', true) $$,
-  'Coaches must be 18 or over.', 'never a minor');
+  'No player has that username.', 'never a minor, who reads as nobody');
 select t.reset();
 
 select t.as_user('c1000000-0000-0000-0000-000000000006');

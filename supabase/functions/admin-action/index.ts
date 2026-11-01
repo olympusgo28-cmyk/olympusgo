@@ -39,6 +39,7 @@ const ACTIONS = new Set<string>([
   "staff_academy_decide",
   "staff_licence_decide",
   "staff_doc_removed",
+  "staff_doc_viewed",
   "staff_lesson_decide",
   "staff_service_save",
 ]);

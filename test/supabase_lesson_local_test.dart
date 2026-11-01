@@ -298,8 +298,10 @@ void main() {
       final other = await player('vother');
       final repo = SupabaseCoachRepository(owner);
       final bytes = Uint8List.fromList(List.filled(64, 7));
-      final path = await repo.uploadDocument(bytes, 'image/jpeg');
-      expect(path, startsWith('${idOf(owner)}/'));
+      final path = await repo.uploadDocument(bytes, 'licence');
+      expect(path, '${idOf(owner)}/licence.jpg');
+      // A second photo replaces the first, so nothing is left behind.
+      await repo.uploadDocument(bytes, 'licence');
 
       await expectLater(
         other.storage
@@ -311,17 +313,17 @@ void main() {
         other.storage.from('verification-docs').download(path),
         throwsA(isA<Object>()),
       );
-      await expectLater(
-        owner.storage.from('verification-docs').download(path),
-        throwsA(isA<Object>()),
+      expect(
+        await owner.storage.from('verification-docs').list(path: idOf(owner)),
+        hasLength(1),
       );
       await expectLater(
         owner.storage
             .from('verification-docs')
             .uploadBinary(
-              '${idOf(owner)}/note.txt',
+              '${idOf(owner)}/anything.jpg',
               bytes,
-              fileOptions: const FileOptions(contentType: 'text/plain'),
+              fileOptions: const FileOptions(contentType: 'image/jpeg'),
             ),
         throwsA(isA<Object>()),
       );

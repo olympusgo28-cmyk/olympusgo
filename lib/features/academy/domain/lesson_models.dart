@@ -108,6 +108,9 @@ class LessonBooking {
     this.refundedCents = 0,
     this.attendance,
     this.paymentId = '',
+    this.paymentMethod,
+    this.holdUntil,
+    this.serverNow,
     this.freeCancelUntil,
     this.canPay = false,
     this.canTeach = false,
@@ -130,6 +133,9 @@ class LessonBooking {
     refundedCents: (r['refunded_minor'] as num?)?.toInt() ?? 0,
     attendance: r['attendance'] as String?,
     paymentId: r['payment_id'] as String? ?? '',
+    paymentMethod: r['method'] as String?,
+    holdUntil: DateTime.tryParse(r['hold_until'] as String? ?? ''),
+    serverNow: DateTime.tryParse(r['server_now'] as String? ?? ''),
     freeCancelUntil: r['free_cancel_until'] == null
         ? null
         : DateTime.parse(r['free_cancel_until'] as String).toLocal(),
@@ -154,6 +160,11 @@ class LessonBooking {
   final String? attendance;
   final String paymentId;
 
+  /// Set once a payment has started, which fixes how it's paid.
+  final String? paymentMethod;
+  final DateTime? holdUntil;
+  final DateTime? serverNow;
+
   /// Until then, cancelling gives the price back.
   final DateTime? freeCancelUntil;
 
@@ -164,6 +175,13 @@ class LessonBooking {
   final bool canTeach;
 
   bool get started => !DateTime.now().isBefore(startsAt);
+
+  /// Money really changed hands.
+  bool get charged => switch (step) {
+    LessonStep.pending || LessonStep.expired => false,
+    LessonStep.cancelled => refundedCents > 0,
+    _ => true,
+  };
 }
 
 /// A one-to-one time a coach has opened.

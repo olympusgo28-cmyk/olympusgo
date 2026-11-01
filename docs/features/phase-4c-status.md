@@ -23,3 +23,4 @@
 - ACD-14 marks one-to-one booking as Later. The checklist is newer, and the owner confirmed it on 1 Nov.
 - Parents with a typed name can no longer enrol. A child needs an account and a parent link first (owner, 1 Nov).
 - Attendance releases money at once, as with a Meet, so a report has to come before the coach saves it (Q114).
+- An invited email is held until that person next opens Academy, whether or not it has an account, so inviting can't be used to find out who's registered.

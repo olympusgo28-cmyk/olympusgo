@@ -202,7 +202,7 @@ class _AssessStudentScreenState extends ConsumerState<AssessStudentScreen> {
   final _scores = <String, int>{};
   String? _templateId;
   int? _level;
-  DateTime _on = DateTime.now();
+  DateTime? _on;
   bool _busy = false;
   bool _filled = false;
 

@@ -16,10 +16,12 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pay_sheet.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../earnings/application/earnings_providers.dart';
+import '../../play/data/payment_gateway.dart' show PaymentHold;
 import '../../play/domain/meet_ops.dart' show newClientKey;
 import '../../play/presentation/pay_flow.dart';
 import '../application/academy_providers.dart';
 import '../domain/lesson_models.dart';
+import 'academy_screens.dart' show PlayerChoices;
 
 /// Pays for a lesson from start to finish: the server's quote and refund rule,
 /// the hold, then the webhook. Returns the booking when one came of it.
@@ -84,7 +86,11 @@ Future<String?> payForLesson(
       method,
       paying: PayingFor.lesson,
     );
-    return id;
+    // The booking says what happened. Given up means there's nothing to show.
+    final b = await lessons.get(id);
+    return b.step == LessonStep.cancelled || b.step == LessonStep.expired
+        ? null
+        : id;
   } on AuthFailure catch (e) {
     if (context.mounted) {
       showOgToast(
@@ -151,9 +157,9 @@ class _OneToOneScreenState extends ConsumerState<OneToOneScreen> {
       studentName: who.name,
       academyName: a?.name ?? 'the academy',
     );
+    if (!mounted) return;
     ref.invalidate(openSlotsProvider(widget.academyId));
     ref.invalidate(myLessonsProvider);
-    if (!mounted) return;
     setState(() => _busy = false);
     if (id != null) context.pushReplacement(Routes.lesson(id));
   }
@@ -193,17 +199,11 @@ class _OneToOneScreenState extends ConsumerState<OneToOneScreen> {
               'Who is it for?',
               style: OgText.body(15, weight: FontWeight.w600),
             ),
-            if (players.hasValue && people.isEmpty)
-              _nothing(context, 'A parent needs to book this for you.'),
-            for (final p in people)
-              KitChoiceRow(
-                title: p.self ? 'Myself' : p.name,
-                subtitle: p.self
-                    ? null
-                    : 'Your child${p.age == null ? '' : ' · age ${p.age}'}',
-                selected: _who == p.id,
-                onTap: () => setState(() => _who = p.id),
-              ),
+            PlayerChoices(
+              players: players,
+              selected: _who,
+              onSelect: (id) => setState(() => _who = id),
+            ),
           ],
         ),
         Column(
@@ -300,14 +300,66 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
     try {
       await act();
       HapticFeedback.mediumImpact();
-      ref.invalidate(lessonBookingProvider(widget.id));
-      ref.invalidate(myLessonsProvider);
-      refreshEarnings(ref.invalidate);
+      if (mounted) _refresh();
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _refresh() {
+    final b = ref.read(lessonBookingProvider(widget.id)).value;
+    ref.invalidate(lessonBookingProvider(widget.id));
+    ref.invalidate(myLessonsProvider);
+    refreshEarnings(ref.invalidate);
+    if (b != null) {
+      ref.invalidate(academyLessonsProvider(b.academyId));
+      ref.invalidate(openSlotsProvider(b.academyId));
+      ref.invalidate(mySlotsProvider(b.academyId));
+    }
+  }
+
+  /// Picks up a payment that didn't finish.
+  Future<void> _finish(LessonBooking b) async {
+    final gateway = ref.read(paymentGatewayProvider);
+    setState(() => _busy = true);
+    final method = await showPaySheet(
+      context,
+      kicker: b.kind.label,
+      title: b.title,
+      subtitle: '${Fmt.dayTimeComma(b.startsAt)} · for ${b.student}',
+      lines: [
+        (b.kind.label, '${Money(b.priceCents)}'),
+        ('Platform fee', '${Money(b.feeCents)}'),
+      ],
+      totalCents: b.totalCents,
+      payee: 'OlympusGO',
+    );
+    if (!mounted) return;
+    if (method != null) {
+      try {
+        await finishPayment(
+          context,
+          gateway,
+          PaymentHold(
+            result: 'reserved',
+            id: b.paymentId,
+            totalCents: b.totalCents,
+            holdUntil: b.holdUntil,
+            serverNow: b.serverNow,
+            method: b.paymentMethod,
+          ),
+          method,
+          paying: PayingFor.lesson,
+        );
+      } on AuthFailure catch (e) {
+        if (mounted) showOgToast(context, e.message, error: true);
+      }
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+    _refresh();
   }
 
   Future<void> _cancel(LessonBooking b) async {
@@ -323,7 +375,9 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
     );
     if (yes != true) return;
     await _run(() async {
-      await ref.read(lessonRepositoryProvider).cancel(b.id);
+      await ref
+          .read(lessonRepositoryProvider)
+          .cancel(b.id, expectedCents: inTime ? b.priceCents : 0);
     });
   }
 
@@ -435,6 +489,21 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
                   ),
           ),
         ],
+        if (b.canPay && b.step == LessonStep.pending) ...[
+          KitButton(
+            label: 'Finish paying',
+            loading: _busy,
+            onPressed: () => _finish(b),
+          ),
+          KitButton.outline(
+            label: 'Don’t book this',
+            onPressed: _busy
+                ? null
+                : () => _run(() async {
+                    await ref.read(lessonRepositoryProvider).cancel(b.id);
+                  }),
+          ),
+        ],
         if (canCancel)
           KitButton.outline(
             label: 'Cancel lesson',
@@ -449,7 +518,7 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
           ),
         if (canAcademyCancel)
           KitButton.outline(
-            label: 'Cancel for everyone',
+            label: 'Cancel this lesson',
             onPressed: _busy ? null : () => _academyCancel(b),
           ),
       ],
@@ -467,10 +536,12 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
             'Attendance',
             b.attendance == 'present' ? 'Came' : 'Didn’t come',
           ),
-        KitKeyValue('Paid', '${Money(b.totalCents)}'),
+        KitKeyValue(b.charged ? 'Paid' : 'Total', '${Money(b.totalCents)}'),
         if (b.refundedCents > 0)
           KitKeyValue('Refunded', '${Money(b.refundedCents)}'),
-        if (b.step == LessonStep.paid && b.freeCancelUntil != null && b.canPay)
+        if (b.step == LessonStep.paid &&
+            b.canPay &&
+            (b.freeCancelUntil?.isAfter(DateTime.now()) ?? false))
           Text(
             'Cancel by ${Fmt.dayTimeComma(b.freeCancelUntil!)} for the price '
             'back, without the fee. After that, no refund.',
@@ -534,7 +605,7 @@ class _LessonSlotsScreenState extends ConsumerState<LessonSlotsScreen> {
     setState(() => _busy = true);
     try {
       await ref.read(lessonRepositoryProvider).withdrawSlot(s.id);
-      ref.invalidate(mySlotsProvider(widget.academyId));
+      if (mounted) ref.invalidate(mySlotsProvider(widget.academyId));
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -656,8 +727,9 @@ class _LessonSlotEditScreenState extends ConsumerState<LessonSlotEditScreen> {
             priceCents: cents,
             venue: _venue.text.trim(),
           );
+      if (!mounted) return;
       ref.invalidate(mySlotsProvider(widget.academyId));
-      if (mounted) kitPop(context);
+      kitPop(context);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -690,8 +762,8 @@ class _LessonSlotEditScreenState extends ConsumerState<LessonSlotEditScreen> {
       ),
       KitInput(label: 'Where', controller: _venue, maxLength: 80),
       const KitNote(
-        'The 10% platform fee is added on top for the parent. OlympusGO pays '
-        'the academy owner, not you directly.',
+        'A platform fee of 10%, at least S\$2.00, is added on top for the '
+        'parent. OlympusGO pays the academy owner, not you directly.',
       ),
     ],
   );

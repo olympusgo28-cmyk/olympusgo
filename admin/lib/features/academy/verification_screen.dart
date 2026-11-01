@@ -25,9 +25,15 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     _data = _load();
   });
 
-  Future<void> _show(String path) async {
+  Future<void> _show(String kind, String id, String path) async {
+    final api = ref.read(staffApiProvider);
     try {
-      final url = await ref.read(staffApiProvider).documentUrl(path);
+      await api.act('staff_doc_viewed', {
+        'p_kind': kind,
+        'p_id': id,
+        'p_reason': 'Opened to review it',
+      });
+      final url = await api.documentUrl(path);
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -102,7 +108,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   Widget _fileButtons(String kind, String id, Object? path) => path == null
       ? const SizedBox.shrink()
       : TextButton(
-          onPressed: () => _show(path as String),
+          onPressed: () => _show(kind, id, path as String),
           child: const Text('View file'),
         );
 

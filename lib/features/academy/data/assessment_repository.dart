@@ -19,12 +19,13 @@ abstract class AssessmentRepository {
   /// Everything this person may read about a player, oldest first.
   Future<List<Assessment>> list(String playerId);
 
-  /// Writes a new assessment, or corrects one when [id] is set.
+  /// Writes a new assessment, or corrects one when [id] is set. With no [on],
+  /// it's for today.
   Future<void> save({
     String? id,
     String? studentId,
     String? templateId,
-    required DateTime on,
+    DateTime? on,
     int? level,
     required String note,
     required Map<String, int> scores,
@@ -143,7 +144,7 @@ class SupabaseAssessmentRepository implements AssessmentRepository {
     String? id,
     String? studentId,
     String? templateId,
-    required DateTime on,
+    DateTime? on,
     int? level,
     required String note,
     required Map<String, int> scores,
@@ -155,7 +156,8 @@ class SupabaseAssessmentRepository implements AssessmentRepository {
           'id': ?id,
           'student_id': ?studentId,
           'template_id': ?templateId,
-          'assessed_on': on.toIso8601String().substring(0, 10),
+          // Left out, the server uses today in Singapore.
+          'assessed_on': ?on?.toIso8601String().substring(0, 10),
           'level': level,
           'note': note,
           'scores': scores,
@@ -255,7 +257,7 @@ class DemoAssessmentRepository implements AssessmentRepository {
     String? id,
     String? studentId,
     String? templateId,
-    required DateTime on,
+    DateTime? on,
     int? level,
     required String note,
     required Map<String, int> scores,

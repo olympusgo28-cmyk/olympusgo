@@ -112,6 +112,9 @@ abstract class Academy with _$Academy {
 
     /// Coaches invited by email who haven't signed up yet.
     @Default([]) List<String> invitedCoaches,
+
+    /// People invited by username who haven't answered. For the head coach.
+    @Default([]) List<AcademyCoach> pendingCoaches,
   }) = _Academy;
 
   const Academy._();

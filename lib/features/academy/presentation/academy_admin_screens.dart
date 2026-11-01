@@ -79,7 +79,8 @@ class _AcademyClassEditScreenState
     _loaded = true;
     final x = a.classes.where((c) => c.id == widget.classId).firstOrNull;
     if (x == null) {
-      _coachId = a.coaches.where((k) => k.head).firstOrNull?.id ?? '';
+      // A coach needs a verified licence before they get a class.
+      _coachId = a.coaches.where((k) => k.head && k.nroc).firstOrNull?.id ?? '';
       return;
     }
     _name.text = x.name;
@@ -331,6 +332,12 @@ class _AcademyClassEditScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Coach', style: OgText.body(15, weight: FontWeight.w600)),
+            KitChoiceRow(
+              title: 'No coach yet',
+              subtitle: 'Parents can’t book until there’s a coach',
+              selected: _coachId.isEmpty,
+              onTap: () => setState(() => _coachId = ''),
+            ),
             for (final k in a.coaches)
               KitChoiceRow(
                 title: k.name,
@@ -386,9 +393,10 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
           .read(academyRepositoryProvider)
           .setCoach(widget.id, username.trim(), add: add);
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       ref.invalidate(academyProvider(widget.id));
       if (add) _username.clear();
-      if (mounted) showOgToast(context, add ? 'Coach added' : 'Coach removed');
+      showOgToast(context, add ? 'Invitation sent' : 'Coach removed');
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -452,12 +460,28 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
               ),
           ],
         ),
-        if (a.invitedCoaches.isNotEmpty) ...[
-          Text('Invited by email', style: OgText.heading(20)),
+        if (a.invitedCoaches.isNotEmpty || a.pendingCoaches.isNotEmpty) ...[
+          Text('Invited', style: OgText.heading(20)),
           for (final e in a.invitedCoaches)
             Text(
-              '$e · joins when they sign up',
+              '$e · can join once they have an account',
               style: OgText.body(14, color: c.textMuted),
+            ),
+          for (final k in a.pendingCoaches)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${k.name} · hasn’t answered yet',
+                    style: OgText.body(14, color: c.textMuted),
+                  ),
+                ),
+                if (head)
+                  KitLink(
+                    'Withdraw',
+                    onPressed: _busy ? null : () => _set(k.id, false),
+                  ),
+              ],
             ),
         ],
         if (head) ...[

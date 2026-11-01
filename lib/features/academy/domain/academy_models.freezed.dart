@@ -639,7 +639,8 @@ mixin _$Academy {
  String get id; String get name; Sport get sport; String get area; String get blurb; String get audience; double? get rating; int get ratingCount; int get students; bool get verified; Billing get billing; int get makeupsPerMonth; List<AcademyCoach> get coaches; List<AcademyClass> get classes; int get color; int get ink;/// The banner on the academy page, like a club's cover colour.
  int get coverColor; AcademyRole get myRole; int get pendingRequests;/// 'none', 'submitted' or 'verified'.
  String get verification;/// Coaches invited by email who haven't signed up yet.
- List<String> get invitedCoaches;
+ List<String> get invitedCoaches;/// People invited by username who haven't answered. For the head coach.
+ List<AcademyCoach> get pendingCoaches;
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -651,20 +652,20 @@ $AcademyCopyWith<Academy> get copyWith => _$AcademyCopyWithImpl<Academy>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Academy;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Academy&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.ratingCount, _this.ratingCount) || other.ratingCount == _this.ratingCount)&&(identical(other.students, _this.students) || other.students == _this.students)&&(identical(other.verified, _this.verified) || other.verified == _this.verified)&&(identical(other.billing, _this.billing) || other.billing == _this.billing)&&(identical(other.makeupsPerMonth, _this.makeupsPerMonth) || other.makeupsPerMonth == _this.makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _this.coaches)&&const DeepCollectionEquality().equals(other.classes, _this.classes)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.coverColor, _this.coverColor) || other.coverColor == _this.coverColor)&&(identical(other.myRole, _this.myRole) || other.myRole == _this.myRole)&&(identical(other.pendingRequests, _this.pendingRequests) || other.pendingRequests == _this.pendingRequests)&&(identical(other.verification, _this.verification) || other.verification == _this.verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _this.invitedCoaches));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Academy&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.area, _this.area) || other.area == _this.area)&&(identical(other.blurb, _this.blurb) || other.blurb == _this.blurb)&&(identical(other.audience, _this.audience) || other.audience == _this.audience)&&(identical(other.rating, _this.rating) || other.rating == _this.rating)&&(identical(other.ratingCount, _this.ratingCount) || other.ratingCount == _this.ratingCount)&&(identical(other.students, _this.students) || other.students == _this.students)&&(identical(other.verified, _this.verified) || other.verified == _this.verified)&&(identical(other.billing, _this.billing) || other.billing == _this.billing)&&(identical(other.makeupsPerMonth, _this.makeupsPerMonth) || other.makeupsPerMonth == _this.makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _this.coaches)&&const DeepCollectionEquality().equals(other.classes, _this.classes)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.ink, _this.ink) || other.ink == _this.ink)&&(identical(other.coverColor, _this.coverColor) || other.coverColor == _this.coverColor)&&(identical(other.myRole, _this.myRole) || other.myRole == _this.myRole)&&(identical(other.pendingRequests, _this.pendingRequests) || other.pendingRequests == _this.pendingRequests)&&(identical(other.verification, _this.verification) || other.verification == _this.verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _this.invitedCoaches)&&const DeepCollectionEquality().equals(other.pendingCoaches, _this.pendingCoaches));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Academy;
-  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.area,_this.blurb,_this.audience,_this.rating,_this.ratingCount,_this.students,_this.verified,_this.billing,_this.makeupsPerMonth,const DeepCollectionEquality().hash(_this.coaches),const DeepCollectionEquality().hash(_this.classes),_this.color,_this.ink,_this.coverColor,_this.myRole,_this.pendingRequests,_this.verification,const DeepCollectionEquality().hash(_this.invitedCoaches)]);
+  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.area,_this.blurb,_this.audience,_this.rating,_this.ratingCount,_this.students,_this.verified,_this.billing,_this.makeupsPerMonth,const DeepCollectionEquality().hash(_this.coaches),const DeepCollectionEquality().hash(_this.classes),_this.color,_this.ink,_this.coverColor,_this.myRole,_this.pendingRequests,_this.verification,const DeepCollectionEquality().hash(_this.invitedCoaches),const DeepCollectionEquality().hash(_this.pendingCoaches)]);
 }
 
 @override
 String toString() {
   final _this = this as Academy;
-  return 'Academy(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, area: ${_this.area}, blurb: ${_this.blurb}, audience: ${_this.audience}, rating: ${_this.rating}, ratingCount: ${_this.ratingCount}, students: ${_this.students}, verified: ${_this.verified}, billing: ${_this.billing}, makeupsPerMonth: ${_this.makeupsPerMonth}, coaches: ${_this.coaches}, classes: ${_this.classes}, color: ${_this.color}, ink: ${_this.ink}, coverColor: ${_this.coverColor}, myRole: ${_this.myRole}, pendingRequests: ${_this.pendingRequests}, verification: ${_this.verification}, invitedCoaches: ${_this.invitedCoaches})';
+  return 'Academy(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, area: ${_this.area}, blurb: ${_this.blurb}, audience: ${_this.audience}, rating: ${_this.rating}, ratingCount: ${_this.ratingCount}, students: ${_this.students}, verified: ${_this.verified}, billing: ${_this.billing}, makeupsPerMonth: ${_this.makeupsPerMonth}, coaches: ${_this.coaches}, classes: ${_this.classes}, color: ${_this.color}, ink: ${_this.ink}, coverColor: ${_this.coverColor}, myRole: ${_this.myRole}, pendingRequests: ${_this.pendingRequests}, verification: ${_this.verification}, invitedCoaches: ${_this.invitedCoaches}, pendingCoaches: ${_this.pendingCoaches})';
 }
 
 
@@ -675,7 +676,7 @@ abstract mixin class $AcademyCopyWith<$Res>  {
   factory $AcademyCopyWith(Academy value, $Res Function(Academy) _then) = _$AcademyCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches
+ String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches, List<AcademyCoach> pendingCoaches
 });
 
 
@@ -692,7 +693,7 @@ class _$AcademyCopyWithImpl<$Res>
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,Object? pendingCoaches = null,}) {
   return _then(Academy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -715,7 +716,8 @@ as int,myRole: null == myRole ? _self.myRole : myRole // ignore: cast_nullable_t
 as AcademyRole,pendingRequests: null == pendingRequests ? _self.pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
 as int,verification: null == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
 as String,invitedCoaches: null == invitedCoaches ? _self.invitedCoaches : invitedCoaches // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pendingCoaches: null == pendingCoaches ? _self.pendingCoaches : pendingCoaches // ignore: cast_nullable_to_non_nullable
+as List<AcademyCoach>,
   ));
 }
 
@@ -800,10 +802,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches,  List<AcademyCoach> pendingCoaches)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Academy() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches,_that.pendingCoaches);case _:
   return orElse();
 
 }
@@ -821,10 +823,10 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches,  List<AcademyCoach> pendingCoaches)  $default,) {final _that = this;
 switch (_that) {
 case _Academy():
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches,_that.pendingCoaches);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -841,10 +843,10 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Sport sport,  String area,  String blurb,  String audience,  double? rating,  int ratingCount,  int students,  bool verified,  Billing billing,  int makeupsPerMonth,  List<AcademyCoach> coaches,  List<AcademyClass> classes,  int color,  int ink,  int coverColor,  AcademyRole myRole,  int pendingRequests,  String verification,  List<String> invitedCoaches,  List<AcademyCoach> pendingCoaches)?  $default,) {final _that = this;
 switch (_that) {
 case _Academy() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches);case _:
+return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.audience,_that.rating,_that.ratingCount,_that.students,_that.verified,_that.billing,_that.makeupsPerMonth,_that.coaches,_that.classes,_that.color,_that.ink,_that.coverColor,_that.myRole,_that.pendingRequests,_that.verification,_that.invitedCoaches,_that.pendingCoaches);case _:
   return null;
 
 }
@@ -856,7 +858,7 @@ return $default(_that.id,_that.name,_that.sport,_that.area,_that.blurb,_that.aud
 
 
 class _Academy extends Academy {
-  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF1C1F23, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0, this.verification = 'none',  List<String> invitedCoaches = const []}): _coaches = coaches,_classes = classes,_invitedCoaches = invitedCoaches,super._();
+  const _Academy({required this.id, required this.name, required this.sport, required this.area, this.blurb = '', this.audience = '', this.rating, this.ratingCount = 0, this.students = 0, this.verified = false, this.billing = Billing.month, this.makeupsPerMonth = 2,  List<AcademyCoach> coaches = const [],  List<AcademyClass> classes = const [], this.color = 0xFF1C1F23, this.ink = 0xFFF2C14E, this.coverColor = 0xFFE8590C, this.myRole = AcademyRole.none, this.pendingRequests = 0, this.verification = 'none',  List<String> invitedCoaches = const [],  List<AcademyCoach> pendingCoaches = const []}): _coaches = coaches,_classes = classes,_invitedCoaches = invitedCoaches,_pendingCoaches = pendingCoaches,super._();
   
 
 @override final  String id;
@@ -902,6 +904,15 @@ class _Academy extends Academy {
   return EqualUnmodifiableListView(_invitedCoaches);
 }
 
+/// People invited by username who haven't answered. For the head coach.
+ final  List<AcademyCoach> _pendingCoaches;
+/// People invited by username who haven't answered. For the head coach.
+@override@JsonKey() List<AcademyCoach> get pendingCoaches {
+  if (_pendingCoaches is EqualUnmodifiableListView) return _pendingCoaches;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_pendingCoaches);
+}
+
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
@@ -913,18 +924,18 @@ _$AcademyCopyWith<_Academy> get copyWith => __$AcademyCopyWithImpl<_Academy>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Academy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.area, area) || other.area == area)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.students, students) || other.students == students)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.billing, billing) || other.billing == billing)&&(identical(other.makeupsPerMonth, makeupsPerMonth) || other.makeupsPerMonth == makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _coaches)&&const DeepCollectionEquality().equals(other.classes, _classes)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.coverColor, coverColor) || other.coverColor == coverColor)&&(identical(other.myRole, myRole) || other.myRole == myRole)&&(identical(other.pendingRequests, pendingRequests) || other.pendingRequests == pendingRequests)&&(identical(other.verification, verification) || other.verification == verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _invitedCoaches));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Academy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.area, area) || other.area == area)&&(identical(other.blurb, blurb) || other.blurb == blurb)&&(identical(other.audience, audience) || other.audience == audience)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.students, students) || other.students == students)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.billing, billing) || other.billing == billing)&&(identical(other.makeupsPerMonth, makeupsPerMonth) || other.makeupsPerMonth == makeupsPerMonth)&&const DeepCollectionEquality().equals(other.coaches, _coaches)&&const DeepCollectionEquality().equals(other.classes, _classes)&&(identical(other.color, color) || other.color == color)&&(identical(other.ink, ink) || other.ink == ink)&&(identical(other.coverColor, coverColor) || other.coverColor == coverColor)&&(identical(other.myRole, myRole) || other.myRole == myRole)&&(identical(other.pendingRequests, pendingRequests) || other.pendingRequests == pendingRequests)&&(identical(other.verification, verification) || other.verification == verification)&&const DeepCollectionEquality().equals(other.invitedCoaches, _invitedCoaches)&&const DeepCollectionEquality().equals(other.pendingCoaches, _pendingCoaches));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,name,sport,area,blurb,audience,rating,ratingCount,students,verified,billing,makeupsPerMonth,const DeepCollectionEquality().hash(_coaches),const DeepCollectionEquality().hash(_classes),color,ink,coverColor,myRole,pendingRequests,verification,const DeepCollectionEquality().hash(_invitedCoaches)]);
+    return Object.hashAll([runtimeType,id,name,sport,area,blurb,audience,rating,ratingCount,students,verified,billing,makeupsPerMonth,const DeepCollectionEquality().hash(_coaches),const DeepCollectionEquality().hash(_classes),color,ink,coverColor,myRole,pendingRequests,verification,const DeepCollectionEquality().hash(_invitedCoaches),const DeepCollectionEquality().hash(_pendingCoaches)]);
 }
 
 @override
 String toString() {
-    return 'Academy(id: $id, name: $name, sport: $sport, area: $area, blurb: $blurb, audience: $audience, rating: $rating, ratingCount: $ratingCount, students: $students, verified: $verified, billing: $billing, makeupsPerMonth: $makeupsPerMonth, coaches: $coaches, classes: $classes, color: $color, ink: $ink, coverColor: $coverColor, myRole: $myRole, pendingRequests: $pendingRequests, verification: $verification, invitedCoaches: $invitedCoaches)';
+    return 'Academy(id: $id, name: $name, sport: $sport, area: $area, blurb: $blurb, audience: $audience, rating: $rating, ratingCount: $ratingCount, students: $students, verified: $verified, billing: $billing, makeupsPerMonth: $makeupsPerMonth, coaches: $coaches, classes: $classes, color: $color, ink: $ink, coverColor: $coverColor, myRole: $myRole, pendingRequests: $pendingRequests, verification: $verification, invitedCoaches: $invitedCoaches, pendingCoaches: $pendingCoaches)';
 }
 
 
@@ -935,7 +946,7 @@ abstract mixin class _$AcademyCopyWith<$Res> implements $AcademyCopyWith<$Res> {
   factory _$AcademyCopyWith(_Academy value, $Res Function(_Academy) _then) = __$AcademyCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches
+ String id, String name, Sport sport, String area, String blurb, String audience, double? rating, int ratingCount, int students, bool verified, Billing billing, int makeupsPerMonth, List<AcademyCoach> coaches, List<AcademyClass> classes, int color, int ink, int coverColor, AcademyRole myRole, int pendingRequests, String verification, List<String> invitedCoaches, List<AcademyCoach> pendingCoaches
 });
 
 
@@ -952,7 +963,7 @@ class __$AcademyCopyWithImpl<$Res>
 
 /// Create a copy of Academy
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? area = null,Object? blurb = null,Object? audience = null,Object? rating = freezed,Object? ratingCount = null,Object? students = null,Object? verified = null,Object? billing = null,Object? makeupsPerMonth = null,Object? coaches = null,Object? classes = null,Object? color = null,Object? ink = null,Object? coverColor = null,Object? myRole = null,Object? pendingRequests = null,Object? verification = null,Object? invitedCoaches = null,Object? pendingCoaches = null,}) {
   return _then(_Academy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -975,7 +986,8 @@ as int,myRole: null == myRole ? _self.myRole : myRole // ignore: cast_nullable_t
 as AcademyRole,pendingRequests: null == pendingRequests ? _self.pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
 as int,verification: null == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
 as String,invitedCoaches: null == invitedCoaches ? _self._invitedCoaches : invitedCoaches // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pendingCoaches: null == pendingCoaches ? _self._pendingCoaches : pendingCoaches // ignore: cast_nullable_to_non_nullable
+as List<AcademyCoach>,
   ));
 }
 

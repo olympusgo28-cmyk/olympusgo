@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/data/auth_repository.dart';
-import '../../play/domain/meet_ops.dart' show newClientKey;
 import '../domain/lesson_models.dart';
 
 /// Coach pages, licences and academy verification.
@@ -15,8 +14,10 @@ abstract class CoachRepository {
     int? years,
   });
 
-  /// Uploads a photo of a document and returns where it went.
-  Future<String> uploadDocument(Uint8List bytes, String contentType);
+  /// Uploads a photo of a document and returns where it went. Each person
+  /// has one file per purpose, so a new one replaces the last. [name] is
+  /// `licence`, or `business-<academy id>`.
+  Future<String> uploadDocument(Uint8List bytes, String name);
   Future<void> submitLicence({
     required String number,
     required DateTime expires,
@@ -112,18 +113,20 @@ class SupabaseCoachRepository implements CoachRepository {
   });
 
   @override
-  Future<String> uploadDocument(Uint8List bytes, String contentType) =>
+  Future<String> uploadDocument(Uint8List bytes, String name) =>
       _guard(() async {
         final me = _client.auth.currentUser?.id;
         if (me == null) throw const AuthFailure('Sign in first.');
-        final ext = contentType == 'application/pdf' ? 'pdf' : 'jpg';
-        final path = '$me/${newClientKey()}.$ext';
+        final path = '$me/$name.jpg';
         await _client.storage
             .from('verification-docs')
             .uploadBinary(
               path,
               bytes,
-              fileOptions: FileOptions(contentType: contentType),
+              fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: true,
+              ),
             );
         return path;
       });
@@ -184,6 +187,8 @@ class SupabaseCoachRepository implements CoachRepository {
 
   @override
   Future<List<(String, String)>> coachInvites() => _guard(() async {
+    // Anyone invited by email joins the list once they look.
+    await _client.rpc('academy_claim_invites');
     final rows = await _client.rpc('academy_my_coach_invites') as List? ?? [];
     return [
       for (final r in rows.cast<Map>())
@@ -243,8 +248,8 @@ class DemoCoachRepository implements CoachRepository {
   }
 
   @override
-  Future<String> uploadDocument(Uint8List bytes, String contentType) async =>
-      'demo/doc.jpg';
+  Future<String> uploadDocument(Uint8List bytes, String name) async =>
+      'demo/$name.jpg';
 
   @override
   Future<void> submitLicence({

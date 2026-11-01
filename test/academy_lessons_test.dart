@@ -27,7 +27,7 @@ class _Lessons extends DemoLessonRepository {
   Future<LessonBooking> get(String id) async => lesson;
 
   @override
-  Future<int> cancel(String id) async {
+  Future<int> cancel(String id, {int? expectedCents}) async {
     calls.add('cancel');
     return 0;
   }

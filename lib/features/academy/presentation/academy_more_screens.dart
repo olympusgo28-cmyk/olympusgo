@@ -162,6 +162,12 @@ class AcademySettingsScreen extends ConsumerWidget {
                     : () {},
               ),
               KitNavTile(
+                icon: OgIcons.shieldTick,
+                title: 'My coaching licence',
+                subtitle: 'Your NROC licence and coach page',
+                onTap: () => context.push(Routes.coachMe),
+              ),
+              KitNavTile(
                 icon: OgIcons.calendar,
                 title: 'Lessons',
                 subtitle: 'Paid lessons and one-to-one times',

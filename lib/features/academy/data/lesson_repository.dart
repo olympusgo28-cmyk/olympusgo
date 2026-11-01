@@ -21,8 +21,9 @@ abstract class LessonRepository {
   Future<List<LessonBooking>> mine();
   Future<LessonBooking> get(String id);
 
-  /// Returns what comes back, in cents.
-  Future<int> cancel(String id);
+  /// Returns what comes back, in cents. [expectedCents] is what the screen
+  /// promised: if that's no longer true, nothing happens.
+  Future<int> cancel(String id, {int? expectedCents});
   Future<void> academyCancel(String id, String reason);
   Future<void> markAttendance(String id, {required bool present});
   Future<void> report(String id, String note);
@@ -127,8 +128,11 @@ class SupabaseLessonRepository implements LessonRepository {
   });
 
   @override
-  Future<int> cancel(String id) => _guard(() async {
-    final r = await _client.rpc('lesson_cancel', params: {'p_booking': id});
+  Future<int> cancel(String id, {int? expectedCents}) => _guard(() async {
+    final r = await _client.rpc(
+      'lesson_cancel',
+      params: {'p_booking': id, 'p_expected_minor': expectedCents},
+    );
     return (r as num).toInt();
   });
 
@@ -299,7 +303,7 @@ class DemoLessonRepository implements LessonRepository {
       );
 
   @override
-  Future<int> cancel(String id) async {
+  Future<int> cancel(String id, {int? expectedCents}) async {
     final b = await get(id);
     final inTime = DateTime.now().isBefore(
       b.startsAt.subtract(const Duration(hours: 24)),

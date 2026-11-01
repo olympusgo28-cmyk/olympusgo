@@ -103,7 +103,7 @@ void main() {
       expect(a.area, 'Tampines');
       expect(a.verification, 'none');
       expect(a.coaches.map((k) => k.name), ['head Test']);
-      expect(a.invitedCoaches, ['nobody@test.local']);
+      expect(a.invitedCoaches, hasLength(2));
 
       // An unverified academy isn't listed, and a coach has to agree.
       await expectLater(parent.academy(id), throwsA(isA<Object>()));

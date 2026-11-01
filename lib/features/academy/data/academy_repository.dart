@@ -34,7 +34,7 @@ abstract interface class AcademyRepository {
   Future<List<EnrolPlayer>> myPlayers();
 
   /// Trial classes in the next two weeks with space.
-  Future<List<MakeupSlot>> trialSlots(String academyId);
+  Future<List<MakeupSlot>> trialSlots(String academyId, {bool dropIn = false});
   Future<void> bookTrial(String academyId, MakeupSlot slot, String playerId);
 
   // Coaches.
@@ -199,6 +199,16 @@ class SupabaseAcademyRepository implements AcademyRepository {
         ),
     ],
     invitedCoaches: [for (final e in r['invited'] as List? ?? []) e as String],
+    pendingCoaches: [
+      for (final k in (r['pending_coaches'] as List? ?? const []).cast<Map>())
+        AcademyCoach(
+          id: k['id'] as String,
+          name: '@${k['username'] ?? ''}',
+          initials: '',
+          role: 'Invited',
+          nroc: false,
+        ),
+    ],
     classes: [
       for (final c in (r['classes'] as List).cast<Map>())
         _class(c.cast<String, dynamic>()),
@@ -260,6 +270,8 @@ class SupabaseAcademyRepository implements AcademyRepository {
     coach: r['coach'] as String? ?? '',
     lesson: r['lesson'] as String? ?? '',
     spots: r['spots'] as int? ?? 0,
+    trialPriceCents: r['trial_price_cents'] as int?,
+    dropinPriceCents: r['dropin_price_cents'] as int?,
   );
 
   @override
@@ -364,22 +376,17 @@ class SupabaseAcademyRepository implements AcademyRepository {
   });
 
   @override
-  Future<List<MakeupSlot>> trialSlots(String academyId) => _guard(() async {
-    final a = await academy(academyId);
-    final now = DateTime.now().add(const Duration(hours: 24));
+  Future<List<MakeupSlot>> trialSlots(
+    String academyId, {
+    bool dropIn = false,
+  }) => _guard(() async {
     return [
-      for (final c in a.classes.where((c) => !c.full))
-        MakeupSlot(
-          classId: c.id,
-          className: c.name,
-          at: c.nextAt(now),
-          coach: c.coach,
-          lesson: c.lesson,
-          spots: c.spotsLeft,
-          trialPriceCents: c.trialPriceCents,
-          dropinPriceCents: c.dropinPriceCents,
-        ),
-    ]..sort((x, y) => x.at.compareTo(y.at));
+      for (final r in await _list('academy_class_slots', {
+        'p_academy': academyId,
+        'p_kind': dropIn ? 'class' : 'trial',
+      }))
+        _slot(r),
+    ];
   });
 
   @override
@@ -1242,7 +1249,10 @@ class DemoAcademyRepository implements AcademyRepository {
   ];
 
   @override
-  Future<List<MakeupSlot>> trialSlots(String academyId) async {
+  Future<List<MakeupSlot>> trialSlots(
+    String academyId, {
+    bool dropIn = false,
+  }) async {
     await _tick();
     final now = DateTime.now();
     return [

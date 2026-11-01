@@ -510,7 +510,7 @@ final class TrialSlotsProvider
     with $FutureModifier<List<MakeupSlot>>, $FutureProvider<List<MakeupSlot>> {
   TrialSlotsProvider._({
     required TrialSlotsFamily super.from,
-    required String super.argument,
+    required (String, {bool dropIn}) super.argument,
   }) : super(
          retry: null,
          name: r'trialSlotsProvider',
@@ -526,7 +526,7 @@ final class TrialSlotsProvider
   String toString() {
     return r'trialSlotsProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -537,8 +537,8 @@ final class TrialSlotsProvider
 
   @override
   FutureOr<List<MakeupSlot>> create(Ref ref) {
-    final argument = this.argument as String;
-    return trialSlots(ref, argument);
+    final argument = this.argument as (String, {bool dropIn});
+    return trialSlots(ref, argument.$1, dropIn: argument.dropIn);
   }
 
   @override
@@ -552,10 +552,14 @@ final class TrialSlotsProvider
   }
 }
 
-String _$trialSlotsHash() => r'edf83cd2a0933600c2cacc14a5cc81db4c00eacf';
+String _$trialSlotsHash() => r'2ee88b3aac144f0ddfeeb607e5f9bb3b8dc9cdf4';
 
 final class TrialSlotsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<MakeupSlot>>, String> {
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<MakeupSlot>>,
+          (String, {bool dropIn})
+        > {
   TrialSlotsFamily._()
     : super(
         retry: null,
@@ -565,8 +569,8 @@ final class TrialSlotsFamily extends $Family
         isAutoDispose: true,
       );
 
-  TrialSlotsProvider call(String academyId) =>
-      TrialSlotsProvider._(argument: academyId, from: this);
+  TrialSlotsProvider call(String academyId, {bool dropIn = false}) =>
+      TrialSlotsProvider._(argument: (academyId, dropIn: dropIn), from: this);
 
   @override
   String toString() => r'trialSlotsProvider';
