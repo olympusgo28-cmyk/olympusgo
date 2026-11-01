@@ -13,7 +13,9 @@ select t.player('d1000000-0000-0000-0000-000000000099', 15);  -- teen organizer
 select t.player('d1000000-0000-0000-0000-000000000098');  -- outsider
 select t.player('d1000000-0000-0000-0000-000000000097');  -- content staff
 select t.player('d1000000-0000-0000-0000-000000000096');  -- moderator
-insert into public.staff (user_id, role) values ('d1000000-0000-0000-0000-000000000097', 'content'),
+select t.player('d1000000-0000-0000-0000-000000000095');  -- payments staff
+insert into public.staff (user_id, role) values ('d1000000-0000-0000-0000-000000000095', 'payments'),
+  ('d1000000-0000-0000-0000-000000000097', 'content'),
   ('d1000000-0000-0000-0000-000000000096', 'moderator');
 select t.player(('d1000000-0000-0000-0000-0000000000' || lpad(i::text, 2, '0'))::uuid) from generate_series(11, 19) i;
 update public.feature_flags set enabled = true where key in ('game.campaigns', 'game.organizer_rewards');
@@ -48,9 +50,9 @@ begin
       when (select count(*) from generate_series(1, coalesce(p_scanned, p_present)) x where t.p(x) = ap.user_id) > 0
       then 'qr' else 'host' end
   where ap.activity_id = v and ap.status = 'joined';
-  update public.activities set starts_at = now() - interval '3 hours', ends_at = now() - interval '1 hour' where id = v;
+  update public.activities set starts_at = now() - interval '2 days', ends_at = now() - interval '47 hours' where id = v;
   insert into public.campaign_game_log (activity_id, host_id, present_count, players, starts_at, ends_at)
-  values (v, p_host, p_present, '[]', now() - interval '3 hours', now() - interval '1 hour');
+  values (v, p_host, p_present, '[]', now() - interval '2 days', now() - interval '47 hours');
   perform private.release_activity(v);
   return v;
 end;
@@ -118,7 +120,7 @@ begin
     insert into public.activity_participants (activity_id, user_id, status, attendance, check_in_method)
     values (v, t.p(i), 'joined', 'present', 'qr');
   end loop;
-  update public.activities set starts_at = now() - interval '3 hours', ends_at = now() - interval '1 hour' where id = v;
+  update public.activities set starts_at = now() - interval '2 days', ends_at = now() - interval '47 hours' where id = v;
   insert into public.campaign_game_log (activity_id, host_id, present_count, players, starts_at, ends_at)
   values (v, 'd1000000-0000-0000-0000-000000000098', 6, '[]', now() - interval '3 hours', now() - interval '1 hour');
   return v;
@@ -165,7 +167,7 @@ select t.reset();
 
 insert into ids select 'shop', t.shop('d1000000-0000-0000-0000-000000000097');
 insert into ids select 'venue', id from public.venues order by name limit 1;
-select t.as_staff('d1000000-0000-0000-0000-000000000097');
+select t.as_staff('d1000000-0000-0000-0000-000000000095');
 insert into ids select 'type_a', public.staff_voucher_type_save(jsonb_build_object('name', 'Shuttle voucher', 'kind', 'A',
   'mall_id', t.id('shop'), 'amount_minor', 800, 'organizer_default', true), 'Agreed with the shop');
 insert into ids select 'type_b', public.staff_voucher_type_save(jsonb_build_object('name', 'Hall voucher', 'kind', 'B',
@@ -242,10 +244,12 @@ create function t.attend(p_user uuid) returns void language plpgsql security def
 declare
   v uuid := t.meet('d1000000-0000-0000-0000-000000000098', 12, 48);
 begin
+  update public.activities set starts_at = now() - interval '12 hours', ends_at = now() - interval '10 hours' where id = v;
   insert into public.activity_participants (activity_id, user_id, status) values (v, p_user, 'joined');
-  update public.activity_participants set attendance = 'present' where activity_id = v and user_id = p_user;
+  update public.activity_participants set attendance = 'present', check_in_method = 'qr' where activity_id = v and user_id = p_user;
 end;
 $$;
+update public.challenges set joined_at = now() - interval '13 hours' where user_id = t.p(5);
 select t.attend(t.p(5));
 select is((select count from public.challenge_progress where user_id = t.p(5)), 1, 'one session is one step');
 select t.attend(t.p(5));

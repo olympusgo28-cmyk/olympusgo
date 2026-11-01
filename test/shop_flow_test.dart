@@ -59,6 +59,24 @@ class _Gateway implements PaymentGateway {
   Future<PaymentHold> reserveFeesOwed(String key) => throw UnimplementedError();
 }
 
+/// A voucher spent on another phone: pricing with it always fails.
+class _Stale extends DemoShopRepository {
+  _Stale() : super(DemoEarningsRepository());
+
+  @override
+  Future<ShopQuote> quote(
+    String mallId, {
+    CartLine? only,
+    int pointsCents = 0,
+    String? voucherId,
+  }) {
+    if (voucherId != null) {
+      throw const AuthFailure('This voucher has been used.');
+    }
+    return super.quote(mallId, only: only, pointsCents: pointsCents);
+  }
+}
+
 /// The order stays unpaid, as if the buyer left a payment running.
 class _Unpaid extends DemoShopRepository {
   _Unpaid() : super(DemoEarningsRepository());
@@ -176,6 +194,35 @@ void main() {
     expect(find.text('Final price'), findsOneWidget);
     expect(find.text('S\$18.00'), findsWidgets);
     expect(find.textContaining('final once collected'), findsOneWidget);
+  });
+
+  testWidgets('P4d-03 a voucher takes one unit down, and shows where it went', (
+    tester,
+  ) async {
+    await repo.addToCart('p-racket', qty: 2);
+    await _pump(tester, const CheckoutScreen(mallId: 'm-racket'), repo);
+    expect(find.text('Use a voucher'), findsOneWidget);
+    expect(find.text('−S\$8.00'), findsOneWidget);
+    await tester.tap(find.textContaining('S\$8 off at Racket Lab'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('voucher −S\$8.00'), findsOneWidget);
+    expect(find.text('S\$370.00'), findsWidgets);
+  });
+
+  testWidgets('P4d-03 a voucher that stopped working comes off the price', (
+    tester,
+  ) async {
+    final stale = _Stale();
+    await stale.addToCart('p-racket');
+    await _pump(tester, const CheckoutScreen(mallId: 'm-racket'), stale);
+    await tester.tap(find.textContaining('S\$8 off at Racket Lab'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('This voucher has been used.'), findsOneWidget);
+    expect(find.text('S\$189.00'), findsWidgets);
+    expect(find.textContaining('voucher −'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
   });
 
   // Pay, the sheet, Confirm, then the waiting screen.

@@ -1,6 +1,6 @@
 # Status against DEVELOPER_CHECKLIST.md: Phase 4d (1 Nov 2026)
 
-"Proven" means a test or a real run shows it. Voucher money runs against a **local stand-in for Stripe**, and `game.campaigns` and `game.organizer_rewards` stay off. Games keep counting with both off, so what's earned before launch is issued when rewards open.
+"Proven" means a test or a real run shows it. Voucher money runs against a **local stand-in for Stripe**, and `game.campaigns` and `game.organizer_rewards` stay off. Games keep being recorded with both off. What's earned once payments are open is issued when rewards open, and games before that rank their group and earn nothing (Q158).
 
 | Ticket | State |
 | --- | --- |
@@ -21,4 +21,14 @@
 - The organizer earns the rewards, and needn't pay or play unless they want to count towards the 6 (Q154).
 - The ladder carries on after game 24 (Q155).
 - Club reward is removed (Q156).
-- A game is judged from live data once its money settles, not the first-save log, so a refunded fee doesn't count as paid.
+- A game is judged from live data once attendance has closed for the day and its money has released, not the first-save log, so a refunded fee doesn't count as paid and a Meet nobody pressed save on is still judged.
+- Voucher types are set by payments staff, not content staff as planned, because the amount comes out of a shop's money (Q164).
+- Games before payments open rank their group and earn nothing (Q158).
+
+## Known gaps
+
+- With commission on top, a voucher makes the Items line drop a little, because commission follows the price after the voucher. The total is right.
+- "Use by" and game dates show in the device's time zone, like the rest of the app, not the venue's.
+- `field_registry` from the Definition of done doesn't exist in this repository, so no new column is registered.
+- The admin creates one quest per campaign. The database and the app take several.
+- A game that counted stays counted if a payment is undone later (Q160).

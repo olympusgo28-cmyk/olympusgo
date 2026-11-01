@@ -291,6 +291,11 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
             )
           else
             const CupertinoActivityIndicator(),
+          if (async.hasError)
+            KitButton(
+              label: 'Try again',
+              onPressed: () => ref.invalidate(campaignProvider(widget.id)),
+            ),
         ],
       );
     }
@@ -306,6 +311,13 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
           label: 'All campaigns',
           style: KitButtonStyle.outline,
           onPressed: () => context.go(Routes.game),
+        ),
+      ];
+    } else if (x.done) {
+      bottom = [
+        KitButton(
+          label: 'See my vouchers',
+          onPressed: () => context.push(Routes.wallet),
         ),
       ];
     } else if (!x.joined) {
@@ -327,12 +339,16 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
       ];
     } else {
       bottom = [
-        KitButton(
-          label: x.kind == CampaignKind.creator
-              ? 'Find a ranked Meet'
-              : 'Find a ranked Meet',
-          onPressed: () => context.push(Routes.play),
-        ),
+        if (x.organizing)
+          KitButton(
+            label: 'Organize a Meet',
+            onPressed: () => context.push(Routes.newMeetSport),
+          )
+        else
+          KitButton(
+            label: 'Find a Meet',
+            onPressed: () => context.push(Routes.play),
+          ),
       ];
     }
     final eyebrow = [

@@ -423,6 +423,45 @@ final class MyVouchersProvider
 
 String _$myVouchersHash() => r'833406c67daae7f28a46accb63dc3b957bd4095a';
 
+@ProviderFor(myBadges)
+final myBadgesProvider = MyBadgesProvider._();
+
+final class MyBadgesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GameBadge>>,
+          List<GameBadge>,
+          FutureOr<List<GameBadge>>
+        >
+    with $FutureModifier<List<GameBadge>>, $FutureProvider<List<GameBadge>> {
+  MyBadgesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myBadgesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myBadgesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GameBadge>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GameBadge>> create(Ref ref) {
+    return myBadges(ref);
+  }
+}
+
+String _$myBadgesHash() => r'c20ba9375f4446807fab24f328454798af3b5481';
+
 @ProviderFor(organizerRewards)
 final organizerRewardsProvider = OrganizerRewardsProvider._();
 

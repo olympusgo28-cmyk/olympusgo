@@ -7,9 +7,26 @@ import '../../core/ui.dart';
 
 String _money(Object? minor) => '${Money((minor as num? ?? 0).toInt())}';
 
+// Campaigns run on Singapore days, wherever staff are. Fixed at +8 hours until
+// a campaign runs in another country.
+const _sgt = Duration(hours: 8);
+
 String _day(Object? at) => at == null
     ? '—'
-    : DateTime.parse(at as String).toLocal().toString().substring(0, 10);
+    : DateTime.parse(at as String)
+          .toUtc()
+          .add(_sgt)
+          .toString()
+          .substring(0, 10);
+
+/// The start of a typed Singapore day, or the last second of it.
+String? _instant(String text, {bool end = false}) {
+  final d = DateTime.tryParse(text.trim());
+  if (d == null) return null;
+  final start = DateTime.utc(d.year, d.month, d.day).subtract(_sgt);
+  return (end ? start.add(const Duration(days: 1, seconds: -1)) : start)
+      .toIso8601String();
+}
 
 const _questNames = {
   'play_sessions': 'Play sessions',
@@ -19,7 +36,8 @@ const _questNames = {
 
 const _reasonNames = {
   'counted': 'Counted',
-  'under_six': 'Fewer than 6 Present',
+  'before_payments': 'Before payments opened: ranks, earns nothing',
+  'under_six': 'Not enough Present',
   'unpaid': 'Not everyone paid',
   'not_scanned': 'Not everyone scanned',
   'cancelled': 'Cancelled',
@@ -27,8 +45,9 @@ const _reasonNames = {
   'organizer_flagged': 'Organizer flagged',
 };
 
-/// Campaigns, voucher types, organizer games and redemptions. Content staff
-/// only: the database checks the role and MFA on every call.
+/// Campaigns, voucher types, organizer games and redemptions. Content staff run
+/// campaigns, payments staff set voucher types, and both can read all of it: the
+/// database checks the role and MFA on every call.
 class CampaignsScreen extends ConsumerStatefulWidget {
   const CampaignsScreen({super.key});
 
@@ -339,6 +358,9 @@ class _CampaignDialogState extends State<_CampaignDialog> {
   late final _title = TextEditingController(
     text: widget.row?['title'] as String?,
   );
+  late final _blurb = TextEditingController(
+    text: widget.row?['blurb'] as String?,
+  );
   late final _about = TextEditingController(
     text: widget.row?['about'] as String?,
   );
@@ -361,24 +383,30 @@ class _CampaignDialogState extends State<_CampaignDialog> {
   bool get _draft => widget.row == null || widget.row!['status'] == 'draft';
 
   void _done() {
-    final starts = DateTime.tryParse(_starts.text.trim());
-    final ends = DateTime.tryParse(_ends.text.trim());
+    final starts = _instant(_starts.text);
+    final ends = _instant(_ends.text, end: true);
     final target = int.tryParse(_target.text.trim());
-    if (_title.text.trim().length < 2) {
-      setState(() => _problem = 'Give it a title.');
+    final title = _title.text.trim();
+    if (title.length < 2 || title.length > 80) {
+      setState(() => _problem = 'Give it a title of 2 to 80 characters.');
+    } else if (_blurb.text.trim().length > 200) {
+      setState(() => _problem = 'Keep the short line to 200 characters.');
+    } else if (_about.text.trim().length > 1000) {
+      setState(() => _problem = 'Keep About to 1,000 characters.');
     } else if (starts == null || ends == null) {
       setState(() => _problem = 'Dates look like 2026-11-30.');
-    } else if (target == null || target < 1) {
-      setState(() => _problem = 'Set a target.');
+    } else if (target == null || target < 1 || target > 1000) {
+      setState(() => _problem = 'Set a target from 1 to 1,000.');
     } else if (_voucher == null && _badge == null) {
       setState(() => _problem = 'Pick a reward.');
     } else {
       Navigator.of(context).pop({
         'id': ?widget.row?['id'],
-        'title': _title.text.trim(),
+        'title': title,
+        'blurb': _blurb.text.trim(),
         'about': _about.text.trim(),
-        'starts_at': starts.toUtc().toIso8601String(),
-        'ends_at': ends.toUtc().toIso8601String(),
+        'starts_at': starts,
+        'ends_at': ends,
         'quests': [
           {
             'type': _type,
@@ -408,6 +436,10 @@ class _CampaignDialogState extends State<_CampaignDialog> {
               TextField(
                 controller: _title,
                 decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: _blurb,
+                decoration: const InputDecoration(labelText: 'Short line'),
               ),
               TextField(
                 controller: _about,
@@ -515,10 +547,13 @@ class _VoucherTypeDialogState extends State<_VoucherTypeDialog> {
 
   void _done() {
     final minor = parseMinor(_amount.text.trim());
+    final days = int.tryParse(_days.text.trim());
     if (_name.text.trim().length < 2) {
       setState(() => _problem = 'Give it a name.');
-    } else if (minor == null || minor <= 0) {
-      setState(() => _problem = 'Set an amount, like 8.00.');
+    } else if (minor == null || minor <= 0 || minor > 100000) {
+      setState(() => _problem = 'Set an amount up to S\$1,000.00, like 8.00.');
+    } else if (days == null || days < 1 || days > 365) {
+      setState(() => _problem = 'A voucher lasts 1 to 365 days.');
     } else if (_funder == null) {
       setState(() => _problem = 'Pick who funds it.');
     } else {
@@ -528,7 +563,7 @@ class _VoucherTypeDialogState extends State<_VoucherTypeDialog> {
         'mall_id': _kind == 'A' ? _funder : null,
         'venue_id': _kind == 'B' ? _funder : null,
         'amount_minor': minor,
-        'expiry_days': _days.text.trim(),
+        'expiry_days': days,
         'organizer_default': _reward,
       });
     }

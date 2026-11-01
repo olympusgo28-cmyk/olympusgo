@@ -30,6 +30,28 @@ class _Waiting extends DemoGameRepository {
       const OrganizerRewards(counted: 8, nextGame: 12, nextA: 2, waiting: 3);
 }
 
+class _Settings extends DemoGameRepository {
+  @override
+  Future<OrganizerRewards> organizerRewards() async => const OrganizerRewards(
+    counted: 0,
+    nextGame: 2,
+    nextA: 1,
+    minPresent: 8,
+    feeCents: 300,
+  );
+}
+
+class _Open extends DemoGameRepository {
+  @override
+  Future<OrganizerRewards> organizerRewards() async => const OrganizerRewards(
+    counted: 8,
+    nextGame: 12,
+    nextA: 2,
+    waiting: 1,
+    open: true,
+  );
+}
+
 Future<void> _pump(
   WidgetTester tester,
   Widget screen, [
@@ -92,7 +114,10 @@ void main() {
     testWidgets('says what the next game earns', (tester) async {
       await _pump(tester, const OrganizerRewardsScreen());
       expect(find.text('3 counted games'), findsOneWidget);
-      expect(find.textContaining('Game 4 earns 1 Voucher A'), findsOneWidget);
+      expect(
+        find.textContaining('Game 4 earns 1 shop voucher'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('says why a game didn’t count', (tester) async {
@@ -106,7 +131,24 @@ void main() {
 
     testWidgets('the organizer needn’t pay, and it says so', (tester) async {
       await _pump(tester, const OrganizerRewardsScreen());
-      expect(find.textContaining('You needn’t pay or play'), findsOneWidget);
+      expect(
+        find.textContaining('You don’t have to pay or play'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the numbers come from the server', (tester) async {
+      await _pump(tester, const OrganizerRewardsScreen(), _Settings());
+      expect(find.textContaining('8 or more players'), findsOneWidget);
+      expect(find.textContaining('S\$3.00 fee'), findsOneWidget);
+    });
+
+    testWidgets('rewards waiting with no voucher set up', (tester) async {
+      await _pump(tester, const OrganizerRewardsScreen(), _Open());
+      expect(
+        find.textContaining('Our team is setting them up'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('rewards waiting to open', (tester) async {

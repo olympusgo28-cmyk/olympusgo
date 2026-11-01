@@ -546,12 +546,6 @@ class DemoEarningsRepository implements EarningsRepository {
           162000,
         ),
         EarningSource(
-          'reward',
-          'Tampines Smashers',
-          'Club reward voucher',
-          2000,
-        ),
-        EarningSource(
           'ts-singles',
           'Morning Singles, you cancelled',
           'Card fees on 5 refunds',

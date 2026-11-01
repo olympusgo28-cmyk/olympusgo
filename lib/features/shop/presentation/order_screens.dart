@@ -223,6 +223,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       }
     } on AuthFailure catch (e) {
       if (!mounted || ask != _ask) return;
+      // A voucher that can't be used any more would fail every price after
+      // this one, so it comes off and the cart is priced without it.
+      if (_voucherId != null) {
+        showOgToast(context, e.message, error: true);
+        _voucherId = null;
+        _load();
+        return;
+      }
       setState(() {
         _pricing = false;
         // A failed toggle keeps the price that's on screen.
@@ -230,7 +238,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _error = e.message;
         } else {
           _usePoints = _quote!.pointsCents > 0;
-          _voucherId = _quote!.voucherId;
         }
       });
       if (_quote != null) showOgToast(context, e.message, error: true);
@@ -283,6 +290,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _load();
         } else {
           showOgToast(context, e.message, error: true);
+          // The voucher may be why: pricing again finds out.
+          if (q.voucherId != null) _load();
         }
       }
     }
@@ -465,6 +474,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 sub: [
                   if (l.variant.isNotEmpty) l.variant,
                   'qty ${l.qty}',
+                  if (l.voucherCents > 0) 'voucher −${cash(l.voucherCents)}',
                 ].join(', '),
                 amount: cash(l.priceCents * l.qty),
               ),
@@ -1088,6 +1098,9 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
                   'You weren’t charged.',
                 if ((_was?.pointsCents ?? 0) > 0)
                   'Points you used are back with you.',
+                if ((_was?.voucherCents ?? 0) > 0)
+                  'Your voucher is back in My vouchers, with the same use-by '
+                      'date.',
               ].join(' '),
               style: OgText.body(15, height: 1.45, color: c.textMuted),
             ),
@@ -1288,6 +1301,8 @@ class RefundStatusScreen extends ConsumerWidget {
             'Points returned',
             '${pointsText(o.pointsCents)}, already back with you',
           ),
+        if (o.voucherCents > 0 && o.step == OrderStep.cancelled)
+          const KitKeyValue('Voucher returned', 'Back in My vouchers'),
         if (o.receiptNo.isNotEmpty) KitKeyValue('Reference', o.receiptNo),
         Text(
           'Card and PayNow refunds depend on your bank.',

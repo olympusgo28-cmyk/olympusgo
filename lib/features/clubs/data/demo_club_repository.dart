@@ -534,8 +534,8 @@ class DemoClubRepository implements ClubRepository {
         id: 'an-2',
         author: 'Siti Kamal',
         authorRole: 'admin',
-        title: 'Club reward: 2 Meets to go',
-        body: 'We need 2 more Meets with 6 or more paid players to unlock the S\$20 shuttle voucher.',
+        title: 'Two Meets this weekend',
+        body: 'Saturday and Sunday mornings are open. Bring a friend.',
         at: _daysAgo(2, 19),
       ),
       Announcement(

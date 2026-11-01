@@ -43,6 +43,10 @@ Future<List<GameVoucher>> myVouchers(Ref ref) =>
     ref.watch(gameRepositoryProvider).vouchers();
 
 @riverpod
+Future<List<GameBadge>> myBadges(Ref ref) =>
+    ref.watch(gameRepositoryProvider).badges();
+
+@riverpod
 Future<OrganizerRewards> organizerRewards(Ref ref) =>
     ref.watch(gameRepositoryProvider).organizerRewards();
 
@@ -54,5 +58,6 @@ void refreshGame(void Function(ProviderOrFamily provider) invalidate) {
   invalidate(creatorStatusProvider);
   invalidate(myGearProvider);
   invalidate(myVouchersProvider);
+  invalidate(myBadgesProvider);
   invalidate(organizerRewardsProvider);
 }

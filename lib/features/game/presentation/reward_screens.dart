@@ -40,6 +40,7 @@ class WalletScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final v = ref.watch(myVouchersProvider);
+    final badges = ref.watch(myBadgesProvider).value ?? const <GameBadge>[];
     final blocked = _waiting(
       v,
       'My vouchers',
@@ -60,6 +61,11 @@ class WalletScreen extends ConsumerWidget {
           const KitNote(
             'Vouchers stay on your account and can’t be passed on. Use them at '
             'checkout, one per item, in place of points.',
+          ),
+        if (badges.isNotEmpty)
+          KitBlock(
+            title: 'My badges',
+            child: KitCheckList([for (final b in badges) b.name]),
           ),
       ],
     );
@@ -100,7 +106,7 @@ class _VoucherCard extends StatelessWidget {
             ),
             Text(
               [
-                v.where,
+                if (v.product case final p?) '$p at ${v.where}' else v.where,
                 if (v.usable && v.expiresAt != null)
                   'Use by ${Fmt.day(v.expiresAt!)}',
               ].join(' · '),
@@ -127,8 +133,10 @@ class _VoucherCard extends StatelessWidget {
 class OrganizerRewardsScreen extends ConsumerWidget {
   const OrganizerRewardsScreen({super.key});
 
-  String _prize(int a, int b) =>
-      [if (a > 0) '$a Voucher A', if (b > 0) '$b Voucher B'].join(' and ');
+  String _prize(int a, int b) => [
+    if (a > 0) plural(a, 'shop voucher'),
+    if (b > 0) plural(b, 'court voucher'),
+  ].join(' and ');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -151,16 +159,19 @@ class OrganizerRewardsScreen extends ConsumerWidget {
               ? null
               : 'Game ${r.nextGame} earns ${_prize(r.nextA, r.nextB)}.',
         ),
-        if (!r.open && r.waiting > 0)
+        if (r.waiting > 0)
           KitNote(
-            '${plural(r.waiting, 'voucher')} waiting. They’re issued as soon '
-            'as rewards open.',
+            r.open
+                ? '${plural(r.waiting, 'voucher')} waiting. Our team is '
+                      'setting them up.'
+                : '${plural(r.waiting, 'voucher')} waiting. They’re issued as '
+                      'soon as rewards open.',
           ),
-        const KitNote(
-          'A game counts when 6 or more players are Present, every player '
-          'paid the platform fee, and every player was scanned in by QR. You '
-          'needn’t pay or play yourself. To count towards the 6, take a spot '
-          'for the S\$2.00 fee.',
+        KitNote(
+          'A game counts when ${r.minPresent} or more players are Present, '
+          'every player paid the platform fee, and every player was scanned '
+          'in by QR. You don’t have to pay or play yourself. To count towards '
+          'the ${r.minPresent}, take a spot for the ${Money(r.feeCents)} fee.',
         ),
         if (r.games.isEmpty)
           Text(

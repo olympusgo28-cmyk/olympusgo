@@ -148,13 +148,13 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q136 | Past lessons at an academy staff have rejected: does the held money still go to the owner? | Lessons | Yes, what was taught is still paid. Upcoming lessons are refunded in full | Open |
 | Q137 | A coach's licence expires after a lesson is booked | Lessons | The booking stands. A refused licence ends it, an expired one doesn't | Open |
 | Q138 | A voided refund on an expired Shop order has no way out, as on a lesson before this fix | Shop | Unfixed in the Shop, and only an alert shows it. It needs a staff path like `staff_lesson_decide` | Open |
-| Q139 | Account deletion: `academies.owner_id` and `academy_students.parent_id` cascade, which would take a child's records, and `assessments.coach_name` outlives the coach | Account deletion | No deletion flow exists yet. Must be settled before one is built | Open |
+| Q139 | Account deletion: `academies.owner_id` and `academy_students.parent_id` cascade, which would take a child's records, `assessments.coach_name` outlives the coach, and `vouchers.owner_id` cascades while `voucher_redemptions.voucher_id` and `orders.voucher_id` block it, so deleting someone who used a voucher fails | Account deletion | No deletion flow exists yet. Must be settled before one is built | Open |
 | Q140 | Voucher A's amount and which shop funds it (decision 17) | Organizer rewards | Set per voucher type in admin. Nothing is issued until a type exists, and a shop must agree in writing | Open |
 | Q141 | The same few friends meeting 6 times to farm vouchers | Organizer rewards | No extra limit at launch. Staff can see every game and flag the account | Open |
 | Q142 | Attendance corrected after a game has counted | Organizer rewards | The count stands and no voucher is taken back | Open |
 | Q143 | A voucher already used when a game is found to be wrong | Vouchers | It stays used, and staff handle it | Open |
 | Q144 | Partial refund of the item a voucher was used on | Vouchers | Refund what was paid. The voucher comes back only if the whole order is cancelled | Open |
-| Q145 | A shop stops being a partner while its vouchers are live | Vouchers | They stay in the wallet and can't be used. Nothing tells the holder yet | Open |
+| Q145 | A shop stops being a partner while its vouchers are live | Vouchers | They stay in the wallet and can't be used. Staff switch the voucher type off, or the shop goes inactive. Nothing tells the holder yet | Open |
 | Q146 | An organizer's own QR check-in | Organizer rewards | Not required when they took a paid spot | Open |
 | Q147 | Quest rewards in points | Campaigns | None, as points come only from playing (R-PTS) | Open |
 | Q148 | Under-18s on the Game tab | Campaigns | They see campaigns and can't join (decision 10) | Open |
@@ -166,3 +166,12 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q154 | Who earns the rewards, and must they pay? | Organizer rewards | The organizer | **Decided (owner, 1 Nov).** The organizer earns them. They needn't pay the S$2.00 unless they want to count towards the 6 Present. Participants must pay the platform fee |
 | Q155 | The reward ladder after game 24 | Organizer rewards | Carries on | **Decided (owner, 1 Nov).** Every 4th game gives 3 Voucher A, and every 8th also gives 1 Voucher B |
 | Q156 | The old Club reward (R-CLB-7) | Clubs | Removed | **Decided (owner, 1 Nov).** Removed, replaced by organizer rewards |
+| Q157 | What proves a player attended, for quests? | Campaigns | A finished session they kept their spot in, scanned by QR or marked by the organizer. Saying you're there yourself doesn't count | Open |
+| Q158 | Games played before payments open | Organizer rewards | They still rank the group. They get no game number and earn nothing, because nobody could pay the platform fee | Open |
+| Q159 | Vouchers held by a flagged account | Vouchers | They can't be spent or earned while flagged, and work again if the flag is lifted. Badges are hidden the same way, rather than deleted | Open |
+| Q160 | A game that counted, then a dispute or refund undoes a payment | Organizer rewards | The count stands and no voucher is taken back, as Q142. Staff can flag the account | Open |
+| Q161 | A staff refund of a whole order that used a voucher | Vouchers | The voucher stays spent, as written in Q144. Only a cancelled order returns it. A shop that goes quiet leaves the buyer refunded but without the voucher. **The owner should choose** | Open |
+| Q162 | A voucher type switched off | Vouchers | Issued vouchers can't be used while it's off. A quest with that reward waits and pays out when it's back on | Open |
+| Q163 | Which item takes the voucher | Vouchers | The dearest item it fits. The buyer doesn't choose | Open |
+| Q164 | Who sets voucher amounts | Admin | Payments staff, as with commission. Content staff run campaigns, and both can read games and redemptions. The plan said content staff, and a review moved it because the amount comes out of a shop's money | Open |
+| Q165 | Changing a live campaign's end date | Campaigns | It can run longer but not end sooner. To stop it early, staff end it | Open |

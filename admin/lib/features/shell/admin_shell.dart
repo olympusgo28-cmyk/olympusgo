@@ -7,11 +7,14 @@ import '../auth/session.dart';
 /// A section of the console and the role it needs. Hiding a section is only
 /// tidiness: the database refuses the data whatever this says.
 class Section {
-  const Section(this.path, this.label, this.icon, this.role);
+  const Section(this.path, this.label, this.icon, this.role, {this.also});
   final String path;
   final String label;
   final IconData icon;
   final String? role;
+
+  /// A second role that may open this section.
+  final String? also;
 }
 
 class AdminShell extends StatelessWidget {
@@ -32,7 +35,10 @@ class AdminShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final visible = [
       for (final s in sections)
-        if (s.role == null || session.has(s.role!)) s,
+        if (s.role == null ||
+            session.has(s.role!) ||
+            (s.also != null && session.has(s.also!)))
+          s,
     ];
     final index = visible.indexWhere((s) => location.startsWith(s.path));
     // Staff land on the first section their role can open.

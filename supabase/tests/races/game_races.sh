@@ -90,19 +90,20 @@ SQL
   ACT=$("${PSQL[@]}" <<SQL | head -1
 set session_replication_role = replica;
 insert into public.activities (kind, host_id, title, sports, game_type, format, starts_at, ends_at, venue_id, capacity)
-select 'meet', '$ORG', 'Race Meet', array['badminton'], 'doubles', 'open_play', now() - interval '3 hours', now() - interval '1 hour', v.id, 12
+select 'meet', '$ORG', 'Race Meet', array['badminton'], 'doubles', 'open_play', now() - interval '2 days', now() - interval '47 hours', v.id, 12
 from public.venues v order by v.name limit 1 returning id;
 SQL
   )
   "${PSQL[@]}" >/dev/null <<SQL
-update public.feature_flags set enabled = false where key = 'payments.enabled';
 set session_replication_role = replica;
 insert into public.activity_participants (activity_id, user_id, status, attendance, check_in_method)
 select '$ACT', u.id, 'joined', 'present', 'qr' from auth.users u
 where u.id::text like 'c6000000-0000-0000-0000-00000000009%';
+insert into public.payments (user_id, activity_id, purpose, status, price_minor, fee_minor, amount_minor,
+  rule_snapshot, idempotency_key, released_at)
+select u.id, '$ACT', 'meet', 'succeeded', 0, 200, 200, '{}', 'race-' || gen_random_uuid(), now() from auth.users u
+where u.id::text like 'c6000000-0000-0000-0000-00000000009%';
 set session_replication_role = origin;
-insert into public.campaign_game_log (activity_id, host_id, present_count, players, starts_at, ends_at)
-values ('$ACT', '$ORG', 6, '[]', now(), now());
 SQL
   (for _ in 1 2; do "${PSQL[@]}" -c "select private.organizer_sweep()" >/dev/null; done) &
   a=$!
@@ -111,7 +112,6 @@ SQL
   "${PSQL[@]}" -c "select private.organizer_sweep()" >/dev/null &
   c=$!
   wait $a $b $c
-  "${PSQL[@]}" -c "update public.feature_flags set enabled = true where key = 'payments.enabled'" >/dev/null
   rows=$("${PSQL[@]}" -c "select count(*) from public.organizer_games where activity_id = '$ACT'")
   if [[ "$rows" != "1" ]]; then
     echo "round $i: the game was recorded $rows times"

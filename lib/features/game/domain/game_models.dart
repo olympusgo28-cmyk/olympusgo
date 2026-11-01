@@ -85,7 +85,15 @@ class Campaign {
     this.standings = const [],
     this.sponsor,
     this.result,
+    this.done = false,
+    this.organizing = false,
   });
+
+  /// Every quest is finished.
+  final bool done;
+
+  /// The next quest is to organize, not to play.
+  final bool organizing;
 
   final String id;
   final CampaignKind kind;
@@ -326,7 +334,11 @@ class GameVoucher {
     required this.amountCents,
     required this.where,
     this.expiresAt,
+    this.product,
   });
+
+  /// The one item it's for, if it isn't for anything at the shop.
+  final String? product;
 
   final String id;
   final String name;
@@ -341,6 +353,14 @@ class GameVoucher {
   final DateTime? expiresAt;
 
   bool get usable => status == 'issued';
+}
+
+/// Earned from a campaign.
+class GameBadge {
+  const GameBadge({required this.name, this.blurb = ''});
+
+  final String name;
+  final String blurb;
 }
 
 /// A Meet the organizer ran: whether it counted, and why not if it didn't.
@@ -361,11 +381,12 @@ class OrganizerGame {
 
   String get why => switch (reason) {
     'counted' => 'Counted',
-    'under_six' => 'Fewer than 6 players were Present',
+    'under_six' => 'Not enough players were Present',
     'unpaid' => 'Not everyone paid the platform fee',
     'not_scanned' => 'Not everyone was scanned in by QR',
     'cancelled' => 'This Meet was cancelled',
     'organizer_minor' => 'Organizers earn rewards from 18',
+    'before_payments' => 'Played before payments opened, so it earns nothing',
     _ => 'Our team is looking at this',
   };
 }
@@ -380,7 +401,15 @@ class OrganizerRewards {
     this.open = false,
     this.waiting = 0,
     this.games = const [],
+    this.minPresent = 6,
+    this.feeCents = 200,
   });
+
+  /// Present players a game needs, from the server's settings.
+  final int minPresent;
+
+  /// What an organizer pays to take a spot of their own.
+  final int feeCents;
 
   final int counted;
   final int? nextGame;

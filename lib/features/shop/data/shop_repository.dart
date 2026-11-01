@@ -155,12 +155,10 @@ class SupabaseShopRepository implements ShopRepository {
 
   // Orders from before payments have no unit amounts, and a shop isn't shown them.
   static int _linePrice(Map l) {
-    final paid =
-        ((l['unit_paid'] as num) +
-                (l['unit_points'] as num) +
-                (l['unit_voucher'] as num? ?? 0))
-            .toInt();
-    return paid > 0 ? paid : (l['price_cents'] as num).toInt();
+    final paid = ((l['unit_paid'] as num) + (l['unit_points'] as num)).toInt();
+    return paid > 0
+        ? paid + (l['unit_voucher'] as num? ?? 0).toInt()
+        : (l['price_cents'] as num).toInt();
   }
 
   static Order _order(Map<String, dynamic> r) {
@@ -967,6 +965,10 @@ class DemoShopRepository implements ShopRepository {
     }
   }
 
+  static const _voucherId = 'dv-1';
+  static const _voucherShop = 'Racket Lab';
+  bool _voucherSpent = false;
+
   List<CartLine> _linesFor(String mallId, CartLine? only) => only == null
       ? _cart.where((l) => l.product.mallId == mallId).toList()
       : [only];
@@ -982,18 +984,46 @@ class DemoShopRepository implements ShopRepository {
     var left = pointsCents;
     final lines = <QuoteLine>[];
     var cap = 0;
-    for (final l in _linesFor(mallId, only)) {
+    final cart = _linesFor(mallId, only);
+    // The demo wallet's one voucher goes on the dearest item at its shop.
+    final dearest = cart.isEmpty || cart.first.product.mallName != _voucherShop
+        ? null
+        : cart.reduce(
+            (a, b) => b.product.priceCents > a.product.priceCents ? b : a,
+          );
+    final off = dearest == null
+        ? 0
+        : [
+            800,
+            dearest.product.priceCents - 50,
+          ].reduce((a, b) => a < b ? a : b);
+    for (final l in cart) {
+      var qty = l.qty;
+      if (voucherId == _voucherId && identical(l, dearest) && !_voucherSpent) {
+        lines.add(
+          QuoteLine(
+            name: l.product.name,
+            variant: l.variant,
+            qty: 1,
+            priceCents: l.product.priceCents,
+            pointsCents: 0,
+            voucherCents: off,
+          ),
+        );
+        qty -= 1;
+        if (qty == 0) continue;
+      }
       final unit = [
         l.product.pointsCapCents,
-        left ~/ l.qty,
+        left ~/ qty,
       ].reduce((a, b) => a < b ? a : b);
-      left -= unit * l.qty;
-      cap += l.product.pointsCapCents * l.qty;
+      left -= unit * qty;
+      cap += l.product.pointsCapCents * qty;
       lines.add(
         QuoteLine(
           name: l.product.name,
           variant: l.variant,
-          qty: l.qty,
+          qty: qty,
           priceCents: l.product.priceCents,
           pointsCents: unit,
         ),
@@ -1001,7 +1031,7 @@ class DemoShopRepository implements ShopRepository {
     }
     final total = lines.fold(
       0,
-      (a, l) => a + (l.priceCents - l.pointsCents) * l.qty,
+      (a, l) => a + (l.priceCents - l.pointsCents - l.voucherCents) * l.qty,
     );
     return ShopQuote(
       lines: lines,
@@ -1015,6 +1045,15 @@ class DemoShopRepository implements ShopRepository {
           'Cancel before you collect and you get everything back. Sports '
           'equipment is final once collected.',
       canPay: true,
+      voucherId: lines.any((l) => l.voucherCents > 0) ? voucherId : null,
+      vouchers: [
+        if (off > 0 && !_voucherSpent)
+          CheckoutVoucher(
+            id: _voucherId,
+            name: 'S\$8 off at $_voucherShop',
+            amountCents: off,
+          ),
+      ],
     );
   }
 
@@ -1028,7 +1067,12 @@ class DemoShopRepository implements ShopRepository {
     String? voucherId,
   }) async {
     await _tick();
-    final q = await quote(mallId, only: only, pointsCents: pointsCents);
+    final q = await quote(
+      mallId,
+      only: only,
+      pointsCents: pointsCents,
+      voucherId: voucherId,
+    );
     final lines = _linesFor(mallId, only);
     if (lines.isEmpty) throw const AuthFailure('Your cart is empty.');
     final now = DateTime.now();
@@ -1037,15 +1081,19 @@ class DemoShopRepository implements ShopRepository {
       mallId: mallId,
       mallName: lines.first.product.mallName,
       lines: [
-        for (final (i, l) in q.lines.indexed)
+        for (final l in q.lines)
           OrderLine(
             l.name,
             l.variant,
             l.qty,
             l.priceCents,
-            productId: lines[i].product.id,
+            productId: lines
+                .firstWhere((x) => x.product.name == l.name)
+                .product
+                .id,
             pointsCents: l.pointsCents,
-            shopCents: (l.priceCents * 9 + 5) ~/ 10,
+            voucherCents: l.voucherCents,
+            shopCents: ((l.priceCents - l.voucherCents) * 9 + 5) ~/ 10,
           ),
       ],
       placedAt: now,
@@ -1070,6 +1118,7 @@ class DemoShopRepository implements ShopRepository {
         no: o.receiptNo,
         lines: [
           ('Items', '${Money(o.itemsCents)}'),
+          if (o.voucherCents > 0) ('Voucher', '${Money(-o.voucherCents)}'),
           if (o.pointsCents > 0) ('Points used', '${Money(-o.pointsCents)}'),
         ],
         totalCents: o.totalCents,
@@ -1079,6 +1128,7 @@ class DemoShopRepository implements ShopRepository {
     if (o.pointsCents > 0) {
       _wallet?.spend('Shop order', o.mallName, minor: o.pointsCents);
     }
+    if (o.voucherCents > 0) _voucherSpent = true;
     if (only == null) _cart.removeWhere((l) => l.product.mallId == mallId);
     return (
       PaymentHold(

@@ -44,6 +44,7 @@ abstract interface class GameRepository {
   Future<Gear> saveGear(Gear gear);
 
   Future<List<GameVoucher>> vouchers();
+  Future<List<GameBadge>> badges();
   Future<OrganizerRewards> organizerRewards();
 }
 
@@ -125,7 +126,8 @@ class SupabaseGameRepository implements GameRepository {
     final quests = (r['quests'] as List? ?? const []).cast<Map>();
     String prize(Map q) =>
         q['voucher'] as String? ?? q['badge'] as String? ?? '';
-    final first = quests.firstOrNull;
+    final first =
+        quests.where((q) => q['done'] != true).firstOrNull ?? quests.lastOrNull;
     final ends = DateTime.parse(r['ends_at'] as String).toLocal();
     final players = r['players'] as int? ?? 0;
     return Campaign(
@@ -141,7 +143,12 @@ class SupabaseGameRepository implements GameRepository {
       color: (r['color'] as num).toInt(),
       ink: (r['ink'] as num).toInt(),
       endsAt: ends,
-      about: r['about'] as String? ?? r['blurb'] as String? ?? '',
+      about: [
+        r['about'] as String? ?? '',
+        r['blurb'] as String? ?? '',
+      ].firstWhere((x) => x.isNotEmpty, orElse: () => ''),
+      done: quests.isNotEmpty && quests.every((q) => q['done'] == true),
+      organizing: first?['type'] == 'organize_counted',
       target: first?['target'] as int? ?? 0,
       progress: first?['count'] as int? ?? 0,
       joined: r['joined'] as bool? ?? false,
@@ -172,6 +179,19 @@ class SupabaseGameRepository implements GameRepository {
           expiresAt: v['expires_at'] == null
               ? null
               : DateTime.parse(v['expires_at'] as String).toLocal(),
+          product: v['product'] as String?,
+        ),
+    ];
+  });
+
+  @override
+  Future<List<GameBadge>> badges() => _guard(() async {
+    final rows = await _client.rpc('badge_my') as List? ?? [];
+    return [
+      for (final b in rows.cast<Map>())
+        GameBadge(
+          name: b['name'] as String,
+          blurb: b['blurb'] as String? ?? '',
         ),
     ];
   });
@@ -187,6 +207,8 @@ class SupabaseGameRepository implements GameRepository {
       nextB: next?['voucher_b'] as int? ?? 0,
       open: r['open'] as bool? ?? false,
       waiting: r['waiting'] as int? ?? 0,
+      minPresent: r['min_present'] as int? ?? 6,
+      feeCents: (r['fee_minor'] as num? ?? 200).toInt(),
       games: [
         for (final g in (r['games'] as List? ?? const []).cast<Map>())
           OrganizerGame(
@@ -312,6 +334,11 @@ class SupabaseGameRepository implements GameRepository {
 
 class DemoGameRepository implements GameRepository {
   @override
+  Future<List<GameBadge>> badges() async => const [
+    GameBadge(name: 'First five'),
+  ];
+
+  @override
   Future<List<GameVoucher>> vouchers() async => [
     GameVoucher(
       id: 'dv-1',
@@ -433,7 +460,6 @@ class DemoGameRepository implements GameRepository {
         rewards: const [
           Reward('Finish all 5', '20 bonus points'),
           Reward('First 500 to finish', 'S\$5 Shop voucher'),
-          Reward('Top club by Meets played', 'Club reward voucher doubled'),
         ],
         rules: const [
           'Only ranked Meets where you are marked Present count',
