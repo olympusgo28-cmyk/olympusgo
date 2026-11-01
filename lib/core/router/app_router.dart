@@ -1,3 +1,7 @@
+import '../../features/fitness/presentation/fitness_screens.dart';
+import '../../features/fitness/presentation/program_screens.dart';
+import '../../features/fitness/presentation/train_screen.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -42,7 +46,6 @@ import '../../features/discover/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/clubs/presentation/group_rank_screen.dart';
-import '../../features/discover/presentation/coming_screens.dart';
 import '../../features/discover/presentation/find_screen.dart';
 import '../../features/scan/host_scan_screen.dart';
 import '../../features/guardian/application/guardian_providers.dart';
@@ -175,13 +178,24 @@ GoRouter appRouter(Ref ref) {
       page(Routes.game, (_) => const GameHomeScreen()),
       page(Routes.find, (_) => const FindScreen()),
       page(Routes.services, (_) => const ServicesScreen()),
+      page(Routes.fitness, (_) => const FitnessHomeScreen()),
+      page(Routes.fitnessExercises, (_) => const ExerciseCatalogScreen()),
       page(
-        Routes.fitness,
-        (_) => const EmptyCategoryScreen(
-          title: 'Fitness',
-          message: 'Workouts will be here. None are open yet.',
-        ),
+        Routes.fitnessExercisePick,
+        (_) => const ExerciseCatalogScreen(pick: true),
       ),
+      page(
+        '/fitness/exercises/:id',
+        (s) => ExerciseDetailScreen(id: s.pathParameters['id']!),
+      ),
+      page(Routes.fitnessPrograms, (_) => const ProgramsScreen()),
+      page(
+        '/fitness/programs/:id',
+        (s) => ProgramBuilderScreen(id: s.pathParameters['id']!),
+      ),
+      page(Routes.fitnessTrain, (_) => const TrainScreen()),
+      page(Routes.fitnessLog, (_) => const WorkoutLogScreen()),
+      page(Routes.fitnessCalculators, (_) => const CalculatorsScreen()),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
       page(Routes.wallet, (_) => const WalletScreen()),
       page(Routes.organizerRewards, (_) => const OrganizerRewardsScreen()),

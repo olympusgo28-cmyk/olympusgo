@@ -256,6 +256,18 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-GAM-7 | A game is judged once attendance has closed for the day and its money has released. A session counts towards a quest once attendance has closed for the day, if the player kept their spot and the organizer scanned them or saved them on the list. | Open | Q157, Q167 |
 | R-GAM-8 | Games before payments open rank their group and earn nothing. | Open | Q158 |
 
+## 11c. Fitness
+
+| Id | Rule | Status | Source |
+| --- | --- | --- | --- |
+| R-FIT-1 | A player's programs and workout log are private to them. Other players, parents and staff can't read them. | Open | P5-04, Q170, Q177 |
+| R-FIT-2 | Under-18s see and can save only exercises marked as suitable, and templates made only of those. What they logged earlier is kept. | Open | P5-04, Q168 |
+| R-FIT-3 | Fitness makes no calorie or medical claims. Body mass index is a number with no verdict. | Decided | P5-04, Q174 |
+| R-FIT-4 | Nothing in Fitness earns points, vouchers, badges or rating. | Decided | P5-04 |
+| R-FIT-5 | Weight is stored in whole grams. A workout's key is unique per player, so a retry saves once. | Decided | P5-04 |
+| R-FIT-6 | A workout in progress stays on the phone until it saves. | Decided | P5-04 |
+| R-FIT-7 | One-rep max and body mass index are hidden from under-18s. Anything typed into a calculator stays on the phone. | Open | P5-04, Q175 |
+
 ## 12. Notifications and messages
 
 | Id | Rule | Status | Source |

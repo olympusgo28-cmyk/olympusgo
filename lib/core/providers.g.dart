@@ -9,6 +9,53 @@ part of 'providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(fitnessRepository)
+final fitnessRepositoryProvider = FitnessRepositoryProvider._();
+
+final class FitnessRepositoryProvider
+    extends
+        $FunctionalProvider<
+          FitnessRepository,
+          FitnessRepository,
+          FitnessRepository
+        >
+    with $Provider<FitnessRepository> {
+  FitnessRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'fitnessRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$fitnessRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<FitnessRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  FitnessRepository create(Ref ref) {
+    return fitnessRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FitnessRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FitnessRepository>(value),
+    );
+  }
+}
+
+String _$fitnessRepositoryHash() => r'8eb86ece09fd309e3017a32f32927e50097401cf';
+
 @ProviderFor(biometricVault)
 final biometricVaultProvider = BiometricVaultProvider._();
 

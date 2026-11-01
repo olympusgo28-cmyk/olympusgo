@@ -30,6 +30,14 @@ abstract final class Routes {
   static const find = '/find';
   static const services = '/services';
   static const fitness = '/fitness';
+  static const fitnessExercises = '/fitness/exercises';
+  static const fitnessExercisePick = '/fitness/exercises/pick';
+  static String fitnessExercise(String id) => '/fitness/exercises/$id';
+  static const fitnessPrograms = '/fitness/programs';
+  static String fitnessProgram(String id) => '/fitness/programs/$id';
+  static const fitnessTrain = '/fitness/train';
+  static const fitnessLog = '/fitness/log';
+  static const fitnessCalculators = '/fitness/calculators';
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';

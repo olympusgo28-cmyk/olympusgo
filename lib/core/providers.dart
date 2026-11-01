@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/venues/data/venue_repository.dart';
+import '../features/fitness/data/fitness_repository.dart';
 import '../features/game/data/game_repository.dart';
 import '../features/inbox/data/updates_repository.dart';
 import '../features/auth/data/auth_repository.dart';
@@ -25,6 +26,11 @@ import '../features/social/data/social_repository.dart';
 import 'config/env.dart';
 
 part 'providers.g.dart';
+
+@Riverpod(keepAlive: true)
+FitnessRepository fitnessRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseFitnessRepository(Supabase.instance.client)
+    : DemoFitnessRepository();
 
 @Riverpod(keepAlive: true)
 BiometricVault biometricVault(Ref ref) => BiometricVault();

@@ -177,3 +177,19 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q165 | Changing a live campaign's end date | Campaigns | It can run longer but not end sooner. To stop it early, staff end it | Open |
 | Q166 | Staff end a campaign while sessions are being played | Campaigns | Ending stops quests at once. A session not yet closed doesn't count | Open |
 | Q167 | When a quest's voucher arrives | Campaigns | Within minutes of attendance closing, at midnight after the session, so a correction that evening can't leave a voucher behind | Open |
+| Q168 | Which exercises suit under-18s | Fitness | Bodyweight and band work only, plus bench and box moves that carry no load. A coach must review the list | Open |
+| Q169 | Catalogue size. The board promises 240 | Fitness | About 40 written for launch, until a coach writes more. A coach must review them | Open |
+| Q170 | Parents seeing a child's workout log | Fitness | No. Logs are private to the player | Open |
+| Q171 | Keeping logs when a player stops using Fitness | Fitness | Until they delete them or the account. Set a period with the lawyer's data review | Open |
+| Q172 | Who edits the catalogue | Fitness | Staff, by migration, until an admin screen is needed | Open |
+| Q173 | `BUILD_PLAN.md` uses P5-xx for matches, and the checklist uses it for video and Fitness | Docs | The checklist is newer, so its ids stand | Open |
+| Q174 | Medical wording on the Fitness boards | Fitness | Changed, since the checklist says no medical claims. Body mass index shows the number with no verdict. "Injury prevention" is "Mobility and balance". The "faster recovery" line is reworded | Open |
+| Q175 | One-rep max and body mass index for under-18s | Fitness | Hidden. Adult figures don't suit growing players. The plates calculator stays | Open |
+| Q176 | Limits on Fitness | Fitness | 50 programs, 7 days each (the screen offers 1 to 5), 30 exercises a day, 300 sets a workout, 12 hours a workout. One-rep max stops at 12 reps | Open |
+| Q177 | Where workout logs live | Fitness | On our server, private to the player. The "stay on this phone" line on My workouts is replaced (owner, 1 Nov) | Decided |
+| Q178 | Ultralytics YOLO licence (decision 13) | Video analysis | No Ultralytics. The report covers movement, speed, distance and heatmaps, with no shuttle trajectory until a permissive detector is found (owner, 1 Nov) | Decided |
+| Q179 | Licence of the RTMPose model weights, trained on outside image datasets with their own terms | Video analysis | Check before Gate F | Open |
+| Q180 | Who can post to the video feed | Video feed | Adults post. Teens only watch people they follow, with no autoplay and a feed that ends. Minors can't post until the lawyer answers decision 14 (owner, 1 Nov) | Decided |
+| Q181 | Who can use AI plans | AI plans | Adults only, so no minor's data goes to an LLM (owner, 1 Nov) | Decided |
+| Q182 | When an account is deleted, must Fitness data go too? R-ACC-11 gives 30 days to undo, and support does this by hand today | Fitness, privacy | Yes. The support procedure must name `workouts` and `programs`, and removing the login clears them | Open |
+| Q183 | Workouts one player can save a day | Fitness | 20 in 24 hours, in `fitness.daily_workouts`. It protects the database, and no one should reach it | Open |

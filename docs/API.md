@@ -205,3 +205,20 @@ Authenticated only. Migrations `20261107090000` and `20261107100000`.
 | `shop_reserve(..., slot, voucher)` | Spends the voucher in the same transaction as stock and points |
 | `staff_campaign_list`, `staff_campaign_save`, `staff_campaign_status`, `staff_badge_save`, `staff_voucher_type_save`, `staff_organizer_games`, `staff_redemptions` | Staff. Campaigns and badges take role `content`, voucher types take `payments`, and both can read the list, games and redemptions. Writes through `admin-action` |
 
+## Fitness, as built in Phase 5a
+
+All are for signed-in players, and refuse restricted and suspended accounts. They need `fitness.enabled`. Clients have no table access.
+
+| Function | Does | Limit an hour |
+| --- | --- | --- |
+| `exercise_list()` | Live exercises, only suitable ones for under-18s | 300 |
+| `program_list()` | The caller's programs, then the templates that suit them | 300 |
+| `program_save(p_program jsonb)` | Creates or replaces a program. The phone makes the id, so a retry reaches the same row | 60 |
+| `program_delete(p_program uuid)` | Deletes the caller's program. Past workouts stay | 60 |
+| `workout_save(p_client_key text, p_workout jsonb)` | Saves a finished workout once per key. 20 a day, in `fitness.daily_workouts` | 60 |
+| `workout_delete(p_workout uuid)` | Deletes the caller's workout | 60 |
+| `workout_summary(p_days int default 30)` | Totals, streak, recent workouts and personal bests. Null means all time. Lists at most 100 workouts | 300 |
+| `exercise_history(p_exercise uuid)` | The caller's best set, times done and last 30 sets | 300 |
+
+These functions aren't marked `stable`. The API runs a stable function in a read-only transaction, where the request gate can't record a rate-limit hit.
+

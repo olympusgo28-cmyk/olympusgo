@@ -552,6 +552,18 @@ create view money.balances with (security_invoker = true) as
 - `voucher_redemptions` is append-only: who, which shop, which order, when, and no code.
 - `order_lines.unit_voucher` holds what the voucher took off one unit. `orders.voucher_id` is what `private.order_unreserve` hands back.
 
+## Fitness
+
+All in `public`, with no client access. Every read and write goes through the functions in `API.md`.
+
+| Table | Holds |
+| --- | --- |
+| `exercises` | The catalogue, with `minors_ok`, `unit` (reps or seconds) and `weighted` |
+| `programs` | A player's programs. A template has no owner |
+| `program_days`, `program_items` | Days, and the exercises on them. A day's name is optional |
+| `workouts` | The log. `client_key` is unique per player. `program_id` clears if the program is deleted |
+| `workout_sets` | Each finished set. Weight is `weight_g`, in whole grams |
+
 ## Tests every migration in this file needs
 
 - RLS on for every table (CI meta-test).
