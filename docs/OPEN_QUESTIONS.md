@@ -210,14 +210,28 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q198 | People in a clip who didn't agree | Video analysis | A tick box that everyone agreed, the clip is private to the uploader, and no opponent's numbers are stored. The lawyer should check this (PRD open item) | Open |
 | Q199 | Rallies in the report | Video analysis | Left out. Good-Badminton counts rallies from broadcast cuts, which a tripod never has. Add as beta only if a movement-based count passes on real clips | Open |
 | Q200 | "Use clips to improve the camera system" on the filming screen | Academy | Removed. It was collected and dropped, and nothing trains on clips | Open |
-| Q201 | Moderating uploaded analysis clips | Video analysis | None, as they're private to the uploader. Abuse-image matching comes with the feed in 5d | Open |
+| Q201 | Moderating uploaded analysis clips | Video analysis | None, as they're private to the uploader. Feed posts are matched in 5d, through a seam with no provider yet (Q214). Analysis clips still aren't | Open |
 | Q202 | Which staff role owns the jobs monitor | Admin | Content staff, and it shows no clip, frame or player | Open |
 | Q203 | Doubles clips | Video analysis | Singles only, your own side only, and only that side's numbers are stored (owner, 2 Nov) | Decided |
 | Q204 | Who adds a clip of an under-18 | Video analysis | A linked parent, with one consent row per video. Teens can't upload. Off until Gate F (owner, 2 Nov) | Decided |
 | Q205 | Should a child see their own report? | Video analysis | No, only the parent who added it, for now | Open |
 | Q206 | A parent link ends, or a child turns 18 | Video analysis | The clip and its report are deleted at the next sweep, because the parent who added it no longer has a claim. That holds even if another parent is still linked, and the child can't get them either | Open |
 | Q207 | Does withdrawing consent remove the report? | Video analysis | No. The clip goes, and the numbers stay, as the filming screen says. A parent can delete the report too | Open |
-| Q208 | The account deletion job (P1-14), when it's built | Privacy | It must delete `video_clips`, not anonymise them, or the files are left behind. The sweep's check for files with no clip is the safety net | Open |
+| Q208 | The account deletion job (P1-14), when it's built | Privacy | It must delete `video_clips` and `video_posts`, not anonymise them, or the files are left behind. The sweep's checks for files with no row are the safety net. It should also wait for a post's open check: deleting an account today cascades the job away, so a video posted and left at once is never matched, though nobody could see it | Open |
 | Q209 | Tracking settings in the worker | Video analysis | 10 samples a second, top speed 8 m/s, doubles when two people are inside the lines for over 30% of the time anyone is seen, and too few sightings under 20%. In `workers/analysis/olympus_worker/metrics.py`. All guesses until real tripod clips are tested | Open |
 | Q210 | Can an adult extend their own clip? | Video analysis | Not in the app, which offers it to parents only, as the checklist says. The database allows any owner to, once | Open |
 | Q211 | Parent consent wording | Video analysis | "I'm [name]'s parent or guardian, and I agree to OlympusGO analysing this clip of them.", version `v1` in `video.consent_version`. The lawyer should check it before `video.analysis_minors` goes on | Open |
+| Q212 | A child in an adult's video, after their first 3 posts | Video feed | Only the no-under-18s tick and reports catch it. No automatic check finds a child in a post. **Owner to decide before launch** | Open |
+| Q213 | Who gets abuse-match reports, and how long evidence is held | Video feed | Unknown, so `video.feed` stays off until the lawyer answers. A match keeps its file and an `abuse_matches` row, and opens a child-safety case | Open |
+| Q214 | Frame checker and hash-matching provider, and the video host | Video feed | None chosen. Cloudflare Stream is only assumed in the architecture. Until then a hosted post fails and can't go live | Open |
+| Q215 | Autoplay for adults | Video feed | Off. Tap to play for everyone. No document settles it for adults, and under-18s must never have it | Open |
+| Q216 | Post length, size and daily limit | Video feed | 60 seconds, 100 MB, 5 a day, in `feed.max_seconds`, `feed.max_mb` and `feed.daily_posts` | Open |
+| Q217 | How long a list is | Video feed | 50 posts in `feed.list_length`, with no paging, so each list ends | Open |
+| Q218 | How many frames are checked | Video feed | 1 a second, in `feed.frames_per_second`. Anything shorter between samples is missed | Open |
+| Q219 | Deadline to review a first post | Video feed | 24 hours in `feed.review_hours`, shown in the queue. Nothing enforces it yet | Open |
+| Q220 | Reviewers on formats a browser can't play | Video feed | The admin player says so. A phone's MOV or HEVC may not play on the web, so a real host needs to convert them | Open |
+| Q221 | Default audience for a post | Video feed | Followers. The author can pick Everyone | Open |
+| Q222 | How long posts stay up | Video feed | Until deleted, with no 90-day rule. Rejected and failed posts go after 30 days, in `feed.rejected_days` | Open |
+| Q223 | Which gate covers the feed | Video feed | None names it. Suggest Gate F plus Q212 to Q214 | Open |
+| Q224 | Suspending an account after a match | Video feed | No automatic suspension, which would tip them off and punish a false match. Their later posts go to a person, and staff can suspend | Open |
+| Q225 | Children's posts | Video feed | Not built. Q180 says minors can't post until the lawyer answers decision 14, which outranks the checklist's line on results, badges and parent-reviewed clips | Open |

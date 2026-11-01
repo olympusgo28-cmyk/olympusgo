@@ -42,6 +42,24 @@ class StaffApi {
     }
   }
 
+  /// A short link to one video. The database records every look.
+  Future<String> postVideoUrl(String post) async {
+    try {
+      final res = await _client.functions.invoke(
+        'feed-media',
+        body: {'action': 'staff_play', 'post': post},
+      );
+      return (res.data as Map)['url'] as String;
+    } on FunctionException catch (e) {
+      final details = e.details;
+      throw StaffFailure(
+        details is Map && details['error'] is String
+            ? details['error'] as String
+            : 'We couldn\'t open that video.',
+      );
+    }
+  }
+
   /// A link to a verification file, good for a minute.
   Future<String> documentUrl(String path) async {
     try {

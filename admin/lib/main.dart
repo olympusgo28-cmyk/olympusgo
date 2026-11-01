@@ -16,6 +16,7 @@ import 'features/auth/mfa_screen.dart';
 import 'features/auth/session.dart';
 import 'features/game/campaigns_screen.dart';
 import 'features/money/money_screens.dart';
+import 'features/posts/first_posts_screen.dart';
 import 'features/reports/reports_screens.dart';
 import 'features/shell/admin_shell.dart';
 import 'features/shop/catalogue_screen.dart';
@@ -36,6 +37,12 @@ Future<void> main() async {
 
 const sections = [
   Section('/reports', 'Reports', Icons.flag_outlined, 'moderator'),
+  Section(
+    '/first-posts',
+    'First posts',
+    Icons.smart_display_outlined,
+    'moderator',
+  ),
   Section('/users', 'Users', Icons.people_outline, 'moderator'),
   Section('/scores', 'Scores', Icons.scoreboard_outlined, 'moderator'),
   Section('/sports', 'Sports', Icons.sports_tennis, 'content'),
@@ -80,6 +87,10 @@ final _router = GoRouter(
         GoRoute(path: '/sports', builder: (_, _) => const SportsScreen()),
         GoRoute(path: '/rules', builder: (_, _) => const RulesScreen()),
         GoRoute(path: '/scores', builder: (_, _) => const ScoresScreen()),
+        GoRoute(
+          path: '/first-posts',
+          builder: (_, _) => const FirstPostsScreen(),
+        ),
         GoRoute(path: '/reports', builder: (_, _) => const ReportsScreen()),
         GoRoute(path: '/reports/bans', builder: (_, _) => const BansScreen()),
         GoRoute(

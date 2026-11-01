@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/venues/data/venue_repository.dart';
 import '../features/analysis/data/analysis_repository.dart';
+import '../features/feed/data/feed_repository.dart';
 import '../features/fitness/data/fitness_repository.dart';
 import '../features/game/data/game_repository.dart';
 import '../features/inbox/data/updates_repository.dart';
@@ -27,6 +28,11 @@ import '../features/social/data/social_repository.dart';
 import 'config/env.dart';
 
 part 'providers.g.dart';
+
+@Riverpod(keepAlive: true)
+FeedRepository feedRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseFeedRepository(Supabase.instance.client)
+    : DemoFeedRepository();
 
 @Riverpod(keepAlive: true)
 AnalysisRepository analysisRepository(Ref ref) => Env.hasSupabase

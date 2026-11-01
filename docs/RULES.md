@@ -282,6 +282,12 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-VID-5 | A worker holds no service-role key. It gets a token for one job, and short signed URLs. | Decided | P5-02 |
 | R-VID-6 | Analysis is singles, the player's own side. Only that side's numbers are stored, and a report holds no image. | Decided | P5-03, Q203 |
 | R-VID-7 | Analysis never changes a rating, score or Passport. | Decided | P5-03 |
+| R-VID-8 | Adults post to the feed. Under-18s don't, until the lawyer answers decision 14. | Decided | P5-06, Q180, Q225 |
+| R-VID-9 | Nothing shows before its checks pass: the hash match first, then frames. A check that can't run leaves the post waiting or failed, never live. | Decided | P5-06, Q214 |
+| R-VID-10 | A person reviews a user's first 3 posts. After that the automatic checks decide, and a flag goes to a person. | Decided | P5-06 |
+| R-VID-11 | Adults see Following and Discover, the newest public posts from their country and sports. Under-18s see Following only, with no autoplay. Restricted children have no feed. Every list ends. | Decided | P5-06, SAF-6 |
+| R-VID-12 | Reactions only, and report and block on every post. | Decided | P5-06 |
+| R-VID-13 | A hash match blocks the post for good, records it, and opens a child-safety case. Nothing tells the author, and no one plays the file. | Open | P5-06, Q213 |
 
 ## 12. Notifications and messages
 

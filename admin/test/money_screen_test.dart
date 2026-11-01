@@ -19,6 +19,9 @@ class _Api implements StaffApi {
   }
 
   @override
+  Future<String> postVideoUrl(String post) async => '';
+
+  @override
   Future<String> documentUrl(String path) async => 'https://example.com/$path';
 
   @override

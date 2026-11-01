@@ -1258,12 +1258,14 @@ class ReportContentScreen extends ConsumerStatefulWidget {
     required ChatScope this.scope,
     required String this.messageId,
   }) : clubId = null,
-       activityId = null;
+       activityId = null,
+       postId = null;
 
   const ReportContentScreen.club({super.key, required String this.clubId})
     : scope = null,
       messageId = null,
-      activityId = null;
+      activityId = null,
+      postId = null;
 
   /// A tournament or event.
   const ReportContentScreen.activity({
@@ -1271,12 +1273,21 @@ class ReportContentScreen extends ConsumerStatefulWidget {
     required String this.activityId,
   }) : scope = null,
        messageId = null,
-       clubId = null;
+       clubId = null,
+       postId = null;
+
+  /// A post in the video feed.
+  const ReportContentScreen.video({super.key, required String this.postId})
+    : scope = null,
+      messageId = null,
+      clubId = null,
+      activityId = null;
 
   final ChatScope? scope;
   final String? messageId;
   final String? clubId;
   final String? activityId;
+  final String? postId;
 
   @override
   ConsumerState<ReportContentScreen> createState() =>
@@ -1291,6 +1302,7 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
   final _note = TextEditingController();
 
   bool get _isMessage => widget.messageId != null;
+  bool get _isVideo => widget.postId != null;
 
   @override
   void dispose() {
@@ -1305,6 +1317,8 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
       await repo.report(
         _isMessage
             ? ReportTarget.message(widget.messageId!, scope: widget.scope!)
+            : _isVideo
+            ? ReportTarget.video(widget.postId!)
             : widget.activityId != null
             ? ReportTarget.activity(widget.activityId!)
             : ReportTarget.club(widget.clubId!),
@@ -1325,7 +1339,11 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isMessage ? 'Report a message' : 'Report a club or event';
+    final title = _isMessage
+        ? 'Report a message'
+        : _isVideo
+        ? 'Report a video'
+        : 'Report a club or event';
     if (_sent) {
       return KitScaffold(
         header: KitHeader(title: title, titleSize: 22),
@@ -1350,7 +1368,7 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ],
       );
     }
-    final reasons = _isMessage
+    final reasons = _isMessage || _isVideo
         ? ContentReport.forMessage
         : ContentReport.forClub;
     return KitScaffold(
@@ -1363,14 +1381,15 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ),
       ],
       children: [
-        _isMessage
-            ? _messageCard(context)
-            : widget.activityId != null
-            ? _activityCard(context)
-            : _clubCard(context),
+        if (!_isVideo)
+          _isMessage
+              ? _messageCard(context)
+              : widget.activityId != null
+              ? _activityCard(context)
+              : _clubCard(context),
         KitTitle(
           'What is wrong with it?',
-          lead: _isMessage
+          lead: _isMessage || _isVideo
               ? 'Reports are private. They are not told who reported.'
               : 'Reports are private. The organizer is not told who reported.',
         ),
@@ -1387,15 +1406,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
           ],
         ),
         KitTextArea(label: 'Tell us more', optional: true, controller: _note),
-        KitConfirmBox(
-          label: _isMessage
-              ? 'Hide this message from me now'
-              : widget.activityId != null
-              ? 'Hide this from my results'
-              : 'Hide this club from my results',
-          checked: _hide,
-          onChanged: (v) => setState(() => _hide = v),
-        ),
+        if (!_isVideo)
+          KitConfirmBox(
+            label: _isMessage
+                ? 'Hide this message from me now'
+                : widget.activityId != null
+                ? 'Hide this from my results'
+                : 'Hide this club from my results',
+            checked: _hide,
+            onChanged: (v) => setState(() => _hide = v),
+          ),
       ],
     );
   }

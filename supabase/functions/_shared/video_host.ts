@@ -18,9 +18,8 @@ class StorageHost implements VideoHost {
   constructor(private service: SupabaseClient, private publicUrl?: string) {}
 
   async uploadTarget(ref: string) {
-    const { data, error } = await this.service.storage.from(FEED_BUCKET).createSignedUploadUrl(ref, {
-      upsert: true,
-    });
+    // No overwriting: the file that passes the checks is the file people see.
+    const { data, error } = await this.service.storage.from(FEED_BUCKET).createSignedUploadUrl(ref);
     if (error || !data) throw new Error("upload url failed");
     return { path: data.path, token: data.token };
   }

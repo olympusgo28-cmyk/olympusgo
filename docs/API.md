@@ -250,5 +250,22 @@ The phone calls the `ai-plan` Edge Function with `client_key`, `goal` and `days`
 
 The worker calls the `analysis-worker` Edge Function with `x-worker-secret`. `{"action": "claim"}` gives `{"job": ...}` with a token and a signed clip URL. `{"action": "continue", ...}` says whether to carry on, and a worker asks between stages. `{"action": "result", ...}` sends the outcome, with a court job's frame as base64. A worker can't write to Storage. Set `ANALYSIS_WORKER_SECRET`, and `ANALYSIS_PUBLIC_URL` if the worker reaches Storage on a different address. The money worker runs the sweep with `{"task": "clips"}`.
 
+### Video feed, as built in Phase 5d
+
+| Function | What it does | Who |
+| --- | --- | --- |
+| `feed_status()` | Whether the feed is open to the caller, whether they can post or see Discover, and the limits | Player |
+| `feed_following()`, `feed_discover()` | Lists that end, with no cursor. Discover refuses under-18s | Player |
+| `post_create(p_post, p_ext, p_seconds, p_bytes, p_caption, p_sport, p_audience, p_no_minors)` | Starts a post. The phone makes the id, so a retry reaches the same post. A used id with a case or match is refused | Adult |
+| `post_upload_target(p_post)`, `post_uploaded(p_post)` | The file's place, and queues its checks | Author |
+| `post_retry(p_post)` | Runs failed checks again | Author |
+| `post_delete(p_post)`, `post_mine()` | Open whatever the account's state. A blocked post reads as rejected | Author |
+| `post_like(p_post)`, `post_unlike(p_post)` | Like a post the caller may see | Player |
+| `post_play(p_post)`, `post_posters(p_posts)` | What `feed-media` signs, for this viewer | Player |
+| `feed_svc_claim()`, `feed_svc_job(...)`, `feed_svc_result(...)`, `feed_svc_sweep()` | The worker's side | Service only |
+| `staff_post_queue()`, `staff_post_decide(p_post, p_outcome, p_reason)`, `staff_post_play(p_post)` | First posts. Every look and decision is audited | Moderators |
+
+Reports are `content_reports` rows with `target_kind` `video`, on a post that has passed its hash match. `feed-media` runs as the signed-in person: `{"action": "upload", "post": id}`, `{"action": "play", "post": id}`, `{"action": "posters", "posts": [...]}`, or `staff_play`. Links last `feed.url_seconds`. A worker calls `feed-worker` with `x-worker-secret`: `{"action": "claim"}`, then `{"action": "check", "job_id", "token", "ok", "frames", "code", "worker_seconds"}`. That function calls the providers, so the worker holds no key. `feed-local` plays the worker on a local stack, and takes `hash`, `frames` and `fail` to script a verdict. It needs `feed.fake_checks` on, and answers 404 anywhere else.
+
 These functions aren't marked `stable`. The API runs a stable function in a read-only transaction, where the request gate can't record a rate-limit hit.
 

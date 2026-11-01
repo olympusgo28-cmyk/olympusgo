@@ -9,6 +9,47 @@ part of 'providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(feedRepository)
+final feedRepositoryProvider = FeedRepositoryProvider._();
+
+final class FeedRepositoryProvider
+    extends $FunctionalProvider<FeedRepository, FeedRepository, FeedRepository>
+    with $Provider<FeedRepository> {
+  FeedRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'feedRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$feedRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<FeedRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  FeedRepository create(Ref ref) {
+    return feedRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FeedRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FeedRepository>(value),
+    );
+  }
+}
+
+String _$feedRepositoryHash() => r'a57fd9aed85c25f0323bff94a37e0a1204a3ba97';
+
 @ProviderFor(analysisRepository)
 final analysisRepositoryProvider = AnalysisRepositoryProvider._();
 

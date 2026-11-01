@@ -579,6 +579,19 @@ All in `public`, with no client access. Files are in the private `analysis-clips
 | `analysis_reports` | Distance, speeds, moving time and a 13 by 6 heatmap grid. No image, and nothing about an opponent |
 | `storage_deletions` | Paths still to remove. Filled when a clip's row goes or its time is up |
 
+## Video feed
+
+All in `public`, with no client access. Files are in the private `feed-videos` bucket, as `<author>/<post>.mp4` and `.poster.jpg`, which no client can read or write: uploads and reads use short signed URLs from `feed-media`. `storage_deletions` has a `bucket` column, and one sweep clears both buckets.
+
+| Table | Holds |
+| --- | --- |
+| `video_posts` | One post: author, caption (`body`), sport, country, audience, status, `video_host`, `video_ref`, `file_version`, `hash_cleared_at`, `approved_at`, `hidden_at` |
+| `post_likes` | One like per person per post |
+| `post_jobs` | One check per post, with a hashed token |
+| `abuse_matches` | Append-only, with no foreign keys, so a match outlives the post and the account |
+
+`private.post_transitions` holds the allowed status changes. A check constraint keeps anything out of `review` and `live` without `hash_cleared_at`. `private.post_visible(post, viewer)` decides every read, like and play.
+
 ## Tests every migration in this file needs
 
 - RLS on for every table (CI meta-test).

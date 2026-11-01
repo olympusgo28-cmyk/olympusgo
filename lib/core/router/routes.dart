@@ -43,6 +43,10 @@ abstract final class Routes {
   static const analysisAdd = '/fitness/analysis/add';
   static String analysisClip(String id) => '/fitness/analysis/$id';
   static String childClips(String id) => '/parent-link/children/$id/clips';
+  static const videos = '/videos';
+  static const addPost = '/videos/add';
+  static const myPosts = '/videos/mine';
+  static String reportVideo(String id) => '/videos/$id/report';
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';

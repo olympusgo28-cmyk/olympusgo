@@ -25,21 +25,32 @@ class ChatScope {
 class ReportTarget {
   const ReportTarget.message(this.id, {required this.scope})
     : isClub = false,
-      isActivity = false;
+      isActivity = false,
+      isVideo = false;
   const ReportTarget.club(this.id)
     : isClub = true,
       isActivity = false,
+      isVideo = false,
       scope = null;
 
   /// A tournament or event.
   const ReportTarget.activity(this.id)
     : isClub = false,
       isActivity = true,
+      isVideo = false,
+      scope = null;
+
+  /// A post in the video feed.
+  const ReportTarget.video(this.id)
+    : isClub = false,
+      isActivity = false,
+      isVideo = true,
       scope = null;
 
   final String id;
   final bool isClub;
   final bool isActivity;
+  final bool isVideo;
   final ChatScope? scope;
 }
 

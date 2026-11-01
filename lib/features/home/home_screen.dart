@@ -21,6 +21,7 @@ import '../play/domain/activity.dart';
 import '../shell/main_shell.dart';
 import '../social/application/social_providers.dart';
 import '../earnings/application/earnings_providers.dart';
+import '../feed/application/feed_providers.dart';
 import 'application/home_categories.dart';
 import 'home_rows.dart';
 
@@ -37,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
     ref.invalidate(teamListProvider);
     ref.invalidate(suggestedPlayersProvider);
     ref.invalidate(pointsSummaryProvider);
+    ref.invalidate(feedStatusProvider);
   }
 
   @override
@@ -61,6 +63,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: _Categories()),
+            const SliverToBoxAdapter(child: _Videos()),
             const SliverToBoxAdapter(child: _Balances()),
             const SliverToBoxAdapter(child: _YourGroups()),
             const SliverToBoxAdapter(
@@ -221,6 +224,29 @@ class _Hero extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown only when the server says this person has a feed.
+class _Videos extends ConsumerWidget {
+  const _Videos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!(ref.watch(feedStatusProvider).value?.open ?? false)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: KitNavTile(
+        icon: OgIcons.video,
+        title: 'Videos',
+        subtitle: 'From people you follow',
+        padding: EdgeInsets.zero,
+        minHeight: 68,
+        onTap: () => context.push(Routes.videos),
       ),
     );
   }

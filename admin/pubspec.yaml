@@ -17,6 +17,7 @@ dependencies:
   og_money:
     path: ../packages/og_money
   supabase_flutter: ^2.18.3
+  video_player: ^2.14.1
 
 dev_dependencies:
   flutter_test:

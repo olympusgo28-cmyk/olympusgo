@@ -68,6 +68,15 @@ verify_jwt = false
 [functions.analysis-worker]
 verify_jwt = false
 
+[functions.feed-media]
+verify_jwt = true
+
+[functions.feed-worker]
+verify_jwt = false
+
+[functions.feed-local]
+verify_jwt = false
+
 # Answers 404 anywhere but a local stack.
 [functions.analysis-local]
 verify_jwt = false

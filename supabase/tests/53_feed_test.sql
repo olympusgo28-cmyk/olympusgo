@@ -384,6 +384,28 @@ select ok(not t.p(10) = any (t.ids(public.feed_following())), 'and a suspended a
 select t.back();
 delete from public.account_moderation where user_id = t.u(1);
 
+-- A person only ever sees a file that passed the hash match.
+select t.upload(t.p(16), t.u(11));
+select t.who(t.u(11));
+select throws_ok(format($$ insert into public.content_reports (reporter_id, target_kind, target_id, reason)
+  values (auth.uid(), 'video', %L, 'Harmful') $$, t.p(16)), '42501', null, 'an unchecked post can''t be reported into a person''s view');
+select t.back();
+insert into public.moderation_cases (target_kind, target_id, deadline_at) values ('video', t.p(16)::text, now() + interval '1 day');
+select t.as_staff(t.u(9));
+select throws_like($$ select public.staff_post_play(t.p(16)) $$, 'This video can''t be played%', 'and staff can''t play one, case or no case');
+select t.back();
+delete from public.moderation_cases where target_id = t.p(16)::text;
+select t.verdict();
+
+-- The file that passed is the file that plays.
+update storage.objects set version = 'first' where bucket_id = 'feed-videos' and name like '%' || t.p(11) || '%';
+update public.video_posts set file_version = 'first' where id = t.p(11);
+update storage.objects set version = 'swapped' where bucket_id = 'feed-videos' and name like '%' || t.p(11) || '%';
+select t.who(t.u(2));
+select throws_like($$ select public.post_play(t.p(11)) $$, 'This video isn''t available%', 'a swapped file doesn''t play');
+select t.back();
+update storage.objects set version = 'first' where bucket_id = 'feed-videos' and name like '%' || t.p(11) || '%';
+
 -- Lists end, with no cursor to carry on.
 update public.app_settings set value = '1' where key = 'feed.list_length';
 select t.who(t.u(2));
@@ -452,6 +474,13 @@ select ok(not t.p(14) = any (t.ids(public.staff_post_queue())), 'a moderator''s 
 select throws_like($$ select public.staff_post_decide(t.p(14), 'live', 'Mine') $$, 'Someone else has to%', 'and they can''t pass it');
 select t.back();
 
+-- Or their own case.
+insert into public.moderation_cases (target_kind, target_id, owner_id, deadline_at)
+values ('video', t.p(14)::text, t.u(9), now() + interval '1 day');
+select t.as_staff(t.u(9));
+select throws_like($$ select public.staff_case_decide(t.case_of(t.p(14)), 'kept', 'Mine') $$, 'Someone else has to decide your own case%', 'or keep a case on their own post');
+select t.back();
+
 -- Three approvals, then the checks decide.
 update public.video_posts set approved_at = now() where id in (t.p(2));
 insert into public.video_posts (id, author_id, sport, country_code, ext, seconds, bytes, status, video_ref, hash_cleared_at, approved_at, live_at, no_minors_at)
@@ -491,6 +520,20 @@ select ok((select hidden_at from public.video_posts where id = t.p(20)) is not n
 select throws_like($$ update public.abuse_matches set matcher = 'x' where post_id = t.p(20) $$, 'A match can''t change%', 'a match can''t be edited');
 select throws_like($$ delete from public.abuse_matches where post_id = t.p(20) $$, 'A match can''t change%', 'or removed');
 
+-- Nothing about a match reaches its author by another door.
+select t.upload(t.p(24), t.u(3));
+select is(t.verdict('match'), 'blocked', 'another match');
+select t.who(t.u(3));
+select is((public.post_create(t.p(24), 'mp4', 20, 1000, '', 'badminton', 'public', true) ->> 'status'), 'rejected', 'a retry says rejected, not blocked');
+select t.back();
+select t.as_staff(t.u(9));
+select is(public.staff_case_get(t.case_of(t.p(24))) ->> 'text', 'Blocked video', 'staff see no caption on a match');
+select t.back();
+update public.video_posts set created_at = now() - interval '31 days' where id = t.p(24);
+select t.who(t.u(3));
+select is((select count(*)::int from jsonb_array_elements(public.post_mine()) x where (x ->> 'id')::uuid = t.p(24)), 0, 'and it leaves My posts when a rejection would');
+select t.back();
+
 -- After a match, that author's posts go to a person.
 select t.upload(t.p(21), t.u(1));
 select is(t.verdict(), 'review', 'an author with a match goes back to review');
@@ -499,6 +542,7 @@ select is(t.verdict(), 'review', 'an author with a match goes back to review');
 select t.upload(t.p(22), t.u(3));
 select t.who(t.u(3));
 select lives_ok($$ select public.post_delete(t.p(22)) $$, 'deleting mid-check is allowed');
+select is((public.post_create(t.p(22), 'mp4', 20, 1000, '', 'badminton', 'public', true) ->> 'status'), 'deleted', 'a retry says deleted');
 select t.back();
 set local role service_role;
 select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
@@ -506,6 +550,10 @@ reset role;
 select is((select count(*)::int from public.video_posts where id = t.p(22)), 1, 'and the post stays while its check is open');
 select is(t.verdict('match'), 'blocked', 'a late match still lands');
 select is((select status from public.video_posts where id = t.p(22)), 'blocked', 'on a deleted post');
+select t.who(t.u(3));
+select is((select count(*)::int from jsonb_array_elements(public.post_mine()) x where (x ->> 'id')::uuid = t.p(22)), 0, 'and it stays out of My posts');
+select is((public.post_create(t.p(22), 'mp4', 20, 1000, '', 'badminton', 'public', true) ->> 'status'), 'deleted', 'and a retry still says deleted');
+select t.back();
 select t.upload(t.p(23), t.u(3));
 select t.who(t.u(3));
 select lives_ok($$ select public.post_delete(t.p(23)) $$, 'deleting another');
@@ -551,6 +599,32 @@ set local role service_role;
 select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
 reset role;
 select is((select count(*)::int from public.video_posts where id in (t.p(30), t.p(5))), 0, 'goes, with a rejected post past its time');
+
+-- A used id stays spent.
+select t.who(t.u(1));
+select t.back();
+delete from public.video_posts where id = t.p(3);
+select t.who(t.u(1));
+select throws_like($$ select public.post_create(t.p(3), 'mp4', 20, 1000, '', 'badminton', 'public', true) $$,
+  'This post can''t be added%', 'an id with a case can''t come back');
+select t.back();
+
+-- A deleted post whose checks failed tries again rather than going unchecked.
+select t.upload(t.p(33), t.u(3));
+select t.who(t.u(3));
+select lives_ok($$ select public.post_delete(t.p(33)) $$, 'deleted before its check');
+select t.back();
+update public.post_jobs set status = 'failed', finished_at = now() where post_id = t.p(33);
+set local role service_role;
+select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
+reset role;
+select is((select status from public.post_jobs where post_id = t.p(33)), 'queued', 'and its check goes round again');
+select is((select count(*)::int from public.video_posts where id = t.p(33)), 1, 'with the post still there');
+update public.video_posts set created_at = now() - interval '31 days' where id = t.p(33);
+set local role service_role;
+select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
+reset role;
+select is((select count(*)::int from public.video_posts where id = t.p(33)), 0, 'until its time runs out');
 
 -- A file with no post goes. One tied to a match doesn't.
 insert into storage.objects (bucket_id, name, metadata, created_at) values

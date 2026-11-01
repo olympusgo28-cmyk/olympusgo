@@ -5,6 +5,7 @@ import 'package:og_design/og_design.dart';
 
 import '../../core/staff_api.dart';
 import '../../core/ui.dart';
+import '../posts/first_posts_screen.dart';
 
 /// A-03: the daily queue, by deadline then number of reports.
 class ReportsScreen extends ConsumerStatefulWidget {
@@ -116,6 +117,19 @@ class _CaseScreenState extends ConsumerState<CaseScreen> {
               c['text'] as String? ?? 'This item no longer exists.',
               style: OgText.lead(context.og.text),
             ),
+            // A file matched as abuse imagery is never played.
+            if (c['target_kind'] == 'video' &&
+                c['text'] != 'Blocked video') ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton(
+                  onPressed: () =>
+                      showPostVideo(context, ref, c['target_id'] as String),
+                  child: const Text('Play video'),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Text(
               'Warnings on this account: ${c['owner_warnings']}',
