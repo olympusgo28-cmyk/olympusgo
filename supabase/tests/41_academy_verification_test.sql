@@ -59,7 +59,8 @@ insert into public.academy_coaches (academy_id, user_id, role, head, accepted_at
 values (t.id('waiting'), 'c1000000-0000-0000-0000-000000000003', 'Head coach', true, now());
 
 select t.as_user('c1000000-0000-0000-0000-000000000006');
-select is((select count(*) from jsonb_array_elements(public.academy_list())), 1::bigint, 'a stranger sees only the verified academy');
+select is((select count(*) from jsonb_array_elements(public.academy_list()) x
+  where (x ->> 'id')::uuid in (t.id('academy'), t.id('waiting'))), 1::bigint, 'a stranger sees only the verified academy');
 select throws_ok($$ select public.academy_get(t.id('waiting')) $$, 'This academy is no longer listed.', 'and can''t open an unverified one');
 select t.reset();
 select t.as_user('c1000000-0000-0000-0000-000000000003');
