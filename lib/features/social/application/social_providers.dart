@@ -67,11 +67,17 @@ class BlockedPlayers extends _$BlockedPlayers {
       ref.watch(socialRepositoryProvider).blocked();
 
   Future<void> block(String id) async {
-    await ref.read(socialRepositoryProvider).block(id);
-    ref.invalidateSelf();
-    ref.invalidate(myFollowingProvider);
-    ref.invalidate(feedFollowingProvider);
-    ref.invalidate(feedDiscoverProvider);
+    // A profile calls this without watching the list, so it has to last.
+    final link = ref.keepAlive();
+    try {
+      await ref.read(socialRepositoryProvider).block(id);
+      ref.invalidateSelf();
+      ref.invalidate(myFollowingProvider);
+      ref.invalidate(feedFollowingProvider);
+      ref.invalidate(feedDiscoverProvider);
+    } finally {
+      link.close();
+    }
   }
 
   Future<void> unblock(String id) async {

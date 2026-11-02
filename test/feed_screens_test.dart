@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +18,7 @@ import 'package:olympus_go/features/feed/domain/feed_models.dart';
 import 'package:olympus_go/features/feed/presentation/feed_screens.dart';
 import 'package:olympus_go/features/onboarding/domain/sport.dart';
 import 'package:olympus_go/features/play/application/play_providers.dart';
+import 'package:olympus_go/features/social/application/social_providers.dart';
 import 'package:olympus_go/features/social/data/social_repository.dart';
 import 'package:olympus_go/features/social/domain/social_models.dart';
 import 'package:video_player/video_player.dart';
@@ -150,19 +153,25 @@ class _Player extends VideoPlayerController {
   }
 
   static final live = <_Player>[];
+  static Completer<void>? gate;
   final bool playable;
   var paused = 0;
+  var plays = 0;
 
   void fail() => value = value.copyWith(errorDescription: 'link ran out');
 
   @override
   Future<void> initialize() async {
     if (!playable) throw Exception('no plugin');
+    await gate?.future;
     value = value.copyWith(size: const Size(16, 9), isInitialized: true);
   }
 
   @override
-  Future<void> play() async => value = value.copyWith(isPlaying: true);
+  Future<void> play() async {
+    plays++;
+    value = value.copyWith(isPlaying: true);
+  }
 
   @override
   Future<void> pause() async {
@@ -348,6 +357,21 @@ void main() {
       await _settle(tester);
       await tapText(tester, 'Mei Tan');
       expect(_Player.live.first.paused, greaterThan(0));
+    });
+
+    testWidgets('leaving while it loads doesn\'t start the sound', (
+      tester,
+    ) async {
+      final repo = _Repo()..following_ = [post('1')];
+      _Player.gate = Completer<void>();
+      addTearDown(() => _Player.gate = null);
+      await _pump(tester, repo, playable: true);
+      await tester.tap(find.bySemanticsLabel('Play video').first);
+      await _settle(tester);
+      await tapText(tester, 'Mei Tan');
+      _Player.gate!.complete();
+      await _settle(tester);
+      expect(_Player.live.first.plays, 0);
     });
 
     testWidgets('a playback error goes back to a tap for a new link', (
@@ -614,6 +638,25 @@ void main() {
       await tapText(tester, 'Try again');
       expect(repo.retried, ['1']);
     });
+  });
+
+  test('blocking from a profile, with nothing watching the list', () async {
+    final social = _Social();
+    final repo = _Repo();
+    final container = ProviderContainer.test(
+      overrides: [
+        socialRepositoryProvider.overrideWithValue(social),
+        feedRepositoryProvider.overrideWithValue(repo),
+      ],
+    );
+    repo.following_ = [post('1')];
+    final sub = container.listen(feedFollowingProvider, (_, _) {});
+    await container.read(feedFollowingProvider.future);
+    await container.read(blockedPlayersProvider.notifier).block('a-1');
+    repo.following_ = [];
+    expect(social.blocked_, ['a-1']);
+    expect(await container.read(feedFollowingProvider.future), isEmpty);
+    sub.close();
   });
 
   group('the row models', () {

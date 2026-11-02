@@ -39,14 +39,17 @@ def sample_frames(path, per_second, max_seconds, deadline):
     next_at = 0.0
     gap = 1 / per_second
     grabbed = 0
+    at = -1 / fps
     try:
         while capture.grab():
             if time.monotonic() > deadline:
                 raise OutOfTime()
             grabbed += 1
-            # Counted as well, in case the file's own clock stands still.
-            at = max(capture.get(cv2.CAP_PROP_POS_MSEC) / 1000, (grabbed - 1) / fps)
-            if at > max_seconds:
+            # The file's own clock, so a burst of frames can't hide what follows
+            # it. If that clock stands still, a frame's worth of time passes anyway.
+            stamp = capture.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            at = stamp if stamp > at else at + 1 / fps
+            if max(at, (grabbed - 1) / fps) > max_seconds:
                 raise ClipProblem("too_long")
             if at + 1e-3 < next_at:
                 continue

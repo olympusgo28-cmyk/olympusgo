@@ -76,6 +76,10 @@ class Api:
                 if time.monotonic() > deadline:
                     raise OutOfTime()
                 out.write(chunk)
+            # A dropped download reads as a short file, not an error.
+            stated = response.headers.get("Content-Length")
+            if stated is not None and copied != int(stated):
+                raise ValueError("short download")
 
 
 class FeedApi(Api):

@@ -351,12 +351,15 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
     super.dispose();
   }
 
-  void _onScroll() {
+  bool get _onScreen {
     final box = context.findRenderObject();
-    if (_player == null || box is! RenderBox) return;
+    if (box is! RenderBox || !box.attached) return true;
     final top = box.localToGlobal(Offset.zero).dy;
-    final height = MediaQuery.sizeOf(context).height;
-    if (top + box.size.height <= 0 || top >= height) _player?.pause();
+    return top + box.size.height > 0 && top < MediaQuery.sizeOf(context).height;
+  }
+
+  void _onScroll() {
+    if (_player != null && !_onScreen) _player?.pause();
   }
 
   void _onValue() {
@@ -383,6 +386,7 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
       _loading = true;
       _failed = false;
     });
+    ref.read(activePostProvider.notifier).play(widget.id);
     VideoPlayerController? player;
     try {
       final url = await repo.playUrl(widget.id);
@@ -392,8 +396,12 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
         await player.dispose();
         return;
       }
-      ref.read(activePostProvider.notifier).play(widget.id);
-      await player.play();
+      // The person may have moved on while it loaded.
+      final wanted =
+          ModalRoute.of(context)?.isCurrent != false &&
+          _onScreen &&
+          ref.read(activePostProvider) == widget.id;
+      if (wanted) await player.play();
       if (!mounted) {
         await player.dispose();
         return;
@@ -401,7 +409,7 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
       player.addListener(_onValue);
       setState(() {
         _player = player;
-        _playing = true;
+        _playing = wanted;
       });
     } on Exception {
       await player?.dispose();

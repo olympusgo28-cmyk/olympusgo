@@ -76,9 +76,12 @@ class _VideoDialogState extends State<_VideoDialog> {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AspectRatio(
-                aspectRatio: widget.player.value.aspectRatio,
-                child: VideoPlayer(widget.player),
+              // Flexible, so a tall phone video leaves room for Play.
+              Flexible(
+                child: AspectRatio(
+                  aspectRatio: widget.player.value.aspectRatio,
+                  child: VideoPlayer(widget.player),
+                ),
               ),
               ValueListenableBuilder(
                 valueListenable: widget.player,

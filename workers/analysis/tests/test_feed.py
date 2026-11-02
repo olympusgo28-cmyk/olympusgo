@@ -1,3 +1,4 @@
+import io
 import logging
 import time
 
@@ -86,9 +87,10 @@ def test_a_file_that_isnt_a_video(tmp_path):
 class _Capture:
     """Stands in for OpenCV, for files a test can't easily make."""
 
-    def __init__(self, frames, msec=None, retrieve_ok=True):
+    def __init__(self, frames, msec=None, retrieve_ok=True, stamps=None):
         self.frames = frames
         self.msec = msec
+        self.stamps = stamps
         self.retrieve_ok = retrieve_ok
         self.at = 0
 
@@ -97,6 +99,8 @@ class _Capture:
         return self.at <= self.frames
 
     def get(self, _):
+        if self.stamps is not None:
+            return self.stamps[self.at - 1]
         return 0 if self.msec == 0 else (self.at - 1) * 100
 
     def retrieve(self):
@@ -135,6 +139,25 @@ def test_a_clock_that_stands_still_is_counted_instead(monkeypatch):
     monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
     with pytest.raises(ClipProblem):
         sample_frames("x", 1, 5, later())
+
+
+def test_a_burst_of_frames_cant_hide_what_follows(monkeypatch):
+    # 5 seconds at 240 fps, then 5 seconds at 30. By counting, the end looks like
+    # the first 5 seconds of a longer run of frames.
+    burst = [i * 1000 / 240 for i in range(1200)]
+    rest = [5000 + i * 1000 / 30 for i in range(150)]
+    capture = _Capture(frames=1350, stamps=burst + rest)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 135, 1350))
+    assert len(sample_frames("x", 1, 60, later())) == 10
+
+
+def test_a_short_download_is_a_failed_job_not_a_bad_video(tmp_path, monkeypatch):
+    class Response(io.BytesIO):
+        headers = {"Content-Length": "100"}
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_, **__: Response(b"only part"))
+    with pytest.raises(ValueError):
+        FeedApi("http://x", "s").download("http://x/v", tmp_path / "v", later())
 
 
 def test_running_out_of_time_stops_sampling(tmp_path):
