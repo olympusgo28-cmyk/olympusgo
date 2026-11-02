@@ -235,3 +235,4 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q223 | Which gate covers the feed | Video feed | None names it. Suggest Gate F plus Q212 to Q214 | Open |
 | Q224 | Suspending an account after a match | Video feed | No automatic suspension, which would tip them off and punish a false match. Their later posts go to a person, and staff can suspend | Open |
 | Q225 | Children's posts | Video feed | Not built. Q180 says minors can't post until the lawyer answers decision 14, which outranks the checklist's line on results, badges and parent-reviewed clips | Open |
+| Q226 | Location inside a posted video | Video feed | A phone's video can carry where it was filmed, and the iOS picker says so. Nothing removes it yet, and a viewer's link gets the original file. The real host must strip it, or re-encode, before any post goes public. Photos already have this rule | Open |

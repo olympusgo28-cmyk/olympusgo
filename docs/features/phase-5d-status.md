@@ -4,8 +4,8 @@
 
 | Ticket | State |
 | --- | --- |
-| P5-06 Video feed | Built behind stand-ins. Proven at the database, through the real API and Storage, in a race script with a negative control, and in widget tests |
-| First posts queue | Proven at the database and in widget tests |
+| P5-06 Video feed | Built behind stand-ins. Proven at the database, through the real API and Storage, in a race script with a negative control, in widget tests, and on the simulator from post to delete |
+| First posts queue | Proven at the database, in widget tests, and by a click-through in the built web app: queue, audited player, approval |
 
 ## Not built
 
@@ -31,11 +31,12 @@
 ## Known gaps
 
 - **A child in an adult's post.** After the first 3 posts, only the tick and reports catch it (Q212).
+- **Location stays in the file.** A posted video keeps any location it was filmed with, and viewers get the original file. The real host must remove it before anything goes public (Q226).
 - **Nothing proves the checks work.** The fake passes everything it's told to. Detection, match accuracy and real outages are unmeasured.
 - **Deleting an account mid-check** cascades the job away, so that video is never matched, though nobody could see it. The deletion job must wait for open checks (Q208).
 - A link outlives a block or hide by up to 5 minutes.
 - Checks read captions and sampled frames, not speech, on-screen text or what falls between samples.
-- The admin web player may not play a phone's MOV or HEVC (Q220).
+- The admin web player needs a tap on its own Play button, because browsers refuse autoplay here. H.264 played there. An old mp4v clip didn't and said so, and a phone's MOV or HEVC is untested (Q220).
 - The phone can't read a video's length, so it sends the maximum and the worker fails one that runs over. That happens only after upload.
 - A post's stated seconds are therefore not real, so no screen shows them.
 - `feed_svc_result` locks post then case, and `staff_case_decide` case then post. A deadlock aborts one side and fails safe.

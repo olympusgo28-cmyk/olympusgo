@@ -781,6 +781,7 @@ class MyPostsScreen extends ConsumerWidget {
                   reason: post.reason,
                 );
                 return KitCard(
+                  padding: const EdgeInsets.all(14),
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -528,6 +528,10 @@ select is((select count(*)::int from public.abuse_matches where post_id = t.p(20
 select is((select owner_id from public.moderation_cases where target_id = t.p(20)::text), null, 'the case names nobody');
 select is((select involves_child from public.moderation_cases where target_id = t.p(20)::text), true, 'and is a child-safety case');
 select is((select count(*)::int from public.content_removals where user_id = t.u(1)), 0, 'nothing tells the author');
+select t.as_staff(t.u(9));
+select is((select x -> 'reasons' from jsonb_array_elements(public.staff_case_list()) x where x ->> 'target_id' = t.p(20)::text), '[]'::jsonb,
+  'a case nobody reported still lists');
+select t.back();
 select t.who(t.u(1));
 select is((select x ->> 'status' from jsonb_array_elements(public.post_mine()) x where (x ->> 'id')::uuid = t.p(20)), 'rejected', 'and it reads as a plain rejection');
 select throws_like($$ select public.post_play(t.p(20)) $$, 'This video isn''t available%', 'the author can''t play it');

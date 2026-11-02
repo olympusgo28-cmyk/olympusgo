@@ -42,14 +42,18 @@ class _VideoDialog extends StatefulWidget {
 }
 
 class _VideoDialogState extends State<_VideoDialog> {
-  late final Future<void> _ready = widget.player.initialize().then(
-    (_) => widget.player.play(),
-  );
+  // No autoplay: a browser refuses it without a tap on the video itself.
+  late final Future<void> _ready = widget.player.initialize();
 
   @override
   void dispose() {
     widget.player.dispose();
     super.dispose();
+  }
+
+  void _toggle() {
+    final player = widget.player;
+    player.value.isPlaying ? player.pause() : player.play();
   }
 
   @override
@@ -69,9 +73,22 @@ class _VideoDialogState extends State<_VideoDialog> {
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          return AspectRatio(
-            aspectRatio: widget.player.value.aspectRatio,
-            child: VideoPlayer(widget.player),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AspectRatio(
+                aspectRatio: widget.player.value.aspectRatio,
+                child: VideoPlayer(widget.player),
+              ),
+              ValueListenableBuilder(
+                valueListenable: widget.player,
+                builder: (_, value, _) => IconButton(
+                  tooltip: value.isPlaying ? 'Pause' : 'Play',
+                  onPressed: _toggle,
+                  icon: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
+                ),
+              ),
+            ],
           );
         },
       ),
