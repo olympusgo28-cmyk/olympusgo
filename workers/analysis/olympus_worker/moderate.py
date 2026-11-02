@@ -16,6 +16,8 @@ log = logging.getLogger("olympus_worker")
 IDLE_SECONDS = 2
 FRAME_MAX_WIDTH = 640
 FRAME_QUALITY = 70
+# A file's frame count can run a little over what it holds, but not by more.
+MIN_FRAMES_READ = 0.9
 
 
 def _jpeg(image):
@@ -29,29 +31,33 @@ def _jpeg(image):
 
 
 def sample_frames(path, per_second, max_seconds, deadline):
-    """A frame every 1 / per_second seconds, by the video's own clock. Stated
-    lengths can lie, so the frames themselves are counted: a video that runs on
-    past the limit fails, because the end of it would go unchecked."""
-    capture, _, _ = _open(path)
+    """A frame every 1 / per_second seconds, by the video's own clock. Anything
+    that could leave part of a video unseen fails it: running past the limit,
+    a frame that won't decode, or stopping well short of the stated end."""
+    capture, fps, stated = _open(path)
     frames = []
     next_at = 0.0
     gap = 1 / per_second
+    grabbed = 0
     try:
         while capture.grab():
             if time.monotonic() > deadline:
                 raise OutOfTime()
-            at = capture.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            grabbed += 1
+            # Counted as well, in case the file's own clock stands still.
+            at = max(capture.get(cv2.CAP_PROP_POS_MSEC) / 1000, (grabbed - 1) / fps)
             if at > max_seconds:
                 raise ClipProblem("too_long")
             if at + 1e-3 < next_at:
                 continue
             ok, image = capture.retrieve()
-            if ok:
-                frames.append(_jpeg(image))
-                next_at = at + gap
+            if not ok:
+                raise ClipProblem("bad_video")
+            frames.append(_jpeg(image))
+            next_at = at + gap
     finally:
         capture.release()
-    if not frames:
+    if not frames or grabbed < stated * MIN_FRAMES_READ:
         raise ClipProblem("bad_video")
     return frames
 

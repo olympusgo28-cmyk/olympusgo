@@ -271,6 +271,30 @@ select t.back();
 update public.feature_flags set enabled = true where key = 'feed.fake_checks';
 select is(t.verdict(), 'live', 'and it still has to pass');
 
+-- Some failures are about the file, so they don't go round again.
+select t.upload(t.p(8), t.u(1));
+set local role service_role;
+insert into claims values ('long', public.feed_svc_claim());
+select is(public.feed_svc_result((t.got('long') ->> 'job_id')::uuid, t.got('long') ->> 'token', false, null, null, null, null, false, 'too_long', 1),
+  'failed', 'a video that''s too long fails at once');
+reset role;
+select t.who(t.u(1));
+select is((select x ->> 'reason' from jsonb_array_elements(public.post_mine()) x where (x ->> 'id')::uuid = t.p(8)), 'too_long', 'and My posts says why');
+select throws_like($$ select public.post_retry(t.p(8)) $$, 'This video can''t be checked%', 'and it can''t retry');
+select t.back();
+
+-- Until the file is in, a retry can change what was chosen.
+select t.who(t.u(1));
+select ok(public.post_create(t.p(9), 'mp4', 20, 1000, 'First', 'badminton', 'public', true) is not null, 'a waiting post');
+select ok(public.post_create(t.p(9), 'mp4', 20, 1000, 'Second', 'pickleball', 'followers', true) is not null, 'a retry with changes');
+select t.back();
+select is((select body || ' ' || sport || ' ' || audience from public.video_posts where id = t.p(9)), 'Second pickleball followers', 'takes the changes');
+select t.who(t.u(1));
+select throws_like($$ select public.post_create(t.p(9), 'mp4', 20, 1000, '', 'quidditch', 'public', true) $$, 'Choose a sport%', 'a sport outside the catalogue is refused');
+select throws_like(format($$ select public.post_create(t.p(9), 'mp4', 20, 1000, %L, 'badminton', 'public', true) $$, repeat('a', 301)),
+  'Keep your caption%', 'and a long caption has a plain answer');
+select t.back();
+
 -- A timeout goes round again, then fails.
 select t.upload(t.p(7), t.u(1));
 set local role service_role;
@@ -618,8 +642,19 @@ update public.post_jobs set status = 'failed', finished_at = now() where post_id
 set local role service_role;
 select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
 reset role;
-select is((select status from public.post_jobs where post_id = t.p(33)), 'queued', 'and its check goes round again');
+select is((select status from public.post_jobs where post_id = t.p(33)), 'failed', 'it waits an hour');
+select t.upload(t.p(34), t.u(3));
+select t.who(t.u(3));
+select lives_ok($$ select public.post_delete(t.p(34)) $$, 'and another');
+select t.back();
+update public.post_jobs set status = 'failed', finished_at = now() - interval '2 hours', error_code = 'bad_video' where post_id = t.p(34);
+update public.post_jobs set finished_at = now() - interval '2 hours' where post_id = t.p(33);
+set local role service_role;
+select ok(public.feed_svc_sweep() is not null, 'the sweep runs');
+reset role;
+select is((select status from public.post_jobs where post_id = t.p(33)), 'queued', 'otherwise its check goes round again');
 select is((select count(*)::int from public.video_posts where id = t.p(33)), 1, 'with the post still there');
+select is((select count(*)::int from public.video_posts where id = t.p(34)), 0, 'and a file nothing can read just goes');
 update public.video_posts set created_at = now() - interval '31 days' where id = t.p(33);
 set local role service_role;
 select ok(public.feed_svc_sweep() is not null, 'the sweep runs');

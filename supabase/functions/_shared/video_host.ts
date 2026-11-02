@@ -10,7 +10,8 @@ export const FEED_BUCKET = "feed-videos";
 const WORKER_URL_SECONDS = 300;
 
 export interface VideoHost {
-  uploadTarget(ref: string): Promise<{ path: string; token: string }>;
+  /** Where to send the file, or null if it has already landed. */
+  uploadTarget(ref: string): Promise<{ path: string; token: string } | null>;
   readUrl(ref: string, seconds?: number): Promise<string>;
 }
 
@@ -20,6 +21,8 @@ class StorageHost implements VideoHost {
   async uploadTarget(ref: string) {
     // No overwriting: the file that passes the checks is the file people see.
     const { data, error } = await this.service.storage.from(FEED_BUCKET).createSignedUploadUrl(ref);
+    // A retry after the file landed and the next step didn't.
+    if ((error as { statusCode?: string } | null)?.statusCode === "409") return null;
     if (error || !data) throw new Error("upload url failed");
     return { path: data.path, token: data.token };
   }

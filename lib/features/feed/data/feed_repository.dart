@@ -132,7 +132,8 @@ class SupabaseFeedRepository implements FeedRepository {
     ) as Map;
     if (row['status'] == 'waiting') {
       final target = await _media({'action': 'upload', 'post': id});
-      try {
+      // Already there on a retry, if the file landed and the next step didn't.
+      if (target['exists'] != true) {
         await _client.storage
             .from(_bucket)
             .uploadToSignedUrl(
@@ -145,9 +146,6 @@ class SupabaseFeedRepository implements FeedRepository {
                     : 'video/mp4',
               ),
             );
-      } on StorageException catch (e) {
-        // A retry after the file landed and the next step didn't.
-        if (e.statusCode != '409') rethrow;
       }
       await _client.rpc('post_uploaded', params: {'p_post': id});
     }

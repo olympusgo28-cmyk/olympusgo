@@ -225,7 +225,7 @@ Decisions an agent must not make. Each row says what it blocks and the default t
 | Q213 | Who gets abuse-match reports, and how long evidence is held | Video feed | Unknown, so `video.feed` stays off until the lawyer answers. A match keeps its file and an `abuse_matches` row, and opens a child-safety case | Open |
 | Q214 | Frame checker and hash-matching provider, and the video host | Video feed | None chosen. Cloudflare Stream is only assumed in the architecture. Until then a hosted post fails and can't go live | Open |
 | Q215 | Autoplay for adults | Video feed | Off. Tap to play for everyone. No document settles it for adults, and under-18s must never have it | Open |
-| Q216 | Post length, size and daily limit | Video feed | 60 seconds, 100 MB, 5 a day, in `feed.max_seconds`, `feed.max_mb` and `feed.daily_posts` | Open |
+| Q216 | Post length, size and daily limit | Video feed | 60 seconds, 100 MB, 5 a day, in `feed.max_seconds`, `feed.max_mb` and `feed.daily_posts`. A deleted post frees its slot once it's swept | Open |
 | Q217 | How long a list is | Video feed | 50 posts in `feed.list_length`, with no paging, so each list ends | Open |
 | Q218 | How many frames are checked | Video feed | 1 a second, in `feed.frames_per_second`. Anything shorter between samples is missed | Open |
 | Q219 | Deadline to review a first post | Video feed | 24 hours in `feed.review_hours`, shown in the queue. Nothing enforces it yet | Open |

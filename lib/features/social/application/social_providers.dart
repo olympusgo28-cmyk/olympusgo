@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../feed/application/feed_providers.dart';
 import '../../../core/providers.dart';
 import '../domain/social_models.dart';
 
@@ -69,6 +70,8 @@ class BlockedPlayers extends _$BlockedPlayers {
     await ref.read(socialRepositoryProvider).block(id);
     ref.invalidateSelf();
     ref.invalidate(myFollowingProvider);
+    ref.invalidate(feedFollowingProvider);
+    ref.invalidate(feedDiscoverProvider);
   }
 
   Future<void> unblock(String id) async {

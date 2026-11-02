@@ -18,6 +18,7 @@ import '../../fitness/application/fitness_providers.dart';
 import '../../fitness/presentation/fitness_screens.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
+import '../../social/application/social_providers.dart';
 import '../application/feed_providers.dart';
 import '../domain/feed_models.dart';
 
@@ -78,6 +79,18 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             onSelect: (i) => setState(() => _tab = i),
           ),
         ...switch (posts) {
+          AsyncValue(hasError: true, isLoading: false, :final error) => [
+            KitNote(
+              error is AuthFailure
+                  ? error.message
+                  : 'Can’t load this right now. Check your connection.',
+              tone: KitTone.warn,
+            ),
+            KitButton.outline(
+              label: 'Try again',
+              onPressed: () => ref.invalidate(provider),
+            ),
+          ],
           AsyncValue(hasValue: true, :final value?) when value.isEmpty => [
             Text(
               discover
@@ -93,16 +106,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               'That’s everything for now.',
               textAlign: TextAlign.center,
               style: OgText.body(14, color: c.textMuted),
-            ),
-          ],
-          AsyncValue(hasError: true) => [
-            const KitNote(
-              'Can’t load this right now. Check your connection.',
-              tone: KitTone.warn,
-            ),
-            KitButton.outline(
-              label: 'Try again',
-              onPressed: () => ref.invalidate(provider),
             ),
           ],
           _ => [const Center(child: CupertinoActivityIndicator())],
@@ -205,6 +208,9 @@ class _PostCardState extends ConsumerState<_PostCard> {
     try {
       await container.read(socialRepositoryProvider).block(_post.authorId);
       _refreshLists(container);
+      container
+        ..invalidate(blockedPlayersProvider)
+        ..invalidate(myFollowingProvider);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     }
@@ -320,13 +326,54 @@ class PostPlayer extends ConsumerStatefulWidget {
 
 class _PostPlayerState extends ConsumerState<PostPlayer> {
   VideoPlayerController? _player;
+  ScrollPosition? _scroll;
   var _loading = false;
   var _failed = false;
+  var _playing = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scroll = Scrollable.maybeOf(context)?.position;
+    if (scroll != _scroll) {
+      _scroll?.removeListener(_onScroll);
+      _scroll = scroll?..addListener(_onScroll);
+    }
+    // Another page opened on top, so this one's sound stops.
+    if (ModalRoute.of(context)?.isCurrent == false) _player?.pause();
+  }
 
   @override
   void dispose() {
+    _scroll?.removeListener(_onScroll);
+    _player?.removeListener(_onValue);
     _player?.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final box = context.findRenderObject();
+    if (_player == null || box is! RenderBox) return;
+    final top = box.localToGlobal(Offset.zero).dy;
+    final height = MediaQuery.sizeOf(context).height;
+    if (top + box.size.height <= 0 || top >= height) _player?.pause();
+  }
+
+  void _onValue() {
+    final player = _player;
+    if (player == null || !mounted) return;
+    // A link that ran out or a dropped signal. A tap asks for a new link.
+    if (player.value.hasError) {
+      player.removeListener(_onValue);
+      player.dispose();
+      setState(() {
+        _player = null;
+        _playing = false;
+        _failed = true;
+      });
+    } else if (player.value.isPlaying != _playing) {
+      setState(() => _playing = player.value.isPlaying);
+    }
   }
 
   Future<void> _start() async {
@@ -345,8 +392,17 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
         await player.dispose();
         return;
       }
+      ref.read(activePostProvider.notifier).play(widget.id);
       await player.play();
-      setState(() => _player = player);
+      if (!mounted) {
+        await player.dispose();
+        return;
+      }
+      player.addListener(_onValue);
+      setState(() {
+        _player = player;
+        _playing = true;
+      });
     } on Exception {
       await player?.dispose();
       if (mounted) setState(() => _failed = true);
@@ -357,18 +413,25 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
 
   void _toggle() {
     final player = _player!;
-    player.value.isPlaying ? player.pause() : player.play();
-    setState(() {});
+    if (player.value.isPlaying) {
+      player.pause();
+    } else {
+      ref.read(activePostProvider.notifier).play(widget.id);
+      player.play();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
     final player = _player;
+    ref.listen(activePostProvider, (_, active) {
+      if (active != widget.id) _player?.pause();
+    });
     if (player != null) {
       return Semantics(
         button: true,
-        label: player.value.isPlaying ? 'Pause' : 'Play',
+        label: _playing ? 'Pause' : 'Play',
         child: GestureDetector(
           onTap: _toggle,
           child: ClipRRect(
@@ -431,6 +494,8 @@ class AddPostScreen extends ConsumerStatefulWidget {
 }
 
 class _AddPostScreenState extends ConsumerState<AddPostScreen> {
+  static const _maxCaption = 300;
+
   // Stays the same on a retry, so a dropped signal reaches the same post.
   var _id = newFitnessId();
   final _caption = TextEditingController();
@@ -488,6 +553,10 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
   }
 
   Future<void> _send(FeedStatus status) async {
+    if (_caption.text.trim().length > _maxCaption) {
+      setState(() => _error = 'Keep your caption to $_maxCaption characters.');
+      return;
+    }
     // Outlives this screen, so leaving during the upload can't lose the post.
     final container = ProviderScope.containerOf(context, listen: false);
     final uploads = container.read(postUploadsProvider.notifier);
@@ -587,6 +656,7 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
             for (final sport in sports)
               KitChip(
                 label: sport.label,
+                height: 44,
                 selected: sport.id == _sport,
                 onTap: () => setState(() => _sport = sport.id),
               ),
@@ -708,6 +778,7 @@ class MyPostsScreen extends ConsumerWidget {
                 final (line, detail) = postStatusLine(
                   post.status,
                   uploading: uploading,
+                  reason: post.reason,
                 );
                 return KitCard(
                   children: [
@@ -729,7 +800,7 @@ class MyPostsScreen extends ConsumerWidget {
                               color: c.textMuted,
                             ),
                           ),
-                        if (post.status == PostStatus.failed)
+                        if (post.canRetry)
                           KitLink(
                             'Try again',
                             onPressed: () => _retry(context, ref, post),

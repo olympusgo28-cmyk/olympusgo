@@ -17,6 +17,7 @@ import 'package:olympus_go/features/feed/presentation/feed_screens.dart';
 import 'package:olympus_go/features/onboarding/domain/sport.dart';
 import 'package:olympus_go/features/play/application/play_providers.dart';
 import 'package:olympus_go/features/social/data/social_repository.dart';
+import 'package:olympus_go/features/social/domain/social_models.dart';
 import 'package:video_player/video_player.dart';
 
 FeedPost post(
@@ -136,15 +137,42 @@ class _Social implements SocialRepository {
   Future<void> block(String id) async => blocked_.add(id);
 
   @override
+  Future<List<PlayerSummary>> blocked() async => const [];
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// No plugin in a test, so loading always fails.
+/// No plugin in a test, so loading fails unless a test says otherwise.
 class _Player extends VideoPlayerController {
-  _Player(super.url) : super.networkUrl();
+  _Player(super.url, {this.playable = false}) : super.networkUrl() {
+    live.add(this);
+  }
+
+  static final live = <_Player>[];
+  final bool playable;
+  var paused = 0;
+
+  void fail() => value = value.copyWith(errorDescription: 'link ran out');
 
   @override
-  Future<void> initialize() async => throw Exception('no plugin');
+  Future<void> initialize() async {
+    if (!playable) throw Exception('no plugin');
+    value = value.copyWith(size: const Size(16, 9), isInitialized: true);
+  }
+
+  @override
+  Future<void> play() async => value = value.copyWith(isPlaying: true);
+
+  @override
+  Future<void> pause() async {
+    paused++;
+    value = value.copyWith(isPlaying: false);
+  }
+
+  @override
+  // ignore: must_call_super
+  Future<void> dispose() async {}
 }
 
 const _file = PickedClip(path: '/tmp/a.mp4', ext: 'mp4', bytes: 1000);
@@ -164,7 +192,9 @@ Future<List<Uri>> _pump(
   String start = Routes.videos,
   ClipPicker? picker,
   _Social? social,
+  bool playable = false,
 }) async {
+  _Player.live.clear();
   await tester.binding.setSurfaceSize(const Size(420, 1600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   final made = <Uri>[];
@@ -195,7 +225,7 @@ Future<List<Uri>> _pump(
         ),
         postPlayerMakerProvider.overrideWithValue((url) {
           made.add(url);
-          return _Player(url);
+          return _Player(url, playable: playable);
         }),
         if (picker != null) clipPickerProvider.overrideWithValue(picker),
         if (social != null) socialRepositoryProvider.overrideWithValue(social),
@@ -272,10 +302,7 @@ void main() {
     testWidgets('a failed list offers Try again', (tester) async {
       final repo = _Repo()..failList = true;
       await _pump(tester, repo);
-      expect(
-        find.text('Can’t load this right now. Check your connection.'),
-        findsOneWidget,
-      );
+      expect(find.text('No.'), findsOneWidget);
       repo
         ..failList = false
         ..following_ = [post('1')];
@@ -301,6 +328,40 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Play video').first);
       await _settle(tester);
       expect(find.text('Can’t play this. Tap to try again.'), findsOneWidget);
+    });
+
+    testWidgets('starting a second video pauses the first', (tester) async {
+      final repo = _Repo()..following_ = [post('1'), post('2')];
+      final made = await _pump(tester, repo, playable: true);
+      await tester.tap(find.bySemanticsLabel('Play video').first);
+      await _settle(tester);
+      await tester.tap(find.bySemanticsLabel('Play video').first);
+      await _settle(tester);
+      expect(made.length, 2);
+      expect(_Player.live.first.paused, greaterThan(0));
+    });
+
+    testWidgets('opening another page stops the sound', (tester) async {
+      final repo = _Repo()..following_ = [post('1')];
+      await _pump(tester, repo, playable: true);
+      await tester.tap(find.bySemanticsLabel('Play video').first);
+      await _settle(tester);
+      await tapText(tester, 'Mei Tan');
+      expect(_Player.live.first.paused, greaterThan(0));
+    });
+
+    testWidgets('a playback error goes back to a tap for a new link', (
+      tester,
+    ) async {
+      final repo = _Repo()..following_ = [post('1')];
+      await _pump(tester, repo, playable: true);
+      await tester.tap(find.bySemanticsLabel('Play video').first);
+      await _settle(tester);
+      expect(repo.played, ['1']);
+      _Player.live.first.fail();
+      await _settle(tester);
+      await tapText(tester, 'Can’t play this. Tap to try again.');
+      expect(repo.played, ['1', '1']);
     });
   });
 
@@ -470,6 +531,16 @@ void main() {
       await tapText(tester, 'Choose from my library');
       expect(find.text('Choose an MP4 or MOV video.'), findsOneWidget);
     });
+
+    testWidgets('a long caption stops before the upload', (tester) async {
+      final repo = await ready(tester);
+      await tapText(tester, 'Choose from my library');
+      await tester.enterText(find.byType(EditableText).first, 'a' * 301);
+      await tapText(tester, 'No one under 18 is in this video.');
+      await tapText(tester, 'Post');
+      expect(repo.added, isEmpty);
+      expect(find.text('Keep your caption to 300 characters.'), findsOneWidget);
+    });
   });
 
   group('my posts', () {
@@ -518,6 +589,23 @@ void main() {
       await tapText(tester, 'Delete post');
       expect(repo.deleted, ['1']);
       expect(find.text('No posts yet.'), findsOneWidget);
+    });
+
+    testWidgets('a video that\'s too long doesn\'t offer Try again', (
+      tester,
+    ) async {
+      final failed = FeedPost.fromRow({
+        'id': '1',
+        'author_id': 'a',
+        'sport': 'tennis',
+        'seconds': 5,
+        'likes': 0,
+        'status': 'failed',
+        'reason': 'too_long',
+      });
+      await _pump(tester, _Repo()..mine_ = [failed], start: Routes.myPosts);
+      expect(find.text('This video is too long'), findsOneWidget);
+      expect(find.text('Try again'), findsNothing);
     });
 
     testWidgets('a failed post can try again', (tester) async {

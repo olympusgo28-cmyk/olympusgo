@@ -83,6 +83,60 @@ def test_a_file_that_isnt_a_video(tmp_path):
         sample_frames(clip, 1, 60, later())
 
 
+class _Capture:
+    """Stands in for OpenCV, for files a test can't easily make."""
+
+    def __init__(self, frames, msec=None, retrieve_ok=True):
+        self.frames = frames
+        self.msec = msec
+        self.retrieve_ok = retrieve_ok
+        self.at = 0
+
+    def grab(self):
+        self.at += 1
+        return self.at <= self.frames
+
+    def get(self, _):
+        return 0 if self.msec == 0 else (self.at - 1) * 100
+
+    def retrieve(self):
+        return self.retrieve_ok, np.zeros((10, 10, 3), dtype=np.uint8)
+
+    def release(self):
+        pass
+
+
+def test_stopping_short_of_the_stated_end_fails(monkeypatch):
+    capture = _Capture(frames=50)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
+    with pytest.raises(ClipProblem) as problem:
+        sample_frames("x", 1, 60, later())
+    assert problem.value.code == "bad_video"
+
+
+def test_a_little_short_of_the_stated_end_passes(monkeypatch):
+    capture = _Capture(frames=95)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
+    assert len(sample_frames("x", 1, 60, later())) == 10
+
+
+def test_a_frame_that_wont_decode_fails(monkeypatch):
+    capture = _Capture(frames=100, retrieve_ok=False)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
+    with pytest.raises(ClipProblem):
+        sample_frames("x", 1, 60, later())
+
+
+def test_a_clock_that_stands_still_is_counted_instead(monkeypatch):
+    capture = _Capture(frames=100, msec=0)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
+    assert len(sample_frames("x", 1, 60, later())) == 10
+    capture = _Capture(frames=100, msec=0)
+    monkeypatch.setattr("olympus_worker.moderate._open", lambda _: (capture, 10, 100))
+    with pytest.raises(ClipProblem):
+        sample_frames("x", 1, 5, later())
+
+
 def test_running_out_of_time_stops_sampling(tmp_path):
     clip = tmp_path / "a.mp4"
     write_clip(clip, seconds=2)

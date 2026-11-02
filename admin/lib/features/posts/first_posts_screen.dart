@@ -117,7 +117,8 @@ class _FirstPostsScreenState extends ConsumerState<FirstPostsScreen> {
     }
   }
 
-  String _when(String at) => at.substring(0, 16).replaceFirst('T', ' ');
+  String _when(String at) =>
+      DateTime.parse(at).toLocal().toString().substring(0, 16);
 
   @override
   Widget build(BuildContext context) => StaffPage(

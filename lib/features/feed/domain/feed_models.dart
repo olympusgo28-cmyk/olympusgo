@@ -59,6 +59,7 @@ class FeedPost {
     required this.mine,
     this.audience = PostAudience.followers,
     this.status = PostStatus.live,
+    this.reason,
     this.createdAt,
   });
 
@@ -77,6 +78,7 @@ class FeedPost {
         ? PostAudience.public
         : PostAudience.followers,
     status: _status(r['status'] as String?),
+    reason: r['reason'] as String?,
     createdAt: r['created_at'] == null
         ? null
         : DateTime.parse(r['created_at'] as String).toLocal(),
@@ -94,10 +96,19 @@ class FeedPost {
   final bool mine;
   final PostAudience audience;
   final PostStatus status;
+
+  /// Why the checks failed, when it's about the file.
+  final String? reason;
   final DateTime? createdAt;
 
   /// The answer is coming from the server.
   bool get working => status == PostStatus.checking;
+
+  /// Trying again can't change a file that's too long or can't be read.
+  bool get canRetry =>
+      status == PostStatus.failed &&
+      reason != 'too_long' &&
+      reason != 'bad_video';
 
   FeedPost copy({bool? liked, int? likes}) => FeedPost(
     id: id,
@@ -112,6 +123,7 @@ class FeedPost {
     mine: mine,
     audience: audience,
     status: status,
+    reason: reason,
     createdAt: createdAt,
   );
 }
@@ -120,6 +132,7 @@ class FeedPost {
 (String, String?) postStatusLine(
   PostStatus status, {
   required bool uploading,
+  String? reason,
 }) => switch (status) {
   PostStatus.waiting when uploading => ('Uploading', null),
   PostStatus.waiting => ('Upload didn’t finish', 'Delete it and post again.'),
@@ -133,12 +146,20 @@ class FeedPost {
     'Not posted',
     'This video didn’t pass our checks, so nobody can see it.',
   ),
+  PostStatus.failed when reason == 'too_long' => (
+    'This video is too long',
+    'Trim it and post it again.',
+  ),
+  PostStatus.failed when reason == 'bad_video' => (
+    'We couldn’t read this video',
+    'Post it again as an MP4 or MOV file.',
+  ),
   PostStatus.failed => (
     'We couldn’t check this',
     'Try again. It stays private until it passes.',
   ),
   PostStatus.removed => (
     'Taken down',
-    'People reported this video, and we’re looking at it.',
+    'It’s hidden after reports. You’ll get a notice if we remove it.',
   ),
 };

@@ -284,6 +284,36 @@ void main() {
     expect(await http.readBytes(Uri.parse(link)), video);
   }, skip: skip);
 
+  test('a retry finds a file that already landed', () async {
+    final id = uuid();
+    final me = author.auth.currentUser!.id;
+    await author.rpc(
+      'post_create',
+      params: {
+        'p_post': id,
+        'p_ext': 'mp4',
+        'p_seconds': 20,
+        'p_bytes': video.length,
+        'p_caption': '',
+        'p_sport': 'badminton',
+        'p_audience': 'public',
+        'p_no_minors': true,
+      },
+    );
+    await admin.storage.from(bucket).uploadBinary('$me/$id.mp4', video);
+    await SupabaseFeedRepository(author).addPost(
+      id: id,
+      file: PickedClip(path: file.path, ext: 'mp4', bytes: video.length),
+      seconds: 20,
+      caption: '',
+      sport: 'badminton',
+      audience: PostAudience.public,
+      noMinors: true,
+    );
+    expect(await status(id), 'checking');
+    await standIn();
+  }, skip: skip);
+
   test('Someone with no feed is refused by the real gate', () async {
     final id = await add(author);
     await standIn();
@@ -400,6 +430,6 @@ void main() {
       headers: {'x-worker-secret': 'local-analysis-secret'},
     );
     expect(gaveUp.statusCode, 200, reason: gaveUp.body);
-    expect(await status(id), 'checking');
+    expect(await status(id), 'failed');
   }, skip: skip);
 }

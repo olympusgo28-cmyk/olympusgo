@@ -360,7 +360,7 @@ final class BlockedPlayersProvider
   BlockedPlayers create() => BlockedPlayers();
 }
 
-String _$blockedPlayersHash() => r'f23c79d431f655f6a987d4e3ef6375fa4b8f614d';
+String _$blockedPlayersHash() => r'ceccee04b13b5ec8fccbac5c2d52c0e5c74e5e6e';
 
 abstract class _$BlockedPlayers extends $AsyncNotifier<List<PlayerSummary>> {
   FutureOr<List<PlayerSummary>> build();

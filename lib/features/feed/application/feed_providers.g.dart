@@ -167,7 +167,7 @@ final class MyPostsProvider
   }
 }
 
-String _$myPostsHash() => r'708c09a771983f5b0e14176146f6b94d58282af4';
+String _$myPostsHash() => r'71009529add2aed7dc0934fec63542fbed62d4ce';
 
 /// Short-lived links, so they're fetched for the list on show. [ids] is
 /// comma-separated, so a family key compares by value.
@@ -311,6 +311,63 @@ abstract class _$PostUploads extends $Notifier<Set<String>> {
             as $ClassProviderElement<
               AnyNotifier<Set<String>, Set<String>>,
               Set<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// The one video playing. Starting another pauses it.
+
+@ProviderFor(ActivePost)
+final activePostProvider = ActivePostProvider._();
+
+/// The one video playing. Starting another pauses it.
+final class ActivePostProvider extends $NotifierProvider<ActivePost, String?> {
+  /// The one video playing. Starting another pauses it.
+  ActivePostProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activePostProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activePostHash();
+
+  @$internal
+  @override
+  ActivePost create() => ActivePost();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$activePostHash() => r'6f9ba4232638107aba0abf9e20b9cde9169038a6';
+
+/// The one video playing. Starting another pauses it.
+
+abstract class _$ActivePost extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
               Object?,
               Object?
             >;

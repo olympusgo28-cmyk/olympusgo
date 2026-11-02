@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
     if (body.action === "upload") {
       const { data, error } = await user.rpc("post_upload_target", { p_post: body.post });
       if (error) return refused(error);
-      return json(await videoHost(data.host, service, url, publicUrl).uploadTarget(data.ref));
+      const target = await videoHost(data.host, service, url, publicUrl).uploadTarget(data.ref);
+      return json(target ?? { exists: true });
     }
     if (body.action === "play" || body.action === "staff_play") {
       const rpc = body.action === "play" ? "post_play" : "staff_post_play";
