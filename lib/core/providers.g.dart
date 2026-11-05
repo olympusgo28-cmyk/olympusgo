@@ -9,6 +9,142 @@ part of 'providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(feedRepository)
+final feedRepositoryProvider = FeedRepositoryProvider._();
+
+final class FeedRepositoryProvider
+    extends $FunctionalProvider<FeedRepository, FeedRepository, FeedRepository>
+    with $Provider<FeedRepository> {
+  FeedRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'feedRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$feedRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<FeedRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  FeedRepository create(Ref ref) {
+    return feedRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FeedRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FeedRepository>(value),
+    );
+  }
+}
+
+String _$feedRepositoryHash() => r'a57fd9aed85c25f0323bff94a37e0a1204a3ba97';
+
+@ProviderFor(analysisRepository)
+final analysisRepositoryProvider = AnalysisRepositoryProvider._();
+
+final class AnalysisRepositoryProvider
+    extends
+        $FunctionalProvider<
+          AnalysisRepository,
+          AnalysisRepository,
+          AnalysisRepository
+        >
+    with $Provider<AnalysisRepository> {
+  AnalysisRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'analysisRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$analysisRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<AnalysisRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AnalysisRepository create(Ref ref) {
+    return analysisRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AnalysisRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AnalysisRepository>(value),
+    );
+  }
+}
+
+String _$analysisRepositoryHash() =>
+    r'4eab8c4851a8fe68f55a7912b90b022f08fb2f33';
+
+@ProviderFor(fitnessRepository)
+final fitnessRepositoryProvider = FitnessRepositoryProvider._();
+
+final class FitnessRepositoryProvider
+    extends
+        $FunctionalProvider<
+          FitnessRepository,
+          FitnessRepository,
+          FitnessRepository
+        >
+    with $Provider<FitnessRepository> {
+  FitnessRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'fitnessRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$fitnessRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<FitnessRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  FitnessRepository create(Ref ref) {
+    return fitnessRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FitnessRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FitnessRepository>(value),
+    );
+  }
+}
+
+String _$fitnessRepositoryHash() => r'8eb86ece09fd309e3017a32f32927e50097401cf';
+
 @ProviderFor(biometricVault)
 final biometricVaultProvider = BiometricVaultProvider._();
 
@@ -90,6 +226,54 @@ final class AuthRepositoryProvider
 }
 
 String _$authRepositoryHash() => r'65c9429dcf1535fc008aa31e5ac650f957f58fd1';
+
+@ProviderFor(guardianRepository)
+final guardianRepositoryProvider = GuardianRepositoryProvider._();
+
+final class GuardianRepositoryProvider
+    extends
+        $FunctionalProvider<
+          GuardianRepository,
+          GuardianRepository,
+          GuardianRepository
+        >
+    with $Provider<GuardianRepository> {
+  GuardianRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'guardianRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$guardianRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<GuardianRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  GuardianRepository create(Ref ref) {
+    return guardianRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GuardianRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GuardianRepository>(value),
+    );
+  }
+}
+
+String _$guardianRepositoryHash() =>
+    r'85fed50a8d45bec6c133630dcfc18cf30267531b';
 
 @ProviderFor(profileRepository)
 final profileRepositoryProvider = ProfileRepositoryProvider._();
@@ -314,6 +498,54 @@ final class PlayRepositoryProvider
 
 String _$playRepositoryHash() => r'0c2554a88011e1ada739e40396824fbb64d36f7b';
 
+@ProviderFor(discoverRepository)
+final discoverRepositoryProvider = DiscoverRepositoryProvider._();
+
+final class DiscoverRepositoryProvider
+    extends
+        $FunctionalProvider<
+          DiscoverRepository,
+          DiscoverRepository,
+          DiscoverRepository
+        >
+    with $Provider<DiscoverRepository> {
+  DiscoverRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'discoverRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$discoverRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DiscoverRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  DiscoverRepository create(Ref ref) {
+    return discoverRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DiscoverRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DiscoverRepository>(value),
+    );
+  }
+}
+
+String _$discoverRepositoryHash() =>
+    r'75cf5b691dc4a3d41e9f59f20287c3141d65fa59';
+
 @ProviderFor(paymentGateway)
 final paymentGatewayProvider = PaymentGatewayProvider._();
 
@@ -353,7 +585,7 @@ final class PaymentGatewayProvider
   }
 }
 
-String _$paymentGatewayHash() => r'61c25fb9fd62ba64effafaa7108453b030901591';
+String _$paymentGatewayHash() => r'96f568b4eeb43eeacecd5806a896b6e5f81b0873';
 
 @ProviderFor(tournamentRepository)
 final tournamentRepositoryProvider = TournamentRepositoryProvider._();
@@ -525,53 +757,55 @@ final class ShopRepositoryProvider
   }
 }
 
-String _$shopRepositoryHash() => r'148fea8484d9a3197d1682d0552141c34e09fa68';
+String _$shopRepositoryHash() => r'4cfda882762e655a6f499c09683ac7a05578d3c5';
 
-@ProviderFor(walletRepository)
-final walletRepositoryProvider = WalletRepositoryProvider._();
+@ProviderFor(earningsRepository)
+final earningsRepositoryProvider = EarningsRepositoryProvider._();
 
-final class WalletRepositoryProvider
+final class EarningsRepositoryProvider
     extends
         $FunctionalProvider<
-          WalletRepository,
-          WalletRepository,
-          WalletRepository
+          EarningsRepository,
+          EarningsRepository,
+          EarningsRepository
         >
-    with $Provider<WalletRepository> {
-  WalletRepositoryProvider._()
+    with $Provider<EarningsRepository> {
+  EarningsRepositoryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'walletRepositoryProvider',
+        name: r'earningsRepositoryProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$walletRepositoryHash();
+  String debugGetCreateSourceHash() => _$earningsRepositoryHash();
 
   @$internal
   @override
-  $ProviderElement<WalletRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<EarningsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  WalletRepository create(Ref ref) {
-    return walletRepository(ref);
+  EarningsRepository create(Ref ref) {
+    return earningsRepository(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(WalletRepository value) {
+  Override overrideWithValue(EarningsRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<WalletRepository>(value),
+      providerOverride: $SyncValueProvider<EarningsRepository>(value),
     );
   }
 }
 
-String _$walletRepositoryHash() => r'4545be1c0e07289c098c3bd559541cb7f90c7f23';
+String _$earningsRepositoryHash() =>
+    r'01c7465739a7b60002267093346b059567bb8344';
 
 @ProviderFor(venueRepository)
 final venueRepositoryProvider = VenueRepositoryProvider._();
@@ -815,7 +1049,7 @@ final class SessionProfileProvider
   SessionProfile create() => SessionProfile();
 }
 
-String _$sessionProfileHash() => r'71d0149db2a59d6f99e77d4cc1a31554508b5f00';
+String _$sessionProfileHash() => r'e80acb54d34499bdcab9738448ad40cfdce4f610';
 
 /// The signed-in player's profile; null when signed out.
 

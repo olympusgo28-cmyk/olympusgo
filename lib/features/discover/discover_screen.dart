@@ -195,6 +195,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             ),
             if (_shows(_Scope.meets))
               SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: KitButton.outline(
+                    label: 'Find a Meet by date and distance',
+                    onPressed: () => context.push(Routes.find),
+                  ),
+                ),
+              ),
+            if (_shows(_Scope.meets))
+              SliverToBoxAdapter(
                 child: ActivityShelf(
                   kind: ActivityKind.meet,
                   title: 'Meets',
@@ -218,6 +228,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             if (_shows(_Scope.clubs))
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: KitButton.outline(
+                    label: 'Most active groups',
+                    onPressed: () => context.push(Routes.groupRanking),
+                  ),
+                ),
+              ),
+            if (_shows(_Scope.clubs))
               const SliverToBoxAdapter(
                 child: ClubShelf(
                   title: 'Clubs to join',
@@ -226,11 +246,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               ),
             if (_shows(_Scope.players))
               SliverToBoxAdapter(
-                child: PlayerShelf(
-                  title: 'Players and creators',
-                  linkLabel: 'Top creator',
-                  linkRoute: Routes.creator('ravi'),
-                ),
+                child: PlayerShelf(title: 'Players and creators'),
               ),
             if (_shows(_Scope.malls))
               const SliverToBoxAdapter(child: MallShelf()),
@@ -280,7 +296,7 @@ class _Hero extends ConsumerWidget {
               width: 220,
               height: 220,
               decoration: BoxDecoration(
-                color: c.primary,
+                color: c.primarySmall,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -354,7 +370,7 @@ class _Hero extends ConsumerWidget {
                   KitTag(
                     'Featured',
                     background: OgColors.ink,
-                    foreground: OgColors.lime,
+                    foreground: OgColors.orange300,
                   ),
                   const SizedBox(height: 8),
                   Text(

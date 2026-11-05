@@ -2,6 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/venues/data/venue_repository.dart';
+import '../features/analysis/data/analysis_repository.dart';
+import '../features/feed/data/feed_repository.dart';
+import '../features/fitness/data/fitness_repository.dart';
 import '../features/game/data/game_repository.dart';
 import '../features/inbox/data/updates_repository.dart';
 import '../features/auth/data/auth_repository.dart';
@@ -9,6 +12,8 @@ import '../features/auth/data/biometric_vault.dart';
 import '../features/clubs/data/club_repository.dart';
 import '../features/clubs/data/demo_club_repository.dart';
 import '../features/clubs/data/supabase_club_repository.dart';
+import '../features/discover/data/discover_repository.dart';
+import '../features/guardian/data/guardian_repository.dart';
 import '../features/profile/data/profile_repository.dart';
 import '../features/profile/domain/profile.dart';
 import '../features/safety/data/safety_repository.dart';
@@ -17,12 +22,27 @@ import '../features/play/data/payment_gateway.dart';
 import '../features/play/data/play_repository.dart';
 import '../features/settings/data/settings_repository.dart';
 import '../features/shop/data/shop_repository.dart';
-import '../features/wallet/data/wallet_repository.dart';
+import '../features/earnings/data/earnings_repository.dart';
 import '../features/social/data/chat_repository.dart';
 import '../features/social/data/social_repository.dart';
 import 'config/env.dart';
 
 part 'providers.g.dart';
+
+@Riverpod(keepAlive: true)
+FeedRepository feedRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseFeedRepository(Supabase.instance.client)
+    : DemoFeedRepository();
+
+@Riverpod(keepAlive: true)
+AnalysisRepository analysisRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseAnalysisRepository(Supabase.instance.client)
+    : DemoAnalysisRepository();
+
+@Riverpod(keepAlive: true)
+FitnessRepository fitnessRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseFitnessRepository(Supabase.instance.client)
+    : DemoFitnessRepository();
 
 @Riverpod(keepAlive: true)
 BiometricVault biometricVault(Ref ref) => BiometricVault();
@@ -37,6 +57,11 @@ AuthRepository authRepository(Ref ref) {
   ref.onDispose(repo.dispose);
   return repo;
 }
+
+@Riverpod(keepAlive: true)
+GuardianRepository guardianRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseGuardianRepository(Supabase.instance.client)
+    : DemoGuardianRepository();
 
 @Riverpod(keepAlive: true)
 ProfileRepository profileRepository(Ref ref) => Env.hasSupabase
@@ -66,8 +91,16 @@ PlayRepository playRepository(Ref ref) => Env.hasSupabase
     : DemoPlayRepository();
 
 @Riverpod(keepAlive: true)
+DiscoverRepository discoverRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseDiscoverRepository(
+        Supabase.instance.client,
+        ref.watch(playRepositoryProvider) as SupabasePlayRepository,
+      )
+    : DemoDiscoverRepository(ref.watch(playRepositoryProvider));
+
+@Riverpod(keepAlive: true)
 PaymentGateway paymentGateway(Ref ref) => Env.hasSupabase
-    ? SupabasePaymentGateway()
+    ? SupabasePaymentGateway(Supabase.instance.client)
     : DemoPaymentGateway(
         ref.watch(playRepositoryProvider) as DemoPlayRepository,
       );
@@ -106,13 +139,13 @@ ClubRepository clubRepository(Ref ref) => Env.hasSupabase
 ShopRepository shopRepository(Ref ref) => Env.hasSupabase
     ? SupabaseShopRepository(Supabase.instance.client)
     : DemoShopRepository(
-        ref.watch(walletRepositoryProvider) as DemoWalletRepository,
+        ref.watch(earningsRepositoryProvider) as DemoEarningsRepository,
       );
 
 @Riverpod(keepAlive: true)
-WalletRepository walletRepository(Ref ref) => Env.hasSupabase
-    ? SupabaseWalletRepository(Supabase.instance.client)
-    : DemoWalletRepository();
+EarningsRepository earningsRepository(Ref ref) => Env.hasSupabase
+    ? SupabaseEarningsRepository(Supabase.instance.client)
+    : DemoEarningsRepository();
 
 @Riverpod(keepAlive: true)
 VenueRepository venueRepository(Ref ref) => Env.hasSupabase
@@ -149,7 +182,19 @@ class SessionProfile extends _$SessionProfile {
   Future<Profile?> build() async {
     final userId = await ref.watch(currentUserIdProvider.future);
     if (userId == null) return null;
-    return ref.watch(profileRepositoryProvider).fetch(userId);
+    final profile = await ref.watch(profileRepositoryProvider).fetch(userId);
+    final name = profile?.fullName;
+    if (profile != null && profile.onboardingCompleted && name != null) {
+      // Saved for the Welcome screen's tile, whatever happens next.
+      await ref
+          .read(authRepositoryProvider)
+          .rememberAccount(
+            displayName: name,
+            avatarUrl: profile.avatarUrl,
+            username: profile.username,
+          );
+    }
+    return profile;
   }
 
   Future<void> reload() async {

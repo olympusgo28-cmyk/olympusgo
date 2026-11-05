@@ -42,7 +42,7 @@ final class PendingCodeControllerProvider
 }
 
 String _$pendingCodeControllerHash() =>
-    r'5a40d27fe40b1590d76074103c9ad7c5e8306b9f';
+    r'4e2d811fa3b4494d5e8f7c07b24609e98b2af33e';
 
 abstract class _$PendingCodeController extends $Notifier<PendingCode?> {
   PendingCode? build();

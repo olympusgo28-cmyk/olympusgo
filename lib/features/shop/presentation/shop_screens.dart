@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
-import '../../../core/config/env.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -15,11 +15,28 @@ import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/application/wallet_providers.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/application/earnings_providers.dart';
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
+
+/// A spinner, or what went wrong with a way to try again, until there's data.
+Widget? shopWaiting(AsyncValue<Object?> v, String title, VoidCallback retry) {
+  if (v.hasValue) return null;
+  return KitScaffold(
+    header: KitHeader(title: title),
+    children: v.hasError
+        ? [
+            const KitNote(
+              'Can’t load this right now. Check your connection.',
+              tone: KitTone.warn,
+            ),
+            KitButton(label: 'Try again', onPressed: retry),
+          ]
+        : const [CupertinoActivityIndicator()],
+  );
+}
 
 /// "1.2k".
 String compact(int n) =>
@@ -150,7 +167,7 @@ class ProductTile extends StatelessWidget {
               p.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(14, weight: FontWeight.w700, height: 1.25),
+              style: OgText.body(14, weight: FontWeight.w600, height: 1.25),
             ),
             const SizedBox(height: 4),
             Row(
@@ -173,18 +190,11 @@ class ProductTile extends StatelessWidget {
               ],
             ),
             Text(p.soldLine, style: OgText.body(12, color: c.textMuted)),
-            if (p.usedBy != null)
-              Text(
-                'Used by ${p.usedBy}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: OgText.body(12, weight: FontWeight.w700, color: t.onTag),
-              ),
-            if (p.maxPoints > 0)
+            if (p.pointsCapCents > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: KitTag(
-                  'Up to ${p.maxPoints} pts off',
+                  'Up to ${pointsText(p.pointsCapCents)} pts off',
                   height: 22,
                   fontSize: 11,
                   background: t.successFill,
@@ -239,12 +249,7 @@ Future<void> showBuySheet(
   int? priceCents,
 }) => showKitSheet<void>(
   context,
-  builder: (_) => _BuySheet(
-    product: product,
-    options: options,
-    buyNow: buyNow,
-    priceCents: priceCents,
-  ),
+  builder: (_) => _BuySheet(product: product, options: options, buyNow: buyNow),
 );
 
 class _BuySheet extends ConsumerStatefulWidget {
@@ -252,13 +257,11 @@ class _BuySheet extends ConsumerStatefulWidget {
     required this.product,
     required this.options,
     required this.buyNow,
-    this.priceCents,
   });
 
   final Product product;
   final List<OptionGroup> options;
   final bool buyNow;
-  final int? priceCents;
 
   @override
   ConsumerState<_BuySheet> createState() => _BuySheetState();
@@ -277,15 +280,8 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
     if (buy) {
       nav.pop();
       outer.push(
-        Routes.checkout,
-        extra: CartLine(
-          id: 'now',
-          product: widget.priceCents == null
-              ? p
-              : p.copyWith(priceCents: widget.priceCents!),
-          variant: _variant,
-          qty: _qty,
-        ),
+        Routes.checkout(p.mallId),
+        extra: CartLine(id: 'now', product: p, variant: _variant, qty: _qty),
       );
       return;
     }
@@ -306,7 +302,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
   Widget build(BuildContext context) {
     final c = context.og;
     final p = widget.product;
-    final price = widget.priceCents ?? p.priceCents;
+    final price = p.priceCents;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -322,7 +318,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
                     Text(cash(price * _qty), style: OgText.heading(22)),
                     Text(
                       p.name,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                     if (_variant.isNotEmpty)
                       Text(
@@ -336,7 +332,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
           ),
           for (final (gi, g) in widget.options.indexed) ...[
             const SizedBox(height: 14),
-            Text(g.title, style: OgText.body(15, weight: FontWeight.w700)),
+            Text(g.title, style: OgText.body(15, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -357,13 +353,15 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
               Expanded(
                 child: Text(
                   'Quantity',
-                  style: OgText.body(15, weight: FontWeight.w700),
+                  style: OgText.body(15, weight: FontWeight.w600),
                 ),
               ),
               KitQty(
                 value: _qty,
                 onLess: _qty <= 1 ? null : () => setState(() => _qty--),
-                onMore: () => setState(() => _qty++),
+                onMore: !p.service && _qty >= p.stock
+                    ? null
+                    : () => setState(() => _qty++),
               ),
             ],
           ),
@@ -389,7 +387,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
   }
 }
 
-/// Shop: watch and shop, deals, videos, lives, services and malls.
+/// Shop: deals, services and partner shops.
 class ShopHomeScreen extends ConsumerStatefulWidget {
   const ShopHomeScreen({super.key});
 
@@ -405,10 +403,9 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final t = context.tones;
-    final products = ref.watch(shopProductsProvider(null, _q)).value;
+    final loading = ref.watch(shopProductsProvider(null, _q));
+    final products = loading.value;
     final deals = ref.watch(shopDealsProvider).value ?? const [];
-    final videos = ref.watch(shopVideosProvider).value ?? const [];
-    final lives = ref.watch(shopLivesProvider).value ?? const [];
     final malls = ref.watch(mallsProvider).value ?? const [];
     final searching = _q.trim().isNotEmpty;
     return KitScaffold(
@@ -432,7 +429,9 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
           onChanged: (v) => setState(() => _q = v),
         ),
         if (searching) ...[
-          if (products == null)
+          if (loading.hasError)
+            const _ShopEmpty('Can’t search right now. Check your connection.')
+          else if (products == null)
             const CupertinoActivityIndicator()
           else if (products.isEmpty)
             DashedBox(
@@ -447,59 +446,8 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
           else
             ProductGrid(products: products),
         ] else ...[
-          if (videos.isNotEmpty)
-            Pressable(
-              semanticLabel: 'Watch and shop',
-              onPressed: () => context.push(Routes.shopVideo(videos.first.id)),
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: OgColors.ink,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gear your coach plays with',
-                            style: OgText.heading(
-                              22,
-                              color: const Color(0xFFFFFFFF),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Watch it in use, then buy it',
-                            style: OgText.body(
-                              14,
-                              color: const Color(0xFFC9C6BC),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          KitTag(
-                            'Watch and shop',
-                            background: t.gold,
-                            foreground: t.onGold,
-                            height: 30,
-                            fontSize: 13,
-                          ),
-                        ],
-                      ),
-                    ),
-                    OgIcon(
-                      OgIcons.racquet,
-                      size: 56,
-                      color: const Color(0xFFC6FF00),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           KitUnderlineTabs(
-            labels: const ['For you', 'Videos', 'Live', 'Services', 'Malls'],
+            labels: const ['For you', 'Services', 'Shops'],
             selected: _tab,
             padding: EdgeInsets.zero,
             onSelect: (i) => setState(() => _tab = i),
@@ -523,54 +471,24 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                 ),
               ],
               Text('For you', style: OgText.heading(20)),
-              if (products == null)
+              if (loading.hasError)
+                const _ShopEmpty('Can’t load the Shop. Check your connection.')
+              else if (products == null)
                 const CupertinoActivityIndicator()
               else if (products.where((p) => !p.service).isEmpty)
-                _ShopEmpty(
-                  'Nothing for sale yet. Players and clubs can open a shop '
-                  'from Profile, then My shop.',
+                const _ShopEmpty(
+                  'Nothing for sale yet. Partner shops open soon.',
                 )
               else
                 ProductGrid(
                   products: products.where((p) => !p.service).toList(),
                 ),
             ],
-            1 when videos.isEmpty => [
-              const _ShopEmpty(
-                'Shoppable videos come later. Browse For you in the meantime.',
-              ),
-            ],
-            2 when lives.isEmpty => [
-              const _ShopEmpty(
-                'Live selling comes later. Browse For you in the meantime.',
-              ),
-            ],
             1 => [
-              for (final v in videos)
-                _MediaRow(
-                  title: v.title,
-                  sub: '${v.creator} · ${compact(v.views)} views',
-                  mark: v.creatorMark,
-                  price: cash(v.product.priceCents),
-                  onTap: () => context.push(Routes.shopVideo(v.id)),
-                ),
-            ],
-            2 => [
-              for (final l in lives)
-                _MediaRow(
-                  title: l.title,
-                  sub: 'Live, ${compact(l.watching)} watching · ${l.shop}',
-                  mark: l.shopMark,
-                  price: 'Live',
-                  live: true,
-                  onTap: () => context.push(Routes.shopLive(l.id)),
-                ),
-              Text(
-                'Live prices last until the stream ends.',
-                style: OgText.body(13, color: c.textMuted),
-              ),
-            ],
-            3 => [
+              if (loading.hasError)
+                const _ShopEmpty('Can’t load services. Check your connection.'),
+              if (products != null && !products.any((p) => p.service))
+                const _ShopEmpty('No services yet.'),
               if (products != null)
                 for (final p in products.where((p) => p.service))
                   KitCard(
@@ -586,6 +504,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                   ),
             ],
             _ => [
+              if (malls.isEmpty) const _ShopEmpty('No shops yet.'),
               KitCard(
                 children: [
                   for (final m in malls)
@@ -611,7 +530,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                                     m.name,
                                     style: OgText.body(
                                       15,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
@@ -641,98 +560,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
   }
 }
 
-class _MediaRow extends StatelessWidget {
-  const _MediaRow({
-    required this.title,
-    required this.sub,
-    required this.mark,
-    required this.price,
-    required this.onTap,
-    this.live = false,
-  });
-
-  final String title;
-  final String sub;
-  final String mark;
-  final String price;
-  final VoidCallback onTap;
-  final bool live;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    return Pressable(
-      semanticLabel: '$title, $sub',
-      onPressed: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 96,
-            height: 128,
-            decoration: BoxDecoration(
-              color: OgColors.ink,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.center,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Icon(
-                  CupertinoIcons.play_fill,
-                  color: Color(0xFFFFFFFF),
-                  size: 32,
-                ),
-                if (live)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: KitTag(
-                      'LIVE',
-                      height: 20,
-                      fontSize: 10,
-                      background: const Color(0xFFD2342C),
-                      foreground: const Color(0xFFFFFFFF),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: OgText.body(16, weight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    SolidAvatar.forId(
-                      mark,
-                      initials: mark,
-                      size: 24,
-                      fontSize: 10,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        sub,
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(price, style: OgText.heading(16)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A shop's page: follow, vouchers, products, videos and about.
+/// A shop's page: follow, products and about.
 class MallPageScreen extends ConsumerStatefulWidget {
   const MallPageScreen({super.key, required this.id});
 
@@ -757,9 +585,6 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
       );
     }
     final m = d.mall;
-    final videos = (ref.watch(shopVideosProvider).value ?? const <ShopVideo>[])
-        .where((v) => v.product.mallId == m.id)
-        .toList();
     Crumbs.name(context, m.name);
     Widget stat(String big, String small) => Expanded(
       child: Column(
@@ -789,13 +614,14 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                     children: [
                       Flexible(child: Text(m.name, style: OgText.heading(22))),
                       const SizedBox(width: 6),
-                      KitTag(
-                        'Verified',
-                        height: 22,
-                        fontSize: 11,
-                        background: t.successFill,
-                        foreground: t.onSuccessFill,
-                      ),
+                      if (d.verified)
+                        KitTag(
+                          'Verified',
+                          height: 22,
+                          fontSize: 11,
+                          background: t.successFill,
+                          foreground: t.onSuccessFill,
+                        ),
                     ],
                   ),
                   Text(
@@ -824,10 +650,16 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                     : KitButtonStyle.primary,
                 height: 46,
                 onPressed: () async {
-                  await ref
-                      .read(shopRepositoryProvider)
-                      .follow(m.id, !d.following);
-                  ref.invalidate(mallDetailProvider(m.id));
+                  try {
+                    await ref
+                        .read(shopRepositoryProvider)
+                        .follow(m.id, !d.following);
+                    ref.invalidate(mallDetailProvider(m.id));
+                  } on AuthFailure catch (e) {
+                    if (context.mounted) {
+                      showOgToast(context, e.message, error: true);
+                    }
+                  }
                 },
               ),
             ),
@@ -838,56 +670,14 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                 style: KitButtonStyle.outline,
                 height: 46,
                 onPressed: () => m.ownerId.isEmpty
-                    ? showOgToast(context, 'Shop chat opens with the Shop.')
+                    ? showOgToast(context, 'This shop can’t be messaged yet.')
                     : context.push(Routes.messagePlayer(m.ownerId)),
               ),
             ),
           ],
         ),
-        Row(
-          children: [
-            for (final (i, v) in d.vouchers.indexed) ...[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: t.warnFill,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        v.title,
-                        style: OgText.heading(18, color: t.onWarnFill),
-                      ),
-                      Text(
-                        v.condition,
-                        style: OgText.body(12, color: t.onWarnFill),
-                      ),
-                      const SizedBox(height: 6),
-                      KitLink(
-                        v.claimed ? 'Claimed' : 'Claim',
-                        color: t.onWarnFill,
-                        onPressed: v.claimed
-                            ? null
-                            : () async {
-                                await ref
-                                    .read(shopRepositoryProvider)
-                                    .claimVoucher(m.id, v.title);
-                                ref.invalidate(mallDetailProvider(m.id));
-                              },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
         KitUnderlineTabs(
-          labels: const ['Products', 'Videos', 'About'],
+          labels: const ['Products', 'About'],
           selected: _tab,
           spread: true,
           padding: EdgeInsets.zero,
@@ -895,21 +685,6 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
         ),
         ...switch (_tab) {
           0 => [ProductGrid(products: d.products)],
-          1 => [
-            if (videos.isEmpty)
-              Text(
-                'No videos yet.',
-                style: OgText.body(14, color: c.textMuted),
-              ),
-            for (final v in videos)
-              _MediaRow(
-                title: v.title,
-                sub: '${v.creator} · ${compact(v.views)} views',
-                mark: v.creatorMark,
-                price: cash(v.product.priceCents),
-                onTap: () => context.push(Routes.shopVideo(v.id)),
-              ),
-          ],
           _ => [
             Column(children: [for (final (k, v) in d.facts) KitKeyValue(k, v)]),
             if (m.pointsAccepted)
@@ -919,10 +694,9 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: KitLink(
-                'Report this shop',
+                'Get help with this shop',
                 color: c.textMuted,
-                onPressed: () =>
-                    context.push(Routes.reportListing('Shop: ${m.name}')),
+                onPressed: () => context.push(Routes.help),
               ),
             ),
           ],
@@ -932,7 +706,7 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
   }
 }
 
-/// A product: price, points, options, the creator's video, reviews.
+/// A product: price, points, options, reviews.
 class ProductPageScreen extends ConsumerWidget {
   const ProductPageScreen({super.key, required this.id});
 
@@ -943,7 +717,7 @@ class ProductPageScreen extends ConsumerWidget {
     final c = context.og;
     final t = context.tones;
     final d = ref.watch(productDetailProvider(id));
-    final points = ref.watch(walletSummaryProvider).value?.points ?? 0;
+    final points = ref.watch(pointsSummaryProvider).value?.minor ?? 0;
     final value = d.value;
     if (value == null) {
       return KitScaffold(
@@ -969,19 +743,23 @@ class ProductPageScreen extends ConsumerWidget {
       bottom: [
         Row(
           children: [
-            Expanded(
-              child: KitButton(
-                label: 'Add to cart',
-                style: KitButtonStyle.outline,
-                onPressed: soldOut
-                    ? null
-                    : p.service
-                    ? () => context.push(Routes.serviceBook(p.id))
-                    : () =>
-                          showBuySheet(context, ref, p, options: value.options),
+            if (!p.service) ...[
+              Expanded(
+                child: KitButton(
+                  label: 'Add to cart',
+                  style: KitButtonStyle.outline,
+                  onPressed: soldOut
+                      ? null
+                      : () => showBuySheet(
+                          context,
+                          ref,
+                          p,
+                          options: value.options,
+                        ),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: KitButton(
                 label: soldOut ? 'Sold out' : (p.service ? 'Book' : 'Buy now'),
@@ -1007,7 +785,7 @@ class ProductPageScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(cash(p.priceCents), style: OgText.heading(30)),
-            if (p.oldPriceCents != null) ...[
+            if (p.deal case final deal?) ...[
               const SizedBox(width: 8),
               Text(
                 cash(p.oldPriceCents!),
@@ -1019,7 +797,7 @@ class ProductPageScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               KitTag(
-                p.deal!,
+                deal,
                 background: const Color(0xFFD2342C),
                 foreground: const Color(0xFFFFFFFF),
               ),
@@ -1035,7 +813,7 @@ class ProductPageScreen extends ConsumerWidget {
               : '${p.rating.toStringAsFixed(1)} · from ${compact(value.ratings)} ${value.ratings == 1 ? 'rating' : 'ratings'}, ${compact(p.sold)} sold',
           style: OgText.body(14, color: c.textMuted),
         ),
-        if (p.maxPoints > 0 && !Env.hasSupabase)
+        if (p.pointsCapCents > 0)
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -1048,7 +826,7 @@ class ProductPageScreen extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Use up to ${p.maxPoints} points here. You have ${points.toStringAsFixed(1)}.',
+                    'Use up to ${pointsText(p.pointsCapCents)} points here. You have ${pointsText(points)}.',
                     style: OgText.body(
                       14,
                       weight: FontWeight.w600,
@@ -1059,8 +837,8 @@ class ProductPageScreen extends ConsumerWidget {
               ],
             ),
           ),
-        Text(value.arrives, style: OgText.body(14, color: c.textMuted)),
-        if (value.options.isNotEmpty)
+        Text(value.collectLine, style: OgText.body(14, color: c.textMuted)),
+        if (value.options.isNotEmpty && !p.service && !soldOut)
           KitCard(
             children: [
               KitNavTile(
@@ -1071,19 +849,6 @@ class ProductPageScreen extends ConsumerWidget {
                     .join(' · '),
                 onTap: () =>
                     showBuySheet(context, ref, p, options: value.options),
-              ),
-            ],
-          ),
-        if (p.usedBy != null && value.videoTitle != null)
-          KitCard(
-            children: [
-              KitNavTile(
-                icon: OgIcons.racquet,
-                tile: OgColors.ink,
-                ink: const Color(0xFFC6FF00),
-                title: '${p.usedBy} uses this',
-                subtitle: '${value.videoTitle} · Watch the video',
-                onTap: () => context.push(Routes.shopVideo('v1')),
               ),
             ],
           ),
@@ -1115,7 +880,7 @@ class ProductPageScreen extends ConsumerWidget {
                   children: [
                     Text(
                       r.name,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: OgText.body(14, weight: FontWeight.w600),
                     ),
                     Text(r.meta, style: OgText.body(12, color: c.textMuted)),
                     const SizedBox(height: 4),
@@ -1130,7 +895,7 @@ class ProductPageScreen extends ConsumerWidget {
             KitNavTile(
               icon: OgIcons.bag,
               title: p.mallName,
-              subtitle: 'Seller details, delivery and returns',
+              subtitle: 'About the shop and where to collect',
               onTap: () => context.push(Routes.mallPage(p.mallId)),
             ),
           ],
@@ -1144,8 +909,7 @@ class ProductPageScreen extends ConsumerWidget {
           child: KitLink(
             'Report this listing',
             color: c.textMuted,
-            onPressed: () =>
-                context.push(Routes.reportListing('Listing: ${p.name}')),
+            onPressed: () => context.push(Routes.reportListing(p.id, p.name)),
           ),
         ),
       ],
@@ -1153,442 +917,7 @@ class ProductPageScreen extends ConsumerWidget {
   }
 }
 
-/// A shoppable video: the tagged product with a Buy button.
-class ShopVideoScreen extends ConsumerStatefulWidget {
-  const ShopVideoScreen({super.key, required this.id});
-
-  final String id;
-
-  @override
-  ConsumerState<ShopVideoScreen> createState() => _ShopVideoScreenState();
-}
-
-class _ShopVideoScreenState extends ConsumerState<ShopVideoScreen> {
-  bool _liked = false;
-  bool _following = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final videos = ref.watch(shopVideosProvider).value;
-    final v = videos?.where((v) => v.id == widget.id).firstOrNull;
-    if (v == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Video'),
-        children: [CupertinoActivityIndicator()],
-      );
-    }
-    final i = videos!.indexOf(v);
-    const white = Color(0xFFFFFFFF);
-    const muted = Color(0xFFC9C6BC);
-    return KitScaffold(
-      header: KitHeader(
-        title: '${i + 1} of ${videos.length}',
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KitIconButton(
-              icon: OgIcons.flag,
-              label: 'Report this video',
-              onPressed: () => context.push(Routes.reportVideo(v.id)),
-            ),
-            const CartButton(),
-          ],
-        ),
-      ),
-      background: OgColors.ink,
-      children: [
-        Container(
-          height: 360,
-          decoration: BoxDecoration(
-            color: const Color(0xFF26292E),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Stack(
-            children: [
-              const Center(
-                child: Icon(
-                  CupertinoIcons.play_circle_fill,
-                  color: white,
-                  size: 64,
-                ),
-              ),
-              Positioned(
-                right: 12,
-                bottom: 16,
-                child: Column(
-                  children: [
-                    KitIconButton(
-                      icon: OgIcons.heart,
-                      label: _liked ? 'Unlike' : 'Like',
-                      fill: _liked,
-                      color: white,
-                      background: const Color(0x38FFFFFF),
-                      onPressed: () => setState(() => _liked = !_liked),
-                    ),
-                    Text(
-                      compact(v.likes + (_liked ? 1 : 0)),
-                      style: OgText.body(12, color: white),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (v.paid)
-          KitTag(
-            'Paid partnership',
-            background: const Color(0x38FFFFFF),
-            foreground: white,
-          ),
-        Row(
-          children: [
-            SolidAvatar.forId(
-              v.creatorMark,
-              initials: v.creatorMark,
-              size: 40,
-              fontSize: 14,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                v.creator,
-                style: OgText.body(16, weight: FontWeight.w700, color: white),
-              ),
-            ),
-            KitButton(
-              label: _following ? 'Following' : 'Follow',
-              expand: false,
-              height: 38,
-              radius: 19,
-              fontSize: 13,
-              style: _following
-                  ? KitButtonStyle.outline
-                  : KitButtonStyle.primary,
-              onPressed: () => setState(() => _following = !_following),
-            ),
-          ],
-        ),
-        Text(v.title, style: OgText.heading(20, color: white)),
-        Text('${compact(v.views)} views', style: OgText.body(13, color: muted)),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 64,
-                child: ProductArtBox(product: v.product, height: 64),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      v.product.name,
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w700,
-                        color: OgColors.ink,
-                      ),
-                    ),
-                    Text(
-                      cash(v.product.priceCents),
-                      style: OgText.heading(16, color: OgColors.ink),
-                    ),
-                    if (v.product.maxPoints > 0)
-                      Text(
-                        'Up to ${v.product.maxPoints} pts off',
-                        style: OgText.body(12, color: const Color(0xFF0A4F3A)),
-                      ),
-                  ],
-                ),
-              ),
-              KitButton(
-                label: 'Buy',
-                expand: false,
-                height: 42,
-                radius: 21,
-                onPressed: () => showBuySheet(context, ref, v.product),
-              ),
-            ],
-          ),
-        ),
-        Row(
-          children: [
-            if (i > 0)
-              Expanded(
-                child: KitButton(
-                  label: 'Previous',
-                  style: KitButtonStyle.outline,
-                  onPressed: () => context.pushReplacement(
-                    Routes.shopVideo(videos[i - 1].id),
-                  ),
-                ),
-              ),
-            if (i > 0 && i < videos.length - 1) const SizedBox(width: 10),
-            if (i < videos.length - 1)
-              Expanded(
-                child: KitButton(
-                  label: 'Next video',
-                  style: KitButtonStyle.outline,
-                  onPressed: () => context.pushReplacement(
-                    Routes.shopVideo(videos[i + 1].id),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Live shopping: chat, the pinned product at its live price.
-class ShopLiveScreen extends ConsumerStatefulWidget {
-  const ShopLiveScreen({super.key, required this.id});
-
-  final String id;
-
-  @override
-  ConsumerState<ShopLiveScreen> createState() => _ShopLiveScreenState();
-}
-
-class _ShopLiveScreenState extends ConsumerState<ShopLiveScreen> {
-  final _ask = TextEditingController();
-  final _mine = <String>[];
-
-  @override
-  void dispose() {
-    _ask.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = ref
-        .watch(shopLivesProvider)
-        .value
-        ?.where((l) => l.id == widget.id)
-        .firstOrNull;
-    if (l == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Live'),
-        children: [CupertinoActivityIndicator()],
-      );
-    }
-    const white = Color(0xFFFFFFFF);
-    const muted = Color(0xFFC9C6BC);
-    final pinned = l.products.first;
-    final livePrice = l.livePriceCents[pinned.id] ?? pinned.priceCents;
-    return KitScaffold(
-      header: KitHeader(
-        title: l.shop,
-        subtitle: 'with ${l.host}',
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KitIconButton(
-              icon: OgIcons.flag,
-              label: 'Report this live',
-              onPressed: () =>
-                  context.push(Routes.reportVideo(l.id, live: true)),
-            ),
-            const CartButton(),
-          ],
-        ),
-      ),
-      background: OgColors.ink,
-      children: [
-        Container(
-          height: 280,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF26292E),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Stack(
-            children: [
-              Row(
-                children: [
-                  KitTag(
-                    'LIVE',
-                    background: const Color(0xFFD2342C),
-                    foreground: white,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${compact(l.watching)} watching',
-                    style: OgText.body(13, color: white),
-                  ),
-                ],
-              ),
-              const Center(
-                child: Icon(
-                  CupertinoIcons.videocam_fill,
-                  color: white,
-                  size: 56,
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final (who, text) in [
-                      ...l.chat,
-                      for (final m in _mine) ('You', m),
-                    ].reversed.take(4).toList().reversed)
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '$who  ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            TextSpan(text: text),
-                          ],
-                        ),
-                        style: OgText.body(13, color: white),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: white,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 64,
-                child: ProductArtBox(product: pinned, height: 64),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Live price · ends with the stream',
-                      style: OgText.body(
-                        11,
-                        weight: FontWeight.w800,
-                        color: const Color(0xFFD2342C),
-                      ),
-                    ),
-                    Text(
-                      pinned.name,
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w700,
-                        color: OgColors.ink,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          cash(livePrice),
-                          style: OgText.heading(16, color: OgColors.ink),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          cash(pinned.oldPriceCents ?? pinned.priceCents),
-                          style: OgText.body(
-                            12,
-                            color: const Color(0xFF5B6168),
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              KitButton(
-                label: 'Buy',
-                expand: false,
-                height: 42,
-                radius: 21,
-                onPressed: () =>
-                    showBuySheet(context, ref, pinned, priceCents: livePrice),
-              ),
-            ],
-          ),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: KitInput(
-                label: 'Ask the host',
-                controller: _ask,
-                hint: 'Type a question',
-              ),
-            ),
-          ],
-        ),
-        KitButton(
-          label: 'Send',
-          style: KitButtonStyle.outline,
-          onPressed: () {
-            if (_ask.text.trim().isEmpty) return;
-            setState(() => _mine.add(_ask.text.trim()));
-            _ask.clear();
-            showOgToast(context, 'Sent. The host sees your question.');
-          },
-        ),
-        Text('In this live', style: OgText.heading(20, color: white)),
-        for (final p in l.products)
-          Pressable(
-            semanticLabel: p.name,
-            onPressed: () => context.push(Routes.product(p.id)),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 52,
-                  child: ProductArtBox(product: p, height: 52),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    p.name,
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w700,
-                      color: white,
-                    ),
-                  ),
-                ),
-                Text(
-                  cash(l.livePriceCents[p.id] ?? p.priceCents),
-                  style: OgText.heading(15, color: white),
-                ),
-              ],
-            ),
-          ),
-        Text(
-          'Live prices last until the stream ends.',
-          style: OgText.body(13, color: muted),
-        ),
-      ],
-    );
-  }
-}
-
-/// Book a service like a restring: tension, day and time, then pay.
+/// A service: tension and a drop-off time, then checkout.
 class ServiceBookScreen extends ConsumerStatefulWidget {
   const ServiceBookScreen({super.key, required this.id});
 
@@ -1601,9 +930,14 @@ class ServiceBookScreen extends ConsumerStatefulWidget {
 class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
   String _tension = '24 lb';
   int _day = 0;
-  String? _time;
-  bool _busy = false;
-  Order? _done;
+  (int, int, String)? _time;
+
+  static const _times = [
+    (10, 0, '10:00 AM'),
+    (12, 0, '12:00 PM'),
+    (15, 0, '3:00 PM'),
+    (18, 0, '6:00 PM'),
+  ];
 
   List<DateTime> get _days {
     final now = DateTime.now();
@@ -1615,70 +949,39 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
   String _dayLabel(DateTime d) =>
       '${const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1]} ${d.day}';
 
-  Future<void> _book(Product p) async {
-    setState(() => _busy = true);
-    try {
-      final o = await ref
-          .read(shopRepositoryProvider)
-          .bookService(
-            p.id,
-            slot: '${_dayLabel(_days[_day])}, $_time',
-            tension: _tension,
-          );
-      HapticFeedback.mediumImpact();
-      refreshShop(ref.invalidate);
-      if (mounted) setState(() => _done = o);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+  void _book(Product p) {
+    final (hour, minute, _) = _time!;
+    final day = _days[_day];
+    context.push(
+      Routes.checkout(p.mallId),
+      extra: CartLine(
+        id: 'now',
+        product: p,
+        variant: _tension,
+        slot: DateTime(day.year, day.month, day.day, hour, minute),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    final d = ref.watch(productDetailProvider(widget.id)).value;
-    if (d == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Book a service'),
-        children: [CupertinoActivityIndicator()],
-      );
+    final detail = ref.watch(productDetailProvider(widget.id));
+    if (shopWaiting(
+          detail,
+          'Book a service',
+          () => ref.invalidate(productDetailProvider(widget.id)),
+        )
+        case final waiting?) {
+      return waiting;
     }
+    final d = detail.requireValue;
     final p = d.product;
-    if (_done case final o?) {
-      return KitScaffold(
-        header: const KitHeader(title: 'Book a service'),
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-        bottom: [
-          KitButton(
-            label: 'See my orders',
-            onPressed: () => context.go(Routes.orders()),
-          ),
-          KitButton(
-            label: 'Back to the Shop',
-            style: KitButtonStyle.outline,
-            onPressed: () => context.go(Routes.shop),
-          ),
-        ],
-        children: [
-          const KitDoneBanner(title: 'Booked'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '${p.name}, ${o.booking} at ${p.mallName}. Show the booking when you drop off your racket.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
-            ),
-          ),
-        ],
-      );
-    }
     return KitScaffold(
       header: const KitHeader(title: 'Book a service'),
       bottom: [
         KitButton(
-          label: _time == null ? 'Pick a time' : 'Book · ${cash(p.priceCents)}',
-          loading: _busy,
+          label: _time == null ? 'Pick a time' : 'Continue',
           onPressed: _time == null ? null : () => _book(p),
         ),
       ],
@@ -1732,28 +1035,22 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final s in const [
-              '10:00 AM',
-              '12:00 PM',
-              '3:00 PM',
-              '6:00 PM',
-            ])
+            for (final t in _times)
               KitChip(
-                label: s,
-                selected: _time == s,
-                onTap: () => setState(() => _time = s),
+                label: t.$3,
+                selected: _time == t,
+                onTap: () => setState(() => _time = t),
               ),
           ],
         ),
-        const KitKeyValue('Ready', '2 hours after drop-off'),
-        KitKeyValue('Where', '${p.mallName}, Tampines'),
+        KitKeyValue('Where', p.mallName),
         KitKeyValue(
           'Price',
           '${cash(p.priceCents)}, no platform fee for the buyer',
         ),
         Text(
-          'Free to cancel up to 2 hours before your slot. Services are booked '
-          'and paid like anything else in the Shop, and points can be used.',
+          'Pay now. OlympusGO holds your payment until you collect your '
+          'racket, and you can cancel until the shop starts work.',
           style: OgText.body(13, height: 1.45, color: c.textMuted),
         ),
       ],

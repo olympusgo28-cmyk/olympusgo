@@ -494,7 +494,7 @@ class KitButton extends StatelessWidget {
     final (bg, fg, side) = off
         ? (t.disabledFill, t.onDisabledFill, null)
         : switch (style) {
-            KitButtonStyle.primary => (c.primary, c.onPrimary, null),
+            KitButtonStyle.primary => (c.primarySmall, c.onPrimary, null),
             KitButtonStyle.outline => (
               c.bg,
               c.text,
@@ -967,7 +967,10 @@ class KitTickBox extends StatelessWidget {
         height: 24,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: on ? c.primary : off, width: on ? 7 : 2),
+          border: Border.all(
+            color: on ? c.primarySmall : off,
+            width: on ? 7 : 2,
+          ),
         ),
       );
     }
@@ -975,9 +978,9 @@ class KitTickBox extends StatelessWidget {
       width: 24,
       height: 24,
       decoration: BoxDecoration(
-        color: on ? c.primary : c.bg,
+        color: on ? c.primarySmall : c.bg,
         borderRadius: BorderRadius.circular(radius ?? 8),
-        border: Border.all(color: on ? c.primary : off, width: 2),
+        border: Border.all(color: on ? c.primarySmall : off, width: 2),
       ),
       alignment: Alignment.center,
       child: on
@@ -1174,7 +1177,7 @@ class KitUnderlineTabs extends StatelessWidget {
             labels[i],
             style: OgText.body(
               15,
-              weight: on ? FontWeight.w700 : FontWeight.w600,
+              weight: on ? FontWeight.w600 : FontWeight.w600,
               color: on ? c.text : c.textMuted,
             ),
           ),
@@ -2124,8 +2127,8 @@ class KitQty extends StatelessWidget {
       semanticLabel: what,
       onPressed: tap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,

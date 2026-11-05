@@ -14,6 +14,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/place_code.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/club_providers.dart';
 import '../domain/club_models.dart';
@@ -76,7 +77,7 @@ Widget _countTile(
           count,
           style: OgText.body(
             14,
-            weight: FontWeight.w700,
+            weight: FontWeight.w600,
             color: context.og.textMuted,
           ),
         ),
@@ -96,12 +97,6 @@ class ClubSettingsScreen extends ConsumerWidget {
     body: (club) {
       final can = club.myPermissions;
       final owner = club.isOwner;
-      final reward = ref.watch(clubRewardProvider(id)).value;
-      final done =
-          reward?.meets
-              .where((m) => m.paidPresent >= reward.minPlayers)
-              .length ??
-          0;
       return KitScaffold(
         header: KitHeader(title: 'Club settings', subtitle: club.name),
         children: [
@@ -126,16 +121,6 @@ class ClubSettingsScreen extends ConsumerWidget {
                   onTap: () =>
                       context.push(Routes.clubOverview(id, tab: 'sports')),
                 ),
-              _countTile(
-                context,
-                icon: OgIcons.giftBox,
-                title: 'Club reward',
-                sub: reward == null
-                    ? 'Meets that count toward the reward'
-                    : '${(reward.target - done).clamp(0, reward.target)} more Meets unlock ${reward.prize}',
-                count: reward == null ? null : '$done of ${reward.target}',
-                onTap: () => context.push(Routes.clubReward(id)),
-              ),
               if (owner || can.contains(ClubPermission.members))
                 _countTile(
                   context,
@@ -192,6 +177,19 @@ class ClubSettingsScreen extends ConsumerWidget {
                     ? null
                     : '${club.activeInvites} active',
                 onTap: () => context.push(Routes.clubInvite(id)),
+              ),
+              _countTile(
+                context,
+                icon: OgIcons.link,
+                title: 'Group code',
+                sub: 'Players scan it to open this group',
+                onTap: () => showPlaceCode(
+                  context,
+                  title: club.name,
+                  load: (rotate) => ref
+                      .read(playRepositoryProvider)
+                      .groupCode(id, rotate: rotate),
+                ),
               ),
               if (owner || can.contains(ClubPermission.members))
                 _countTile(
@@ -315,7 +313,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                           k.toUpperCase(),
                           style: OgText.body(
                             12,
-                            weight: FontWeight.w800,
+                            weight: FontWeight.w600,
                             color: c.textMuted,
                             letterSpacing: 0.6,
                           ),
@@ -355,7 +353,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                                     m.player.displayName,
                                     style: OgText.body(
                                       15,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -364,7 +362,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                                     '${m.band!.code} ${m.rating!.toStringAsFixed(1)}',
                                     style: OgText.body(
                                       13,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                       color: c.textMuted,
                                     ),
                                   ),
@@ -568,7 +566,7 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
                 'Saved',
                 style: OgText.body(
                   13,
-                  weight: FontWeight.w700,
+                  weight: FontWeight.w600,
                   color: t.successInk,
                 ),
               ),
@@ -676,7 +674,7 @@ class _BanSheetState extends State<_BanSheet> {
         const SizedBox(height: 14),
         Text(
           'Reason, shown to other Admins',
-          style: OgText.body(15, weight: FontWeight.w700),
+          style: OgText.body(15, weight: FontWeight.w600),
         ),
         for (final r in const [
           'No-shows',
@@ -791,7 +789,7 @@ class JoinRequestsScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 r.player.displayName,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 [
@@ -940,7 +938,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                             TextSpan(
                               text: e.actor,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             TextSpan(text: ' ${e.action}'),
@@ -1051,7 +1049,7 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                                   b.player.displayName,
                                   style: OgText.body(
                                     15,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
@@ -1180,7 +1178,7 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
                 children: [
                   Text(
                     'Invite link',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -1357,8 +1355,8 @@ class _ClubTransferScreenState extends ConsumerState<ClubTransferScreen> {
             ],
           ),
         Text(
-          'After they accept, you become an Admin. Payouts and the club '
-          'reward move to the new owner once their identity is verified.',
+          'After they accept, you become an Admin. Payouts move to the new '
+          'owner once their identity is verified.',
           style: OgText.body(13, height: 1.45, color: c.textMuted),
         ),
       ],
@@ -1524,7 +1522,6 @@ class _ClubDeleteScreenState extends ConsumerState<ClubDeleteScreen> {
     body: (club) {
       final sessions =
           ref.watch(clubSessionsProvider(widget.id)).value ?? const [];
-      final reward = ref.watch(clubRewardProvider(widget.id)).value;
       return KitScaffold(
         header: const KitHeader(title: 'Delete club'),
         bottom: [
@@ -1563,7 +1560,6 @@ class _ClubDeleteScreenState extends ConsumerState<ClubDeleteScreen> {
             '${sessions.length} upcoming ${sessions.length == 1 ? 'session' : 'sessions'}',
             'Club chat, photos and files',
             'Leaderboards, roles and the audit log',
-            if (reward != null) 'Club reward progress',
           ], crossed: true),
           const KitNote(
             'Players with paid spots are refunded in full, fees included. '

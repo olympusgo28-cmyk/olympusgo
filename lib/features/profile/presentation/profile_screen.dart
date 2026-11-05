@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -18,8 +19,9 @@ import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../shell/main_shell.dart';
+import '../../shop/application/shop_providers.dart';
 import '../../social/application/social_providers.dart';
-import '../../wallet/application/wallet_providers.dart';
+import '../../earnings/application/earnings_providers.dart';
 import '../domain/profile.dart';
 
 const _muted = Color(0xFFC9C6BC);
@@ -35,7 +37,7 @@ class ProfileScreen extends ConsumerWidget {
     ref.invalidate(mySummaryProvider);
     ref.invalidate(mySocialProvider);
     ref.invalidate(myScheduleProvider);
-    ref.invalidate(walletSummaryProvider);
+    ref.invalidate(pointsSummaryProvider);
   }
 
   @override
@@ -45,7 +47,7 @@ class ProfileScreen extends ConsumerWidget {
     final summary = ref.watch(mySummaryProvider).value;
     final sports = ref.watch(mySportsProvider).value ?? const [];
     final social = ref.watch(mySocialProvider).value;
-    final wallet = ref.watch(walletSummaryProvider).value;
+    final wallet = ref.watch(pointsSummaryProvider).value;
     final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
     final teams = ref.watch(teamListProvider(ClubTab.mine)).value ?? const [];
     final upcoming = (ref.watch(myScheduleProvider).value ?? const [])
@@ -136,10 +138,10 @@ class ProfileScreen extends ConsumerWidget {
                       localRank: summary?.localRank,
                       area: summary?.area,
                     ),
-                  if (wallet != null)
+                  if (wallet != null && wallet.worthShowing)
                     Pressable(
                       semanticLabel:
-                          '${wallet.points.toStringAsFixed(1)} points. Use points',
+                          '${pointsText(wallet.minor)} points. Use points',
                       onPressed: () => context.push(Routes.points),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -147,7 +149,7 @@ class ProfileScreen extends ConsumerWidget {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFE8CC),
+                          color: const Color(0xFFFFE6D6),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: Row(
@@ -157,17 +159,19 @@ class ProfileScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${wallet.points.toStringAsFixed(1)} points',
+                                    '${pointsText(wallet.minor)} points',
                                     style: OgText.body(
                                       16,
-                                      weight: FontWeight.w800,
+                                      weight: FontWeight.w600,
                                       color: const Color(0xFF7A3B00),
                                     ),
                                   ),
                                   Text(
-                                    wallet.pendingPoints > 0
-                                        ? '${wallet.pendingPoints.toStringAsFixed(0)} more pending'
-                                        : 'Earn points by playing',
+                                    wallet.pendingMinor > 0
+                                        ? '${pointsText(wallet.pendingMinor)} more pending'
+                                        : wallet.earning
+                                        ? 'Earn points by playing'
+                                        : 'Use them in the Shop',
                                     style: OgText.body(
                                       13,
                                       color: const Color(0xFF7A3B00),
@@ -180,7 +184,7 @@ class ProfileScreen extends ConsumerWidget {
                               'Use points',
                               style: OgText.body(
                                 14,
-                                weight: FontWeight.w700,
+                                weight: FontWeight.w600,
                                 color: const Color(0xFF7A3B00),
                               ),
                             ),
@@ -253,10 +257,9 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push(Routes.passport),
                         ),
                         _ListRow(
-                          title: 'Wallet',
-                          subtitle:
-                              'S\$${money(wallet?.balanceCents ?? 0)} · refunds, withdraw, history',
-                          onTap: () => context.push(Routes.wallet),
+                          title: 'Earnings and receipts',
+                          subtitle: 'What you’ve paid and what you’ve earned',
+                          onTap: () => context.push(Routes.earnings),
                         ),
                         _ListRow(
                           title: 'Followers and following',
@@ -272,9 +275,20 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push(Routes.orders()),
                         ),
                         _ListRow(
-                          title: 'My shop',
-                          subtitle: 'Sell gear or services to players',
-                          onTap: () => context.push(Routes.seller),
+                          title: 'My children',
+                          subtitle: 'Link and look after a child\'s account',
+                          onTap: () => context.push(Routes.children),
+                        ),
+                        if (ref.watch(myShopProvider).value case final shop?)
+                          _ListRow(
+                            title: 'My shop',
+                            subtitle: '${shop.name}: orders to get ready',
+                            onTap: () => context.push(Routes.ownerOrders),
+                          ),
+                        _ListRow(
+                          title: 'My lessons',
+                          subtitle: 'Trials and one-to-ones you’ve booked',
+                          onTap: () => context.push(Routes.lessons),
                         ),
                         _ListRow(
                           title: 'Sports and levels',
@@ -416,7 +430,7 @@ class _ListRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                  Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                   const SizedBox(height: 1),
                   Text(subtitle, style: OgText.body(13, color: c.textMuted)),
                 ],
@@ -505,7 +519,7 @@ class _PassportCard extends StatelessWidget {
                     'PASSPORT · ${label.toUpperCase()}',
                     style: OgText.body(
                       12,
-                      weight: FontWeight.w800,
+                      weight: FontWeight.w600,
                       color: _muted,
                       letterSpacing: 0.6,
                     ),
@@ -524,7 +538,7 @@ class _PassportCard extends StatelessWidget {
                     'MAIN SPORT',
                     style: OgText.body(
                       11,
-                      weight: FontWeight.w800,
+                      weight: FontWeight.w600,
                       color: const Color(0xFF3A2C00),
                     ),
                   ),
@@ -546,7 +560,7 @@ class _PassportCard extends StatelessWidget {
                     '${band.label} · ${band.code}',
                     style: OgText.body(
                       16,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -583,7 +597,7 @@ class _PassportCard extends StatelessWidget {
                             : 'Local #$localRank${area == null ? '' : ' in $area'} · See leaderboards',
                         style: OgText.body(
                           14,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -629,7 +643,7 @@ class _BadgeTile extends StatelessWidget {
           Text(
             badge.name,
             textAlign: TextAlign.center,
-            style: OgText.body(12, weight: FontWeight.w700, height: 1.25),
+            style: OgText.body(12, weight: FontWeight.w600, height: 1.25),
           ),
         ],
       ),

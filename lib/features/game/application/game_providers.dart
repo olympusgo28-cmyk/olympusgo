@@ -38,6 +38,18 @@ Future<List<Standing>> leaderboard(
 @riverpod
 Future<List<Gear>> myGear(Ref ref) => ref.watch(gameRepositoryProvider).gear();
 
+@riverpod
+Future<List<GameVoucher>> myVouchers(Ref ref) =>
+    ref.watch(gameRepositoryProvider).vouchers();
+
+@riverpod
+Future<List<GameBadge>> myBadges(Ref ref) =>
+    ref.watch(gameRepositoryProvider).badges();
+
+@riverpod
+Future<OrganizerRewards> organizerRewards(Ref ref) =>
+    ref.watch(gameRepositoryProvider).organizerRewards();
+
 /// Refreshes the game screens after joining or an attempt.
 void refreshGame(void Function(ProviderOrFamily provider) invalidate) {
   invalidate(campaignsProvider);
@@ -45,4 +57,7 @@ void refreshGame(void Function(ProviderOrFamily provider) invalidate) {
   invalidate(creatorProvider);
   invalidate(creatorStatusProvider);
   invalidate(myGearProvider);
+  invalidate(myVouchersProvider);
+  invalidate(myBadgesProvider);
+  invalidate(organizerRewardsProvider);
 }

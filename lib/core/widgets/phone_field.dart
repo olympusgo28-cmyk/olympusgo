@@ -5,6 +5,7 @@ import '../domain/country.dart';
 import '../theme/og_colors.dart';
 import '../theme/og_text.dart';
 import 'og_fields.dart';
+import 'og_screen.dart';
 
 /// Country code dropdown plus mobile number, as in the design.
 class PhoneField extends StatefulWidget {
@@ -107,7 +108,8 @@ class _PhoneFieldState extends State<PhoneField> {
                 autofillHints: const [AutofillHints.telephoneNumberNational],
                 textInputAction: TextInputAction.done,
                 onSubmitted: widget.onSubmitted,
-                error: widget.error,
+                // Red box only: the sentence goes below both boxes.
+                error: widget.error == null ? null : '',
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]')),
                 ],
@@ -115,6 +117,8 @@ class _PhoneFieldState extends State<PhoneField> {
             ),
           ],
         ),
+        // Under both boxes: the number box alone is too narrow for a sentence.
+        if (widget.error != null) OgErrorText(widget.error!),
       ],
     );
   }

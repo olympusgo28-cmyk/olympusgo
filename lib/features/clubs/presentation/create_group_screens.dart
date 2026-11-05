@@ -85,7 +85,7 @@ class _Group extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: kitSpaced([
-      Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+      Text(title, style: OgText.body(15, weight: FontWeight.w600)),
       ...children,
     ], 12),
   );
@@ -286,7 +286,7 @@ class NewClubScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: OgColors.tangerineLine, width: 2),
+                  border: Border.all(color: OgColors.orange700, width: 2),
                 ),
                 child: Row(
                   children: [
@@ -298,7 +298,7 @@ class NewClubScreen extends ConsumerWidget {
                         children: [
                           Text(
                             d.venueName ?? '',
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             'Area: ${d.area}',
@@ -487,7 +487,7 @@ class _SportCard extends StatelessWidget {
             color: off ? t.soft : c.bg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: on ? OgColors.tangerineLine : c.borderControl,
+              color: on ? OgColors.orange700 : c.borderControl,
               width: on ? 2 : 1,
             ),
           ),
@@ -501,7 +501,7 @@ class _SportCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: on ? c.primary : t.soft,
+                      color: on ? c.primarySmall : t.soft,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -528,7 +528,7 @@ class _SportCard extends StatelessWidget {
                 sport.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(16, weight: FontWeight.w700),
+                style: OgText.body(16, weight: FontWeight.w600),
               ),
             ],
           ),
@@ -582,7 +582,7 @@ class NewClubLevelsScreen extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             s.label,
-                            style: OgText.body(17, weight: FontWeight.w700),
+                            style: OgText.body(17, weight: FontWeight.w600),
                           ),
                         ),
                         if (s == d.sports.first) ...[
@@ -706,7 +706,7 @@ class _NewClubInviteScreenState extends ConsumerState<NewClubInviteScreen> {
             Expanded(
               child: Text(
                 "Players you've played with",
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
             ),
             Text('$n selected', style: OgText.body(13, color: c.textMuted)),
@@ -794,7 +794,7 @@ class _PersonRow extends StatelessWidget {
                 children: [
                   Text(
                     p.displayName,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   Text(meta, style: OgText.body(13, color: c.textMuted)),
                 ],
@@ -867,7 +867,7 @@ class NewTeamScreen extends ConsumerWidget {
                       children: [
                         Text(
                           name,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         Text(rule, style: OgText.body(13, color: c.textMuted)),
                       ],
@@ -997,7 +997,7 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
       ],
       gap: 14,
       children: [
-        Text('Staff', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Staff', style: OgText.body(15, weight: FontWeight.w600)),
         Text(
           'You: head coach · team owner. Add coaches and managers later from '
           'the team settings.',
@@ -1008,7 +1008,7 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
             Expanded(
               child: Text(
                 'Players',
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: OgText.body(15, weight: FontWeight.w600),
               ),
             ),
             Text('$n selected', style: OgText.body(13, color: c.textMuted)),

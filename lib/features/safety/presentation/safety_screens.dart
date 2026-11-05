@@ -110,8 +110,7 @@ class MyReportsScreen extends ConsumerWidget {
       children: [
         const KitTitle(
           'Your reports',
-          lead:
-              'Only you can see these. We tell you the result of every report.',
+          lead: 'Only you can see these. Thanks for telling us. We review every report.',
         ),
         if (reports == null)
           const CupertinoActivityIndicator()
@@ -247,7 +246,7 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
                   children: [
                     Text(
                       r.heading,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(r.detail, style: OgText.body(13, color: c.textMuted)),
                     const SizedBox(height: 4),
@@ -278,7 +277,7 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
             title: 'What can happen',
             child: KitCheckList([
               'Removed, and the person is told which rule was broken',
-              'Kept, if it does not break the rules. We tell you why',
+              'Kept, if it does not break the rules',
               'Serious cases go to the police or the safety regulator in your country',
             ]),
           )
@@ -337,7 +336,7 @@ class _Step extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                 Text(line, style: OgText.body(13, color: c.textMuted)),
               ],
             ),

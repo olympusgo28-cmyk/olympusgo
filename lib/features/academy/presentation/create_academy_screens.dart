@@ -64,7 +64,7 @@ class _Header extends StatelessWidget {
 }
 
 Widget _label(String text) =>
-    Text(text, style: OgText.body(15, weight: FontWeight.w700));
+    Text(text, style: OgText.body(15, weight: FontWeight.w600));
 
 // ─── 1 Details ─────────────────────────────────────────────────────────────
 
@@ -260,7 +260,7 @@ class NewAcademyLevelsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           name,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         Text(meta, style: OgText.body(13, color: c.textMuted)),
                       ],
@@ -370,7 +370,7 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
 
 // ─── 4 Verification ────────────────────────────────────────────────────────
 
-class NewAcademyVerifyScreen extends ConsumerWidget {
+class NewAcademyVerifyScreen extends StatelessWidget {
   const NewAcademyVerifyScreen({super.key});
 
   static const _docs = [
@@ -380,11 +380,9 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final c = context.og;
     final t = context.tones;
-    final d = ref.watch(academyDraftControllerProvider);
-    final draft = ref.read(academyDraftControllerProvider.notifier);
     return KitScaffold(
       header: const _Header(4, 'Verification'),
       bottom: [
@@ -399,8 +397,9 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
           size: 28,
           lead:
               'The academy needs a business licence. Everyone who coaches '
-              'needs an NROC licence. We review within 1 – 3 working days. You '
-              'can set up classes while you wait.',
+              'needs an NROC licence. You add these right after creating the '
+              'academy, and we review within 1 – 3 working days. Parents can’t '
+              'find you until then, and you can set up classes while you wait.',
         ),
         for (var i = 0; i < _docs.length; i++)
           Container(
@@ -415,7 +414,7 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                   backgroundColor: t.soft,
                   child: Text(
                     '${i + 1}',
-                    style: OgText.body(13, weight: FontWeight.w700),
+                    style: OgText.body(13, weight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -425,7 +424,7 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                     children: [
                       Text(
                         _docs[i].$2,
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         _docs[i].$3,
@@ -434,22 +433,6 @@ class NewAcademyVerifyScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (d.documents.contains(_docs[i].$1))
-                  KitTag(
-                    'In review',
-                    background: t.warnFill,
-                    foreground: t.onWarnFill,
-                  )
-                else
-                  KitLink(
-                    'Add',
-                    // shortcut: marks the step done; document upload to
-                    // storage comes with the academy backend.
-                    onPressed: () => draft.edit(
-                      (x) =>
-                          x.copyWith(documents: {...x.documents, _docs[i].$1}),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -494,6 +477,7 @@ class _NewAcademyCoachesScreenState
       if (!mounted) return;
       showOgToast(context, 'Academy created');
       context.go(Routes.academyToday(id));
+      context.push(Routes.academyVerify(id));
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -582,7 +566,7 @@ class _Role extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+        Text(title, style: OgText.body(15, weight: FontWeight.w600)),
         Text(body, style: OgText.body(13, color: context.og.textMuted)),
       ],
     ),

@@ -213,7 +213,7 @@ class TeamPageScreen extends ConsumerWidget {
                           'NEXT FIXTURE',
                           style: OgText.body(
                             12,
-                            weight: FontWeight.w800,
+                            weight: FontWeight.w600,
                             color: t.gold,
                             letterSpacing: 0.8,
                           ),
@@ -244,8 +244,8 @@ class TeamPageScreen extends ConsumerWidget {
                       "You're in · $myLine",
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
-                        color: const Color(0xFFC6FF00),
+                        weight: FontWeight.w600,
+                        color: const Color(0xFFFF7A1A),
                       ),
                     ),
                   ],
@@ -255,7 +255,7 @@ class TeamPageScreen extends ConsumerWidget {
                       'Are you available?',
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: const Color(0xFFFFFFFF),
                       ),
                     ),
@@ -299,7 +299,7 @@ class TeamPageScreen extends ConsumerWidget {
                             'You said: ${fixture.myAvailability.label}',
                             style: OgText.body(
                               14,
-                              weight: FontWeight.w700,
+                              weight: FontWeight.w600,
                               color: const Color(0xFFFFFFFF),
                             ),
                           ),
@@ -369,7 +369,7 @@ class TeamPageScreen extends ConsumerWidget {
                                   ][s.startsAt.weekday - 1],
                                   style: OgText.body(
                                     11,
-                                    weight: FontWeight.w800,
+                                    weight: FontWeight.w600,
                                     color: t.onTag,
                                   ),
                                 ),
@@ -389,7 +389,7 @@ class TeamPageScreen extends ConsumerWidget {
                                   s.title,
                                   style: OgText.body(
                                     15,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
@@ -435,7 +435,7 @@ class TeamPageScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 'vs ${r.opponent}',
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 [
@@ -698,7 +698,7 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
                       children: [
                         Text(
                           club.name,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                         Text(
                           'You can add players from this club',
@@ -775,7 +775,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                       Flexible(
                         child: Text(
                           m.player.displayName,
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                       ),
                       if (m.captain != null) ...[
@@ -882,7 +882,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                                       s.label.toUpperCase(),
                                       style: OgText.body(
                                         11,
-                                        weight: FontWeight.w800,
+                                        weight: FontWeight.w600,
                                         color: c.textMuted,
                                         letterSpacing: 0.6,
                                       ),
@@ -897,7 +897,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                                                   'Player'),
                                         style: OgText.body(
                                           15,
-                                          weight: FontWeight.w700,
+                                          weight: FontWeight.w600,
                                           color: id == null
                                               ? c.textMuted
                                               : c.text,
@@ -927,7 +927,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
               1 => [
                 Text(
                   '${players.length} players${fixture == null ? '' : ' · availability for ${Fmt.day(fixture.startsAt)}'}',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
                 KitCard(
                   children: [
@@ -1065,7 +1065,7 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
                   children: [
                     Text(
                       link.replaceFirst('https://', ''),
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -1215,7 +1215,7 @@ class TeamFixtureScreen extends ConsumerWidget {
             f.competition.toUpperCase(),
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: c.textMuted,
               letterSpacing: 0.8,
             ),
@@ -1265,7 +1265,7 @@ class TeamFixtureScreen extends ConsumerWidget {
                           s.label,
                           style: OgText.body(
                             13,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: c.textMuted,
                           ),
                         ),
@@ -1273,7 +1273,7 @@ class TeamFixtureScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           who(f.lineup[s.key] ?? const []),
-                          style: OgText.body(15, weight: FontWeight.w700),
+                          style: OgText.body(15, weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -1477,7 +1477,7 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(s.label, style: OgText.body(15, weight: FontWeight.w700)),
+              Text(s.label, style: OgText.body(15, weight: FontWeight.w600)),
               const SizedBox(height: 6),
               for (var i = 0; i < s.size; i++)
                 Padding(
@@ -1510,7 +1510,7 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
                                     : (byId[id]?.player.displayName ??
                                           'Player');
                               }(),
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                           ),
                           OgIcon(
@@ -1846,7 +1846,7 @@ class _NewFixtureScreenState extends ConsumerState<NewFixtureScreen> {
                       ),
                       Text(
                         at == null ? 'Choose a date and time' : Fmt.dayTime(at),
-                        style: OgText.body(16, weight: FontWeight.w700),
+                        style: OgText.body(16, weight: FontWeight.w600),
                       ),
                     ],
                   ),

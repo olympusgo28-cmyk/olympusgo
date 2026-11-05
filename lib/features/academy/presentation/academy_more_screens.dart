@@ -17,7 +17,7 @@ import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/academy_providers.dart';
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';
@@ -153,13 +153,33 @@ class AcademySettingsScreen extends ConsumerWidget {
                 subtitle: switch (a.verification) {
                   'verified' => 'Business licence checked',
                   'submitted' => 'Sent for review',
+                  'rejected' => 'Needs another look',
                   _ => 'Not verified yet',
                 },
                 chevron: head,
                 onTap: head
-                    ? () => showAcademyVerification(context, ref, a)
+                    ? () => context.push(Routes.academyVerify(a.id))
                     : () {},
               ),
+              KitNavTile(
+                icon: OgIcons.shieldTick,
+                title: 'My coaching licence',
+                subtitle: 'Your NROC licence and coach page',
+                onTap: () => context.push(Routes.coachMe),
+              ),
+              KitNavTile(
+                icon: OgIcons.calendar,
+                title: 'Lessons',
+                subtitle: 'Paid lessons and one-to-one times',
+                onTap: () => context.push(Routes.academyLessons(a.id)),
+              ),
+              if (head)
+                KitNavTile(
+                  icon: OgIcons.clipboardList,
+                  title: 'Assessment templates',
+                  subtitle: 'What your coaches score',
+                  onTap: () => context.push(Routes.assessmentTemplates(a.id)),
+                ),
               KitNavTile(
                 icon: OgIcons.people,
                 title: 'Coaches',
@@ -200,7 +220,7 @@ class AcademySettingsScreen extends ConsumerWidget {
                 KitNavTile(
                   icon: OgIcons.trash,
                   title: 'Close academy',
-                  subtitle: 'Stop classes and refund unused lessons',
+                  subtitle: 'Stop classes and refund lessons still to come',
                   danger: true,
                   onTap: () => context.push(Routes.academyClose(a.id)),
                 ),
@@ -312,7 +332,7 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
                                       style: OgText.body(
                                         15,
                                         weight: m.unread > 0
-                                            ? FontWeight.w800
+                                            ? FontWeight.w600
                                             : FontWeight.w600,
                                       ),
                                     ),
@@ -579,7 +599,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                       ][at.weekday - 1],
                       style: OgText.body(
                         11,
-                        weight: FontWeight.w800,
+                        weight: FontWeight.w600,
                         color: t.onTag,
                       ),
                     ),
@@ -642,7 +662,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
               style: OgText.body(13, height: 1.4, color: c.textMuted),
             ),
           ] else if (_mode == 'time') ...[
-            Text('New date', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('New date', style: OgText.body(15, weight: FontWeight.w600)),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -750,7 +770,7 @@ class CoachPayScreen extends ConsumerWidget {
                 '${p.month.toUpperCase()} PAY',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
@@ -879,7 +899,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                         children: [
                           Text(
                             p.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: OgText.body(14, weight: FontWeight.w600),
                           ),
                           Text(
                             p.sub,
@@ -933,7 +953,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                 '${w.week}',
                                 style: OgText.body(
                                   13,
-                                  weight: FontWeight.w800,
+                                  weight: FontWeight.w600,
                                   color: w.week == 5 ? c.onPrimary : t.onTag,
                                 ),
                               ),
@@ -947,7 +967,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                     w.topic,
                                     style: OgText.body(
                                       14,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
@@ -998,7 +1018,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                         '${d.minutes} min',
                                         style: OgText.body(
                                           13,
-                                          weight: FontWeight.w700,
+                                          weight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -1126,7 +1146,7 @@ class _LessonPlanEditScreenState extends ConsumerState<LessonPlanEditScreen> {
               '$total min',
               style: OgText.body(
                 14,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: total > 90 ? context.tones.onDangerFill : c.textMuted,
               ),
             ),
@@ -1257,7 +1277,7 @@ class _DrillPickerState extends ConsumerState<_DrillPicker> {
                   d.video,
                   style: OgText.body(
                     11,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: const Color(0xFFFFFFFF),
                   ),
                 ),
@@ -1372,7 +1392,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
                 children: [
                   Text(
                     'Invite link for ${cls.name}',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                   Text(
                     '${link.replaceFirst('https://', '')} · valid 7 days',
@@ -1523,7 +1543,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
                         children: [
                           Text(
                             Fmt.day(l.at),
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             l.lesson,
@@ -1638,7 +1658,7 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(k.name, style: OgText.body(15, weight: FontWeight.w700)),
+              Text(k.name, style: OgText.body(15, weight: FontWeight.w600)),
               const SizedBox(height: 6),
               KitSegments(
                 labels: [
@@ -1654,7 +1674,7 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
               ),
             ],
           ),
-        Text('Add a line', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Add a line', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1702,13 +1722,12 @@ class FilmingConsentScreen extends ConsumerStatefulWidget {
 
 class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
   bool? _own;
-  bool _train = false;
   bool _busy = false;
   DateTime? _signed;
 
   Future<void> _save(Student s) async {
     final own = _own ?? s.filmingConsent;
-    if (own || _train) {
+    if (own) {
       final ok =
           !Env.hasSupabase ||
           await ref
@@ -1720,7 +1739,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
     try {
       await ref
           .read(academyRepositoryProvider)
-          .setFilmingConsent(s.id, own: own, train: _train);
+          .setFilmingConsent(s.id, own: own);
       HapticFeedback.mediumImpact();
       ref.invalidate(studentProvider(s.id));
       if (mounted) setState(() => _signed = DateTime.now());
@@ -1751,7 +1770,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'What it is used for',
-        'Counting rallies and showing $name’s movement so the coach can explain what to work on.',
+        'Showing $name’s movement so the coach can explain what to work on.',
       ),
       (
         'Who can see it',
@@ -1759,11 +1778,11 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'How long it is kept',
-        'Clips are deleted after 90 days. The numbers in the progress report stay.',
+        'Clips are kept for 90 days, or longer if you extend them once. The numbers in the progress report stay.',
       ),
     ];
     final outcome = own
-        ? '$name’s classes will be filmed for the progress report${_train ? ', and blurred clips may help improve the camera system.' : '. Clips will not be used for model training.'}'
+        ? '$name’s classes will be filmed for the progress report.'
         : '$name still joins every class. Clips are not analysed or kept, and progress is tracked by the coach only.';
     return KitScaffold(
       header: const KitHeader(title: 'Filming consent'),
@@ -1771,9 +1790,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
         KitButton(
           label: _signed != null
               ? 'Saved'
-              : (own || _train
-                    ? 'Confirm with Face ID'
-                    : 'Save without filming'),
+              : (own ? 'Confirm with Face ID' : 'Save without filming'),
           loading: _busy,
           onPressed: _signed != null ? () => context.pop() : () => _save(s),
         ),
@@ -1818,7 +1835,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                   '${i + 1}',
                   style: OgText.body(
                     12,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: c.onPrimary,
                   ),
                 ),
@@ -1830,7 +1847,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                   children: [
                     Text(
                       title,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                     Text(
                       text,
@@ -1841,11 +1858,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
               ),
             ],
           ),
-        Text('Your choices', style: OgText.heading(20)),
-        Text(
-          'Two separate choices. You can say yes to one and no to the other.',
-          style: OgText.body(13, color: c.textMuted),
-        ),
+        Text('Your choice', style: OgText.heading(20)),
         SwitchRow(
           compact: true,
           title: 'Film $name for their own progress',
@@ -1853,16 +1866,6 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
           value: own,
           onChanged: (v) => setState(() {
             _own = v;
-            _signed = null;
-          }),
-        ),
-        SwitchRow(
-          compact: true,
-          title: 'Use $name’s clips to improve the camera system',
-          subtitle: 'Faces are blurred first. Saying no changes nothing about classes or reports. Optional.',
-          value: _train,
-          onChanged: (v) => setState(() {
-            _train = v;
             _signed = null;
           }),
         ),
@@ -1876,7 +1879,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
             'Signed by you, parent · ${Fmt.dayTimeComma(_signed!)}',
             style: OgText.body(
               13,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: t.successInk,
             ),
           ),

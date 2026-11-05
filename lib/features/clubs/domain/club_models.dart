@@ -319,29 +319,6 @@ abstract class ClubLeaderboard with _$ClubLeaderboard {
   }) = _ClubLeaderboard;
 }
 
-@freezed
-abstract class RewardMeet with _$RewardMeet {
-  const factory RewardMeet({
-    required String title,
-    required DateTime at,
-    required int paidPresent,
-  }) = _RewardMeet;
-}
-
-@freezed
-abstract class ClubReward with _$ClubReward {
-  const factory ClubReward({
-    @Default(4) int target,
-    @Default(6) int minPlayers,
-    @Default('S\$20 shuttle voucher') String prize,
-    @Default([]) List<RewardMeet> meets,
-    @Default([]) List<(String, String)> past,
-  }) = _ClubReward;
-
-  const ClubReward._();
-  int get done => meets.where((m) => m.paidPresent >= minPlayers).length;
-}
-
 /// A player you have played with, offered when inviting.
 @freezed
 abstract class InviteCandidate with _$InviteCandidate {
@@ -627,17 +604,6 @@ enum ContentReport {
     other,
   ];
 
-  static const forVideo = [
-    harassment,
-    personalDetails,
-    intimateImage,
-    childSafety,
-    hate,
-    scam,
-    copyright,
-    other,
-  ];
-
   static const forClub = [
     scam,
     harassment,
@@ -658,4 +624,16 @@ String clubInitials(String name) {
   if (words.isEmpty) return '?';
   if (words.length == 1) return words.first[0].toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+/// A group's place in the activity ranking. Groups only: no player is named.
+@freezed
+abstract class GroupRank with _$GroupRank {
+  const factory GroupRank({
+    required int rank,
+    required String clubId,
+    required String name,
+    @Default('') String area,
+    required int games,
+  }) = _GroupRank;
 }

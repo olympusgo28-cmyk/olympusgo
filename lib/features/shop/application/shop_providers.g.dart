@@ -349,84 +349,6 @@ final class MallDetailFamily extends $Family
   String toString() => r'mallDetailProvider';
 }
 
-@ProviderFor(shopVideos)
-final shopVideosProvider = ShopVideosProvider._();
-
-final class ShopVideosProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<ShopVideo>>,
-          List<ShopVideo>,
-          FutureOr<List<ShopVideo>>
-        >
-    with $FutureModifier<List<ShopVideo>>, $FutureProvider<List<ShopVideo>> {
-  ShopVideosProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'shopVideosProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$shopVideosHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<ShopVideo>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<ShopVideo>> create(Ref ref) {
-    return shopVideos(ref);
-  }
-}
-
-String _$shopVideosHash() => r'498b5a304a0b227e683b0598af7fabecd68729b6';
-
-@ProviderFor(shopLives)
-final shopLivesProvider = ShopLivesProvider._();
-
-final class ShopLivesProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<LiveStream>>,
-          List<LiveStream>,
-          FutureOr<List<LiveStream>>
-        >
-    with $FutureModifier<List<LiveStream>>, $FutureProvider<List<LiveStream>> {
-  ShopLivesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'shopLivesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$shopLivesHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<LiveStream>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<LiveStream>> create(Ref ref) {
-    return shopLives(ref);
-  }
-}
-
-String _$shopLivesHash() => r'f763d1df27e2ae3760ea5e60f2108b6472ff2a7d';
-
 @ProviderFor(cart)
 final cartProvider = CartProvider._();
 
@@ -465,45 +387,6 @@ final class CartProvider
 }
 
 String _$cartHash() => r'c68a754f8bf794c7777d22508ee4e608e3e5f3f8';
-
-@ProviderFor(addresses)
-final addressesProvider = AddressesProvider._();
-
-final class AddressesProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Address>>,
-          List<Address>,
-          FutureOr<List<Address>>
-        >
-    with $FutureModifier<List<Address>>, $FutureProvider<List<Address>> {
-  AddressesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'addressesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$addressesHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Address>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Address>> create(Ref ref) {
-    return addresses(ref);
-  }
-}
-
-String _$addressesHash() => r'9f090683712e501e678ff2139a493e87acc7774b';
 
 @ProviderFor(myOrders)
 final myOrdersProvider = MyOrdersProvider._();
@@ -613,49 +496,48 @@ final class OrderDetailFamily extends $Family
   String toString() => r'orderDetailProvider';
 }
 
-@ProviderFor(sellerSummary)
-final sellerSummaryProvider = SellerSummaryProvider._();
+/// The shop this account runs, if any.
 
-final class SellerSummaryProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<SellerSummary?>,
-          SellerSummary?,
-          FutureOr<SellerSummary?>
-        >
-    with $FutureModifier<SellerSummary?>, $FutureProvider<SellerSummary?> {
-  SellerSummaryProvider._()
+@ProviderFor(myShop)
+final myShopProvider = MyShopProvider._();
+
+/// The shop this account runs, if any.
+
+final class MyShopProvider
+    extends $FunctionalProvider<AsyncValue<Mall?>, Mall?, FutureOr<Mall?>>
+    with $FutureModifier<Mall?>, $FutureProvider<Mall?> {
+  /// The shop this account runs, if any.
+  MyShopProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'sellerSummaryProvider',
+        name: r'myShopProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$sellerSummaryHash();
+  String debugGetCreateSourceHash() => _$myShopHash();
 
   @$internal
   @override
-  $FutureProviderElement<SellerSummary?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<Mall?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  FutureOr<SellerSummary?> create(Ref ref) {
-    return sellerSummary(ref);
+  FutureOr<Mall?> create(Ref ref) {
+    return myShop(ref);
   }
 }
 
-String _$sellerSummaryHash() => r'2889a8cf3b1a866ddc4f434bfd1508c33d9e7b60';
+String _$myShopHash() => r'8412d19515af86304fd2eb9bbb3d2ecbbdb0d977';
 
-@ProviderFor(sellerOrders)
-final sellerOrdersProvider = SellerOrdersProvider._();
+@ProviderFor(ownerOrders)
+final ownerOrdersProvider = OwnerOrdersProvider._();
 
-final class SellerOrdersProvider
+final class OwnerOrdersProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Order>>,
@@ -663,19 +545,19 @@ final class SellerOrdersProvider
           FutureOr<List<Order>>
         >
     with $FutureModifier<List<Order>>, $FutureProvider<List<Order>> {
-  SellerOrdersProvider._()
+  OwnerOrdersProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'sellerOrdersProvider',
+        name: r'ownerOrdersProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$sellerOrdersHash();
+  String debugGetCreateSourceHash() => _$ownerOrdersHash();
 
   @$internal
   @override
@@ -685,47 +567,8 @@ final class SellerOrdersProvider
 
   @override
   FutureOr<List<Order>> create(Ref ref) {
-    return sellerOrders(ref);
+    return ownerOrders(ref);
   }
 }
 
-String _$sellerOrdersHash() => r'5e653efc48555d94c01327e5e142dc5ab53f2dff';
-
-@ProviderFor(sellerProducts)
-final sellerProductsProvider = SellerProductsProvider._();
-
-final class SellerProductsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Product>>,
-          List<Product>,
-          FutureOr<List<Product>>
-        >
-    with $FutureModifier<List<Product>>, $FutureProvider<List<Product>> {
-  SellerProductsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'sellerProductsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$sellerProductsHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Product>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Product>> create(Ref ref) {
-    return sellerProducts(ref);
-  }
-}
-
-String _$sellerProductsHash() => r'1872e51f6967a5f54cb59612d8ae2f7d4ac6109d';
+String _$ownerOrdersHash() => r'4e44483fcf7d3a4f7559ff55503d08f3a78c6f16';

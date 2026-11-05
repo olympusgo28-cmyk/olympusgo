@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../core/config/env.dart';
 import '../../core/format.dart';
@@ -14,15 +15,17 @@ import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/pressable.dart';
 import '../clubs/application/club_providers.dart';
+import '../clubs/data/club_repository.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../shell/main_shell.dart';
 import '../social/application/social_providers.dart';
-import '../wallet/application/wallet_providers.dart';
+import '../earnings/application/earnings_providers.dart';
+import '../feed/application/feed_providers.dart';
 import 'application/home_categories.dart';
 import 'home_rows.dart';
 
-/// Home: hero, search, categories, Wallet and points, then rows of Meets,
+/// Home: hero, search, categories, points, then rows of Meets,
 /// events, tournaments, clubs, players, malls and popular items.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -34,7 +37,8 @@ class HomeScreen extends ConsumerWidget {
     ref.invalidate(clubListProvider);
     ref.invalidate(teamListProvider);
     ref.invalidate(suggestedPlayersProvider);
-    ref.invalidate(walletSummaryProvider);
+    ref.invalidate(pointsSummaryProvider);
+    ref.invalidate(feedStatusProvider);
   }
 
   @override
@@ -59,7 +63,9 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: _Categories()),
+            const SliverToBoxAdapter(child: _Videos()),
             const SliverToBoxAdapter(child: _Balances()),
+            const SliverToBoxAdapter(child: _YourGroups()),
             const SliverToBoxAdapter(
               child: ActivityShelf(kind: ActivityKind.meet, title: 'Meets'),
             ),
@@ -190,7 +196,7 @@ class _Hero extends ConsumerWidget {
                   KitTag(
                     demo ? 'Creator challenge' : 'Play',
                     fontSize: 12,
-                    background: c.onPrimary,
+                    background: OgColors.ink,
                     foreground: Colors.white,
                   ),
                   const SizedBox(height: 8),
@@ -200,7 +206,7 @@ class _Hero extends ConsumerWidget {
                         : 'Find your next game',
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    // Archivo runs much wider than the artboard's condensed
+                    // Baloo 2 runs much wider than the artboard's condensed
                     // face, so 26 keeps three lines clear of the circle.
                     style: OgText.heading(26, color: c.onPrimary, height: 1),
                   ),
@@ -218,6 +224,29 @@ class _Hero extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown only when the server says this person has a feed.
+class _Videos extends ConsumerWidget {
+  const _Videos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!(ref.watch(feedStatusProvider).value?.open ?? false)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: KitNavTile(
+        icon: OgIcons.video,
+        title: 'Videos',
+        subtitle: 'From people you follow',
+        padding: EdgeInsets.zero,
+        minHeight: 68,
+        onTap: () => context.push(Routes.videos),
       ),
     );
   }
@@ -327,8 +356,8 @@ class _Balances extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
-    final t = context.tones;
-    final w = ref.watch(walletSummaryProvider).value;
+    final w = ref.watch(pointsSummaryProvider).value;
+    if (w == null || !w.worthShowing) return const SizedBox.shrink();
     Widget card({
       required Color bg,
       required String label,
@@ -361,7 +390,7 @@ class _Balances extends ConsumerWidget {
                       label,
                       style: OgText.body(
                         13,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: labelColor,
                       ),
                     ),
@@ -390,34 +419,54 @@ class _Balances extends ConsumerWidget {
       child: Row(
         children: [
           card(
-            bg: t.soft,
-            label: 'Wallet',
-            labelColor: c.textMuted,
-            icon: OgIcons.walletCard,
-            iconColor: c.text,
-            stroke: 1.8,
-            value: 'S\$${money(w?.balanceCents ?? 0)}',
-            valueColor: c.text,
-            note: 'Refunds and history',
-            noteColor: c.textMuted,
-            route: Routes.wallet,
-          ),
-          const SizedBox(width: 12),
-          card(
             bg: c.inverseCard,
             label: 'Points',
             labelColor: const Color(0xFFC9C9CF),
             icon: OgIcons.pointsStar,
             iconColor: c.accent,
             stroke: 1.6,
-            value: (w?.points ?? 0).toStringAsFixed(1),
+            value: pointsText(w.minor),
             valueColor: c.accent,
-            note: (w?.pendingPoints ?? 0) > 0
-                ? '${(w!.pendingPoints).toStringAsFixed(0)} more pending'
-                : 'Earn by playing',
+            note: w.pendingMinor > 0
+                ? '${pointsText(w.pendingMinor)} more pending'
+                : w.earning
+                ? 'Earn by playing'
+                : 'Use them in the Shop',
             noteColor: const Color(0xFFC9C9CF),
             route: Routes.points,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The groups the player belongs to. Nothing shows until they join one.
+class _YourGroups extends ConsumerWidget {
+  const _YourGroups();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groups = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
+    if (groups.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text('Your groups', style: OgText.section),
+          ),
+          const SizedBox(height: 8),
+          for (final item in groups.take(3))
+            KitNavTile(
+              icon: OgIcons.group,
+              title: item.club.name,
+              subtitle: item.club.area,
+              padding: EdgeInsets.zero,
+              onTap: () => context.push(Routes.club(item.club.id)),
+            ),
         ],
       ),
     );

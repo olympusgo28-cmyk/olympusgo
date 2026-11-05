@@ -1,9 +1,21 @@
+import '../../features/analysis/presentation/analysis_screens.dart';
+import '../../features/feed/presentation/feed_screens.dart';
+import '../../features/fitness/presentation/ai_plan_screen.dart';
+import '../../features/fitness/presentation/fitness_screens.dart';
+import '../../features/fitness/presentation/program_screens.dart';
+import '../../features/fitness/presentation/train_screen.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/academy/presentation/academy_admin_screens.dart';
 import '../../features/academy/presentation/academy_screens.dart';
+import '../../features/academy/presentation/assessment_screens.dart';
+import '../../features/academy/presentation/lesson_screens.dart';
+import '../../features/academy/presentation/verification_screens.dart';
+import '../../features/game/presentation/reward_screens.dart';
+import '../../features/services/presentation/services_screen.dart';
 import '../../features/academy/presentation/coach_screens.dart';
 import '../../features/academy/presentation/create_academy_screens.dart';
 import '../../features/academy/presentation/parent_screens.dart';
@@ -23,9 +35,9 @@ import '../../features/game/presentation/gear_screens.dart';
 import '../../features/settings/presentation/account_screens.dart';
 import '../../features/shop/domain/commerce_models.dart';
 import '../../features/shop/presentation/order_screens.dart';
-import '../../features/shop/presentation/seller_screens.dart';
+import '../../features/shop/presentation/owner_screens.dart';
 import '../../features/shop/presentation/shop_screens.dart';
-import '../../features/wallet/presentation/wallet_screens.dart';
+import '../../features/earnings/presentation/earnings_screens.dart';
 import '../../features/clubs/presentation/club_overview_screen.dart';
 import '../../features/clubs/presentation/club_page_screen.dart';
 import '../../features/clubs/presentation/club_role_screens.dart';
@@ -36,6 +48,12 @@ import '../../features/clubs/presentation/group_chat_screens.dart';
 import '../../features/discover/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
+import '../../features/clubs/presentation/group_rank_screen.dart';
+import '../../features/discover/presentation/find_screen.dart';
+import '../../features/scan/host_scan_screen.dart';
+import '../../features/guardian/application/guardian_providers.dart';
+import '../../features/guardian/domain/guardian_models.dart';
+import '../../features/guardian/presentation/parent_link_screens.dart';
 import '../../features/onboarding/domain/sport.dart';
 import '../../features/onboarding/presentation/account_screens.dart';
 import '../../features/onboarding/presentation/name_birthday_screens.dart';
@@ -50,6 +68,7 @@ import '../../features/play/presentation/tournament_host_screens.dart';
 import '../../features/play/presentation/tournament_screens.dart';
 import '../../features/play/presentation/meet_action_screens.dart';
 import '../../features/play/presentation/meet_host_screens.dart';
+import '../../features/play/presentation/meet_rounds_screen.dart';
 import '../../features/play/presentation/score_screens.dart';
 import '../../features/play/presentation/meet_detail_screen.dart';
 import '../../features/play/presentation/play_screen.dart';
@@ -82,12 +101,19 @@ final rootKey = GlobalKey<NavigatorState>();
 Page<void> cupertinoPage(GoRouterState state, Widget child) =>
     CupertinoPage<void>(key: state.pageKey, child: child);
 
+/// A code is only asked for after a change starts, so a bare link or a
+/// restored app goes back to where the change begins.
+@visibleForTesting
+String? verifyChangeRedirect(Object? extra) =>
+    extra is String ? null : Routes.personalInfo;
+
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   // Re-run redirects whenever sign-in or the profile changes.
   final refresh = ValueNotifier(0);
   ref.listen(currentUserIdProvider, (_, _) => refresh.value++);
   ref.listen(sessionProfileProvider, (_, _) => refresh.value++);
+  ref.listen(restrictionsProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   // A share link opened while signed out, opened once they're in.
@@ -128,6 +154,14 @@ GoRouter appRouter(Ref ref) {
     if (isPublic) return onboarded ? Routes.home : Routes.name;
     if (!onboarded && !inOnboarding) return Routes.name;
     if (onboarded && loc.startsWith('/onboarding')) return Routes.home;
+    // The database refuses these players everything else. This keeps the
+    // screens from showing a wall of errors.
+    final restricted =
+        ref.read(restrictionsProvider).value?.restricted ?? false;
+    if (restricted && !Routes.restrictedPrefixes.any(loc.startsWith)) {
+      return Routes.parentLink;
+    }
+    if (!restricted && loc == Routes.parentLink) return Routes.home;
     return null;
   }
 
@@ -151,7 +185,43 @@ GoRouter appRouter(Ref ref) {
       page(Routes.deleteAccount, (_) => const DeleteAccountScreen()),
       // Game.
       page(Routes.game, (_) => const GameHomeScreen()),
+      page(Routes.find, (_) => const FindScreen()),
+      page(Routes.services, (_) => const ServicesScreen()),
+      page(Routes.fitness, (_) => const FitnessHomeScreen()),
+      page(Routes.fitnessExercises, (_) => const ExerciseCatalogScreen()),
+      page(
+        Routes.fitnessExercisePick,
+        (_) => const ExerciseCatalogScreen(pick: true),
+      ),
+      page(
+        '/fitness/exercises/:id',
+        (s) => ExerciseDetailScreen(id: s.pathParameters['id']!),
+      ),
+      page(Routes.fitnessPrograms, (_) => const ProgramsScreen()),
+      page(
+        '/fitness/programs/:id',
+        (s) => ProgramBuilderScreen(id: s.pathParameters['id']!),
+      ),
+      page(Routes.fitnessTrain, (_) => const TrainScreen()),
+      page(Routes.fitnessLog, (_) => const WorkoutLogScreen()),
+      page(Routes.fitnessCalculators, (_) => const CalculatorsScreen()),
+      page(Routes.fitnessAiPlan, (_) => const AiPlanScreen()),
+      page(Routes.videos, (_) => const FeedScreen()),
+      page(Routes.addPost, (_) => const AddPostScreen()),
+      page(Routes.myPosts, (_) => const MyPostsScreen()),
+      page(
+        '${Routes.videos}/:id/report',
+        (s) => ReportContentScreen.video(postId: id(s)),
+      ),
+      page(Routes.analysis, (_) => const MyClipsScreen()),
+      page(
+        Routes.analysisAdd,
+        (s) => AddClipScreen(child: s.extra as (String, String)?),
+      ),
+      page('${Routes.analysis}/:id', (s) => ClipScreen(id: id(s))),
       page(Routes.leaderboards, (_) => const LeaderboardsScreen()),
+      page(Routes.wallet, (_) => const WalletScreen()),
+      page(Routes.organizerRewards, (_) => const OrganizerRewardsScreen()),
       page('/game/:id', (s) => CampaignScreen(id: s.pathParameters['id']!)),
       page(
         '/game/:id/setup',
@@ -222,17 +292,15 @@ GoRouter appRouter(Ref ref) {
         '/students/:id/consent',
         (s) => FilmingConsentScreen(studentId: id(s)),
       ),
-      // Wallet.
-      page(Routes.wallet, (_) => const WalletScreen()),
-      page(Routes.walletWithdraw, (_) => const WithdrawScreen()),
+      // Earnings and receipts.
       page(Routes.points, (_) => const PointsWalletScreen()),
       page(Routes.receipts, (_) => const ReceiptsScreen()),
       page(Routes.earnings, (_) => const EarningsScreen()),
       page(
-        '/wallet/earnings/:id',
+        '/earnings/:id',
         (s) => EarningsDetailScreen(id: s.pathParameters['id']!),
       ),
-      page(Routes.payout, (_) => const PayoutScreen()),
+      page(Routes.paymentMethods, (_) => const PaymentMethodsScreen()),
       page(Routes.payoutAccount, (_) => const PayoutAccountScreen()),
       // Shop.
       page(Routes.shop, (_) => const ShopHomeScreen()),
@@ -244,18 +312,14 @@ GoRouter appRouter(Ref ref) {
         '/shop/products/:id',
         (s) => ProductPageScreen(id: s.pathParameters['id']!),
       ),
-      page(
-        '/shop/videos/:id',
-        (s) => ShopVideoScreen(id: s.pathParameters['id']!),
-      ),
-      page(
-        '/shop/live/:id',
-        (s) => ShopLiveScreen(id: s.pathParameters['id']!),
-      ),
       page(Routes.cart, (_) => const CartScreen()),
-      page(Routes.checkout, (s) => CheckoutScreen(only: s.extra as CartLine?)),
-      page(Routes.addresses, (_) => const AddressesScreen()),
-      page(Routes.addressNew, (_) => const AddressNewScreen()),
+      page(
+        '/shop/checkout/:mall',
+        (s) => CheckoutScreen(
+          mallId: s.pathParameters['mall']!,
+          only: s.extra as CartLine?,
+        ),
+      ),
       page(
         '/shop/orders',
         (s) => OrdersScreen(tab: s.uri.queryParameters['tab'] ?? 'all'),
@@ -277,37 +341,32 @@ GoRouter appRouter(Ref ref) {
         (s) => WriteReviewScreen(id: s.pathParameters['id']!),
       ),
       page(
-        '/shop/orders/:id/return',
-        (s) => ReturnRequestScreen(id: s.pathParameters['id']!),
+        '/shop/orders/:id/problem',
+        (s) => OrderProblemScreen(id: s.pathParameters['id']!),
       ),
       page(
-        '/shop/report',
-        (s) => ReportListingScreen(what: s.uri.queryParameters['what'] ?? ''),
+        '/shop/report/:id',
+        (s) => ReportListingScreen(
+          productId: s.pathParameters['id']!,
+          name: s.uri.queryParameters['name'] ?? '',
+        ),
       ),
       page(
         '/shop/services/:id',
         (s) => ServiceBookScreen(id: s.pathParameters['id']!),
       ),
-      page(Routes.seller, (_) => const SellerHomeScreen()),
-      page(Routes.sellerOrders, (_) => const SellerOrdersScreen()),
+      page(Routes.ownerOrders, (_) => const OwnerOrdersScreen()),
       page(
-        '/shop/seller/orders/:id',
-        (s) => SellerOrderDetailScreen(id: s.pathParameters['id']!),
-      ),
-      page(Routes.sellerProducts, (_) => const SellerProductsScreen()),
-      page(Routes.sellerLive, (_) => const SellerGoLiveScreen()),
-      page(Routes.sellerVideo, (_) => const SellerUploadVideoScreen()),
-      page(
-        '/shop/seller/products/:id',
-        (s) => SellerProductEditScreen(id: s.pathParameters['id']!),
+        '/shop/owner/orders/:id',
+        (s) => OwnerOrderScreen(id: s.pathParameters['id']!),
       ),
       page(Routes.welcome, (_) => const WelcomeScreen()),
       page(Routes.signUp, (_) => const SignUpScreen()),
       page(Routes.signUpCode, (_) => const CodeScreen()),
-      page(Routes.logIn, (_) => const LogInScreen(method: LoginMethod.email)),
+      page(Routes.logIn, (_) => const LogInScreen(method: LoginMethod.phone)),
       page(
-        Routes.logInPhone,
-        (_) => const LogInScreen(method: LoginMethod.phone),
+        Routes.logInEmail,
+        (_) => const LogInScreen(method: LoginMethod.email),
       ),
       page(
         Routes.logInUsername,
@@ -327,8 +386,26 @@ GoRouter appRouter(Ref ref) {
             SportSkillScreen(sport: Sport.fromId(s.pathParameters['sport']!)),
       ),
       page(Routes.username, (_) => const UsernameScreen()),
-      page(Routes.mobile, (_) => const MobileNumberScreen()),
-      page(Routes.mobileVerify, (_) => const VerifyMobileScreen()),
+      page(Routes.addEmail, (_) => const AddEmailScreen()),
+      page(Routes.addEmailVerify, (_) => const VerifyEmailScreen()),
+      page(Routes.parentLink, (_) => const RestrictedHomeScreen()),
+      page(Routes.parentCode, (_) => const ParentCodeScreen()),
+      page(Routes.enterChildCode, (_) => const EnterChildCodeScreen()),
+      page(Routes.children, (_) => const MyChildrenScreen()),
+      page(
+        '${Routes.children}/:id',
+        (s) => ChildDetailScreen(
+          childId: s.pathParameters['id']!,
+          link: s.extra as GuardianLink?,
+        ),
+      ),
+      page(
+        '${Routes.children}/:id/clips',
+        (s) => ChildClipsScreen(
+          childId: s.pathParameters['id']!,
+          name: (s.extra as GuardianLink?)?.name,
+        ),
+      ),
       page(Routes.ready, (_) => const ReadyScreen()),
       page(
         Routes.setupAccount,
@@ -341,9 +418,13 @@ GoRouter appRouter(Ref ref) {
       page(Routes.settings, (_) => const SettingsScreen()),
       page(Routes.accountCentre, (_) => const AccountCentreScreen()),
       page(Routes.personalInfo, (_) => const PersonalInfoScreen()),
-      page(
-        Routes.verifyPhoneChange,
-        (s) => VerifyPhoneChangeScreen(phone: s.extra! as String),
+      GoRoute(
+        path: Routes.verifyPhoneChange,
+        redirect: (_, s) => verifyChangeRedirect(s.extra),
+        pageBuilder: (_, s) => cupertinoPage(
+          s,
+          VerifyPhoneChangeScreen(phone: s.extra! as String),
+        ),
       ),
       page(Routes.notifications, (_) => const NotificationsScreen()),
       page(Routes.privacy, (_) => const PrivacyScreen()),
@@ -449,12 +530,20 @@ GoRouter appRouter(Ref ref) {
         (s) => MeetWalkInScreen(activityId: s.pathParameters['id']!),
       ),
       page(
+        '/activities/:id/scan-players',
+        (s) => HostScanScreen(activityId: s.pathParameters['id']!),
+      ),
+      page(
         '/activities/:id/attendance',
         (s) => MeetAttendanceScreen(activityId: s.pathParameters['id']!),
       ),
       page(
         '/activities/:id/recap',
         (s) => MeetRecapScreen(activityId: s.pathParameters['id']!),
+      ),
+      page(
+        '/activities/:id/rounds',
+        (s) => MeetRoundsScreen(activityId: s.pathParameters['id']!),
       ),
       page(
         '/activities/:id/cancel',
@@ -502,6 +591,57 @@ GoRouter appRouter(Ref ref) {
       page('/academies/:id', (s) => AcademyPageScreen(id: id(s))),
       page('/academies/:id/enrol', (s) => AcademyEnrolScreen(id: id(s))),
       page('/academies/:id/trial', (s) => TrialClassScreen(id: id(s))),
+      page(
+        '/academies/:id/single-class',
+        (s) => TrialClassScreen(id: id(s), dropIn: true),
+      ),
+      page(
+        '/academies/:id/one-to-one',
+        (s) => OneToOneScreen(academyId: id(s)),
+      ),
+      page('/academies/:id/verify', (s) => AcademyVerifyScreen(id: id(s))),
+      page(
+        '/academies/:id/coach-invite',
+        (s) => CoachInviteScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons',
+        (s) => AcademyLessonsScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons/times',
+        (s) => LessonSlotsScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/lessons/times/new',
+        (s) => LessonSlotEditScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/templates',
+        (s) => AssessmentTemplatesScreen(academyId: id(s)),
+      ),
+      page(
+        '/academies/:id/templates/new',
+        (s) => AssessmentTemplateEditScreen(academyId: id(s)),
+      ),
+      page(Routes.lessons, (_) => const MyLessonsScreen()),
+      page('/lessons/:id', (s) => LessonDetailScreen(id: id(s))),
+      page(Routes.coachMe, (_) => const CoachMeScreen()),
+      page('/coaches/:id', (s) => CoachPageScreen(id: id(s))),
+      page(
+        '/students/:id/assess',
+        (s) => AssessStudentScreen(
+          studentId: id(s),
+          editId: s.uri.queryParameters['edit'],
+        ),
+      ),
+      page(
+        '/assessments/:id',
+        (s) => AssessmentHistoryScreen(
+          playerId: id(s),
+          studentId: s.uri.queryParameters['student'],
+        ),
+      ),
       page('/academies/:id/today', (s) => AcademyTodayScreen(id: id(s))),
       page('/academies/:id/classes', (s) => AcademyClassesScreen(id: id(s))),
       page('/academies/:id/requests', (s) => EnrolRequestsScreen(id: id(s))),
@@ -533,6 +673,7 @@ GoRouter appRouter(Ref ref) {
         (s) => CancelCourtBookingScreen(id: id(s)),
       ),
       // Clubs. Literal paths come before /clubs/:id.
+      page(Routes.groupRanking, (_) => const GroupRankScreen()),
       page(
         Routes.clubs,
         (s) => ClubsHomeScreen(teams: s.uri.queryParameters['kind'] == 'teams'),
@@ -569,20 +710,11 @@ GoRouter appRouter(Ref ref) {
         '/clubs/:id/announcements/new',
         (s) => NewAnnouncementScreen(clubId: id(s)),
       ),
-      page('/clubs/:id/reward', (s) => ClubRewardScreen(id: id(s))),
       page('/clubs/:id/moderation', (s) => ChatModerationScreen(clubId: id(s))),
       page('/clubs/:id/report', (s) => ReportContentScreen.club(clubId: id(s))),
       page(
         '/activities/:id/report',
         (s) => ReportContentScreen.activity(activityId: id(s)),
-      ),
-      page(
-        '/shop/videos/:id/report',
-        (s) => ReportContentScreen.video(videoId: id(s)),
-      ),
-      page(
-        '/shop/live/:id/report',
-        (s) => ReportContentScreen.video(videoId: id(s), live: true),
       ),
       page('/clubs/:id/members', (s) => ClubMembersScreen(id: id(s))),
       page(

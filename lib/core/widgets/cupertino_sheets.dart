@@ -46,7 +46,7 @@ Future<T?> showOgPickerSheet<T>({
                           textAlign: TextAlign.center,
                           style: OgText.body(
                             17,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: c.text,
                           ),
                         ),
@@ -57,7 +57,7 @@ Future<T?> showOgPickerSheet<T>({
                           'Done',
                           style: OgText.body(
                             17,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: c.link,
                           ),
                         ),

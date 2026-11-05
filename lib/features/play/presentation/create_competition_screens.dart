@@ -140,7 +140,7 @@ class _Money extends StatelessWidget {
                       k,
                       style: OgText.body(
                         14,
-                        weight: bold ? FontWeight.w800 : FontWeight.w400,
+                        weight: bold ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                   ),
@@ -148,7 +148,7 @@ class _Money extends StatelessWidget {
                     v,
                     style: OgText.body(
                       14,
-                      weight: bold ? FontWeight.w800 : FontWeight.w600,
+                      weight: bold ? FontWeight.w600 : FontWeight.w600,
                     ),
                   ),
                 ],
@@ -382,9 +382,8 @@ class _NewEventScreenState extends ConsumerState<NewEventScreen> {
             ),
             Text(
               d.chargeFee
-                  ? 'Attendees who cancel by the day before get all of it back '
-                        'to their Wallet, or the ticket price to their card. If '
-                        'you cancel, they get all of it back.'
+                  ? 'Attendees who cancel by the day before get the ticket '
+                        'price back. If you cancel, they get all of it back.'
                   : 'If someone releases their ticket, your S\$2 for it is '
                         'returned.',
               style: OgText.body(13, height: 1.45, color: c.textMuted),
@@ -584,7 +583,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             'tournament uses draws and matches.',
             tone: KitTone.info,
           ),
-          Text('Tier', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Tier', style: OgText.body(15, weight: FontWeight.w600)),
           KitSegments(
             labels: _tiers.keys.toList(),
             selected: _tiers.keys.toList().indexOf(d.tier),
@@ -922,9 +921,8 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             ('You receive', 'S\$${money(d.feeCents)}', false),
           ]),
           Text(
-            'If they withdraw before registration closes: all of it back to '
-            'their Wallet, or the entry fee to their card. If you cancel, they '
-            'get all of it back.',
+            'If they withdraw before registration closes, they get the entry '
+            'fee back. If you cancel, they get all of it back.',
             style: OgText.body(13, height: 1.45, color: c.textMuted),
           ),
         ],

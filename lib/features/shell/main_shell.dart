@@ -182,7 +182,7 @@ class _TabButton extends StatelessWidget {
                                 badge > 9 ? '9+' : '$badge',
                                 style: OgText.body(
                                   10,
-                                  weight: FontWeight.w700,
+                                  weight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
                               ),
@@ -196,7 +196,7 @@ class _TabButton extends StatelessWidget {
                     label,
                     style: OgText.body(
                       12,
-                      weight: selected ? FontWeight.w700 : FontWeight.w600,
+                      weight: selected ? FontWeight.w600 : FontWeight.w600,
                       color: fg,
                     ),
                   ),
@@ -262,7 +262,7 @@ class _ScanButton extends StatelessWidget {
                     'Scan',
                     style: OgText.body(
                       12,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: selected ? c.link : c.textMuted,
                     ),
                   ),

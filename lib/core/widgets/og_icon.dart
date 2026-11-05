@@ -106,6 +106,8 @@ abstract final class OgIcons {
       '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8M9 5h3"/>';
 
   // Club, team and shop artboards (phase 3).
+  static const video =
+      '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3"/>';
   static const arrowBack = '<path d="M19 12H5M11 6l-6 6 6 6"/>';
   static const close = '<path d="M6 6l12 12M18 6L6 18"/>';
   static const closeSmall = '<path d="M7 7l10 10M17 7L7 17"/>';

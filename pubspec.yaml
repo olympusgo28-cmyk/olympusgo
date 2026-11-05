@@ -21,6 +21,12 @@ version: 1.0.0+1
 environment:
   sdk: ^3.13.3
 
+workspace:
+  - packages/og_design
+  - packages/match_engine
+  - packages/og_money
+  - admin
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -49,6 +55,17 @@ dependencies:
   qr_flutter: ^4.1.0
   share_plus: ^13.3.1
   url_launcher: ^6.3.3
+  http: ^1.5.0
+  og_design:
+    path: packages/og_design
+  match_engine:
+    path: packages/match_engine
+  og_money:
+    path: packages/og_money
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  geolocator: ^14.1.2
+  video_player: ^2.14.1
 
 dev_dependencies:
   flutter_test:

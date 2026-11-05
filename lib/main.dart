@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
+import 'core/config/session_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/og_theme.dart';
 
@@ -13,6 +14,10 @@ Future<void> main() async {
     await Supabase.initialize(
       url: Env.supabaseUrl,
       publishableKey: Env.supabaseAnonKey,
+      httpClient: sessionHttpClient,
+      authOptions: const FlutterAuthClientOptions(
+        localStorage: SecureSessionStorage(),
+      ),
     );
   } else {
     debugPrint(
@@ -21,14 +26,28 @@ Future<void> main() async {
   }
   // Load the two brand fonts before the first frame so nothing reflows.
   GoogleFonts.config.allowRuntimeFetching = true;
-  await GoogleFonts.pendingFonts([
-    GoogleFonts.archivo(fontWeight: FontWeight.w700),
-    GoogleFonts.archivo(fontWeight: FontWeight.w800),
-    GoogleFonts.figtree(),
-    GoogleFonts.figtree(fontWeight: FontWeight.w600),
-    GoogleFonts.figtree(fontWeight: FontWeight.w700),
-  ]).timeout(const Duration(seconds: 3), onTimeout: () => []);
+  await waitForFonts(
+    GoogleFonts.pendingFonts([
+      GoogleFonts.baloo2(fontWeight: FontWeight.w600),
+      GoogleFonts.nunitoSans(),
+      GoogleFonts.nunitoSans(fontWeight: FontWeight.w600),
+    ]),
+  );
   runApp(const ProviderScope(child: OlympusGoApp()));
+}
+
+/// Waits a short while for the fonts. A slow or failed load leaves the
+/// fallback font, so the first frame always comes.
+@visibleForTesting
+Future<void> waitForFonts(
+  Future<Object?> pending, {
+  Duration limit = const Duration(seconds: 3),
+}) async {
+  try {
+    await pending.timeout(limit);
+  } on Object catch (e) {
+    debugPrint('Fonts not loaded: ${e.runtimeType}');
+  }
 }
 
 class OlympusGoApp extends ConsumerWidget {

@@ -29,12 +29,37 @@ abstract interface class PlayRepository {
   Future<MyStatus> join(String id, {String? guestName, double? guestLevel});
   Future<int> joinWaitlist(String id, {bool notify = true});
 
-  /// Gives up a spot. Returns what is refunded, in cents: to the Wallet
+  /// Gives up a spot. Returns what is refunded, in cents, to how they paid
   /// all of it, to a card the session fee only. 0 once it has started.
-  Future<int> leave(String id, {bool toWallet = true});
+  Future<int> leave(String id);
 
   /// Checks in at the venue. Returns how many players are here.
   Future<int> checkIn(String id);
+
+  /// The opaque token shown on My QR, and a new one to replace it.
+  Future<String> myQr();
+  Future<String> rotateQr();
+
+  /// The username a scanned token opens.
+  /// Where a scanned code leads: player, vendor, group or venue, and which.
+  Future<(String, String)> resolveQr(String token);
+
+  /// The code a group's managers show, and the one a verified vendor shows.
+  Future<String> groupCode(String clubId, {bool rotate = false});
+  Future<String> vendorCode({bool rotate = false});
+
+  /// The host scans a player's QR. Returns their name and how many are here.
+  Future<(String, int)> hostCheckIn(String id, String token);
+
+  /// A parent checks in a linked child, who cannot scan.
+  Future<int> checkInChild(String id, String childId);
+
+  /// Sports new Meets can be created in, from the catalogue.
+  Future<List<Sport>> liveSports();
+
+  /// Off until real payments go live. While off, a Meet's price is settled
+  /// with the host and nothing is charged here.
+  Future<bool> paymentsEnabled();
 
   Future<String> publish(ActivityDraft draft);
 
@@ -48,7 +73,8 @@ abstract interface class PlayRepository {
 
   /// The host takes a spot (paying the platform fee) or gives it up and
   /// keeps organizing.
-  Future<void> hostPlays(String id, {required bool playing});
+  /// Takes or gives up the organizer's spot. Returns what is refunded.
+  Future<int> hostPlays(String id, {required bool playing});
 
   /// Club members who could be added as a walk-in.
   Future<List<MeetPlayer>> walkInCandidates(String id);
@@ -62,18 +88,40 @@ abstract interface class PlayRepository {
   Future<MeetRecap> recap(String id);
 
   // Ranked scores.
+  Future<ScoringPreset> scoring(String activityId);
+
+  /// The presets an organizer can pick for this sport.
+  Future<List<(String, String, ScoringPreset)>> presets(String sport);
+  Future<void> setPreset(String activityId, String preset);
   Future<MatchScore> score(String scoreId);
   Future<MatchScore> submitScore(
     String activityId, {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   });
   Future<MatchScore> answerScore(
     String scoreId, {
     required bool confirm,
     String? reason,
   });
+
+  /// Scores this organizer has to decide.
+  Future<List<String>> disputes(String activityId);
+
+  /// Keeps the score, or sets [games] instead.
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  });
+
+  // Rounds from the match generator.
+  Future<List<Round>> rounds(String activityId);
+
+  /// Replaces rounds [from] onward. Earlier rounds stand.
+  Future<void> saveRounds(String activityId, int from, List<Round> rounds);
 
   Future<List<PlaySportPref>> playSports();
   Future<void> savePlaySports(List<PlaySportPref> prefs);
@@ -88,6 +136,9 @@ class SupabasePlayRepository implements PlayRepository {
     if (id == null) throw const AuthFailure('Log in again to continue.');
     return id;
   }
+
+  /// A row from `activity_cards`, for other repositories that read one.
+  Activity fromCard(Map<String, dynamic> row) => _fromRow(row);
 
   Future<T> _guard<T>(Future<T> Function() run) async {
     try {
@@ -134,6 +185,10 @@ class SupabasePlayRepository implements PlayRepository {
       capacity: r['capacity'] as int,
       spotsTaken: r['spots_taken'] as int,
       waitlistCount: r['waitlist_count'] as int,
+      gameIsOn: r['game_is_on'] as bool? ?? false,
+      genderMix: r['gender_mix'] as String? ?? 'any',
+      reservedSlots: r['reserved_slots'] as int? ?? 0,
+      courtBooked: r['court_booked'] as bool? ?? false,
       feeCents: r['fee_cents'] as int,
       allowGuests: r['allow_guests'] as bool,
       approvalRequired: r['approval_required'] as bool,
@@ -149,6 +204,8 @@ class SupabasePlayRepository implements PlayRepository {
         'joined' => MyStatus.joined,
         'waitlist' => MyStatus.waitlist,
         'requested' => MyStatus.requested,
+        'offered' => MyStatus.offered,
+        'reserved' => MyStatus.reserved,
         _ => MyStatus.none,
       },
       myWaitlistPosition: r['my_waitlist_position'] as int? ?? 0,
@@ -165,7 +222,7 @@ class SupabasePlayRepository implements PlayRepository {
       recurrence: r['recurrence'] as String?,
       subtitle: r['subtitle'] as String?,
       coverTitle: r['cover_title'] as String?,
-      coverColor: _hex(r['cover_color'] as String?) ?? 0xFF16181B,
+      coverColor: _hex(r['cover_color'] as String?) ?? 0xFF1C1F23,
       coverInk: _hex(r['cover_ink'] as String?) ?? 0xFFFFFFFF,
       tier: r['tier'] as String?,
       live: r['live'] as bool? ?? false,
@@ -271,22 +328,19 @@ class SupabasePlayRepository implements PlayRepository {
         .select()
         .eq('id', id)
         .single();
-    final going = await _client
-        .from('activity_participants')
-        .select('user_id')
-        .eq('activity_id', id)
-        .eq('status', 'joined')
-        .order('created_at')
-        .limit(20);
-    final ids = going.map((g) => g['user_id'] as String).toList();
-    final people = ids.isEmpty
-        ? const <Map<String, dynamic>>[]
-        : await _client
-              .from('profiles')
-              .select('id, username, full_name, avatar_url')
-              .inFilter('id', ids);
-    return _fromRow(row)
-        .copyWith(going: people.map(PlayerSummary.fromRow).toList());
+    // The roster function masks minors and leaves out blocked players.
+    final going =
+        await _client
+                .rpc('meet_players', params: {'activity': id})
+                .eq('status', 'joined')
+                .limit(20)
+            as List;
+    return _fromRow(row).copyWith(
+      going: [
+        for (final g in going.cast<Map<String, dynamic>>())
+          PlayerSummary.fromRow({...g, 'id': g['user_id']}),
+      ],
+    );
   });
 
   @override
@@ -341,7 +395,11 @@ class SupabasePlayRepository implements PlayRepository {
           'join_activity',
           params: {'activity': id, 'guest': guestName, 'guest_lvl': guestLevel},
         );
-        return status == 'requested' ? MyStatus.requested : MyStatus.joined;
+        return switch (status) {
+          'requested' => MyStatus.requested,
+          'waitlist' => MyStatus.waitlist,
+          _ => MyStatus.joined,
+        };
       });
 
   @override
@@ -353,11 +411,9 @@ class SupabasePlayRepository implements PlayRepository {
   });
 
   @override
-  Future<int> leave(String id, {bool toWallet = true}) => _guard(
-    () async => await _client.rpc(
-      'leave_activity',
-      params: {'activity': id, 'to_wallet': toWallet},
-    ) as int,
+  Future<int> leave(String id) => _guard(
+    () async =>
+        await _client.rpc('leave_activity', params: {'activity': id}) as int,
   );
 
   MeetPlayer _player(Map<String, dynamic> r, {int? waitlistAt}) {
@@ -411,10 +467,10 @@ class SupabasePlayRepository implements PlayRepository {
   });
 
   @override
-  Future<void> hostPlays(String id, {required bool playing}) async {
+  Future<int> hostPlays(String id, {required bool playing}) async {
     try {
-      await _guard(
-        () => _client.rpc(
+      return await _guard(
+        () => _client.rpc<int>(
           'host_plays',
           params: {'activity': id, 'playing': playing},
         ),
@@ -495,28 +551,21 @@ class SupabasePlayRepository implements PlayRepository {
 
   @override
   Future<MeetRecap> recap(String id) => _guard(() async {
-    // Points, ratings and partners come with the rating engine. Until then
-    // the recap counts the confirmed scores this player was in.
     final me = _me;
-    final rows =
-        (await _client
-                .from('match_scores')
-                .select('side_a, side_b, games')
-                .eq('activity_id', id)
-                .eq('status', 'confirmed'))
-            .cast<Map<String, dynamic>>();
+    final rows = (await _client.rpc(
+      'my_meet_results',
+      params: {'p_activity': id},
+    ) as List).cast<Map>();
     var wins = 0, losses = 0;
     String? best;
     var bestGap = -1;
     for (final r in rows) {
-      final onA = (r['side_a'] as List).contains(me);
-      if (!onA && !(r['side_b'] as List).contains(me)) continue;
+      final onA = r['on_a'] == true;
       final games = [
         for (final g in (r['games'] as List).cast<List>())
           onA ? (g[0] as int, g[1] as int) : (g[1] as int, g[0] as int),
       ];
-      final won = games.where((g) => g.$1 > g.$2).length >= 2;
-      won ? wins++ : losses++;
+      r['won'] == true ? wins++ : losses++;
       for (final g in games) {
         if (g.$1 > g.$2 && g.$1 - g.$2 > bestGap) {
           bestGap = g.$1 - g.$2;
@@ -530,52 +579,144 @@ class SupabasePlayRepository implements PlayRepository {
         .eq('user_id', me)
         .eq('status', 'joined')
         .count(CountOption.exact);
+    final change = await _ratingChange(id);
     return MeetRecap(
       games: wins + losses,
       wins: wins,
       losses: losses,
       bestGame: best,
-      points: 4,
+      ratingBefore: change?.$1,
+      ratingAfter: change?.$2,
+      band: change == null ? null : SkillBand.forLevel(change.$2).code,
+      points: 0,
       session: sessions.count,
     );
   });
 
+  Future<(double, double)?> _ratingChange(
+    String activity, [
+    String? score,
+  ]) async {
+    final j = await _client.rpc(
+      'my_rating_change',
+      params: {'p_activity': activity, 'p_score': ?score},
+    );
+    if (j == null) return null;
+    return ((j['before'] as num).toDouble(), (j['after'] as num).toDouble());
+  }
+
+  @override
+  Future<ScoringPreset> scoring(String activityId) => _guard(() async {
+    final j = await _client.rpc(
+      'activity_scoring',
+      params: {'p_activity': activityId},
+    );
+    return ScoringPreset.fromJson(Map<String, dynamic>.from(j as Map));
+  });
+
+  @override
+  Future<List<(String, String, ScoringPreset)>> presets(String sport) =>
+      _guard(() async {
+        final rows = await _client
+            .from('scoring_presets')
+            .select('key, name, rules')
+            .eq('sport_key', sport)
+            .eq('active', true)
+            .order('key');
+        return [
+          for (final r in rows)
+            (
+              r['key'] as String,
+              r['name'] as String,
+              ScoringPreset.fromJson(
+                Map<String, dynamic>.from(r['rules'] as Map),
+              ),
+            ),
+        ];
+      });
+
+  @override
+  Future<void> setPreset(String activityId, String preset) => _guard(
+    () => _client.rpc(
+      'activity_preset_set',
+      params: {'p_activity': activityId, 'p_preset': preset},
+    ),
+  );
+
+  @override
+  Future<List<Round>> rounds(String activityId) => _guard(() async {
+    final rows = await _client.rpc(
+      'meet_rounds',
+      params: {'p_activity': activityId},
+    ) as List;
+    final byRound = <int, List<Map>>{};
+    for (final r in rows.cast<Map>()) {
+      byRound.putIfAbsent(r['round'] as int, () => []).add(r);
+    }
+    return [
+      for (final e in byRound.entries)
+        Round(e.key, [
+          for (final m in e.value)
+            Pairing(
+              m['court'] as int,
+              (m['side_a'] as List).cast<String>(),
+              (m['side_b'] as List).cast<String>(),
+            ),
+        ], (e.value.first['byes'] as List).cast<String>()),
+    ];
+  });
+
+  @override
+  Future<void> saveRounds(String activityId, int from, List<Round> rounds) =>
+      _guard(
+        () => _client.rpc(
+          'meet_rounds_save',
+          params: {
+            'p_activity': activityId,
+            'p_from': from,
+            'p_rounds': [
+              for (final r in rounds)
+                {
+                  'number': r.number,
+                  'byes': r.byes,
+                  'matches': [
+                    for (final m in r.matches)
+                      {'court': m.court, 'side_a': m.sideA, 'side_b': m.sideB},
+                  ],
+                },
+            ],
+          },
+        ),
+      );
+
   @override
   Future<MatchScore> score(String scoreId) => _guard(() async {
-    final r = await _client
-        .from('match_scores')
-        .select('*, activities(title, host_id)')
-        .eq('id', scoreId)
-        .single();
-    final ids = <String>{
-      ...(r['side_a'] as List).cast<String>(),
-      ...(r['side_b'] as List).cast<String>(),
-      (r['activities'] as Map)['host_id'] as String,
-    };
-    final people = {
-      for (final p
-          in await _client
-              .from('profiles')
-              .select('id, username, full_name, avatar_url')
-              .inFilter('id', ids.toList()))
-        p['id'] as String: PlayerSummary.fromRow(p),
-    };
-    PlayerSummary who(String id) => people[id] ?? PlayerSummary(id: id);
+    final j = await _client.rpc('score_view', params: {'p_score': scoreId});
+    if (j == null) throw const AuthFailure("Can't find this score.");
+    final r = Map<String, dynamic>.from(j as Map);
+    PlayerSummary who(Object? p) =>
+        PlayerSummary.fromRow(Map<String, dynamic>.from(p as Map));
+    final status = ScoreStatus.fromId(r['status'] as String?);
+    final change = status == ScoreStatus.confirmed
+        ? await _ratingChange(r['activity_id'] as String, scoreId)
+        : null;
     return MatchScore(
       id: r['id'] as String,
       activityId: r['activity_id'] as String,
-      activityTitle: (r['activities'] as Map)['title'] as String,
-      sideA: [for (final id in (r['side_a'] as List).cast<String>()) who(id)],
-      sideB: [for (final id in (r['side_b'] as List).cast<String>()) who(id)],
+      activityTitle: r['title'] as String,
+      sideA: [for (final p in r['side_a'] as List) who(p)],
+      sideB: [for (final p in r['side_b'] as List) who(p)],
       games: [
         for (final g in (r['games'] as List).cast<List>())
           (g[0] as int, g[1] as int),
       ],
-      enteredBy: who(r['entered_by'] as String),
+      enteredBy: who(r['entered_by']),
       enteredAt: DateTime.parse(r['created_at'] as String).toLocal(),
-      status: ScoreStatus.fromId(r['status'] as String?),
+      status: status,
       reason: r['reason'] as String?,
-      organizer: who((r['activities'] as Map)['host_id'] as String),
+      ratingBefore: change?.$1,
+      ratingAfter: change?.$2,
+      organizer: who(r['organizer']),
     );
   });
 
@@ -585,6 +726,7 @@ class SupabasePlayRepository implements PlayRepository {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   }) => _guard(() async {
     final id = await _client.rpc(
       'submit_score',
@@ -595,6 +737,7 @@ class SupabasePlayRepository implements PlayRepository {
         'games': [
           for (final g in games) [g.$1, g.$2],
         ],
+        'client_key': ?clientKey,
       },
     ) as String;
     return score(id);
@@ -614,9 +757,106 @@ class SupabasePlayRepository implements PlayRepository {
   });
 
   @override
+  Future<List<String>> disputes(String activityId) => _guard(() async {
+    final ids = await _client.rpc(
+      'meet_disputes',
+      params: {'p_activity': activityId},
+    ) as List;
+    return ids.cast<String>();
+  });
+
+  @override
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  }) => _guard(() async {
+    await _client.rpc(
+      'organiser_decide_score',
+      params: {
+        'p_score': scoreId,
+        'p_games': ?games?.map((g) => [g.$1, g.$2]).toList(),
+        'p_reason': ?reason,
+      },
+    );
+    return score(scoreId);
+  });
+
+  @override
   Future<int> checkIn(String id) => _guard(
     () async => await _client.rpc('check_in', params: {'activity': id}) as int,
   );
+
+  @override
+  Future<String> myQr() =>
+      _guard(() async => await _client.rpc('my_qr') as String);
+
+  @override
+  Future<String> rotateQr() =>
+      _guard(() async => await _client.rpc('rotate_my_qr') as String);
+
+  @override
+  Future<String> groupCode(String clubId, {bool rotate = false}) => _guard(
+    () => _client.rpc<String>(
+      'club_qr',
+      params: {'p_club': clubId, 'p_rotate': rotate},
+    ),
+  );
+
+  @override
+  Future<String> vendorCode({bool rotate = false}) => _guard(
+    () => _client.rpc<String>('vendor_qr', params: {'p_rotate': rotate}),
+  );
+
+  @override
+  Future<(String, String)> resolveQr(String token) => _guard(() async {
+    final r = await _client.rpc(
+      'resolve_qr',
+      params: {'p_token': token},
+    ) as Map<String, dynamic>;
+    return (r['kind'] as String, (r['username'] ?? r['id']) as String);
+  });
+
+  @override
+  Future<(String, int)> hostCheckIn(String id, String token) =>
+      _guard(() async {
+        final r = await _client.rpc(
+          'host_check_in',
+          params: {'p_activity': id, 'p_token': token},
+        ) as Map<String, dynamic>;
+        return (r['name'] as String, r['present'] as int);
+      });
+
+  @override
+  Future<int> checkInChild(String id, String childId) => _guard(
+    () async => await _client.rpc(
+      'guardian_check_in',
+      params: {'p_activity': id, 'p_child': childId},
+    ) as int,
+  );
+
+  @override
+  Future<List<Sport>> liveSports() => _guard(() async {
+    final rows = await _client
+        .from('sports')
+        .select('key, name')
+        .eq('status', 'live')
+        .order('position');
+    return [
+      for (final r in rows)
+        Sport.fromCatalogue(r['key'] as String, r['name'] as String),
+    ];
+  });
+
+  @override
+  Future<bool> paymentsEnabled() => _guard(() async {
+    final r = await _client
+        .from('feature_flags')
+        .select('enabled')
+        .eq('key', 'payments.enabled')
+        .maybeSingle();
+    return r?['enabled'] as bool? ?? false;
+  });
 
   /// The activities row for [d] starting at [starts].
   Map<String, dynamic> _row(ActivityDraft d, DateTime starts) {
@@ -684,6 +924,9 @@ class SupabasePlayRepository implements PlayRepository {
         'ranked': d.ranked,
         'recurrence': d.recurrenceLabel,
         'min_players': d.minPlayers,
+        'gender_mix': d.genderMix,
+        'reserved_slots': d.reservedSlots,
+        'court_booked': d.courtBooked,
         'players_pay_fee': !d.chargeFee && d.playersPayFee,
         'level_numbers': d.levelAsNumbers,
         'host_invites_only': d.hostInvitesOnly,
@@ -1000,7 +1243,7 @@ class DemoPlayRepository implements PlayRepository {
         myStatus: MyStatus.joined,
         going: going,
         coverTitle: 'Tampines Open',
-        coverColor: 0xFF16181B,
+        coverColor: 0xFF1C1F23,
         coverInk: 0xFFF2C14E,
         tier: 'Regional',
         proof: const SocialProof(
@@ -1086,7 +1329,7 @@ class DemoPlayRepository implements PlayRepository {
         description: 'A free day of racquet sports for all levels, with try-outs, clinics and gear booths.',
         proof: const SocialProof(
           mark: 'TS',
-          color: 0xFF16181B,
+          color: 0xFF1C1F23,
           ink: 0xFFF2C14E,
           name: 'Tampines Smashers',
           text: 'is running a badminton try-out',
@@ -1299,7 +1542,7 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<int> leave(String id, {bool toWallet = true}) async {
+  Future<int> leave(String id) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == id);
     _update(
@@ -1317,8 +1560,53 @@ class DemoPlayRepository implements PlayRepository {
     _people.remove(id);
     final early = a.startsAt.isAfter(DateTime.now());
     if (a.isFree || !early || a.myStatus != MyStatus.joined) return 0;
-    return toWallet ? a.totalCents : a.feeCents;
+    return a.feeCents;
   }
+
+  @override
+  Future<String> myQr() async => _qrToken;
+
+  @override
+  Future<String> rotateQr() async {
+    _qrRotations++;
+    return _qrToken;
+  }
+
+  @override
+  Future<(String, String)> resolveQr(String token) async =>
+      ('player', 'hannahgoh');
+
+  @override
+  Future<String> groupCode(String clubId, {bool rotate = false}) async =>
+      'demo${'0' * 16}';
+
+  @override
+  Future<String> vendorCode({bool rotate = false}) async => 'demo${'0' * 16}';
+
+  @override
+  Future<(String, int)> hostCheckIn(String id, String token) async {
+    await _tick();
+    return ('Hannah Goh', 1);
+  }
+
+  @override
+  Future<int> checkInChild(String id, String childId) async {
+    await _tick();
+    return 1;
+  }
+
+  @override
+  Future<List<Sport>> liveSports() async => const [
+    Sport.badminton,
+    Sport.pickleball,
+  ];
+
+  // The demo shows the full payment sheet.
+  @override
+  Future<bool> paymentsEnabled() async => true;
+
+  int _qrRotations = 0;
+  String get _qrToken => 'demo${_qrRotations.toString().padLeft(44, '0')}';
 
   @override
   Future<int> checkIn(String id) async {
@@ -1498,10 +1786,10 @@ class DemoPlayRepository implements PlayRepository {
   }
 
   @override
-  Future<void> hostPlays(String id, {required bool playing}) async {
+  Future<int> hostPlays(String id, {required bool playing}) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == id);
-    if (a.hostPlaying == playing) return;
+    if (a.hostPlaying == playing) return 0;
     if (playing && a.isFull) throw const AuthFailure('The Meet is full.');
     final list = _listFor(a);
     _update(
@@ -1526,6 +1814,7 @@ class DemoPlayRepository implements PlayRepository {
     } else {
       list.removeWhere((p) => p.isHost);
     }
+    return playing ? 0 : a.hostSpotCents;
   }
 
   @override
@@ -1633,6 +1922,46 @@ class DemoPlayRepository implements PlayRepository {
     );
   }
 
+  final _rounds = <String, List<Round>>{};
+
+  @override
+  Future<List<String>> disputes(String activityId) async => const [];
+
+  @override
+  Future<MatchScore> decideScore(
+    String scoreId, {
+    List<(int, int)>? games,
+    String? reason,
+  }) async => score(scoreId);
+
+  @override
+  Future<ScoringPreset> scoring(String activityId) async =>
+      ScoringPreset.badminton;
+
+  @override
+  Future<List<(String, String, ScoringPreset)>> presets(String sport) async =>
+      const [('badminton_standard', 'Badminton', ScoringPreset.badminton)];
+
+  @override
+  Future<void> setPreset(String activityId, String preset) => _tick();
+
+  @override
+  Future<List<Round>> rounds(String activityId) async =>
+      _rounds[activityId] ?? const [];
+
+  @override
+  Future<void> saveRounds(
+    String activityId,
+    int from,
+    List<Round> rounds,
+  ) async {
+    await _tick();
+    _rounds[activityId] = [
+      ...?_rounds[activityId]?.where((r) => r.number < from),
+      ...rounds,
+    ];
+  }
+
   void _seedScores() {
     final mei = _w.players['cp-mei']!;
     final singles = _items.firstWhere((a) => a.id == 'ts-singles');
@@ -1666,6 +1995,7 @@ class DemoPlayRepository implements PlayRepository {
     required List<String> partners,
     required List<String> opponents,
     required List<(int, int)> games,
+    String? clientKey,
   }) async {
     await _tick();
     final a = _items.firstWhere((x) => x.id == activityId);

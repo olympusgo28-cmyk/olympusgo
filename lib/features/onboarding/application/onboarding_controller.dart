@@ -18,9 +18,6 @@ class OnboardingController extends _$OnboardingController {
   void setBirthday(DateTime date, Country country) =>
       state = state.copyWith(birthday: date, country: country);
 
-  void setParentEmail(String email) =>
-      state = state.copyWith(parentEmail: email);
-
   void toggleSport(Sport sport) {
     final sports = [...state.sports];
     sports.contains(sport) ? sports.remove(sport) : sports.add(sport);
@@ -35,8 +32,7 @@ class OnboardingController extends _$OnboardingController {
   void setUsername(String username) =>
       state = state.copyWith(username: username);
 
-  void setPhone(Country country, String number) =>
-      state = state.copyWith(phoneCountry: country, phoneNumber: number);
+  void setEmail(String email) => state = state.copyWith(email: email);
 
   /// Saves the answers to the player's profile.
   Future<void> save({required bool complete}) async {

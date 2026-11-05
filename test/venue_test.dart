@@ -66,18 +66,17 @@ void main() {
     expect(free(20), true); // one court left at 20:00
   });
 
-  test('refunds: all to the Wallet, the court price to a card, none late', () {
+  test('refunds: the court price in time, none late', () {
     final b = booked(20, 2).copyWith(
       start: DateTime.now().add(const Duration(days: 3)),
       end: DateTime.now().add(const Duration(days: 3, hours: 2)),
       courtCents: 4400,
       feeCents: 440,
     );
-    expect(b.refundTo(wallet: true), 4840);
-    expect(b.refundTo(wallet: false), 4400);
+    expect(b.refundDueCents, 4400);
     final late = b.copyWith(
       start: DateTime.now().add(const Duration(hours: 5)),
     );
-    expect(late.refundTo(wallet: true), 0);
+    expect(late.refundDueCents, 0);
   });
 }

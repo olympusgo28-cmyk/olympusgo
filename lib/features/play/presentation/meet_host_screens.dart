@@ -127,12 +127,12 @@ class _MeetPlayersScreenState extends State<MeetPlayersScreen> {
                 OgIcon(OgIcons.male, size: 18, color: c.textMuted),
                 Text(
                   ' ${a.men}  ',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
                 OgIcon(OgIcons.female, size: 18, color: c.textMuted),
                 Text(
                   ' ${a.women}',
-                  style: OgText.body(14, weight: FontWeight.w700),
+                  style: OgText.body(14, weight: FontWeight.w600),
                 ),
               ],
             ],
@@ -305,8 +305,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
                   title: 'Pay in app',
                   subtitle:
                       'They get a payment request for '
-                      'S\$${money(a.feeCents + fee)}, fee included. Points go '
-                      'to whoever pays, after you mark them Present.',
+                      'S\$${money(a.feeCents + fee)}, fee included.',
                   selected: !_cash,
                   onTap: () => setState(() => _cash = false),
                 ),
@@ -314,8 +313,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
                   title: 'Cash to organizer',
                   subtitle:
                       'You collect S\$${money(a.feeCents)} yourself. The '
-                      'S\$${money(fee)} platform fee is charged to the club, '
-                      'and the club earns the points.',
+                      'S\$${money(fee)} platform fee is charged to the club.',
                   selected: _cash,
                   onTap: () => setState(() => _cash = true),
                 ),
@@ -371,9 +369,10 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
       await showDoneSheet(
         context,
         title: 'Attendance saved',
-        body:
-            '$present present. They get Passport credit, points and a stats '
-            "card, and their payments go to your earnings.",
+        body: ref.read(paymentsEnabledProvider).value ?? false
+            ? '$present present. They get Passport credit and a stats card, '
+                  'and their payments go to your earnings.'
+            : '$present present. They get Passport credit and a stats card.',
         next: 'See my recap',
         onNext: () => context.push(Routes.meetRecap(a.id)),
       );
@@ -407,6 +406,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
       final host = going.where((p) => p.isHost).firstOrNull;
       final hostIn = host != null && _mark(host) == Attendance.present;
       final today = Fmt.day(now) == Fmt.day(a.startsAt);
+      final paid = ref.watch(paymentsEnabledProvider).value ?? false;
 
       Widget pill(
         String label,
@@ -430,7 +430,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
             label,
             style: OgText.body(
               13,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: on ? fg : c.textMuted,
             ),
           ),
@@ -467,7 +467,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                     children: [
                       Text(
                         'of ${going.length} present',
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       Text(
                         unmarked == 0
@@ -495,9 +495,10 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
           ),
           KitNote(
             'Mark by 11:59 PM ${today ? 'tonight' : 'on ${Fmt.day(a.startsAt)}'}. '
-            'Only present players get Passport credit, points and a stats '
-            'card. Saving releases the players’ payments to your earnings. If '
-            'you don’t save, they are released 24 hours after the Meet ends.',
+            'Only present players get Passport credit and a stats card.'
+            '${paid ? ' Saving releases the players’ payments to your earnings. '
+                      'If you don’t save, they are released 24 hours after the '
+                      'Meet ends.' : ''}',
           ),
           if (host != null)
             Container(
@@ -517,7 +518,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         : 'Your own attendance is automatic',
                     style: OgText.body(
                       15,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: hostIn ? t.onSuccessFill : t.onWarnFill,
                     ),
                   ),
@@ -603,6 +604,29 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         ),
                 ),
               Pressable(
+                semanticLabel: 'Scan a player',
+                onPressed: !open
+                    ? null
+                    : () async {
+                        await context.push(Routes.meetScanPlayers(a.id));
+                        ref.invalidate(meetPlayersProvider(a.id));
+                      },
+                child: SizedBox(
+                  height: 52,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OgIcon(OgIcons.scan, size: 18, color: c.text),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Scan a player',
+                        style: OgText.body(14, weight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Pressable(
                 semanticLabel: 'Add a walk-in member',
                 onPressed: () => context.push(Routes.meetWalkIn(a.id)),
                 child: SizedBox(
@@ -614,7 +638,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                       const SizedBox(width: 6),
                       Text(
                         'Add a walk-in member',
-                        style: OgText.body(14, weight: FontWeight.w700),
+                        style: OgText.body(14, weight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -766,7 +790,7 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
                             children: [
                               Text(
                                 label,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: OgText.body(15, weight: FontWeight.w600),
                               ),
                               Text(
                                 hint,
@@ -801,18 +825,19 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
                 if (context.mounted) showOgToast(context, 'Link copied');
               },
             ),
-          KitNote(
-            'You earned ${r.points} points for showing up.',
-            tone: KitTone.info,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: KitLink(
-                'See your points',
-                underline: true,
-                onPressed: () => context.push(Routes.points),
+          if (r.points > 0)
+            KitNote(
+              'You earned ${r.points} points for showing up.',
+              tone: KitTone.info,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: KitLink(
+                  'See your points',
+                  underline: true,
+                  onPressed: () => context.push(Routes.points),
+                ),
               ),
             ),
-          ),
         ],
       );
     },
@@ -857,7 +882,7 @@ class _RecapCard extends StatelessWidget {
             a.eyebrow.toUpperCase(),
             style: OgText.body(
               12,
-              weight: FontWeight.w800,
+              weight: FontWeight.w600,
               color: t.gold,
               letterSpacing: 1,
             ),
@@ -917,7 +942,7 @@ class _RecapCard extends StatelessWidget {
                         'RATING',
                         style: OgText.body(
                           11,
-                          weight: FontWeight.w800,
+                          weight: FontWeight.w600,
                           color: muted,
                           letterSpacing: 1,
                         ),
@@ -926,7 +951,7 @@ class _RecapCard extends StatelessWidget {
                         '${r.ratingBefore!.toStringAsFixed(1)} → ${r.ratingAfter!.toStringAsFixed(1)}${r.band == null ? '' : ' · ${r.band}'}',
                         style: OgText.body(
                           16,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -954,7 +979,7 @@ class _RecapCard extends StatelessWidget {
                         '${partner!.first}${partner.length > 1 ? ' ${partner.last[0]}.' : ''}',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   TextSpan(
@@ -973,7 +998,7 @@ class _RecapCard extends StatelessWidget {
             children: [
               Text(
                 '$playerName · session ${r.session}',
-                style: OgText.body(13, weight: FontWeight.w700, color: muted),
+                style: OgText.body(13, weight: FontWeight.w600, color: muted),
               ),
             ],
           ),
@@ -1042,13 +1067,6 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
           children: [CupertinoActivityIndicator()],
         );
       }
-      final present =
-          ref
-              .watch(meetPlayersProvider(a.id))
-              .value
-              ?.where((x) => x.attendance == Attendance.present && !x.isHost)
-              .length ??
-          0;
       return KitScaffold(
         header: const KitHeader(title: 'Cancel Meet'),
         bottom: [
@@ -1109,19 +1127,13 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
                   'Card fees, from your earnings',
                   'S\$${money(p.cardFeeCents)}',
                 ),
-                KitKeyValue(
-                  'Points',
-                  present == 0
-                      ? 'None, nobody was marked Present'
-                      : '$present present keep theirs',
-                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Each player picks their Wallet or card. Card companies keep '
-                  'their fee when a card payment is refunded, so the '
-                  'S\$${money(p.cardFeeCents)} for ${p.cardPayments} card '
-                  '${p.cardPayments == 1 ? 'payment' : 'payments'} comes off '
-                  'your earnings.',
+                  'Money goes back to the card or PayNow each player used. Card '
+                  'companies keep their fee when a card payment is refunded, '
+                  'so the S\$${money(p.cardFeeCents)} for ${p.cardPayments} '
+                  'card ${p.cardPayments == 1 ? 'payment' : 'payments'} comes '
+                  'off your earnings.',
                   style: OgText.body(13, height: 1.45, color: c.textMuted),
                 ),
               ],

@@ -27,11 +27,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Scan Meet and player QR codes, and take a profile photo.</string>
+	<string>Scan Meet and player QR codes, take a profile photo, and film a game to analyse or post.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record sound when you film a game. Analysis uses only the picture, and a post keeps its sound.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to unlock OlympusGO without a code.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sort Meets near you. We keep only a rough area, and other players never see it.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a profile photo.</string>
+	<string>Choose a profile photo, or a video to analyse or post.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

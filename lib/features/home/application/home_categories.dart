@@ -18,7 +18,9 @@ enum HomeCategory {
   ),
   game('Game', 'Campaigns and challenges', OgIcons.trophyTeam, Routes.game),
   venue('Venue', 'Find and book courts', OgIcons.mapPin, Routes.venues),
-  shop('Shop', 'Gear, services and malls', OgIcons.bag, Routes.shop);
+  shop('Shop', 'Gear, services and malls', OgIcons.bag, Routes.shop),
+  services('Services', 'Physio and partners', OgIcons.heart, Routes.services),
+  fitness('Fitness', 'Workouts', OgIcons.running, Routes.fitness);
 
   const HomeCategory(this.label, this.sub, this.icon, this.route);
   final String label;

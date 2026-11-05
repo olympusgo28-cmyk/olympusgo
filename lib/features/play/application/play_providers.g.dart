@@ -217,6 +217,121 @@ final class HubActivitiesFamily extends $Family
   String toString() => r'hubActivitiesProvider';
 }
 
+/// Sports new Meets can be created in.
+
+@ProviderFor(liveSports)
+final liveSportsProvider = LiveSportsProvider._();
+
+/// Sports new Meets can be created in.
+
+final class LiveSportsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Sport>>,
+          List<Sport>,
+          FutureOr<List<Sport>>
+        >
+    with $FutureModifier<List<Sport>>, $FutureProvider<List<Sport>> {
+  /// Sports new Meets can be created in.
+  LiveSportsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'liveSportsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$liveSportsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Sport>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Sport>> create(Ref ref) {
+    return liveSports(ref);
+  }
+}
+
+String _$liveSportsHash() => r'1b7313e6c29910396956bb23f6cd13074b0ba64f';
+
+@ProviderFor(paymentsEnabled)
+final paymentsEnabledProvider = PaymentsEnabledProvider._();
+
+final class PaymentsEnabledProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  PaymentsEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentsEnabledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentsEnabledHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return paymentsEnabled(ref);
+  }
+}
+
+String _$paymentsEnabledHash() => r'a72602cd457c7a87e97dbaa16d8e0bc05b089733';
+
+/// The signed-in player's QR token.
+
+@ProviderFor(myQr)
+final myQrProvider = MyQrProvider._();
+
+/// The signed-in player's QR token.
+
+final class MyQrProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  /// The signed-in player's QR token.
+  MyQrProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myQrProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myQrHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    return myQr(ref);
+  }
+}
+
+String _$myQrHash() => r'b57177df19d3398c2f3dead51f03b54dbbe02ecc';
+
 @ProviderFor(activityDetail)
 final activityDetailProvider = ActivityDetailFamily._();
 
@@ -874,6 +989,312 @@ final class MeetRecapFamily extends $Family
 
   @override
   String toString() => r'meetRecapProvider';
+}
+
+@ProviderFor(activityScoring)
+final activityScoringProvider = ActivityScoringFamily._();
+
+final class ActivityScoringProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ScoringPreset>,
+          ScoringPreset,
+          FutureOr<ScoringPreset>
+        >
+    with $FutureModifier<ScoringPreset>, $FutureProvider<ScoringPreset> {
+  ActivityScoringProvider._({
+    required ActivityScoringFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'activityScoringProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$activityScoringHash();
+
+  @override
+  String toString() {
+    return r'activityScoringProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<ScoringPreset> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ScoringPreset> create(Ref ref) {
+    final argument = this.argument as String;
+    return activityScoring(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ActivityScoringProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$activityScoringHash() => r'ac5bd4c927b42b6de39a0c847e8074fe966321ea';
+
+final class ActivityScoringFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ScoringPreset>, String> {
+  ActivityScoringFamily._()
+    : super(
+        retry: null,
+        name: r'activityScoringProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ActivityScoringProvider call(String id) =>
+      ActivityScoringProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'activityScoringProvider';
+}
+
+@ProviderFor(scoringPresets)
+final scoringPresetsProvider = ScoringPresetsFamily._();
+
+final class ScoringPresetsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<(String, String, ScoringPreset)>>,
+          List<(String, String, ScoringPreset)>,
+          FutureOr<List<(String, String, ScoringPreset)>>
+        >
+    with
+        $FutureModifier<List<(String, String, ScoringPreset)>>,
+        $FutureProvider<List<(String, String, ScoringPreset)>> {
+  ScoringPresetsProvider._({
+    required ScoringPresetsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'scoringPresetsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$scoringPresetsHash();
+
+  @override
+  String toString() {
+    return r'scoringPresetsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<(String, String, ScoringPreset)>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<(String, String, ScoringPreset)>> create(Ref ref) {
+    final argument = this.argument as String;
+    return scoringPresets(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ScoringPresetsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$scoringPresetsHash() => r'520c2e14b1508fe827ae6c19ecb54dd52dfc0936';
+
+final class ScoringPresetsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<(String, String, ScoringPreset)>>,
+          String
+        > {
+  ScoringPresetsFamily._()
+    : super(
+        retry: null,
+        name: r'scoringPresetsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ScoringPresetsProvider call(String sport) =>
+      ScoringPresetsProvider._(argument: sport, from: this);
+
+  @override
+  String toString() => r'scoringPresetsProvider';
+}
+
+@ProviderFor(meetDisputes)
+final meetDisputesProvider = MeetDisputesFamily._();
+
+final class MeetDisputesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          FutureOr<List<String>>
+        >
+    with $FutureModifier<List<String>>, $FutureProvider<List<String>> {
+  MeetDisputesProvider._({
+    required MeetDisputesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'meetDisputesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$meetDisputesHash();
+
+  @override
+  String toString() {
+    return r'meetDisputesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return meetDisputes(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MeetDisputesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$meetDisputesHash() => r'5a19cc68ad53c09cd0be7529a332ed1f3f9dd72a';
+
+final class MeetDisputesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<String>>, String> {
+  MeetDisputesFamily._()
+    : super(
+        retry: null,
+        name: r'meetDisputesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MeetDisputesProvider call(String id) =>
+      MeetDisputesProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'meetDisputesProvider';
+}
+
+@ProviderFor(meetRounds)
+final meetRoundsProvider = MeetRoundsFamily._();
+
+final class MeetRoundsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Round>>,
+          List<Round>,
+          FutureOr<List<Round>>
+        >
+    with $FutureModifier<List<Round>>, $FutureProvider<List<Round>> {
+  MeetRoundsProvider._({
+    required MeetRoundsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'meetRoundsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$meetRoundsHash();
+
+  @override
+  String toString() {
+    return r'meetRoundsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Round>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Round>> create(Ref ref) {
+    final argument = this.argument as String;
+    return meetRounds(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MeetRoundsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$meetRoundsHash() => r'73f5d86bba55ce5e7bf9a46284a5e0f1196c7630';
+
+final class MeetRoundsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Round>>, String> {
+  MeetRoundsFamily._()
+    : super(
+        retry: null,
+        name: r'meetRoundsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MeetRoundsProvider call(String id) =>
+      MeetRoundsProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'meetRoundsProvider';
 }
 
 @ProviderFor(matchScore)

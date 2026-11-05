@@ -20,7 +20,6 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../play/application/play_providers.dart';
-import '../../shop/application/shop_providers.dart';
 import '../application/club_providers.dart';
 import '../data/club_repository.dart';
 import '../domain/club_models.dart';
@@ -326,7 +325,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
             icon: OgIcons.paperPlane,
             label: 'Send',
             size: 20,
-            background: c.primary,
+            background: c.primarySmall,
             color: c.onPrimary,
             onPressed: _send,
           ),
@@ -372,12 +371,12 @@ class _Pinned extends StatelessWidget {
                           text: 'Pinned: ',
                           style: OgText.body(
                             13,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: c.text,
                           ),
                         ),
                         const TextSpan(
-                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit and points.',
+                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit.',
                         ),
                       ],
                     ),
@@ -621,7 +620,7 @@ class _Mine extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: c.primary,
+                color: c.primarySmall,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(4),
@@ -1260,15 +1259,13 @@ class ReportContentScreen extends ConsumerStatefulWidget {
     required String this.messageId,
   }) : clubId = null,
        activityId = null,
-       videoId = null,
-       live = false;
+       postId = null;
 
   const ReportContentScreen.club({super.key, required String this.clubId})
     : scope = null,
       messageId = null,
       activityId = null,
-      videoId = null,
-      live = false;
+      postId = null;
 
   /// A tournament or event.
   const ReportContentScreen.activity({
@@ -1277,25 +1274,20 @@ class ReportContentScreen extends ConsumerStatefulWidget {
   }) : scope = null,
        messageId = null,
        clubId = null,
-       videoId = null,
-       live = false;
+       postId = null;
 
-  /// A shop video, or a live stream.
-  const ReportContentScreen.video({
-    super.key,
-    required String this.videoId,
-    this.live = false,
-  }) : scope = null,
-       messageId = null,
-       clubId = null,
-       activityId = null;
+  /// A post in the video feed.
+  const ReportContentScreen.video({super.key, required String this.postId})
+    : scope = null,
+      messageId = null,
+      clubId = null,
+      activityId = null;
 
   final ChatScope? scope;
   final String? messageId;
   final String? clubId;
   final String? activityId;
-  final String? videoId;
-  final bool live;
+  final String? postId;
 
   @override
   ConsumerState<ReportContentScreen> createState() =>
@@ -1310,6 +1302,7 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
   final _note = TextEditingController();
 
   bool get _isMessage => widget.messageId != null;
+  bool get _isVideo => widget.postId != null;
 
   @override
   void dispose() {
@@ -1324,8 +1317,8 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
       await repo.report(
         _isMessage
             ? ReportTarget.message(widget.messageId!, scope: widget.scope!)
-            : widget.videoId != null
-            ? ReportTarget.video(widget.videoId!, live: widget.live)
+            : _isVideo
+            ? ReportTarget.video(widget.postId!)
             : widget.activityId != null
             ? ReportTarget.activity(widget.activityId!)
             : ReportTarget.club(widget.clubId!),
@@ -1348,8 +1341,8 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
   Widget build(BuildContext context) {
     final title = _isMessage
         ? 'Report a message'
-        : widget.videoId != null
-        ? 'Report a video or live'
+        : _isVideo
+        ? 'Report a video'
         : 'Report a club or event';
     if (_sent) {
       return KitScaffold(
@@ -1375,10 +1368,8 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ],
       );
     }
-    final reasons = _isMessage
+    final reasons = _isMessage || _isVideo
         ? ContentReport.forMessage
-        : widget.videoId != null
-        ? ContentReport.forVideo
         : ContentReport.forClub;
     return KitScaffold(
       header: KitHeader(title: title, titleSize: 22),
@@ -1390,19 +1381,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ),
       ],
       children: [
-        _isMessage
-            ? _messageCard(context)
-            : widget.videoId != null
-            ? _videoCard(context)
-            : widget.activityId != null
-            ? _activityCard(context)
-            : _clubCard(context),
+        if (!_isVideo)
+          _isMessage
+              ? _messageCard(context)
+              : widget.activityId != null
+              ? _activityCard(context)
+              : _clubCard(context),
         KitTitle(
           'What is wrong with it?',
-          lead: _isMessage
+          lead: _isMessage || _isVideo
               ? 'Reports are private. They are not told who reported.'
-              : widget.videoId != null
-              ? 'Reports are private. The creator is not told who reported.'
               : 'Reports are private. The organizer is not told who reported.',
         ),
         Column(
@@ -1418,17 +1406,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
           ],
         ),
         KitTextArea(label: 'Tell us more', optional: true, controller: _note),
-        KitConfirmBox(
-          label: _isMessage
-              ? 'Hide this message from me now'
-              : widget.videoId != null
-              ? 'Do not show me this video again'
-              : widget.activityId != null
-              ? 'Hide this from my results'
-              : 'Hide this club from my results',
-          checked: _hide,
-          onChanged: (v) => setState(() => _hide = v),
-        ),
+        if (!_isVideo)
+          KitConfirmBox(
+            label: _isMessage
+                ? 'Hide this message from me now'
+                : widget.activityId != null
+                ? 'Hide this from my results'
+                : 'Hide this club from my results',
+            checked: _hide,
+            onChanged: (v) => setState(() => _hide = v),
+          ),
       ],
     );
   }
@@ -1496,37 +1483,6 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
       'Message in ${where ?? 'chat'}${scope.isTeam ? '' : ' chat'}',
       '${m.sender.displayName}, ${_clock(m.at)}',
       m.body.isEmpty ? 'A shared item' : '“${m.body}”',
-    );
-  }
-
-  Widget _videoCard(BuildContext context) {
-    if (widget.live) {
-      final l = ref
-          .watch(shopLivesProvider)
-          .value
-          ?.where((l) => l.id == widget.videoId)
-          .firstOrNull;
-      if (l == null) return const SizedBox.shrink();
-      return _card(
-        context,
-        SolidAvatar.forId(l.id, initials: l.shopMark),
-        'Live',
-        l.title,
-        '${l.host} · ${l.shop}',
-      );
-    }
-    final v = ref
-        .watch(shopVideosProvider)
-        .value
-        ?.where((v) => v.id == widget.videoId)
-        .firstOrNull;
-    if (v == null) return const SizedBox.shrink();
-    return _card(
-      context,
-      SolidAvatar.forId(v.id, initials: v.creatorMark),
-      'Video',
-      v.title,
-      v.creator,
     );
   }
 

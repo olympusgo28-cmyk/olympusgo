@@ -202,7 +202,7 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.name, style: OgText.body(15, weight: FontWeight.w700)),
+                  Text(r.name, style: OgText.body(15, weight: FontWeight.w600)),
                   Text(
                     r.isOwner
                         ? 'All permissions · can’t be changed'
@@ -478,7 +478,7 @@ class _CreateRoleScreenState extends ConsumerState<CreateRoleScreen> {
             hint: 'e.g. Court Captain, Coach, Treasurer, Founding Member',
             maxLength: 30,
           ),
-          Text('Role colour', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Role colour', style: OgText.body(15, weight: FontWeight.w600)),
           _ColourPicker(
             value: _color,
             onPick: (v) => setState(() => _color = v),
@@ -517,7 +517,7 @@ class _CreateRoleScreenState extends ConsumerState<CreateRoleScreen> {
                   const SizedBox(height: 10),
                   Text(
                     card.$2,
-                    style: OgText.body(14, weight: FontWeight.w700),
+                    style: OgText.body(14, weight: FontWeight.w600),
                   ),
                 ],
                 const SizedBox(height: 8),
@@ -608,7 +608,7 @@ class _RoleEditScreenState extends ConsumerState<RoleEditScreen> {
         ),
         Text(
           'Role colour · ${_colourName(role.color)}',
-          style: OgText.body(15, weight: FontWeight.w700),
+          style: OgText.body(15, weight: FontWeight.w600),
         ),
         _ColourPicker(
           value: role.color,
@@ -748,7 +748,7 @@ class _RolePermissionsScreenState extends ConsumerState<RolePermissionsScreen> {
       children: [
         Text(
           'Start from a preset',
-          style: OgText.body(15, weight: FontWeight.w700),
+          style: OgText.body(15, weight: FontWeight.w600),
         ),
         Row(
           children: [
@@ -885,7 +885,7 @@ class RoleMembersScreen extends ConsumerWidget {
                           children: [
                             Text(
                               m.player.displayName,
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: OgText.body(15, weight: FontWeight.w600),
                             ),
                             Text(
                               m.player.handle,

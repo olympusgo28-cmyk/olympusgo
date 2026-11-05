@@ -15,15 +15,15 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/domain/social_models.dart';
-import '../../onboarding/domain/sport.dart';
 import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import '../domain/draw_logic.dart';
 import '../domain/meet_ops.dart';
+import '../domain/tournament_models.dart';
 import 'meet_action_screens.dart';
 
-const _lime = Color(0xFFC6FF00);
+const _lime = Color(0xFFFF7A1A);
 const _muted = Color(0xFFC9C6BC);
 
 /// "You and Priya Raman", "Hannah Goh and Daniel Tan".
@@ -66,11 +66,17 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
   bool _busy = false;
   MatchScore? _sent;
 
+  /// One per score, so a retry can't enter it twice. Editing makes a new one.
+  String _key = newClientKey();
+  ScoringPreset _rules = ScoringPreset.badminton;
+
   int? _n(String v) => v.isEmpty ? null : int.parse(v);
   List<(int?, int?)> get _games => [
     for (var g = 0; g < 3; g++) (_n(_cells[g * 2]), _n(_cells[g * 2 + 1])),
   ];
-  List<int> get _results => [for (final g in _games) gameWinner(g.$1, g.$2)];
+  List<int> get _results => [
+    for (final g in _games) gameWinner(g.$1, g.$2, _rules),
+  ];
   bool get _showThird {
     final r = _results;
     return r[0] > 0 && r[1] > 0 && r[0] != r[1] ||
@@ -83,6 +89,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
     setState(() {
       _cells[_cur] = v;
       _fresh = false;
+      _key = newClientKey();
       final last = _showThird ? 5 : 3;
       if (advance && _cur < last) {
         _cur++;
@@ -95,7 +102,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
     var v = _fresh ? '' : _cells[_cur];
     if (v.length >= 2) v = '';
     v = '$v$d';
-    if (v.length == 2 && int.parse(v) > 30) v = '$d';
+    if (v.length == 2 && int.parse(v) > (_rules.cap ?? 99)) v = '$d';
     _put(v, advance: v.length == 2);
   }
 
@@ -131,6 +138,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
             partners: [?_partner],
             opponents: _opponents,
             games: games,
+            clientKey: _key,
           );
       HapticFeedback.mediumImpact();
       if (mounted) setState(() => _sent = s);
@@ -147,6 +155,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
     title: 'Enter score',
     body: (a) {
       final me = ref.watch(currentUserIdProvider).value;
+      _rules = ref.watch(activityScoringProvider(a.id)).value ?? _rules;
       final players = (ref.watch(meetPlayersProvider(a.id)).value ?? const [])
           .where((p) => p.waitlistAt == null && !p.isGuest && p.player.id != me)
           .toList();
@@ -222,7 +231,10 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
       final r = _results;
       final winsA = r.where((x) => x == 1).length;
       final winsB = r.where((x) => x == 2).length;
-      final decided = matchDecided(_games.take(_showThird ? 3 : 2).toList());
+      final decided = matchDecided(
+        _games.take(_showThird ? 3 : 2).toList(),
+        _rules,
+      );
       final bad = r.indexOf(-1);
       final head = _camera
           ? 'Camera scoring is coming'
@@ -235,7 +247,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
           ? 'Courts with a camera will score on their own in Phase 2. Type '
                 'the score by hand for now.'
           : bad >= 0
-          ? 'A game is won at 21 with 2 clear, or at 30.'
+          ? scoringHint(_rules)
           : decided
           ? 'Ratings change after the other ${singles ? 'player' : 'pair'} '
                 'confirms.'
@@ -295,7 +307,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
                                   textAlign: TextAlign.center,
                                   style: OgText.body(
                                     13,
-                                    weight: FontWeight.w700,
+                                    weight: FontWeight.w600,
                                     color: _muted,
                                   ),
                                 ),
@@ -374,22 +386,15 @@ class _TournamentUmpireScreenState
   bool _saved = false;
   bool _filled = false;
 
-  /// Badminton games go to 21 with 2 clear, or 30. Other sports just need
-  /// a winner.
-  bool _strict = true;
+  ScoringPreset _rules = ScoringPreset.badminton;
 
   int? _n(String v) => v.isEmpty ? null : int.parse(v);
   List<(int?, int?)> get _games => [
     for (var g = 0; g < 3; g++) (_n(_cells[g * 2]), _n(_cells[g * 2 + 1])),
   ];
-  int _win(int? a, int? b) {
-    if (_strict) return gameWinner(a, b);
-    if (a == null || b == null) return 0;
-    if (a == b) return -1;
-    return a > b ? 1 : 2;
-  }
-
-  List<int> get _results => [for (final g in _games) _win(g.$1, g.$2)];
+  List<int> get _results => [
+    for (final g in _games) gameWinner(g.$1, g.$2, _rules),
+  ];
   bool get _showThird {
     final r = _results;
     return r[0] > 0 && r[1] > 0 && r[0] != r[1] ||
@@ -422,7 +427,7 @@ class _TournamentUmpireScreenState
     var v = _fresh ? '' : _cells[_cur];
     if (v.length >= 2) v = '';
     v = '$v$d';
-    if (_strict && v.length == 2 && int.parse(v) > 30) v = '$d';
+    if (v.length == 2 && int.parse(v) > (_rules.cap ?? 99)) v = '$d';
     _put(v, advance: v.length == 2);
   }
 
@@ -444,16 +449,25 @@ class _TournamentUmpireScreenState
     }
   }
 
-  Future<void> _save() async {
+  Future<void> _save({required bool correcting, int? retired}) async {
     final games = [
       for (final g in _games)
         if (g.$1 != null && g.$2 != null) (g.$1!, g.$2!),
     ];
+    if (games.isEmpty) {
+      showOgToast(context, 'Type the score so far.', error: true);
+      return;
+    }
+    String? reason;
+    if (correcting) {
+      reason = await _askReason();
+      if (reason == null || !mounted) return;
+    }
     setState(() => _busy = true);
     try {
       await ref
           .read(tournamentRepositoryProvider)
-          .saveScore(widget.matchId, games);
+          .saveScore(widget.matchId, games, reason: reason, retired: retired);
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       if (mounted) setState(() => _saved = true);
@@ -462,6 +476,60 @@ class _TournamentUmpireScreenState
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// R-SCO-3: a saved result only changes with a reason.
+  Future<String?> _askReason() {
+    final field = TextEditingController();
+    return showCupertinoDialog<String>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Why is this changing?'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: field,
+            autofocus: true,
+            placeholder: 'Scores were swapped',
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep the result'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              final why = field.text.trim();
+              if (why.isNotEmpty) Navigator.of(context).pop(why);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _retire(DrawMatch m) async {
+    final side = await showCupertinoDialog<int>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Who retired?'),
+        content: const Text('The score so far is kept.'),
+        actions: [
+          for (final (i, name) in [m.a!, m.b!].indexed)
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(i + 1),
+              child: Text(name),
+            ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Nobody'),
+          ),
+        ],
+      ),
+    );
+    if (side != null) await _save(correcting: m.done, retired: side);
   }
 
   @override
@@ -492,7 +560,8 @@ class _TournamentUmpireScreenState
         ],
       );
     }
-    _strict = info.activity.sports.firstOrNull == Sport.badminton;
+    _rules =
+        ref.watch(activityScoringProvider(widget.activityId)).value ?? _rules;
     if (!_filled) {
       // Correcting a score starts from the one saved.
       _filled = true;
@@ -545,9 +614,7 @@ class _TournamentUmpireScreenState
         ? 'Check game ${bad + 1}'
         : 'Type each game';
     final hint = bad >= 0
-        ? (_strict
-              ? 'A game is won at 21 with 2 clear, or at 30.'
-              : "A game can't end level.")
+        ? scoringHint(_rules)
         : decided
         ? 'The score is final once saved. Ratings update for everyone in '
               'the match.'
@@ -560,9 +627,14 @@ class _TournamentUmpireScreenState
       bottom: [
         _Keypad(onDigit: _digit, onNext: _next, onDelete: _delete),
         KitButton(
-          label: 'Save final score',
+          label: m.done ? 'Save correction' : 'Save final score',
           loading: _busy,
-          onPressed: decided ? _save : null,
+          onPressed: decided ? () => _save(correcting: m.done) : null,
+        ),
+        KitButton.outline(
+          label: 'A player retired',
+          height: 44,
+          onPressed: _busy ? null : () => _retire(m),
         ),
       ],
       children: [
@@ -592,7 +664,7 @@ class _TournamentUmpireScreenState
                                 textAlign: TextAlign.center,
                                 style: OgText.body(
                                   13,
-                                  weight: FontWeight.w700,
+                                  weight: FontWeight.w600,
                                   color: _muted,
                                 ),
                               ),
@@ -649,7 +721,7 @@ class _TeamLine extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: OgText.body(
               16,
-              weight: FontWeight.w700,
+              weight: FontWeight.w600,
               color: Colors.white,
             ),
           ),
@@ -761,7 +833,7 @@ class _Keypad extends StatelessWidget {
               onNext,
               child: Text(
                 'Next',
-                style: OgText.body(16, weight: FontWeight.w700),
+                style: OgText.body(16, weight: FontWeight.w600),
               ),
             ),
             key('0', () => onDigit(0)),
@@ -878,6 +950,60 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
   String? _why;
   bool _busy = false;
 
+  Future<void> _decide({List<(int, int)>? games}) async {
+    setState(() => _busy = true);
+    try {
+      final s = await ref
+          .read(playRepositoryProvider)
+          .decideScore(widget.scoreId, games: games);
+      HapticFeedback.mediumImpact();
+      ref.invalidate(matchScoreProvider(widget.scoreId));
+      ref.invalidate(meetDisputesProvider(s.activityId));
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _setScore() async {
+    final field = TextEditingController();
+    final text = await showCupertinoDialog<String>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('What was the score?'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: field,
+            autofocus: true,
+            placeholder: '21-10, 21-12',
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Go back'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(field.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (text == null) return;
+    final games = [
+      for (final m in RegExp(r'(\d+)\s*[-–]\s*(\d+)').allMatches(text))
+        (int.parse(m[1]!), int.parse(m[2]!)),
+    ];
+    if (games.isEmpty) {
+      if (mounted) showOgToast(context, 'Type each game.', error: true);
+      return;
+    }
+    await _decide(games: games);
+  }
+
   Future<void> _answer(bool ok) async {
     setState(() => _busy = true);
     try {
@@ -915,6 +1041,8 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
     final org = s.organizer?.displayName ?? 'the organizer';
     final entered = s.enteredBy.displayName.split(' ').first;
     final mine = s.sideA.any((p) => p.id == me);
+    final played = mine || s.sideB.any((p) => p.id == me);
+    final organizing = s.organizer?.id == me;
 
     Widget table() => Container(
       padding: const EdgeInsets.all(16),
@@ -942,7 +1070,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: OgText.body(
                             16,
-                            weight: FontWeight.w700,
+                            weight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
@@ -1044,6 +1172,49 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
             onPressed: () => context.go(Routes.inbox),
           ),
         ],
+      ),
+      ScoreStatus.superseded => (
+        [
+          Text('This score was corrected', style: OgText.heading(26)),
+          Text(
+            'A newer result replaced it.',
+            style: OgText.body(15, height: 1.45, color: c.textMuted),
+          ),
+        ],
+        [KitButton(label: 'Done', onPressed: () => kitPop(context))],
+      ),
+      ScoreStatus.disputed when organizing && !played => (
+        [
+          Text('Set the final score', style: OgText.heading(26)),
+          Text(
+            'Both sides are told what you decide. Ratings wait until then.',
+            style: OgText.body(15, height: 1.45, color: c.textMuted),
+          ),
+          if (s.reason != null) KitKeyValue('Reason', s.reason!),
+        ],
+        [
+          KitButton(
+            label: 'Keep this score',
+            loading: _busy,
+            onPressed: () => _decide(),
+          ),
+          KitButton(
+            label: 'Change the score',
+            style: KitButtonStyle.outline,
+            onPressed: _busy ? null : _setScore,
+          ),
+        ],
+      ),
+      ScoreStatus.disputed when organizing => (
+        [
+          Text('The OlympusGO team decides', style: OgText.heading(26)),
+          Text(
+            'You played in this match, so someone else sets the final score. '
+            'Ratings wait until then.',
+            style: OgText.body(15, height: 1.45, color: c.textMuted),
+          ),
+        ],
+        [KitButton(label: 'Done', onPressed: () => kitPop(context))],
       ),
       ScoreStatus.disputed => (
         [

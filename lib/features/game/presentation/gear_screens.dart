@@ -12,7 +12,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/game_providers.dart';
 import '../domain/game_models.dart';
 
@@ -272,7 +272,7 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
           'Add what you play with. Others can see it on your player profile.',
           style: OgText.body(14, color: context.og.textMuted),
         ),
-        Text('Gear type', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Gear type', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -325,7 +325,7 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
           ),
         ],
         if (_type == GearType.shoes) ...[
-          Text('Size', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Size', style: OgText.body(15, weight: FontWeight.w600)),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -338,7 +338,7 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
                 ),
             ],
           ),
-          Text('Fit', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Fit', style: OgText.body(15, weight: FontWeight.w600)),
           KitSegments(
             labels: const ['Narrow', 'Regular', 'Wide'],
             selected: const ['Narrow', 'Regular', 'Wide'].indexOf(_fit),

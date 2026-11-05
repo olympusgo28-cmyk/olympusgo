@@ -161,7 +161,7 @@ class CreatePickRow extends StatelessWidget {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(16, weight: FontWeight.w700),
+                    style: OgText.body(16, weight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -249,16 +249,10 @@ List<(Sport, String, bool)> _sportsFor(WidgetRef ref, String? clubId) {
         ),
     ];
   }
-  return [
-    for (final s in const [
-      Sport.badminton,
-      Sport.pickleball,
-      Sport.tennis,
-      Sport.tableTennis,
-      Sport.padel,
-    ])
-      (s, sportFormats(s), false),
-  ];
+  // Only sports staff have made live. Until the list loads, show none rather
+  // than offer a sport the server will refuse.
+  final live = ref.watch(liveSportsProvider).value ?? const <Sport>[];
+  return [for (final s in live) (s, sportFormats(s), false)];
 }
 
 /// Step 1: the sport (or, for events, the sports).
@@ -719,11 +713,55 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
                 ? null
                 : () => _edit((d) => d.copyWith(capacity: d.capacity + 1)),
           ),
+          CreateStepper(
+            label: 'Reserved for your invites',
+            value: '${d.reservedSlots}',
+            onLess: d.reservedSlots <= 0
+                ? null
+                : () => _edit(
+                    (d) => d.copyWith(reservedSlots: d.reservedSlots - 1),
+                  ),
+            onMore: d.reservedSlots >= d.capacity - 1
+                ? null
+                : () => _edit(
+                    (d) => d.copyWith(reservedSlots: d.reservedSlots + 1),
+                  ),
+          ),
           Text(
             '${type.label} needs at least $min. Extra sign-ups join a '
             'waitlist. Below ${d.minPlayers} sign-ups 24 hours before, you '
             'choose to cancel or play.',
             style: OgText.body(13, height: 1.45, color: c.textMuted),
+          ),
+          Text('Who it\'s for', style: OgText.body(13, color: c.textMuted)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (id, label) in const [
+                ('any', 'Anyone'),
+                ('men', 'Men'),
+                ('women', 'Women'),
+                ('mixed', 'Mixed'),
+              ])
+                KitChip(
+                  label: label,
+                  selected: d.genderMix == id,
+                  onTap: () => _edit((d) => d.copyWith(genderMix: id)),
+                ),
+            ],
+          ),
+        ],
+      ),
+      KitCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        children: [
+          SwitchRow(
+            compact: true,
+            title: 'Court booked',
+            subtitle: 'Show players the court is already sorted',
+            value: d.courtBooked,
+            onChanged: (v) => _edit((d) => d.copyWith(courtBooked: v)),
           ),
         ],
       ),
@@ -808,7 +846,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
                     k,
                     style: OgText.body(
                       14,
-                      weight: bold ? FontWeight.w800 : FontWeight.w400,
+                      weight: bold ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -816,7 +854,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
                   v,
                   style: OgText.body(
                     14,
-                    weight: bold ? FontWeight.w800 : FontWeight.w600,
+                    weight: bold ? FontWeight.w600 : FontWeight.w600,
                   ),
                 ),
               ],
@@ -880,7 +918,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
           ] else ...[
             Text(
               'Who pays the S\$2 platform fee?',
-              style: OgText.body(15, weight: FontWeight.w700),
+              style: OgText.body(15, weight: FontWeight.w600),
             ),
             KitChoiceRow(
               title: 'Me, the organizer',
@@ -921,7 +959,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
           ],
           Text(
             'Platform fee: 10%, minimum S\$2. '
-            '${!paid && !d.playersPayFee ? 'If a player leaves before the Meet starts, your S\$2 for them is refunded.' : 'Players who leave before the Meet starts get all of it back to their Wallet, or the price without the platform fee to their card. If you cancel, they get all of it back and card fees come off your earnings.'}',
+            '${!paid && !d.playersPayFee ? 'If a player leaves before the Meet starts, your S\$2 for them is refunded.' : 'Players who leave before the Meet starts get the price back, without the platform fee. If you cancel, they get all of it back and card fees come off your earnings.'}',
             style: OgText.body(13, height: 1.45, color: c.textMuted),
           ),
         ],
@@ -935,8 +973,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
         tone: KitTone.info,
       ),
       Text(
-        'You mark attendance at the Meet. Present players get Passport credit '
-        'and points.',
+        'You mark attendance at the Meet. Present players get Passport credit.',
         style: OgText.body(14, height: 1.45, color: c.textMuted),
       ),
       CreateSection(
@@ -1028,7 +1065,7 @@ class _PartPill extends StatelessWidget {
                 '$n',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: on
                       ? c.onPrimary
                       : done
@@ -1042,7 +1079,7 @@ class _PartPill extends StatelessWidget {
               label,
               style: OgText.body(
                 14,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: on ? Colors.white : c.text,
               ),
             ),
@@ -1088,7 +1125,7 @@ class _DayDot extends StatelessWidget {
           letter,
           style: OgText.body(
             14,
-            weight: FontWeight.w700,
+            weight: FontWeight.w600,
             color: on ? c.onPrimary : c.text,
           ),
         ),
@@ -1133,7 +1170,7 @@ class _TypeCard extends StatelessWidget {
               label,
               style: OgText.body(
                 15,
-                weight: FontWeight.w700,
+                weight: FontWeight.w600,
                 color: on ? Colors.white : c.text,
               ),
             ),

@@ -100,7 +100,7 @@ class TermsPrivacyScreen extends StatelessWidget {
               const KitCheckList([
                 'Platform fee is 10%, minimum S\$2, shown before you pay',
                 'Refund rules are shown on each Meet, ticket and entry before you pay. If the organizer cancels, you get everything back, fees included',
-                'Organizers, clubs, academies and sellers are paid once attendance is marked, or 24 hours after the end. Payouts go to banks weekly',
+                'Organizers, clubs, academies and partner shops are paid once attendance is marked, or 24 hours after the end. Payouts go to banks weekly',
               ]),
               Align(
                 alignment: Alignment.centerLeft,
@@ -118,6 +118,7 @@ class TermsPrivacyScreen extends StatelessWidget {
             'Location is used for nearby results and check-in, never shown to others',
             'You choose who sees your sessions: everyone, your Circle, or nobody',
             'Filming needs your consent, and a parent’s consent for under-18s',
+            'AI plans are optional and for adults. If you agree, a summary of your workouts goes to Anthropic, our AI provider, and may be processed outside Singapore',
           ]),
         ),
         KitBlock(
@@ -181,7 +182,7 @@ class RefundRulesScreen extends StatelessWidget {
           title: 'If the organizer cancels',
           child: KitCheckList([
             'You get back everything you paid, platform fee included',
-            'You choose: your Wallet, instantly, or your card or PayNow, in 3 to 5 working days',
+            'It goes back to the card or PayNow you used, in minutes for PayNow and 3 to 5 working days for a card',
             'The same if the venue closes or the session can’t go ahead',
           ]),
         ),
@@ -191,8 +192,8 @@ class RefundRulesScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const KitCheckList([
-                'To your Wallet: all of it, platform fee included, instantly',
-                'To your card or PayNow: the price without the platform fee, in 3 to 5 working days',
+                'You get the price back, without the platform fee',
+                'It goes back to the card or PayNow you used',
               ]),
               const SizedBox(height: 8),
               for (final (k, v) in const [
@@ -218,9 +219,10 @@ class RefundRulesScreen extends StatelessWidget {
         const KitBlock(
           title: 'Shop orders',
           child: KitCheckList([
-            'Cancel free until the shop ships, all of it back',
-            'A fault: return it within 7 days',
-            'Not delivered in 14 days: all of it back',
+            'Cancel free until you collect, all of it back',
+            'A booked service can’t be cancelled once the shop has started',
+            'A problem before you collect: report it and we hold the payment',
+            'Sports equipment is final once collected',
           ]),
         ),
         const KitBlock(
@@ -228,14 +230,6 @@ class RefundRulesScreen extends StatelessWidget {
           child: Text(
             'Olympus holds your payment until the organizer marks attendance, or until 24 hours after the end if they don’t. If something goes wrong, report it before then and we hold the money while we look.',
           ),
-        ),
-        const KitBlock(
-          title: 'Your wallet',
-          child: KitCheckList([
-            'Holds refunds and rewards',
-            'Spend it on Olympus, or withdraw it to your bank for free',
-            'You can’t add money to it yourself yet',
-          ]),
         ),
         const KitNote(
           'These rules are part of the Terms. Your rights under the law in your country come first.',
@@ -272,7 +266,7 @@ class Under18ProtectionScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
                 Text(sub, style: OgText.body(13, color: c.textMuted)),
               ],
             ),
@@ -430,7 +424,7 @@ class _CountryScreenState extends ConsumerState<CountryScreen> {
               ),
               const KitKeyValue('Reports answered within', '24 hours'),
               KitKeyValue('If we do not act', rules.regulator),
-              KitKeyValue('Seller details shown', rules.sellerDetails),
+              KitKeyValue('Shop details shown', rules.sellerDetails),
             ],
           ),
         ),
@@ -585,7 +579,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           'Send a legal notice',
           lead: 'For a person harmed by something on Olympus, or someone acting for them. You do not need an account.',
         ),
-        Text('I am', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('I am', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -605,7 +599,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           hint: 'name@example.com',
           keyboardType: TextInputType.emailAddress,
         ),
-        Text('Country', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Country', style: OgText.body(15, weight: FontWeight.w600)),
         Wrap(
           spacing: 8,
           runSpacing: 8,

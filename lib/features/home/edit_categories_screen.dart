@@ -108,7 +108,7 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
                         children: [
                           Text(
                             h.label,
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: OgText.body(15, weight: FontWeight.w600),
                           ),
                           Text(
                             h.sub,

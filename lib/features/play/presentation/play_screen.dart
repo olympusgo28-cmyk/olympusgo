@@ -173,7 +173,7 @@ class _Hero extends StatelessWidget {
                 OgIcons.racquet,
                 size: 100,
                 strokeWidth: 1.1,
-                color: OgColors.lime,
+                color: OgColors.orange300,
               ),
             ),
           ),
@@ -232,7 +232,7 @@ class _Hero extends StatelessWidget {
                         'Create',
                         style: OgText.body(
                           14,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -301,7 +301,7 @@ class _FilterBar extends ConsumerWidget {
                     children: [
                       Text(
                         bar[i].title,
-                        style: OgText.body(12, weight: FontWeight.w700),
+                        style: OgText.body(12, weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 1),
                       Text(
@@ -433,7 +433,7 @@ class _SportPill extends StatelessWidget {
                       '•',
                       style: OgText.body(
                         14,
-                        weight: FontWeight.w700,
+                        weight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
@@ -443,7 +443,7 @@ class _SportPill extends StatelessWidget {
                     text,
                     style: OgText.body(
                       14,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -496,7 +496,7 @@ class _AddSportChip extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Add sport',
-                style: OgText.body(14, weight: FontWeight.w700, color: c.link),
+                style: OgText.body(14, weight: FontWeight.w600, color: c.link),
               ),
             ],
           ),
@@ -537,7 +537,7 @@ class _NextSession extends StatelessWidget {
                     days[next.startsAt.weekday - 1],
                     style: OgText.body(
                       11,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: const Color(0xFFF2C14E),
                     ),
                   ),
@@ -568,7 +568,7 @@ class _NextSession extends StatelessWidget {
                         '$count',
                         height: 20,
                         fontSize: 11,
-                        background: OgColors.lime,
+                        background: OgColors.orange300,
                         foreground: OgColors.ink,
                       ),
                     ],
@@ -578,7 +578,7 @@ class _NextSession extends StatelessWidget {
                     next.title,
                     style: OgText.body(
                       17,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -624,7 +624,7 @@ class _Empty extends ConsumerWidget {
           Text(
             'No $what match these filters',
             textAlign: TextAlign.center,
-            style: OgText.body(17, weight: FontWeight.w700),
+            style: OgText.body(17, weight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
@@ -717,7 +717,7 @@ class _HubFiltersSheet extends ConsumerWidget {
                     children: [
                       Text(
                         g.title,
-                        style: OgText.body(15, weight: FontWeight.w700),
+                        style: OgText.body(15, weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 10),
                       Wrap(
@@ -952,7 +952,7 @@ class _SportOptionsSheetState extends State<_SportOptionsSheet> {
                   sportIcon(widget.sport),
                   size: 24,
                   strokeWidth: 1.9,
-                  color: OgColors.lime,
+                  color: OgColors.orange300,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1066,7 +1066,7 @@ class _Options extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+        Text(title, style: OgText.body(15, weight: FontWeight.w600)),
         const SizedBox(height: 10),
         Wrap(spacing: 8, runSpacing: 8, children: children),
         ...footer,
@@ -1169,7 +1169,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
                     ),
                     Text(
                       bands[lo].label,
-                      style: OgText.body(15, weight: FontWeight.w700),
+                      style: OgText.body(15, weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -1187,7 +1187,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
                   ),
                   Text(
                     bands[hi].label,
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: OgText.body(15, weight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -1210,10 +1210,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: OgColors.tangerineLine,
-                          width: 3,
-                        ),
+                        border: Border.all(color: OgColors.orange700, width: 3),
                       ),
                     ),
                   ),
@@ -1268,7 +1265,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
                                     bands[k].code,
                                     style: OgText.body(
                                       12,
-                                      weight: FontWeight.w700,
+                                      weight: FontWeight.w600,
                                       color: k >= lo && k <= hi
                                           ? c.text
                                           : const Color(0xFF8A8A90),
@@ -1394,7 +1391,7 @@ class _PlayAddSportScreenState extends ConsumerState<PlayAddSportScreen> {
                           sportIcon(s),
                           size: 24,
                           strokeWidth: 1.9,
-                          color: pref != null ? OgColors.lime : c.text,
+                          color: pref != null ? OgColors.orange300 : c.text,
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -1404,7 +1401,7 @@ class _PlayAddSportScreenState extends ConsumerState<PlayAddSportScreen> {
                           children: [
                             Text(
                               s.label,
-                              style: OgText.body(16, weight: FontWeight.w700),
+                              style: OgText.body(16, weight: FontWeight.w600),
                             ),
                             const SizedBox(height: 2),
                             Text(

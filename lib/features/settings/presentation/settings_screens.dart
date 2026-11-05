@@ -18,6 +18,7 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../fitness/application/fitness_providers.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
 import '../application/avatar_upload.dart';
@@ -75,14 +76,14 @@ class SettingsScreen extends StatelessWidget {
           children: [
             NavRow(
               icon: OgIcons.wallet,
-              title: 'Wallet and points',
-              subtitle: 'Refunds, withdrawals and points',
-              onTap: () => context.push(Routes.wallet),
+              title: 'Earnings and receipts',
+              subtitle: 'What you’ve paid and what you’ve earned',
+              onTap: () => context.push(Routes.earnings),
             ),
             NavRow(
               icon: OgIcons.bag,
               title: 'My orders',
-              subtitle: 'Track, return and review',
+              subtitle: 'Track, collect and review',
               onTap: () => context.push(Routes.orders()),
             ),
             NavRow(
@@ -446,8 +447,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     });
     try {
       if (_original != null && email != _original!.email) {
-        await ref.read(settingsRepositoryProvider).changeEmail(email);
-        if (mounted) showOgToast(context, 'Check $email to confirm the change');
+        await ref.read(authRepositoryProvider).startEmailChange(email);
+        if (mounted) context.push(Routes.verifyPhoneChange, extra: email);
+        return;
       }
       final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
       final phone = '${_original?.country.dialCode ?? '+65'}$digits';
@@ -682,6 +684,8 @@ class PrivacyScreen extends ConsumerWidget {
     final prefs =
         ref.watch(privacySettingsProvider).value ?? const PrivacyPrefs();
     final notifier = ref.read(privacySettingsProvider.notifier);
+    final aiStatus = ref.watch(aiStatusProvider);
+    final ai = aiStatus.value;
     Future<void> change(PrivacyPrefs Function(PrivacyPrefs) edit) async {
       try {
         await notifier.change(edit);
@@ -735,8 +739,43 @@ class PrivacyScreen extends ConsumerWidget {
               onChanged: (v) =>
                   change((p) => p.copyWith(shareLocationAtMeets: v)),
             ),
+            // Stays while they've agreed, so withdrawing is always possible.
+            if ((ai?.open ?? false) || (ai?.agreed ?? false))
+              SwitchRow(
+                title: 'AI plans',
+                subtitle: 'Sends a workout summary to our AI provider',
+                value: ai!.agreed,
+                onChanged: (v) async {
+                  if (v) {
+                    await context.push(Routes.fitnessAiPlan);
+                    return;
+                  }
+                  final container = ProviderScope.containerOf(
+                    context,
+                    listen: false,
+                  );
+                  try {
+                    await container
+                        .read(fitnessRepositoryProvider)
+                        .setAiConsent(false);
+                    container.invalidate(aiStatusProvider);
+                  } on AuthFailure catch (e) {
+                    if (context.mounted) {
+                      showOgToast(context, e.message, error: true);
+                    }
+                  }
+                },
+              ),
           ],
         ),
+        // Never hide a way to withdraw in silence.
+        if (aiStatus.hasError && !aiStatus.hasValue) ...[
+          const SizedBox(height: 12),
+          KitLink(
+            'Can’t load AI plans. Try again',
+            onPressed: () => ref.invalidate(aiStatusProvider),
+          ),
+        ],
       ],
       bottom: [
         Text(
@@ -843,7 +882,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     ),
     (
       'Where is my refund?',
-      'Refunds go to your Wallet first, then to your card or bank if you ask.',
+      'Refunds go back to the card or PayNow you paid with. PayNow takes minutes, and a card takes 3 to 5 working days.',
     ),
     (
       'How do I block or report someone?',
@@ -1137,6 +1176,9 @@ class _VerifyPhoneChangeScreenState
   String? _error;
   bool _busy = false;
 
+  /// This screen confirms a new email as well as a new mobile.
+  bool get _isEmail => widget.phone.contains('@');
+
   @override
   void dispose() {
     _code.dispose();
@@ -1150,12 +1192,18 @@ class _VerifyPhoneChangeScreenState
       _error = null;
     });
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .verifyPhoneChange(widget.phone, _code.text);
+      final auth = ref.read(authRepositoryProvider);
+      if (_isEmail) {
+        await auth.verifyEmailChange(widget.phone, _code.text);
+      } else {
+        await auth.verifyPhoneChange(widget.phone, _code.text);
+      }
       ref.invalidate(privateInfoProvider);
       if (!mounted) return;
-      showOgToast(context, 'Mobile number updated');
+      showOgToast(
+        context,
+        _isEmail ? 'Email updated' : 'Mobile number updated',
+      );
       context.go(Routes.settings);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);

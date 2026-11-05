@@ -621,16 +621,31 @@ class SupabaseClubRepository implements ClubRepository {
       );
 
   @override
+  Future<List<GroupRank>> groupRanking() => _guard(() async {
+    final rows = await _client.rpc('group_activity_rank') as List;
+    return [
+      for (final r in rows.cast<Map<String, dynamic>>())
+        GroupRank(
+          rank: r['rank'] as int,
+          clubId: r['club_id'] as String,
+          name: r['name'] as String,
+          area: r['area'] as String? ?? '',
+          games: r['games'] as int,
+        ),
+    ];
+  });
+
+  @override
   Future<void> report(ReportTarget target, ContentReport reason, String note) =>
       _guard(
         () => _client.from('content_reports').insert({
-          'target_kind':
-              target.video ??
-              (target.isActivity
-                  ? 'activity'
-                  : target.isClub
-                  ? 'club'
-                  : 'message'),
+          'target_kind': target.isVideo
+              ? 'video'
+              : target.isActivity
+              ? 'activity'
+              : target.isClub
+              ? 'club'
+              : 'message',
           'target_id': target.id,
           'reason': reason.id,
           'note': note,
@@ -665,26 +680,6 @@ class SupabaseClubRepository implements ClubRepository {
               : '',
         );
       });
-
-  @override
-  Future<ClubReward> reward(String clubId) => _guard(() async {
-    final now = DateTime.now();
-    final played = await _play.forClub(
-      clubId,
-      from: DateTime(now.year, now.month),
-    );
-    return ClubReward(
-      meets: [
-        for (final a in played)
-          if (a.kind == ActivityKind.meet && a.startsAt.isBefore(now))
-            RewardMeet(
-              title: a.title,
-              at: a.startsAt,
-              paidPresent: a.spotsTaken,
-            ),
-      ],
-    );
-  });
 
   @override
   Future<void> updateClub(Club club) => _guard(

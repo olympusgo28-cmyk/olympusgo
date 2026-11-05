@@ -844,7 +844,6 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
           child: KitCheckList([
             'Member-only Meets and the club ladder',
             'Club chat and announcements',
-            'A share of the club reward voucher',
           ]),
         ),
         if (leaders.isNotEmpty)

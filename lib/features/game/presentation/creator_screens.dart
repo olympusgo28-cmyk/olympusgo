@@ -13,10 +13,9 @@ import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../shop/presentation/shop_screens.dart' show compact;
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/game_providers.dart';
 import 'game_screens.dart' show CampaignCard;
 
@@ -142,9 +141,8 @@ class CreatorProfileScreen extends ConsumerWidget {
           childAspectRatio: 0.75,
           children: [
             for (final v in cr.videoViews)
-              Pressable(
-                semanticLabel: 'Video, ${compact(v)} views',
-                onPressed: () => context.push(Routes.shopVideo('v1')),
+              Semantics(
+                label: 'Video, ${compact(v)} views',
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.bottomLeft,
@@ -164,7 +162,7 @@ class CreatorProfileScreen extends ConsumerWidget {
                         compact(v),
                         style: OgText.body(
                           12,
-                          weight: FontWeight.w700,
+                          weight: FontWeight.w600,
                           color: const Color(0xFFFFFFFF),
                         ),
                       ),
@@ -206,8 +204,7 @@ class CreatorProfileScreen extends ConsumerWidget {
             KitLink(
               'Report or block',
               color: c.textMuted,
-              onPressed: () =>
-                  context.push(Routes.reportListing('Creator: ${cr.name}')),
+              onPressed: () => context.push(Routes.help),
             ),
             const Spacer(),
             KitLink(
@@ -260,8 +257,8 @@ class CreatorEarningsScreen extends ConsumerWidget {
       header: const KitHeader(title: 'Creator earnings'),
       bottom: [
         KitButton(
-          label: 'Pay out now',
-          onPressed: () => context.push(Routes.payout),
+          label: 'See my earnings',
+          onPressed: () => context.push(Routes.earnings),
         ),
         KitButton(
           label: 'Start a challenge',
@@ -283,7 +280,7 @@ class CreatorEarningsScreen extends ConsumerWidget {
                 'READY TO PAY OUT',
                 style: OgText.body(
                   12,
-                  weight: FontWeight.w800,
+                  weight: FontWeight.w600,
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
@@ -380,7 +377,7 @@ class CreatorChallengesScreen extends ConsumerWidget {
                       : 'Creator access ends ${Fmt.day(s.graceEnds!)}',
                   style: OgText.body(
                     15,
-                    weight: FontWeight.w800,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                   ),
                 ),
@@ -396,7 +393,7 @@ class CreatorChallengesScreen extends ConsumerWidget {
                   '${s.followers} of ${s.threshold} followers · ${s.threshold - s.followers} to go',
                   style: OgText.body(
                     13,
-                    weight: FontWeight.w700,
+                    weight: FontWeight.w600,
                     color: t.onWarnFill,
                   ),
                 ),
@@ -524,14 +521,14 @@ class _NewChallengeScreenState extends ConsumerState<NewChallengeScreen> {
           hint: 'Win 5 doubles matches in 14 days',
           maxLength: 60,
         ),
-        Text('Sport', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Sport', style: OgText.body(15, weight: FontWeight.w600)),
         KitSegments(
           labels: const ['Badminton', 'Pickleball'],
           selected: _sport == 'Badminton' ? 0 : 1,
           onSelect: (i) =>
               setState(() => _sport = i == 0 ? 'Badminton' : 'Pickleball'),
         ),
-        Text('Duration', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Duration', style: OgText.body(15, weight: FontWeight.w600)),
         KitSegments(
           labels: const ['7 days', '14 days', '30 days'],
           selected: [7, 14, 30].indexOf(_days),

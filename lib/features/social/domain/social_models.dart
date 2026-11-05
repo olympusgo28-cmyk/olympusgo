@@ -107,5 +107,9 @@ abstract class ChatMessage with _$ChatMessage {
     required String senderId,
     required String body,
     required DateTime createdAt,
+
+    /// Set by the phone, to match a message to its optimistic copy.
+    String? clientId,
+    @Default(false) bool deleted,
   }) = _ChatMessage;
 }

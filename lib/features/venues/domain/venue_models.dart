@@ -35,8 +35,8 @@ abstract class VenueDetail with _$VenueDetail {
     double? rating,
     @Default(0) int ratingCount,
     @Default(false) bool autoCheckIn,
-    @Default(0xFF16181B) int color,
-    @Default(0xFFC6FF00) int ink,
+    @Default(0xFF1C1F23) int color,
+    @Default(0xFFFF7A1A) int ink,
   }) = _VenueDetail;
 
   const VenueDetail._();
@@ -118,7 +118,6 @@ abstract class CourtBooking with _$CourtBooking {
 
   bool get canCancelFree => DateTime.now().isBefore(freeCancelUntil);
 
-  /// Back to the Wallet: all of it. To a card: the court price only.
-  int refundTo({required bool wallet}) =>
-      !canCancelFree ? 0 : (wallet ? paidCents : courtCents);
+  /// In time, the court price without the fee (R-REF-8).
+  int get refundDueCents => canCancelFree ? courtCents : 0;
 }
