@@ -124,7 +124,7 @@ jobs:
             curl -sf -X OPTIONS http://127.0.0.1:54321/functions/v1/stripe-local > /dev/null && break
             sleep 2
           done
-          LOCAL_MONEY_TESTS=1 flutter test -j 1 test/supabase_money_local_test.dart test/supabase_shop_local_test.dart test/supabase_voucher_local_test.dart test/supabase_lesson_local_test.dart test/supabase_ai_plan_local_test.dart test/supabase_clips_local_test.dart
+          LOCAL_MONEY_TESTS=1 flutter test -j 1 test/supabase_money_local_test.dart test/supabase_shop_local_test.dart test/supabase_voucher_local_test.dart test/supabase_lesson_local_test.dart test/supabase_ai_plan_local_test.dart test/supabase_clips_local_test.dart test/supabase_feed_local_test.dart
       - name: Show the functions' log if that failed
         if: failure()
         run: cat functions.log || echo 'the functions never started'

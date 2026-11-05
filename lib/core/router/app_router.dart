@@ -101,6 +101,12 @@ final rootKey = GlobalKey<NavigatorState>();
 Page<void> cupertinoPage(GoRouterState state, Widget child) =>
     CupertinoPage<void>(key: state.pageKey, child: child);
 
+/// A code is only asked for after a change starts, so a bare link or a
+/// restored app goes back to where the change begins.
+@visibleForTesting
+String? verifyChangeRedirect(Object? extra) =>
+    extra is String ? null : Routes.personalInfo;
+
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   // Re-run redirects whenever sign-in or the profile changes.
@@ -412,9 +418,13 @@ GoRouter appRouter(Ref ref) {
       page(Routes.settings, (_) => const SettingsScreen()),
       page(Routes.accountCentre, (_) => const AccountCentreScreen()),
       page(Routes.personalInfo, (_) => const PersonalInfoScreen()),
-      page(
-        Routes.verifyPhoneChange,
-        (s) => VerifyPhoneChangeScreen(phone: s.extra! as String),
+      GoRoute(
+        path: Routes.verifyPhoneChange,
+        redirect: (_, s) => verifyChangeRedirect(s.extra),
+        pageBuilder: (_, s) => cupertinoPage(
+          s,
+          VerifyPhoneChangeScreen(phone: s.extra! as String),
+        ),
       ),
       page(Routes.notifications, (_) => const NotificationsScreen()),
       page(Routes.privacy, (_) => const PrivacyScreen()),
