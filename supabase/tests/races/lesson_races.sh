@@ -10,7 +10,7 @@
 #   wins, the money moves once and nothing stays held. Local stack only.
 set -euo pipefail
 
-PSQL=(docker exec -i supabase_db_olympusGO psql -U postgres -d postgres -Atq -v ON_ERROR_STOP=1)
+source "$(dirname "$0")/db.sh"
 ROUNDS=${1:-25}
 OWNER=c7000000-0000-0000-0000-000000000071
 COACH=c7000000-0000-0000-0000-000000000072

@@ -8,7 +8,7 @@
 # Local stack only.
 set -euo pipefail
 
-PSQL=(docker exec -i supabase_db_olympusGO psql -U postgres -d postgres -Atq -v ON_ERROR_STOP=1)
+source "$(dirname "$0")/db.sh"
 ROUNDS=${1:-25}
 OWNER=c6000000-0000-0000-0000-000000000081
 BUYER=c6000000-0000-0000-0000-000000000082
@@ -46,6 +46,9 @@ insert into public.voucher_types (name, kind, mall_id, amount_minor, organizer_d
 values ('Race voucher', 'A', '$MALL', 800, true) returning id;
 SQL
 )
+
+# A used database already holds this organizer's games, so count from here.
+read -r games0 last0 <<<"$("${PSQL[@]}" -F ' ' -c "select count(*) filter (where counted), coalesce(max(game_no), 0) from public.organizer_games where host_id = '$ORG'")"
 
 failed=0
 for ((i = 1; i <= ROUNDS; i++)); do
@@ -121,8 +124,8 @@ done
 
 games=$("${PSQL[@]}" -c "select count(*) from public.organizer_games where host_id = '$ORG' and counted")
 last=$("${PSQL[@]}" -c "select max(game_no) from public.organizer_games where host_id = '$ORG'")
-if [[ "$games" != "$ROUNDS" || "$last" != "$ROUNDS" ]]; then
-  echo "$games counted, last number $last, wanted $ROUNDS of each"
+if [[ "$((games - games0))" != "$ROUNDS" || "$((last - last0))" != "$ROUNDS" ]]; then
+  echo "$((games - games0)) counted, last number $last after $last0, wanted $ROUNDS of each"
   failed=1
 fi
 grants=$("${PSQL[@]}" -c "select count(*) from public.reward_grants where user_id = '$ORG'")

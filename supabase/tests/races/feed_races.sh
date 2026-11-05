@@ -10,7 +10,7 @@
 # Local stack only.
 set -euo pipefail
 
-PSQL=(docker exec -i supabase_db_olympusGO psql -U postgres -d postgres -Atq -v ON_ERROR_STOP=1)
+source "$(dirname "$0")/db.sh"
 ROUNDS=${1:-25}
 AUTHOR=c9000000-0000-0000-0000-000000000010
 FAN=c9000000-0000-0000-0000-000000000011
