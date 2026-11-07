@@ -111,6 +111,7 @@ jobs:
           export LOCAL_SUPABASE_KEY=$(supabase status -o json | jq -r .ANON_KEY)
           export LOCAL_SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)
           flutter test test/supabase_play_local_test.dart test/supabase_safety_local_test.dart \
+            test/supabase_enumeration_local_test.dart \
             test/supabase_clubs_local_test.dart \
             test/supabase_tournament_local_test.dart test/supabase_academy_local_test.dart \
             test/supabase_fitness_local_test.dart

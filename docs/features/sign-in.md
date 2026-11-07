@@ -16,7 +16,7 @@
 
 **Security notes.** The service-role key is used only in the Edge Function. Identifiers are hashed with `LOGIN_HASH_PEPPER` before they reach the database. Logs carry status codes only.
 
-**Tests.** `supabase/functions/resolve-login/logic_test.ts`, and the mobile journey in `test/supabase_play_local_test.dart`.
+**Tests.** `supabase/functions/resolve-login/logic_test.ts`, the mobile journey in `test/supabase_play_local_test.dart`, and `test/supabase_enumeration_local_test.dart` (Q41, Gate A): Supabase Auth called directly gives the same reply for a registered mobile or email as for an unknown one, and cannot get round the five-code lockout.
 
 **Delivery.** `delivery.ts` sends through Twilio and Resend. A local stack sends nothing and uses fixed codes for test contacts; this is decided from `SUPABASE_URL`, so no fixed code can work on a hosted project.
 
