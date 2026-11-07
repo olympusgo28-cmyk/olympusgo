@@ -13,12 +13,13 @@ This repository holds a working app. Phase 0 and most of Phase 1 of `docs/DEVELO
 When two sources disagree, the higher one wins. If the disagreement matters to your task, stop and record it in `docs/OPEN_QUESTIONS.md` instead of picking one.
 
 1. **A written decision by the owner** in `docs/OPEN_QUESTIONS.md` (marked Decided) or a later ADR in `docs/adr/`.
-1b. **`docs/DEVELOPER_CHECKLIST.md`** (30 Oct), the newest document. See Q27 to Q39 for where it differs from the files below.
-2. **`docs/RULES.md`**: every business rule with exact numbers. Money, refunds, ages, codes, attendance.
-3. **`docs/PRD.md`** and **`docs/PRD_TOURNAMENTS_SPORT_PROFILE.md`**: requirements with IDs (ACC-1, MET-6, PAY-2, TRN-14 …), release stage and screens.
-4. **`docs/ARCHITECTURE.md`**: how the system is built (Supabase, RLS, RPCs, outbox, ledger), and the approved architecture change requests (ACR-001 to ACR-018) it builds on.
-5. **The design canvases** (`docs/SCREENS.md` explains them): layout, copy and behaviour of each screen.
-6. **`docs/DESIGN_SYSTEM.md`**: colours, type, spacing and components. Its suggested standard (the OlympusGO Design System) takes precedence over colours and fonts drawn on older canvas screens until the owner answers Q15.
+2. **`docs/DEVELOPER_CHECKLIST.md`** (30 Oct), the final word on scope and build order. See Q27 to Q39 for where it differs from the files below.
+3. **`docs/DECISIONS.md`** (owner, 7 Nov 2026): the owner's decisions on the open questions, with the clarifications at its end. Where the checklist is silent, this file decides.
+4. **`docs/RULES.md`**: every business rule with exact numbers. Money, refunds, ages, codes, attendance.
+5. **`docs/PRD.md`** and **`docs/PRD_TOURNAMENTS_SPORT_PROFILE.md`**: requirements with IDs (ACC-1, MET-6, PAY-2, TRN-14 …), release stage and screens.
+6. **`docs/ARCHITECTURE.md`**: how the system is built (Supabase, RLS, RPCs, outbox, ledger), and the approved architecture change requests (ACR-001 to ACR-018) it builds on.
+7. **The design canvases** (`docs/SCREENS.md` explains them): layout, copy and behaviour of each screen.
+8. **`docs/DESIGN_SYSTEM.md`**: colours, type, spacing and components. Its standard (the OlympusGO Design System) takes precedence over colours and fonts drawn on older canvas screens (Q15, decided).
 
 **Names.** Use the table, function and schema names in `docs/DATA_MODEL.md` and `docs/API.md`. `ARCHITECTURE.md` describes the same design but sometimes with earlier names (`meets.join`, `ledger_entries`); `DATA_MODEL.md` lists those differences.
 
@@ -135,3 +136,4 @@ From ACR-017. Ask for these reviews in the pull request; an agent never approves
 | `docs/BUILD_PLAN.md` | Choosing the next task |
 | `docs/TESTING.md` | Writing tests; the 47 end-to-end journeys |
 | `docs/OPEN_QUESTIONS.md` | Before building anything a decision could change |
+| `docs/DECISIONS.md` | Before any task: the owner's decisions on the open questions, and the launch blockers |
