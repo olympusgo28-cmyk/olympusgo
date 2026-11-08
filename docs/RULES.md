@@ -96,7 +96,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-REF-15 | Tournament: withdrawal for injury or illness with a medical note gets everything back at any time. | Designed | TournamentWithdraw |
 | R-REF-16 | Tournament: an event below its minimum entries when registration closes is cancelled and refunded in full. | Decided | TRN-5 |
 | R-REF-17 | Tournament: when the organizer changes dates, venue or fees, entrants may withdraw for a full refund within 48 hours of the change. | Designed | TournamentManage |
-| R-REF-18 | Deleting an account refunds upcoming bookings in full, fee included. | Decided | Architecture 9.3, DeleteAccount |
+| R-REF-18 | Deleting an account refunds upcoming Meets, tournaments, events and lessons in full, fee included, at the moment of the request; Meets the person hosts are cancelled and their players refunded. Shop orders finish first and the erase waits for them. | Decided (owner, 7 Nov 2026) | Architecture 9.3, DeleteAccount, Q237 |
 | R-REF-19 | Shop: a problem reported before collecting, or before the payout is released, holds the money until staff decide by line and quantity. Nothing is refundable by the buyer after that. An order collected by mistake or never collected goes to staff (Q89, Q93). | Decided, details Open | Checklist P4b-04 |
 | R-REF-20 | Refund rules are shown on the payment sheet before paying, and on the Refund rules page. A rule not shown before payment does not apply. | Decided | PAY-1, PAY-4 |
 
@@ -159,8 +159,9 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-AGE-4 | The parent link ends at 18; both are told 30 days before. | Decided | SAF-7 |
 | R-AGE-5 | Parent's monthly spending limit for a child: S$0, S$20 or S$50. | Assumed | SAF-7 |
 | R-ACC-14 | Deleting an account is confirmed with Face ID, fingerprint or the device passcode. | Decided | ACC-11 |
-| R-ACC-11 | Delete account: 30 days to undo, then data is erased. Match results stay as "Former player". Receipts are kept for the period the law requires (number of years to confirm). | Decided / years Open | ACC-11, Q14 |
-| R-ACC-12 | Deleting a parent's account closes linked children's accounts too, unless another parent takes them over. | Assumed | PRD assumed rules |
+| R-ACC-15 | An account that others depend on cannot be deleted until it is handed over or closed: a club or team owner, an academy owner with an open academy, an active shop's owner, a staff member, or anyone with earnings still to be paid out (the payout run's net, per currency; a fee debt they owe does not refuse, Q245). The app says which one in plain words. | Default (agent, 8 Nov 2026) | Q238, Q245 |
+| R-ACC-11 | Delete account in the app: the profile hides at once and every call but "keep my account" is refused; `account.delete_undo_days` (30) to undo by logging in; then the daily job erases contacts, birthday, profile, photos, chats, follows, settings, clips and posts, forfeits points and lapses vouchers, and leaves the profile as "Former player" so match results, ledger, receipts, reports and audit stay. The erase waits while money is still moving. Receipts are kept for the period the law requires (years to confirm). | Decided (owner, 7 Nov 2026) / years Open | ACC-11, Q14, Q228 |
+| R-ACC-12 | Deleting a parent's account never closes or erases a linked child's account or records. The link ends; with no other linked adult the child is back in the restricted shell until another adult links. | Decided (owner, 7 Nov 2026, G1) | DECISIONS G1, Q139, Q234 |
 | R-ACC-13 | Recovery when both email and mobile are lost: ID photo and selfie video, staff review within 3 working days, then a 7-day wait with warnings to the old email and mobile, then the new contacts replace the old and every session is signed out. | Decided / 7 days Assumed | ACC-10 |
 
 ## 6b. Events

@@ -17,12 +17,20 @@ abstract class Restrictions with _$Restrictions {
     @Default(true) bool canDiscover,
     @Default(true) bool canShop,
     @Default(true) bool canHost,
+
+    /// Set while the account is closing: the day it is erased unless the
+    /// player keeps it (R-ACC-11).
+    DateTime? closingUntil,
   }) = _Restrictions;
 
   factory Restrictions.fromRow(Map<String, dynamic> r) => Restrictions(
     audience: r['audience'] as String,
     restricted: r['restricted'] as bool,
     suspended: r['suspended'] as bool? ?? false,
+    closingUntil: switch (r['closing_until']) {
+      final String s => DateTime.parse(s),
+      _ => null,
+    },
     pendingParent: r['pending_parent'] as bool,
     canScan: r['can_scan'] as bool,
     canChat: r['can_chat'] as bool,
@@ -35,6 +43,7 @@ abstract class Restrictions with _$Restrictions {
 
   bool get isUnder13 => audience == 'child';
   bool get isMinor => audience != 'adult';
+  bool get closing => closingUntil != null;
 }
 
 /// A code the child shows a parent.

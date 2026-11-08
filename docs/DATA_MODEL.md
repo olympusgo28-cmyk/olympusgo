@@ -190,12 +190,15 @@ create table identity.user_blocks (
   check (blocker_id <> blocked_id)
 );
 
-create table identity.account_deletions (
+create table public.account_deletions (                  -- built 8 Nov 2026 (P1-14); the auth.users row is never deleted
   user_id uuid primary key references auth.users,
   requested_at timestamptz not null default now(),
-  erase_after timestamptz not null,                     -- requested_at + 30 days
-  cancelled_at timestamptz
-);
+  erase_after timestamptz not null,                     -- requested_at + account.delete_undo_days
+  cancelled_at timestamptz,                             -- kept the account
+  erased_at timestamptz,                                -- private.account_erase ran
+  hidden_before boolean not null default false,         -- moderation had hidden them already
+  reason text, blocked_reason text, blocked_at timestamptz  -- why the erase is waiting (open money)
+);                                                      -- profiles.erased_at marks the "Former player" tombstone
 
 create table identity.rate_limits (                      -- per IP and per device limits (R-ACC-4)
   bucket text not null,                                 -- 'code_send_ip', 'code_send_device', 'search_ip'

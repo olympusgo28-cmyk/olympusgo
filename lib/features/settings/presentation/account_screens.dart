@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +25,7 @@ import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../profile/domain/profile.dart';
 import '../../earnings/application/earnings_providers.dart';
+import '../../guardian/application/guardian_providers.dart';
 import '../../safety/presentation/legal_screens.dart' show CountryRules;
 import '../application/settings_providers.dart';
 
@@ -447,14 +450,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
   }
 }
 
-/// Delete the account: what we sort out first, then a 30-day grace period.
-/// Until the deletion job exists (P1-14), a real account sends support a
-/// request instead, and the screen says so before anything is confirmed.
+/// Delete the account: what we sort out first, then a 30-day grace period in
+/// which logging in again keeps the account (R-ACC-11, R-REF-18).
 class DeleteAccountScreen extends ConsumerStatefulWidget {
-  const DeleteAccountScreen({super.key, @visibleForTesting this.bySupport});
-
-  /// Defaults to whether a real backend is connected.
-  final bool? bySupport;
+  const DeleteAccountScreen({super.key});
 
   @override
   ConsumerState<DeleteAccountScreen> createState() =>
@@ -463,46 +462,33 @@ class DeleteAccountScreen extends ConsumerStatefulWidget {
 
 class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   String? _why;
-  bool _done = false;
+  DateTime? _closingUntil;
   bool _sending = false;
 
-  bool get _bySupport => widget.bySupport ?? Env.hasSupabase;
-
   Future<void> _confirm() async {
-    final bySupport = _bySupport;
     final sure = await showKitSheet<bool>(
       context,
       builder: (sheet) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            bySupport
-                ? 'Ask us to delete your account?'
-                : 'Delete your account?',
-            style: OgText.heading(24),
-          ),
+          Text('Delete your account?', style: OgText.heading(24)),
           const SizedBox(height: 8),
           Text(
-            bySupport
-                ? 'Our support team deletes accounts for now. We send them your '
-                      'request, and your account stays open until they close it.'
-                : 'Your upcoming Meets are refunded, and '
-                      'linked children’s accounts close with yours. You have 30 days to '
-                      'undo it.',
+            'Your upcoming Meets and lessons are refunded in full. Linked '
+            'children keep their accounts but need another adult to link. '
+            'You have 30 days to undo it.',
             style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
           ),
           const SizedBox(height: 18),
           KitButton(
-            label: bySupport ? 'Send with Face ID' : 'Delete with Face ID',
+            label: 'Delete with Face ID',
             style: KitButtonStyle.danger,
             icon: OgIcons.faceId,
             onPressed: () async {
-              final ok =
-                  !bySupport ||
-                  await ref
-                      .read(biometricVaultProvider)
-                      .authenticate('Delete your account');
+              final ok = await ref
+                  .read(biometricVaultProvider)
+                  .authenticate('Delete your account');
               if (sheet.mounted) Navigator.of(sheet).pop(ok);
             },
           ),
@@ -516,27 +502,28 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       ),
     );
     if (sure != true || !mounted) return;
-    if (bySupport) {
-      setState(() => _sending = true);
-      try {
-        await ref
-            .read(socialRepositoryProvider)
-            .contactSupport(
-              'Please delete my account.${_why == null ? '' : ' Reason: $_why'}',
-            );
-      } on AuthFailure catch (e) {
-        if (!mounted) return;
-        setState(() => _sending = false);
-        showOgToast(context, e.message, error: true);
-        return;
-      }
+    setState(() => _sending = true);
+    try {
+      final until = await ref
+          .read(settingsRepositoryProvider)
+          .requestDeletion(_why);
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      setState(() {
+        _sending = false;
+        _closingUntil = until;
+      });
+    } on AuthFailure catch (e) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      showOgToast(context, e.message, error: true);
     }
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _sending = false;
-      _done = true;
-    });
+  }
+
+  /// The tile stays, so logging in again from it is how they keep the account.
+  Future<void> _leave() async {
+    await ref.read(authRepositoryProvider).signOut();
+    if (mounted) context.go(Routes.welcome);
   }
 
   @override
@@ -548,34 +535,27 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         .where((a) => a.myStatus == MyStatus.joined && !a.isFree)
         .toList();
     final kids = ref.watch(myStudentsProvider).value ?? const [];
-    final closeBy = DateTime.now().add(const Duration(days: 30));
-    if (_done) {
+    final closingUntil = _closingUntil;
+    if (closingUntil != null) {
       return KitScaffold(
         header: const KitHeader(title: 'Delete account'),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-        bottom: [
-          KitButton(label: 'Done', onPressed: () => context.go(Routes.home)),
-        ],
+        bottom: [KitButton(label: 'Done', onPressed: _leave)],
         children: [
-          KitDoneBanner(title: _bySupport ? 'Request sent' : 'Closing'),
+          const KitDoneBanner(title: 'Closing'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _bySupport
-                      ? 'Support has your request'
-                      : 'You can still change your mind',
+                  'You can still change your mind',
                   style: OgText.heading(22),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _bySupport
-                      ? 'Your account stays open until they close it. Changed your '
-                            'mind? Write to them from Help.'
-                      : 'Log in before ${Fmt.day(closeBy)} to keep your account. After '
-                            'that it is erased. We sent the details to your email.',
+                  'Log in before ${Fmt.day(closingUntil)} to keep your account. '
+                  'After that it is erased.',
                   style: OgText.body(15, height: 1.45, color: c.textMuted),
                 ),
               ],
@@ -610,9 +590,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       header: const KitHeader(title: 'Delete account'),
       bottom: [
         KitButton(
-          label: _bySupport
-              ? 'Ask us to delete my account'
-              : 'Delete my account',
+          label: 'Delete my account',
           style: KitButtonStyle.danger,
           loading: _sending,
           onPressed: _sending ? null : _confirm,
@@ -624,11 +602,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         ),
       ],
       children: [
-        KitTitle(
+        const KitTitle(
           'Before you go',
-          lead: _bySupport
-              ? 'Our support team deletes accounts for now. Check that each of these is what you want.'
-              : 'We sort these out for you when you delete. Check that each one is what you want.',
+          lead: 'We sort these out for you when you delete. Check that each one is what you want.',
         ),
         if (upcoming.isNotEmpty)
           item(
@@ -638,23 +614,23 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         if (kids.isNotEmpty)
           item(
             '${kids.map((k) => k.name.split(' ').first).join(' and ')} ${kids.length == 1 ? 'is' : 'are'} linked to you',
-            'Their accounts close too, unless another parent takes them over.',
+            'They keep their accounts, but need another adult to link before '
+                'they can do more than browse.',
           ),
         if ((wallet?.minor ?? 0) > 0)
           item(
             '${pointsText(wallet!.minor)} points',
-            'Points cannot be moved or paid out, so they are lost.',
+            'Points and vouchers cannot be moved or paid out, so they are lost.',
             action: 'Use your points first',
             onAction: () => context.push(Routes.shop),
           ),
         Text('What happens', style: OgText.heading(20)),
-        KitCheckList([
-          _bySupport
-              ? 'Your profile, photos, chats and Passport leave the app when support closes your account.'
-              : 'Your profile, photos, chats and Passport leave the app at once.',
-          _bySupport ? 'Changed your mind? Write to support from Help.' : 'You have 30 days to change your mind. Log in to cancel the deletion.',
+        const KitCheckList([
+          'Your profile, photos, chats and Passport leave the app at once.',
+          'Upcoming Meets and lessons are refunded in full, platform fee included. Shop orders finish first.',
+          'You have 30 days to change your mind. Log in to keep your account.',
           'After 30 days your data is erased. Your match results stay on other players’ records as “Former player”.',
-          'Receipts are kept for 5 years, because payment records must be kept by law.',
+          'Receipts are kept for as long as the law requires.',
         ]),
         Text('Why are you leaving? (optional)', style: OgText.heading(20)),
         Column(
@@ -672,6 +648,70 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 onTap: () => setState(() => _why = r),
               ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A closing account lands here on every sign-in until the player keeps it
+/// or logs out. The database refuses it everything else (R-ACC-11).
+class AccountClosingScreen extends ConsumerStatefulWidget {
+  const AccountClosingScreen({super.key});
+
+  @override
+  ConsumerState<AccountClosingScreen> createState() =>
+      _AccountClosingScreenState();
+}
+
+class _AccountClosingScreenState extends ConsumerState<AccountClosingScreen> {
+  bool _busy = false;
+
+  Future<void> _keep() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(settingsRepositoryProvider).keepAccount();
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      showOgToast(context, 'Welcome back. Your account stays open.');
+      // The router sends them home once this reloads.
+      ref.invalidate(restrictionsProvider);
+      unawaited(ref.read(sessionProfileProvider.notifier).reload());
+    } on AuthFailure catch (e) {
+      if (!mounted) return;
+      showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final until = ref.watch(restrictionsProvider).value?.closingUntil;
+    return KitScaffold(
+      children: [
+        Semantics(
+          header: true,
+          child: Text('OlympusGO', style: OgText.h1.copyWith(color: c.text)),
+        ),
+        const KitNote('Your account is closing', tone: KitTone.warn),
+        Text(
+          until == null
+              ? 'It is erased soon unless you keep it. Until then you can’t '
+                    'use the rest of OlympusGO.'
+              : 'It is erased on ${Fmt.day(until)} unless you keep it. Until '
+                    'then you can’t use the rest of OlympusGO.',
+          style: OgText.lead(c.textMuted),
+        ),
+        KitButton(
+          label: 'Keep my account',
+          loading: _busy,
+          onPressed: _busy ? null : _keep,
+        ),
+        KitButton.outline(
+          label: 'Log out',
+          onPressed: () => ref.read(authRepositoryProvider).signOut(),
         ),
       ],
     );

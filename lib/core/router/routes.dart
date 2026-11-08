@@ -51,6 +51,9 @@ abstract final class Routes {
   static const inbox = '/inbox';
   static const profile = '/profile';
 
+  /// A closing account stays here until the player keeps it or logs out.
+  static const closing = '/closing';
+
   // Parent links. Restricted players stay on these until a parent approves.
   static const parentLink = '/parent-link';
   static const parentCode = '/parent-link/code';

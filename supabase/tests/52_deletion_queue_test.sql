@@ -10,8 +10,8 @@ insert into public.storage_deletions (path)
 select 'clip/' || n || '.mp4' from generate_series(1, 250) n;
 insert into public.storage_deletions (bucket, path) values ('feed-videos', 'post/a.mp4'), ('feed-videos', 'post/b.mp4');
 
-select throws_ok($$ insert into public.storage_deletions (bucket, path) values ('avatars', 'x') $$,
-  '23514', null, 'the queue only names buckets that hold videos');
+select throws_ok($$ insert into public.storage_deletions (bucket, path) values ('documents', 'x') $$,
+  '23514', null, 'the queue only names buckets the sweep knows');
 
 set local role service_role;
 create temp table due on commit drop as select x from jsonb_array_elements(public.analysis_svc_sweep()) x;

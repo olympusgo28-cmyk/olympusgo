@@ -154,6 +154,11 @@ GoRouter appRouter(Ref ref) {
     if (isPublic) return onboarded ? Routes.home : Routes.name;
     if (!onboarded && !inOnboarding) return Routes.name;
     if (onboarded && loc.startsWith('/onboarding')) return Routes.home;
+    // A closing account can only keep itself or log out (R-ACC-11). The
+    // database refuses it everything else.
+    final closing = ref.read(restrictionsProvider).value?.closing ?? false;
+    if (closing && loc != Routes.closing) return Routes.closing;
+    if (!closing && loc == Routes.closing) return Routes.home;
     // The database refuses these players everything else. This keeps the
     // screens from showing a wall of errors.
     final restricted =
@@ -389,6 +394,7 @@ GoRouter appRouter(Ref ref) {
       page(Routes.addEmail, (_) => const AddEmailScreen()),
       page(Routes.addEmailVerify, (_) => const VerifyEmailScreen()),
       page(Routes.parentLink, (_) => const RestrictedHomeScreen()),
+      page(Routes.closing, (_) => const AccountClosingScreen()),
       page(Routes.parentCode, (_) => const ParentCodeScreen()),
       page(Routes.enterChildCode, (_) => const EnterChildCodeScreen()),
       page(Routes.children, (_) => const MyChildrenScreen()),

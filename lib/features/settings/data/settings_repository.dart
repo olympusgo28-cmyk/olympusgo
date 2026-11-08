@@ -26,6 +26,13 @@ abstract interface class SettingsRepository {
   Future<void> saveNotifications(NotificationPrefs prefs);
   Future<PrivacyPrefs> privacy();
   Future<void> savePrivacy(PrivacyPrefs prefs);
+
+  /// Closes the account now and returns the day it is erased, unless the
+  /// player logs in before then and keeps it (R-ACC-11, R-REF-18).
+  Future<DateTime> requestDeletion(String? reason);
+
+  /// Undoes [requestDeletion].
+  Future<void> keepAccount();
 }
 
 class SupabaseSettingsRepository implements SettingsRepository {
@@ -194,9 +201,48 @@ class SupabaseSettingsRepository implements SettingsRepository {
         })
         .eq('id', _me),
   );
+
+  /// The database says in plain words when something must be handed over
+  /// first, and that reaches the player as it is.
+  Future<T> _deletionGuard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  @override
+  Future<DateTime> requestDeletion(String? reason) => _deletionGuard(() async {
+    final r = await _client.rpc(
+      'account_delete_request',
+      params: {'p_reason': reason},
+    ) as Map<String, dynamic>;
+    return DateTime.parse(r['erase_after'] as String);
+  });
+
+  @override
+  Future<void> keepAccount() =>
+      _deletionGuard(() => _client.rpc('account_delete_cancel'));
 }
 
 class DemoSettingsRepository implements SettingsRepository {
+  @override
+  Future<DateTime> requestDeletion(String? reason) async {
+    await _tick();
+    return DateTime.now().add(const Duration(days: 30));
+  }
+
+  @override
+  Future<void> keepAccount() => _tick();
+
   DemoSettingsRepository(this._profiles);
 
   /// Shares the demo profile so edits show on the Profile tab.

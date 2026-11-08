@@ -48,7 +48,7 @@ Raise errors with a stable code in `detail` so apps can show the right sentence.
 | `moderation.create_report` | RPC | target type and id, reason, note | Report with `due_at` | SAF-1, R-MOD-1 |
 | `moderation.request_second_look` | RPC | report id | Report status `second_look` | SAF-3 |
 | `submit_legal_notice` | Edge (no account) | notice form | Reference number | SAF-5 |
-| `identity.request_deletion` / `cancel_deletion` | RPC (after step-up) | — | `erase_after` date | R-ACC-11, R-REF-18 |
+| `account_delete_request(p_reason)` / `account_delete_cancel()` | RPC (after Face ID) | optional reason | `{erase_after}`; refuses with a plain message while the caller owns a club, team, open academy or active shop, is staff, or has earnings owed (R-ACC-15). `my_restrictions` returns `closing_until` while closing | R-ACC-11, R-REF-18 |
 | `identity.request_recovery` | Edge | contact details, evidence upload ids | Case reference | R-ACC-13 |
 | `step_up` | Edge | device biometric result token | Short-lived step-up flag on the session | R-ACC-8 |
 | Staff: `moderation.decide` | RPC (staff) | report id, rule, outcome, message | Decision; bans need `moderation.approve_decision` by a second staff member | R-MOD-3, R-MOD-4 |
