@@ -119,19 +119,21 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
             icon: OgIcons.mail,
             title: 'Email',
             trailing: info == null ? null : verified(info.email),
-            onTap: () => context.push(Routes.personalInfo),
+            onTap: () => context.push(Routes.accountInfo),
           ),
           KitNavTile(
             icon: OgIcons.phone,
             title: 'Mobile',
             trailing: info == null ? null : verified(info.phone),
-            onTap: () => context.push(Routes.personalInfo),
+            onTap: () => context.push(Routes.accountInfo),
           ),
           KitNavTile(
             icon: OgIcons.faceId,
             title: 'Face ID',
-            subtitle: 'On. It replaces the text code on this phone',
-            onTap: () => context.push(Routes.personalInfo),
+            subtitle: ref.watch(faceIdEnabledProvider).value ?? false
+                ? 'On. It replaces the text code on this phone'
+                : 'Off. Switch it on in Account information',
+            onTap: () => context.push(Routes.accountInfo),
           ),
         ]),
         section('Payments', [

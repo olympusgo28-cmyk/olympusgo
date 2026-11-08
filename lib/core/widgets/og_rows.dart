@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/og_colors.dart';
 import '../theme/og_text.dart';
+import 'og_fields.dart';
 import 'og_icon.dart';
 import 'pressable.dart';
 
@@ -571,6 +572,7 @@ class OgTextArea extends StatelessWidget {
     this.maxLength = 150,
     this.minLines = 3,
     this.hint,
+    this.autofocus = false,
   });
 
   final String label;
@@ -578,43 +580,25 @@ class OgTextArea extends StatelessWidget {
   final int maxLength;
   final int minLines;
   final String? hint;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: color, width: width),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(label, style: OgText.label),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          minLines: minLines,
-          maxLines: minLines + 2,
-          maxLength: maxLength,
-          textCapitalization: TextCapitalization.sentences,
-          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-          style: OgText.body(16, height: 1.35, color: c.text),
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: hint,
-            hintStyle: OgText.body(16, color: c.textMuted),
-            counterText: '',
-            filled: true,
-            fillColor: c.surfaceRaised,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 10,
-            ),
-            enabledBorder: border(c.borderControl, 2),
-            focusedBorder: border(c.primary, 3),
-          ),
-        ),
-      ],
+    return TextField(
+      controller: controller,
+      autofocus: autofocus,
+      minLines: minLines,
+      maxLines: minLines + 2,
+      maxLength: maxLength,
+      textCapitalization: TextCapitalization.sentences,
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      style: OgText.body(16, height: 1.35, color: c.text),
+      decoration: ogOutlinedDecoration(
+        context,
+        label: label,
+        hint: hint,
+      ).copyWith(counterText: '', alignLabelWithHint: true),
     );
   }
 }

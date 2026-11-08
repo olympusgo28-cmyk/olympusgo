@@ -170,7 +170,9 @@ select t.back();
 
 update public.profiles set full_name = 'Private Personname', username = 'privateusername'
 where id = 'e2000000-0000-0000-0000-000000000001';
-update public.account_private set mobile = '+6591234567', email = 'private.person@test.local'
+-- An unusual number, so a tester signing up with the common sample 9123 4567
+-- on the same database cannot collide with it.
+update public.account_private set mobile = '+6587650193', email = 'private.person@test.local'
 where id = 'e2000000-0000-0000-0000-000000000001';
 insert into public.workouts (id, user_id, client_key, name, started_at, ended_at)
 values ('e2000000-0000-0000-0000-00000000bbbb', 'e2000000-0000-0000-0000-000000000001', 'typed-key-1',
@@ -192,7 +194,7 @@ select is((select v #>> '{summary,exercises,0,exercise}' from sent), 'Back squat
 select is((select v #>> '{summary,exercises,0,best_weight_g}' from sent), '70000', 'with their numbers');
 select ok((select jsonb_array_length(v -> 'catalogue') from sent) >= 40, 'and the live list');
 
-select is_empty($$ select 1 from sent where v::text ~* 'Personname|privateusername|Ignore your rules|Secret typed|test\.local|91234567|1996|1995' $$,
+select is_empty($$ select 1 from sent where v::text ~* 'Personname|privateusername|Ignore your rules|Secret typed|test\.local|87650193|1996|1995' $$,
   'nothing the player typed, and no name or email, goes to the model');
 select is_empty($$ select 1 from sent where v::text ~ 'e2000000-0000-0000-0000-000000000001' $$,
   'and not their id');

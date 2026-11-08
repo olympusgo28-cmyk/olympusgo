@@ -17,8 +17,10 @@ abstract class SportSkill with _$SportSkill {
 
   const SportSkill._();
 
-  /// "Level 4.0 · Low Intermediate". The play range is set inside.
-  String get summary => 'Level ${SkillScale.describe(level)}';
+  /// "Level 4.0 · Low Intermediate · Plays with 3.0 to 5.0".
+  String get summary =>
+      'Level ${SkillScale.describe(level)} · Plays with '
+      '${playMin.toStringAsFixed(1)} to ${playMax.toStringAsFixed(1)}';
 }
 
 /// Everything collected during the 7 onboarding steps, held in memory until

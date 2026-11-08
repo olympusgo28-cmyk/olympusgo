@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/env.dart';
 import 'core/config/session_storage.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/og_text.dart';
 import 'core/theme/og_theme.dart';
 
 Future<void> main() async {
@@ -24,15 +25,17 @@ Future<void> main() async {
       'No SUPABASE_ANON_KEY: running in demo mode (nothing is saved).',
     );
   }
-  // Load the two brand fonts before the first frame so nothing reflows.
+  // iPhones draw Futura from the system. Elsewhere, load Jost before the
+  // first frame so nothing reflows (Q250).
   GoogleFonts.config.allowRuntimeFetching = true;
-  await waitForFonts(
-    GoogleFonts.pendingFonts([
-      GoogleFonts.baloo2(fontWeight: FontWeight.w600),
-      GoogleFonts.nunitoSans(),
-      GoogleFonts.nunitoSans(fontWeight: FontWeight.w600),
-    ]),
-  );
+  if (!OgText.usesFutura) {
+    await waitForFonts(
+      GoogleFonts.pendingFonts([
+        GoogleFonts.jost(),
+        GoogleFonts.jost(fontWeight: FontWeight.w600),
+      ]),
+    );
+  }
   runApp(const ProviderScope(child: OlympusGoApp()));
 }
 

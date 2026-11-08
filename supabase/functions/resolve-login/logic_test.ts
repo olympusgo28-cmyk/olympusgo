@@ -1,5 +1,5 @@
 import { assertEquals, assertNotEquals } from "jsr:@std/assert@1";
-import { isLocalStack, isTestContact, liveDelivery, localDelivery, randomCode } from "./delivery.ts";
+import { isLocalStack, liveDelivery, localDelivery, randomCode } from "./delivery.ts";
 import { canonical, clientIp, paddingMs, parseIdentifier, sha256 } from "./logic.ts";
 
 Deno.test("reads a mobile number and drops spaces", () => {
@@ -46,13 +46,18 @@ Deno.test("a caller cannot choose their own address", () => {
   assertEquals(clientIp(new Headers()), "unknown");
 });
 
-Deno.test("fixed codes exist only on a local stack, and only for test contacts", () => {
+Deno.test("the fixed code exists only on a local stack, for any contact", () => {
   assertEquals(isLocalStack("http://kong:8000"), true);
   assertEquals(isLocalStack("http://127.0.0.1:54321"), true);
   assertEquals(isLocalStack("https://abc.supabase.co"), false);
   assertEquals(localDelivery.codeFor("+6580000001"), "123456");
-  assertNotEquals(liveDelivery(() => undefined).codeFor("+6580000001"), "123456000");
-  assertEquals(isTestContact("+6591234567"), false);
+  assertEquals(localDelivery.codeFor("+6591234567"), "123456");
+  assertEquals(localDelivery.codeFor("someone@example.com"), "123456");
+  // A hosted project's codes are random, so they almost never match.
+  const live = liveDelivery(() => undefined);
+  const fixed = Array.from({ length: 20 }, () => live.codeFor("+6591234567"))
+    .filter((c) => c === "123456");
+  assertEquals(fixed.length < 2, true);
 });
 
 Deno.test("codes are six digits, padded", () => {

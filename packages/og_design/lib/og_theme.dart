@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'og_colors.dart';
+import 'og_text.dart';
 import 'og_tones.dart';
 
 /// App-wide theme. Screens draw from [OgColors]; this sets the platform
@@ -47,7 +47,8 @@ abstract final class OgTheme {
         selectionColor: c.primary.withValues(alpha: 0.3),
         selectionHandleColor: c.primary,
       ),
-      fontFamily: GoogleFonts.figtree().fontFamily,
+      // Text with no style of its own uses the app font too (Q250).
+      fontFamily: OgText.body(16).fontFamily,
       extensions: [c, tones],
     );
     return base.copyWith(

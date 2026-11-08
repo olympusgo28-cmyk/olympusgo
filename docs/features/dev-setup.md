@@ -41,4 +41,4 @@ After a deliberate design change: `flutter test --update-goldens test/design_gol
 
 ## Test accounts
 
-`+65 8000 0001` to `+65 8000 0999`, and any `@test.local` address, take the fixed code `123456`. This only works on a local stack.
+On a local stack every mobile number and every email takes the fixed code `123456`, and nothing is sent (Q248). A hosted project always sends random codes. A mobile number with no account signs up when it logs in (Q247).

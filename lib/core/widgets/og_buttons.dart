@@ -124,8 +124,16 @@ class OgMethodButton extends StatelessWidget {
           children: [
             OgIcon(icon, size: 22, color: c.text),
             const SizedBox(width: 12),
-            ExcludeSemantics(
-              child: Text(label, style: OgText.display(18, color: c.text)),
+            // Shrinks rather than spilling over at large text sizes.
+            Flexible(
+              child: ExcludeSemantics(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: OgText.display(18, color: c.text),
+                ),
+              ),
             ),
           ],
         ),

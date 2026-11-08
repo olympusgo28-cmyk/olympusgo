@@ -12,8 +12,8 @@ void main() {
   group('A02: the phone or email code screen', () {
     test('opens only with the address the change started with', () {
       expect(verifyChangeRedirect('+6591234567'), isNull);
-      expect(verifyChangeRedirect(null), Routes.personalInfo);
-      expect(verifyChangeRedirect(42), Routes.personalInfo);
+      expect(verifyChangeRedirect(null), Routes.accountInfo);
+      expect(verifyChangeRedirect(42), Routes.accountInfo);
     });
   });
 

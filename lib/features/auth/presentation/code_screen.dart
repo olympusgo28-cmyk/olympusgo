@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../core/router/routes.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/resend_timer.dart';
 import '../application/pending_code.dart';
 import '../data/auth_repository.dart';
+import 'code_copy.dart';
 
 /// Enter the 6-digit code from email or SMS. Signing in succeeds here, and
-/// the router then moves on to onboarding or Home.
+/// the router then opens onboarding for a new number or Home for an account
+/// that exists (Q247).
 class CodeScreen extends ConsumerStatefulWidget {
   const CodeScreen({super.key});
 
@@ -52,34 +52,29 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
     }
   }
 
-  Future<void> _resend() async {
+  Future<bool> _resend() async {
     try {
       await ref.read(pendingCodeControllerProvider.notifier).resend();
+      return true;
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
+      return false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final pending = ref.watch(pendingCodeControllerProvider);
-    final channel = pending?.channel ?? CodeChannel.loginMobile;
-    final signUp = channel == CodeChannel.signupMobile;
-
-    final title = signUp ? 'Check your messages' : 'Enter the code';
-    final lead = switch (channel) {
-      CodeChannel.loginEmail =>
-        'We sent a 6-digit code to that email. It works for 10 minutes.',
-      CodeChannel.loginUsername => 'We sent a 6-digit code to the email or mobile on this account. It works for 10 minutes.',
-      _ => 'We sent a 6-digit code by SMS to that mobile number. It works for 10 minutes.',
-    };
-
+    final target = pending?.target ?? CodeTarget.mobile;
     return OgFlowScreen(
       children: [
         const OgBackButton(),
-        OgHeading(title: title, lead: lead),
+        OgHeading(
+          title: codeTitle(target),
+          lead: codeLead(target, pending?.destination ?? ''),
+        ),
         const SizedBox(height: 32),
-        OgCodeInput(
+        OgCodeField(
           controller: _code,
           hasError: _error != null,
           onCompleted: (_) => _verify(),
@@ -87,22 +82,7 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
         if (_error != null) OgErrorText(_error!),
         ResendTimer(onResend: _resend),
       ],
-      bottom: [
-        OgButton(
-          label: signUp ? 'Verify mobile' : 'Log in',
-          loading: _busy,
-          onPressed: _verify,
-        ),
-        const SizedBox(height: 16),
-        OgTextLink(
-          signUp
-              ? 'Wrong number? Change it'
-              : 'Use a different mobile, email or username',
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(signUp ? Routes.signUp : Routes.logIn),
-        ),
-      ],
+      bottom: [OgButton(label: 'Verify', loading: _busy, onPressed: _verify)],
     );
   }
 }

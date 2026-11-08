@@ -52,6 +52,10 @@ abstract interface class AuthRepository {
   /// a token that no longer works removes it, and a fresh code is needed.
   Future<void> unlockAccount(String userId);
   Future<void> forgetAccount(String userId);
+
+  /// Face ID was just switched on: keep this session for a tile now, rather
+  /// than at the next token refresh. Returns whether it was kept.
+  Future<bool> keepSessionForFaceId();
   Future<void> signOut();
 }
 
@@ -236,13 +240,22 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> forgetAccount(String userId) => _vault.forget(userId);
 
+  @override
+  Future<bool> keepSessionForFaceId() async {
+    final session = _auth.currentSession;
+    final token = session?.refreshToken;
+    if (session == null || token == null) return false;
+    return _vault.saveToken(session.user.id, token);
+  }
+
   /// With a saved tile the session stays alive on the server, held behind
   /// Face ID, so the tile can open it again. Without one it is ended.
   @override
   Future<void> signOut() async {
     final me = currentUserId;
     final tile =
-        await _vault.isEnabled &&
+        me != null &&
+        await _vault.isEnabledFor(me) &&
         (await _vault.accounts()).any((a) => a.userId == me);
     sessionHttpClient.keepSession = tile;
     try {
@@ -316,6 +329,10 @@ class DemoAuthRepository implements AuthRepository {
 
   @override
   Future<void> forgetAccount(String userId) async {}
+
+  /// Demo mode keeps nothing on the phone.
+  @override
+  Future<bool> keepSessionForFaceId() async => true;
 
   @override
   Future<void> signOut() async {

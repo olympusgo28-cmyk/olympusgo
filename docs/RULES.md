@@ -141,13 +141,13 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 
 | Id | Rule | Status | Source |
 | --- | --- | --- | --- |
-| R-ACC-1 | Sign-up is by email; no password. Country, email, name and date of birth are asked. | Decided | ACC-1 |
-| R-ACC-2 | Codes are 6 digits, valid 10 minutes, single use. Sending a new code cancels the old one. | Decided | ACC-1, Architecture 9.1 |
-| R-ACC-3 | Resend allowed after 30 seconds (Decided). After 5 wrong codes, a 15-minute lockout (Assumed). | Decided / Assumed | ACC-3, PRD assumed rules |
+| R-ACC-1 | Sign-up starts from log in by mobile: a number with no account gets a code, then onboarding asks name, date of birth and the rest. Email and username only log in. No password. | Decided | ACC-1, Q247 |
+| R-ACC-2 | Codes are 6 digits, valid 3 minutes, single use. Sending a new code cancels the old one. | Decided | ACC-1, Architecture 9.1, Q248 |
+| R-ACC-3 | Resend allowed after 3 minutes (Decided, Q248). After 5 wrong codes, a 15-minute lockout (Assumed). | Decided / Assumed | ACC-3, PRD assumed rules |
 | R-ACC-4 | Code requests always answer "We sent you a code", whether or not the account exists, with padded timing. Limits apply per target account, per IP and per device, with a CAPTCHA after a threshold. | Decided | ACC-2, NFR-5 |
 | R-ACC-5 | A mobile number is required in onboarding and confirmed by text (Decided). WhatsApp is the backup channel (Assumed). One account per verified mobile (Decided). | Decided / Assumed | ACC-3, ACC-4 |
 | R-ACC-6 | If the mobile is on another account: offer "Sign in to that account", or a claim. A claim verifies the number, removes it from the old account and emails that account. | Decided | ACC-4 |
-| R-ACC-7 | Log in with email or username, then a mobile code. On a phone used before, Face ID or fingerprint replaces the code. | Decided | ACC-7 |
+| R-ACC-7 | Log in with mobile, email or username and a code. Once the player switches Face ID on, a saved tile on that phone opens the account with Face ID or fingerprint instead of a code; it is off until then. | Decided | ACC-7, Q249 |
 | R-ACC-8 | Account Centre opens only after Face ID, fingerprint or the device passcode, and stays unlocked for a few minutes (set 5 minutes). | Decided / 5 min Assumed | ACC-8 |
 | R-ACC-9 | Changing email or mobile needs a code to the other one plus Face ID; the old contact is alerted. | Decided | ACC-9 |
 | R-ACC-10 | The email is never shown back, masked or logged. | Decided | Design system, Architecture 9.1 |

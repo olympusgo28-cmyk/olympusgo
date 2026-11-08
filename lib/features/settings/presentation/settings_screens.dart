@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
@@ -15,9 +17,12 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../../core/widgets/phone_field.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
+import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../auth/presentation/code_copy.dart';
 import '../../fitness/application/fitness_providers.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
@@ -42,15 +47,15 @@ class SettingsScreen extends StatelessWidget {
           children: [
             NavRow(
               icon: OgIcons.person,
-              title: 'Account centre',
-              subtitle: 'Name, username, bio and gender',
-              onTap: () => context.push(Routes.accountCentre),
+              title: 'Edit profile',
+              subtitle: 'Photo, name, username, bio and gender',
+              onTap: () => context.push(Routes.editProfile),
             ),
             NavRow(
               icon: OgIcons.idCard,
-              title: 'Personal information',
-              subtitle: 'Email, mobile, birthday and Face ID',
-              onTap: () => context.push(Routes.personalInfo),
+              title: 'Account information',
+              subtitle: 'Email, mobile, birthday, region and Face ID',
+              onTap: () => context.push(Routes.accountInfo),
             ),
           ],
         ),
@@ -137,22 +142,22 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// Account centre: photo, name, username, bio and gender. Used both from
-/// Settings and once right after onboarding ([onboarding] true).
-class AccountCentreScreen extends ConsumerStatefulWidget {
-  const AccountCentreScreen({super.key, this.onboarding = false});
+/// Edit profile: photo, then one card of rows for name, username, bio and
+/// gender. Each row opens its own editor; Save (Settings) or Continue (right
+/// after onboarding) writes them all (owner, 8 Nov 2026).
+class EditProfileScreen extends ConsumerStatefulWidget {
+  const EditProfileScreen({super.key, this.onboarding = false});
 
   final bool onboarding;
 
   @override
-  ConsumerState<AccountCentreScreen> createState() =>
-      _AccountCentreScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
-  final _name = TextEditingController();
-  final _username = TextEditingController();
-  final _bio = TextEditingController();
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  String _name = '';
+  String _username = '';
+  String _bio = '';
   Gender _gender = Gender.preferNotToSay;
   String? _avatarUrl;
   bool _loaded = false;
@@ -160,22 +165,34 @@ class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
   bool _uploading = false;
   String? _error;
 
-  @override
-  void dispose() {
-    _name.dispose();
-    _username.dispose();
-    _bio.dispose();
-    super.dispose();
-  }
-
   void _fill(AccountDetails d) {
     if (_loaded) return;
     _loaded = true;
-    _name.text = d.fullName;
-    _username.text = d.username;
-    _bio.text = d.bio;
+    _name = d.fullName;
+    _username = d.username;
+    _bio = d.bio;
     _gender = d.gender;
     _avatarUrl = d.avatarUrl;
+  }
+
+  Future<void> _edit(ProfileField field, String value) async {
+    final edited = await Navigator.of(context).push<String>(
+      CupertinoPageRoute(
+        builder: (_) => ProfileFieldScreen(field: field, initial: value),
+      ),
+    );
+    if (edited == null || !mounted) return;
+    setState(() {
+      _error = null;
+      switch (field) {
+        case ProfileField.name:
+          _name = edited;
+        case ProfileField.username:
+          _username = edited;
+        case ProfileField.bio:
+          _bio = edited;
+      }
+    });
   }
 
   Future<void> _pickGender() async {
@@ -225,14 +242,11 @@ class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
   }
 
   Future<void> _save() async {
-    final name = _name.text.trim();
-    final username = _username.text.trim();
-    if (name.isEmpty) return setState(() => _error = 'Enter your name.');
-    if (!RegExp(r'^[A-Za-z0-9_]{3,30}$').hasMatch(username)) {
-      return setState(
-        () => _error = 'Usernames use 3 to 30 letters, numbers or underscores.',
-      );
-    }
+    final name = _name.trim();
+    final username = _username.trim();
+    final invalid =
+        ProfileField.name.check(name) ?? ProfileField.username.check(username);
+    if (invalid != null) return setState(() => _error = invalid);
     setState(() {
       _busy = true;
       _error = null;
@@ -244,7 +258,7 @@ class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
             AccountDetails(
               fullName: name,
               username: username,
-              bio: _bio.text,
+              bio: _bio,
               gender: _gender,
             ),
           );
@@ -267,98 +281,62 @@ class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
   Widget build(BuildContext context) {
     final details = ref.watch(accountDetailsProvider);
     details.whenData(_fill);
-    final initials = _initials(_name.text);
     return OgFlowScreen(
       asPage: true,
       children: [
         OgBackButton(
           onPressed: widget.onboarding ? () => context.go(Routes.home) : null,
         ),
-        const OgHeading(title: 'Account centre', topGap: 8),
+        const OgHeading(title: 'Edit profile', topGap: 8),
         const SizedBox(height: 16),
-        Row(
+        // Two rows: the photo, then the link to change it.
+        Center(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Avatar(
+                initials: _initials(_name),
+                tone: AvatarTone.brand,
+                imageUrl: _avatarUrl,
+                size: 72,
+                fontSize: 28,
+              ),
+              if (_uploading)
+                const CupertinoActivityIndicator(color: OgColors.white),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        OgTextLink(
+          'Change photo',
+          align: Alignment.center,
+          onPressed: _changePhoto,
+        ),
+        const SizedBox(height: 16),
+        KitCard(
           children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Avatar(
-                  initials: initials,
-                  tone: AvatarTone.brand,
-                  imageUrl: _avatarUrl,
-                  size: 72,
-                  fontSize: 28,
-                ),
-                if (_uploading)
-                  const CupertinoActivityIndicator(color: OgColors.white),
-              ],
+            DetailRow(
+              label: 'Name',
+              value: _name,
+              onTap: () => _edit(ProfileField.name, _name),
             ),
-            const SizedBox(width: 16),
-            OgTextLink(
-              'Change photo',
-              align: Alignment.centerLeft,
-              onPressed: _changePhoto,
+            DetailRow(
+              label: 'Username',
+              value: _username.isEmpty ? '' : '@$_username',
+              onTap: () => _edit(ProfileField.username, _username),
+            ),
+            DetailRow(
+              label: 'Bio',
+              value: _bio,
+              placeholder: 'Add a few words about you',
+              onTap: () => _edit(ProfileField.bio, _bio),
+            ),
+            DetailRow(
+              label: 'Gender',
+              value: _gender.label,
+              onTap: _pickGender,
             ),
           ],
-        ),
-        const SizedBox(height: 14),
-        OgTextField(
-          label: 'Name',
-          controller: _name,
-          autofillHints: const [AutofillHints.name],
-          capitalization: TextCapitalization.words,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        OgTextField(
-          label: 'Username',
-          controller: _username,
-          autocorrect: false,
-          autofillHints: const [AutofillHints.username],
-        ),
-        const SizedBox(height: 12),
-        OgTextArea(label: 'Bio', controller: _bio, minLines: 2),
-        const SizedBox(height: 12),
-        Text('Gender', style: OgText.label),
-        const SizedBox(height: 8),
-        OgSelectField(
-          value: _gender.label,
-          semanticLabel: 'Gender',
-          onTap: _pickGender,
-        ),
-        const SizedBox(height: 14),
-        Pressable(
-          onPressed: () => context.push(
-            widget.onboarding ? Routes.setupPersonal : Routes.personalInfo,
-          ),
-          semanticLabel: 'Personal information settings',
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.og.borderControl, width: 2),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Personal information settings',
-                    style: OgText.body(
-                      16,
-                      weight: FontWeight.w600,
-                      color: context.og.text,
-                    ),
-                  ),
-                ),
-                OgIcon(
-                  OgIcons.chevronRight,
-                  size: 22,
-                  color: context.og.text,
-                  strokeWidth: 2.5,
-                ),
-              ],
-            ),
-          ),
         ),
         if (_error != null) OgErrorText(_error!),
       ],
@@ -369,6 +347,179 @@ class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
           onPressed: details.hasValue ? _save : null,
         ),
       ],
+    );
+  }
+}
+
+/// The three profile details with their own editor.
+enum ProfileField {
+  name('Name'),
+  username('Username'),
+  bio('Bio');
+
+  const ProfileField(this.label);
+  final String label;
+
+  /// Null when [value] can be saved, otherwise the sentence to show.
+  String? check(String value) => switch (this) {
+    ProfileField.name => value.trim().isEmpty ? 'Enter your name.' : null,
+    ProfileField.username =>
+      RegExp(r'^[A-Za-z0-9_]{3,30}$').hasMatch(value.trim())
+          ? null
+          : 'Usernames use 3 to 30 letters, numbers or underscores.',
+    ProfileField.bio => null,
+  };
+}
+
+/// One profile detail on its own screen. Done hands the value back to Edit
+/// profile, which saves it with the rest.
+class ProfileFieldScreen extends StatefulWidget {
+  const ProfileFieldScreen({
+    super.key,
+    required this.field,
+    required this.initial,
+  });
+
+  final ProfileField field;
+  final String initial;
+
+  @override
+  State<ProfileFieldScreen> createState() => _ProfileFieldScreenState();
+}
+
+class _ProfileFieldScreenState extends State<ProfileFieldScreen> {
+  late final _text = TextEditingController(text: widget.initial);
+  String? _error;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _done() {
+    final value = _text.text.trim();
+    final invalid = widget.field.check(value);
+    if (invalid != null) return setState(() => _error = invalid);
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final field = switch (widget.field) {
+      ProfileField.name => OgTextField(
+        label: 'Name',
+        controller: _text,
+        autofocus: true,
+        autofillHints: const [AutofillHints.name],
+        capitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _done(),
+        error: _error,
+      ),
+      ProfileField.username => OgTextField(
+        label: 'Username',
+        controller: _text,
+        autofocus: true,
+        autocorrect: false,
+        autofillHints: const [AutofillHints.username],
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _done(),
+        error: _error,
+      ),
+      ProfileField.bio => OgTextArea(
+        label: 'Bio',
+        controller: _text,
+        autofocus: true,
+        minLines: 4,
+        hint: 'What you play, when, and who you like to play with',
+      ),
+    };
+    return OgFlowScreen(
+      asPage: true,
+      children: [
+        const OgBackButton(),
+        OgHeading(title: widget.field.label, topGap: 8),
+        const SizedBox(height: 16),
+        field,
+      ],
+      bottom: [OgButton(label: 'Done', onPressed: _done)],
+    );
+  }
+}
+
+/// A label over its value, and a chevron when it opens something. The value
+/// wraps, so a long bio shows in full.
+class DetailRow extends StatelessWidget {
+  const DetailRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.onTap,
+    this.placeholder,
+    this.leading,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  /// Shown muted when [value] is empty.
+  final String? placeholder;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final empty = value.isEmpty;
+    return Pressable(
+      semanticLabel: '$label, ${empty ? (placeholder ?? 'empty') : value}',
+      onPressed: onTap,
+      dimWhenDisabled: false,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 64),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: ExcludeSemantics(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: OgText.body(13, color: c.textMuted)),
+                    const SizedBox(height: 2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (leading != null) ...[
+                          leading!,
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            empty ? (placeholder ?? '') : value,
+                            softWrap: true,
+                            style: OgText.body(
+                              16,
+                              height: 1.35,
+                              weight: empty ? FontWeight.w400 : FontWeight.w600,
+                              color: empty ? c.textMuted : c.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 8),
+                OgIcon(OgIcons.chevronRight, size: 20, color: c.borderControl),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -384,17 +535,19 @@ String _initials(String name) {
   return (parts.first[0] + parts.last[0]).toUpperCase();
 }
 
-/// Email, mobile, birthday (read only) and the Face ID switch.
-class PersonalInfoScreen extends ConsumerStatefulWidget {
-  const PersonalInfoScreen({super.key, this.onboarding = false});
+/// Account information: email, mobile, date of birth (read only), account
+/// region (read only, Q254) and the Face ID switch (off until switched on,
+/// Q249). Only the owner sees these.
+class AccountInfoScreen extends ConsumerStatefulWidget {
+  const AccountInfoScreen({super.key, this.onboarding = false});
 
   final bool onboarding;
 
   @override
-  ConsumerState<PersonalInfoScreen> createState() => _PersonalInfoScreenState();
+  ConsumerState<AccountInfoScreen> createState() => _AccountInfoScreenState();
 }
 
-class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
+class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
   final _email = TextEditingController();
   final _mobile = TextEditingController();
   PrivateInfo? _original;
@@ -423,11 +576,18 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     super.dispose();
   }
 
+  /// The mobile's own dialling code, which can differ from the account's
+  /// region (a Malaysian number on a Singapore account).
+  Country get _mobileCountry =>
+      Country.fromPhone(_original?.phone ?? '') ??
+      _original?.country ??
+      Country.singapore;
+
   void _fill(PrivateInfo info) {
     if (_original != null) return;
     _original = info;
     _email.text = info.email;
-    final dial = info.country.dialCode.substring(1);
+    final dial = _mobileCountry.dialCode.substring(1);
     var digits = info.phone.replaceAll('+', '');
     if (digits.startsWith(dial)) digits = digits.substring(dial.length);
     _mobile.text = digits.length == 8
@@ -452,7 +612,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         return;
       }
       final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
-      final phone = '${_original?.country.dialCode ?? '+65'}$digits';
+      final phone = '${_mobileCountry.dialCode}$digits';
       if (_original != null &&
           digits.isNotEmpty &&
           phone.replaceAll('+', '') != _original!.phone.replaceAll('+', '')) {
@@ -468,117 +628,89 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  Future<void> _setFaceId(bool on) async {
+    final now = await ref.read(faceIdEnabledProvider.notifier).set(on);
+    if (on && !now && mounted) {
+      showOgToast(
+        context,
+        'Face ID is still off. Check Face ID is set up on this phone, then try again.',
+        error: true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.og;
     final info = ref.watch(privateInfoProvider);
     info.whenData(_fill);
-    final faceId = ref.watch(faceIdEnabledProvider).value ?? true;
+    final faceId = ref.watch(faceIdEnabledProvider).value ?? false;
     final birthday = info.value?.birthday;
-    final country = info.value?.country;
+    final country = info.value?.country ?? Country.singapore;
+    final born = birthday == null
+        ? ''
+        : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}';
+    final note = OgText.body(14, color: c.textMuted);
 
     return OgFlowScreen(
       asPage: true,
       children: [
         const OgBackButton(),
         const OgHeading(
-          title: 'Personal information',
+          title: 'Account information',
           topGap: 8,
           lead: 'Only you can see these details.',
         ),
-        const SizedBox(height: 20),
-        OgTextField(
-          label: 'Email',
-          controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
-          autocorrect: false,
-        ),
         const SizedBox(height: 16),
-        Text('Mobile', style: OgText.label),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Container(
-              width: 124,
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: c.surfaceRaised,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: c.borderControl, width: 2),
-              ),
-              child: Row(
-                children: [
-                  if (country != null) country.flag(),
-                  const SizedBox(width: 8),
-                  Text(
-                    country?.dialCode ?? '',
-                    style: OgText.body(
-                      18,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OgInput(
-                controller: _mobile,
-                semanticLabel: 'Mobile',
-                keyboardType: TextInputType.phone,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text('Date of birth', style: OgText.label),
-        const SizedBox(height: 8),
-        Semantics(
-          readOnly: true,
-          label: 'Date of birth',
-          value: birthday == null
-              ? ''
-              : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}',
-          child: Container(
-            height: 56,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.borderControl, width: 2),
-            ),
-            child: ExcludeSemantics(
-              child: Text(
-                birthday == null
-                    ? ''
-                    : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}',
-                style: OgText.body(18, color: c.textMuted),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          "Your date of birth can't be changed.",
-          style: OgText.body(14, color: c.textMuted),
-        ),
-        const SizedBox(height: 20),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: c.border, width: 2),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: c.border),
           ),
-          child: SwitchRow(
-            leading: OgIcon(OgIcons.faceId, size: 26, color: c.text),
-            title: 'Enable Face ID',
-            subtitle: 'Unlock OlympusGO with your face.',
-            value: faceId,
-            onChanged: (v) => ref.read(faceIdEnabledProvider.notifier).set(v),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OgTextField(
+                label: 'Email',
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                autocorrect: false,
+              ),
+              const SizedBox(height: 16),
+              // The number keeps its own dialling code; it cannot be changed
+              // here (Q254).
+              PhoneField(
+                country: _mobileCountry,
+                controller: _mobile,
+                label: 'Mobile',
+              ),
+              const SizedBox(height: 16),
+              ReadOnlyField(label: 'Date of birth', value: born),
+              const SizedBox(height: 6),
+              Text("Your date of birth can't be changed.", style: note),
+              const SizedBox(height: 16),
+              ReadOnlyField(
+                label: 'Account region',
+                value: info.hasValue ? country.name : '',
+                leading: info.hasValue ? country.flag() : null,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Sets your currency, emergency number and local rules.',
+                style: note,
+              ),
+              const SizedBox(height: 8),
+              Container(height: 1, color: context.tones.divider),
+              SwitchRow(
+                leading: OgIcon(OgIcons.faceId, size: 26, color: c.text),
+                title: 'Enable Face ID',
+                subtitle: 'Unlock OlympusGO with your face.',
+                value: faceId,
+                onChanged: _setFaceId,
+              ),
+            ],
           ),
         ),
         if (_error != null) OgErrorText(_error!),
@@ -590,6 +722,50 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           onPressed: _finish,
         ),
       ],
+    );
+  }
+}
+
+/// A greyed, outlined field that cannot be edited (date of birth, region).
+class ReadOnlyField extends StatelessWidget {
+  const ReadOnlyField({
+    super.key,
+    required this.label,
+    required this.value,
+    this.leading,
+  });
+
+  final String label;
+  final String value;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    return Semantics(
+      readOnly: true,
+      label: label,
+      value: value,
+      child: ExcludeSemantics(
+        child: InputDecorator(
+          isEmpty: value.isEmpty,
+          decoration: ogOutlinedDecoration(
+            context,
+            label: label,
+            prefix: leading == null
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(left: 14, right: 8),
+                    // A Row keeps the flag at its own size, not the field's.
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [leading!],
+                    ),
+                  ),
+          ).copyWith(enabled: false, filled: true, fillColor: c.surface),
+          child: Text(value, style: OgText.input.copyWith(color: c.textMuted)),
+        ),
+      ),
     );
   }
 }
@@ -1159,7 +1335,7 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
   }
 }
 
-/// Confirms a new mobile number with the 6-digit SMS code.
+/// Confirms a new mobile number or email with its 6-digit code.
 class VerifyPhoneChangeScreen extends ConsumerStatefulWidget {
   const VerifyPhoneChangeScreen({super.key, required this.phone});
 
@@ -1185,8 +1361,28 @@ class _VerifyPhoneChangeScreenState
     super.dispose();
   }
 
+  CodeTarget get _target => _isEmail ? CodeTarget.email : CodeTarget.mobile;
+
+  Future<bool> _resend() async {
+    try {
+      final auth = ref.read(authRepositoryProvider);
+      if (_isEmail) {
+        await auth.startEmailChange(widget.phone);
+      } else {
+        await auth.startPhoneChange(widget.phone);
+      }
+      return true;
+    } on AuthFailure catch (e) {
+      setState(() => _error = e.message);
+      return false;
+    }
+  }
+
   Future<void> _verify() async {
-    if (_busy || _code.text.length != 6) return;
+    if (_busy) return;
+    if (_code.text.length != 6) {
+      return setState(() => _error = 'Enter all 6 digits of the code.');
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -1220,17 +1416,17 @@ class _VerifyPhoneChangeScreenState
       children: [
         const OgBackButton(),
         OgHeading(
-          title: 'Verify your number',
-          lead:
-              'We texted a 6-digit code to ${widget.phone}. It works for 10 minutes.',
+          title: codeTitle(_target),
+          lead: codeLead(_target, widget.phone),
         ),
         const SizedBox(height: 32),
-        OgCodeInput(
+        OgCodeField(
           controller: _code,
           hasError: _error != null,
           onCompleted: (_) => _verify(),
         ),
         if (_error != null) OgErrorText(_error!),
+        ResendTimer(onResend: _resend),
       ],
       bottom: [OgButton(label: 'Verify', loading: _busy, onPressed: _verify)],
     );

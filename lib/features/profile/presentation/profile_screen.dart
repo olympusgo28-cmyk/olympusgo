@@ -248,7 +248,7 @@ class ProfileScreen extends ConsumerWidget {
                           title: 'Edit profile',
                           subtitle:
                               'Name, photo, username, who sees your sessions',
-                          onTap: () => context.push(Routes.accountCentre),
+                          onTap: () => context.push(Routes.editProfile),
                         ),
                         _ListRow(
                           title: 'Sessions and rating',

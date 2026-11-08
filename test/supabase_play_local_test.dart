@@ -17,7 +17,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// The phone's Keychain isn't there in a test.
 class _NoVault extends BiometricVault {
   @override
-  Future<void> saveToken(String userId, String token) async {}
+  Future<bool> saveToken(String userId, String token) async => false;
 }
 
 void main() {

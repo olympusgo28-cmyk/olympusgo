@@ -16,6 +16,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../auth/presentation/code_copy.dart';
 import '../../auth/presentation/validators.dart';
 import '../application/onboarding_controller.dart';
 
@@ -256,7 +257,8 @@ class _AddEmailScreenState extends ConsumerState<AddEmailScreen> {
   }
 }
 
-/// Step 7: confirm the email code.
+/// Confirms the optional email with its code. No progress bar: it is a
+/// check, not a step (owner, 8 Nov 2026).
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
 
@@ -306,15 +308,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     return OgFlowScreen(
       children: [
         const OgBackButton(),
-        const OgHeading(
-          title: 'Check your email',
-          step: 7,
+        OgHeading(
+          title: codeTitle(CodeTarget.email),
           topGap: 16,
-          lead:
-              'We sent a 6-digit code to that email. It works for 10 minutes.',
+          lead: codeLead(CodeTarget.email, draft.email),
         ),
         const SizedBox(height: 32),
-        OgCodeInput(
+        OgCodeField(
           controller: _code,
           hasError: _error != null,
           onCompleted: (_) => _verify(),
@@ -326,8 +326,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
               await ref
                   .read(authRepositoryProvider)
                   .startEmailChange(draft.email);
+              return true;
             } on AuthFailure catch (e) {
               setState(() => _error = e.message);
+              return false;
             }
           },
         ),

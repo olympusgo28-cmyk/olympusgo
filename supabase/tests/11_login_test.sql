@@ -1,7 +1,7 @@
 -- Q41: Supabase Auth holds no real contact details, and codes stay server-side.
 begin;
 \ir helpers/setup.psql
-select plan(10);
+select plan(12);
 
 select t.player('b0000000-0000-0000-0000-000000000001');
 
@@ -16,6 +16,11 @@ select public.login_code_issue('target', 'second', 'login');
 select is(public.login_code_check('target', 'first'), null, 'R-ACC-2 a new code cancels the old one');
 select is(public.login_code_check('target', 'second'), 'login', 'the newest code works');
 select is(public.login_code_check('target', 'second'), null, 'R-ACC-2 a code works once');
+
+select is(private.setting_int('auth.code_minutes'), 3, 'Q248 codes last 3 minutes');
+select public.login_code_issue('target3', 'fresh', 'login');
+select is((select expires_at from public.login_codes where target_hash = 'target3'), now() + interval '3 minutes',
+  'R-ACC-2 a new code expires 3 minutes after it is sent');
 
 select public.login_code_issue('target2', 'late', 'login');
 update public.login_codes set expires_at = now() - interval '1 second' where target_hash = 'target2';

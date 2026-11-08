@@ -1,8 +1,9 @@
-// Sends codes. A local stack sends nothing and uses fixed codes for test
-// contacts, so no test code can ever work on a hosted project.
+// Sends codes. A local stack sends nothing and gives every mobile and email
+// the same fixed code, so a tester can use any number. A hosted project never
+// uses the local delivery, so the fixed code can never work there.
 
 export interface Delivery {
-  /** The code for this contact: fixed on a local stack, otherwise random. */
+  /** The code for this contact: fixed on a local stack, random when hosted. */
   codeFor(contact: string): string;
   sms(mobile: string, code: string): Promise<boolean>;
   email(address: string, code: string): Promise<boolean>;
@@ -17,12 +18,8 @@ export function randomCode(): string {
   return value.toString().padStart(6, "0");
 }
 
-export function isTestContact(contact: string): boolean {
-  return /^\+6580000\d{3}$/.test(contact) || contact.endsWith("@test.local");
-}
-
 export const localDelivery: Delivery = {
-  codeFor: (contact) => (isTestContact(contact) ? TEST_CODE : randomCode()),
+  codeFor: () => TEST_CODE,
   sms: () => Promise.resolve(true),
   email: () => Promise.resolve(true),
 };
@@ -62,7 +59,7 @@ export function liveDelivery(env: (key: string) => string | undefined): Delivery
           from,
           to: address,
           subject: "Your OlympusGO code",
-          text: `Your OlympusGO code is ${code}. It works for 10 minutes.`,
+          text: `Your OlympusGO code is ${code}. It works for 3 minutes.`,
         }),
       });
       await res.body?.cancel();

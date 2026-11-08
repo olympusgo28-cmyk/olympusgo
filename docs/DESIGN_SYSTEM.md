@@ -37,21 +37,21 @@ Brand constants: `orange500 #E8590C`, `orange700 #C94A00`, `orange300 #FF7A1A`, 
 
 ### Type
 
-Fonts: **Baloo 2** for display (titles, button labels), **Nunito Sans** for everything else. Bundle them with the app (both are on Google Fonts under the Open Font License).
+Fonts: **Futura** for everything (owner, 8 Nov 2026, Q250): Bold for display (titles, button labels), Medium for the rest. iPhones include Futura; Android, the web and the admin web use **Jost**, the closest free match (Open Font License), until a Futura licence is bought. This replaces Baloo 2 and Nunito Sans (Q15).
 
 | Style | Family | Size / line | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `display` | Baloo 2 | 48 / 52 | 800 | Splash and celebration only |
-| `h1` | Baloo 2 | 34 / 38 | 800 | Screen titles |
-| `h2` | Baloo 2 | 24 / 28 | 800 | Section titles |
-| `h3` | Baloo 2 | 20 / 24 | 700 | Card titles |
-| `button` | Baloo 2 | 20 / 24 | 800 | Button labels (20 px bold counts as large text) |
-| `bodyLg` | Nunito Sans | 18 / 26 | 400 | Input text |
-| `body` | Nunito Sans | 16 / 24 | 400 | Body copy |
-| `bodyBold` | Nunito Sans | 16 / 24 | 700 | Selected options, emphasis |
-| `label` | Nunito Sans | 14 / 20 | 700 | Field labels |
-| `small` | Nunito Sans | 14 / 20 | 400 | Helper text |
-| `caption` | Nunito Sans | 12 / 16 | 600 | The smallest text allowed |
+| `display` | Futura | 48 / 52 | 800 | Splash and celebration only |
+| `h1` | Futura | 34 / 38 | 800 | Screen titles |
+| `h2` | Futura | 24 / 28 | 800 | Section titles |
+| `h3` | Futura | 20 / 24 | 700 | Card titles |
+| `button` | Futura | 20 / 24 | 800 | Button labels (20 px bold counts as large text) |
+| `bodyLg` | Futura | 18 / 26 | 400 | Input text |
+| `body` | Futura | 16 / 24 | 400 | Body copy |
+| `bodyBold` | Futura | 16 / 24 | 700 | Selected options, emphasis |
+| `label` | Futura | 14 / 20 | 700 | Field labels |
+| `small` | Futura | 14 / 20 | 400 | Helper text |
+| `caption` | Futura | 12 / 16 | 600 | The smallest text allowed |
 
 ### Spacing, radius, shadow
 

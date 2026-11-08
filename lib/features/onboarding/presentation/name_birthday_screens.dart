@@ -217,19 +217,13 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
       double? width,
       bool flex = false,
     }) {
-      final field = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(label, style: OgText.label),
-          const SizedBox(height: 8),
-          OgSelectField(
-            value: value,
-            semanticLabel: label,
-            chevron: false,
-            placeholder: _date == null,
-            onTap: _pickDate,
-          ),
-        ],
+      // Outlined (Q251): the label rests inside until a date is picked.
+      final field = OgSelectField(
+        label: label,
+        value: value,
+        chevron: false,
+        placeholder: _date == null,
+        onTap: _pickDate,
       );
       return flex
           ? Expanded(child: field)
@@ -263,11 +257,9 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        Text('Country', style: OgText.label),
-        const SizedBox(height: 8),
         OgSelectField(
+          label: 'Country',
           value: _country.name,
-          semanticLabel: 'Country',
           onTap: _pickCountry,
         ),
         const SizedBox(height: 8),

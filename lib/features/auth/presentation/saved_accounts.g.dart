@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'welcome_screen.dart';
+part of 'saved_accounts.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -8,9 +8,14 @@ part of 'welcome_screen.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Accounts this phone can open with Face ID. Empty unless Face ID is on
+/// (Q249).
 
 @ProviderFor(savedAccounts)
 final savedAccountsProvider = SavedAccountsProvider._();
+
+/// Accounts this phone can open with Face ID. Empty unless Face ID is on
+/// (Q249).
 
 final class SavedAccountsProvider
     extends
@@ -22,6 +27,8 @@ final class SavedAccountsProvider
     with
         $FutureModifier<List<SavedAccount>>,
         $FutureProvider<List<SavedAccount>> {
+  /// Accounts this phone can open with Face ID. Empty unless Face ID is on
+  /// (Q249).
   SavedAccountsProvider._()
     : super(
         from: null,

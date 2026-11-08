@@ -95,9 +95,9 @@ You sign up with email, and a mobile number is required as the second check. The
 
 | ID | Requirement | Release | Screens |
 | --- | --- | --- | --- |
-| ACC-1 | Sign up with country, email, name and date of birth. A 6-digit code is emailed and works for 10 minutes. | Foundation | SignUp, SignUpVerify |
+| ACC-1 | Sign up with country, email, name and date of birth. A 6-digit code is emailed and works for 3 minutes (Q248; sign-up is now by mobile, Q247). | Foundation | SignUp, SignUpVerify |
 | ACC-2 | Always answer “We sent you a code”, whether or not the email exists, so no one can test emails to find users. | Foundation | SignUpVerify, LogIn |
-| ACC-3 | A mobile number is required during onboarding and confirmed by a text code, with WhatsApp as the backup channel. Resend is allowed after 30 seconds. After 5 wrong codes, the person waits 15 minutes. | Foundation | SignUpMobile |
+| ACC-3 | A mobile number is required during onboarding and confirmed by a text code, with WhatsApp as the backup channel. Resend is allowed after 3 minutes (Q248). After 5 wrong codes, the person waits 15 minutes. | Foundation | SignUpMobile |
 | ACC-4 | If the mobile is already on another account, never dead-end. Offer “Sign in to that account”, or let a new owner claim a recycled number. Claiming removes it from the old account and tells that account by email. One account per verified mobile. | Foundation | SignUpMobile |
 | ACC-5 | Age path from date of birth. 18 and over: own account. 13 to 17: a parent approves. Under 13: joins inside a parent's account. Thresholds can be set per country. | Foundation | SignUp, SignUpParent, SignUpUnder13, ParentApprove |
 | ACC-6 | Onboarding: pick sports, set a starting level per sport (marked provisional), then allow notifications and location. | Foundation | OnboardSports, OnboardLevel, OnboardPermissions |

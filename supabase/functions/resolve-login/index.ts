@@ -80,23 +80,22 @@ async function allowedToSend(targetHash: string, ipHash: string): Promise<boolea
   return data === true;
 }
 
-async function send(target: Target, signUp: boolean, targetHash: string, ipHash: string) {
+async function send(target: Target, targetHash: string, ipHash: string) {
   if (!await allowedToSend(targetHash, ipHash)) return json({ error: TOO_MANY }, 429);
 
-  // A new mobile signing up gets a code. So does one already in use: it simply
-  // logs in, and nothing here says which happened.
-  if (signUp && target.kind === "mobile") {
+  // Every mobile gets a code the same way, with no lookup first: a new number
+  // signs up with it and one already in use simply logs in (Q247). So neither
+  // the answer nor its timing says which. The old sign_up flag is ignored.
+  if (target.kind === "mobile") {
     const code = await issue(targetHash, target.phone, "signup");
     await delivery.sms(target.phone, code);
     return json({ sent: true });
   }
 
   const account = await lookup(target);
-  const contact = target.kind === "mobile"
-    ? account?.mobile
-    : target.kind === "email"
-    ? account?.email
-    : account?.email ?? account?.mobile;
+  // Only email and username reach here; a username's code goes to its email,
+  // or its mobile when it has none.
+  const contact = target.kind === "email" ? account?.email : account?.email ?? account?.mobile;
   if (contact) {
     const code = await issue(targetHash, contact, "login");
     const ok = contact.startsWith("+")
@@ -230,7 +229,7 @@ Deno.serve(async (req) => {
 
   switch (body.action) {
     case "send":
-      return finish(await send(target, body.sign_up === true, targetHash, ipHash));
+      return finish(await send(target, targetHash, ipHash));
     case "verify":
       return finish(await verify(target, code, targetHash));
     case "contact_send":

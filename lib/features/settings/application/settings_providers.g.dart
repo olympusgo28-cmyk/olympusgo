@@ -190,15 +190,21 @@ abstract class _$PrivacySettings extends $AsyncNotifier<PrivacyPrefs> {
   }
 }
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 
 @ProviderFor(FaceIdEnabled)
 final faceIdEnabledProvider = FaceIdEnabledProvider._();
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 final class FaceIdEnabledProvider
     extends $AsyncNotifierProvider<FaceIdEnabled, bool> {
-  /// Face ID unlock on this phone.
+  /// Face ID unlock for the signed-in account on this phone. Off until this
+  /// player switches it on; another account on the same phone is not affected
+  /// (Q249).
   FaceIdEnabledProvider._()
     : super(
         from: null,
@@ -218,9 +224,11 @@ final class FaceIdEnabledProvider
   FaceIdEnabled create() => FaceIdEnabled();
 }
 
-String _$faceIdEnabledHash() => r'49dc48cbdc884cc939d98cb486d504ba7e267111';
+String _$faceIdEnabledHash() => r'fb6683eb7526a52db1e8343699c518df9b2415a3';
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 
 abstract class _$FaceIdEnabled extends $AsyncNotifier<bool> {
   FutureOr<bool> build();

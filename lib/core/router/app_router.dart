@@ -20,9 +20,9 @@ import '../../features/academy/presentation/coach_screens.dart';
 import '../../features/academy/presentation/create_academy_screens.dart';
 import '../../features/academy/presentation/parent_screens.dart';
 import '../../features/auth/presentation/code_screen.dart';
+import '../../features/auth/presentation/log_in_account_screen.dart';
 import '../../features/auth/presentation/log_in_screen.dart';
 import '../../features/auth/presentation/recovery_screens.dart';
-import '../../features/auth/presentation/sign_up_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/clubs/data/club_repository.dart';
@@ -105,7 +105,7 @@ Page<void> cupertinoPage(GoRouterState state, Widget child) =>
 /// restored app goes back to where the change begins.
 @visibleForTesting
 String? verifyChangeRedirect(Object? extra) =>
-    extra is String ? null : Routes.personalInfo;
+    extra is String ? null : Routes.accountInfo;
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
@@ -366,16 +366,18 @@ GoRouter appRouter(Ref ref) {
         (s) => OwnerOrderScreen(id: s.pathParameters['id']!),
       ),
       page(Routes.welcome, (_) => const WelcomeScreen()),
-      page(Routes.signUp, (_) => const SignUpScreen()),
-      page(Routes.signUpCode, (_) => const CodeScreen()),
-      page(Routes.logIn, (_) => const LogInScreen(method: LoginMethod.phone)),
+      page(Routes.logIn, (_) => const LogInScreen()),
+      page(
+        Routes.logInMobile,
+        (_) => const LogInAccountScreen(method: LoginMethod.phone),
+      ),
       page(
         Routes.logInEmail,
-        (_) => const LogInScreen(method: LoginMethod.email),
+        (_) => const LogInAccountScreen(method: LoginMethod.email),
       ),
       page(
         Routes.logInUsername,
-        (_) => const LogInScreen(method: LoginMethod.username),
+        (_) => const LogInAccountScreen(method: LoginMethod.username),
       ),
       page(Routes.logInCode, (_) => const CodeScreen()),
       page(Routes.recovery, (_) => const RecoveryScreen()),
@@ -415,15 +417,15 @@ GoRouter appRouter(Ref ref) {
       page(Routes.ready, (_) => const ReadyScreen()),
       page(
         Routes.setupAccount,
-        (_) => const AccountCentreScreen(onboarding: true),
+        (_) => const EditProfileScreen(onboarding: true),
       ),
       page(
         Routes.setupPersonal,
-        (_) => const PersonalInfoScreen(onboarding: true),
+        (_) => const AccountInfoScreen(onboarding: true),
       ),
       page(Routes.settings, (_) => const SettingsScreen()),
-      page(Routes.accountCentre, (_) => const AccountCentreScreen()),
-      page(Routes.personalInfo, (_) => const PersonalInfoScreen()),
+      page(Routes.editProfile, (_) => const EditProfileScreen()),
+      page(Routes.accountInfo, (_) => const AccountInfoScreen()),
       GoRoute(
         path: Routes.verifyPhoneChange,
         redirect: (_, s) => verifyChangeRedirect(s.extra),

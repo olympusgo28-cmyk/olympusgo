@@ -5,9 +5,12 @@ import '../../features/play/domain/hub.dart';
 abstract final class Routes {
   static const splash = '/';
   static const welcome = '/welcome';
-  static const signUp = '/signup';
-  static const signUpCode = '/signup/code';
+
+  /// The saved-account tiles. With none, log in by mobile opens instead.
   static const logIn = '/login';
+
+  /// Log in by mobile. A number with no account signs up here too (Q247).
+  static const logInMobile = '/login/mobile';
   static const logInEmail = '/login/email';
   static const logInUsername = '/login/username';
   static const logInCode = '/login/code';
@@ -76,13 +79,13 @@ abstract final class Routes {
 
   // Settings.
   static const settings = '/settings';
-  static const accountCentre = '/settings/account';
-  static const personalInfo = '/settings/personal';
+  static const editProfile = '/settings/profile';
+  static const accountInfo = '/settings/account-info';
   static const accountHub = '/settings/account-centre';
   static const profileSports = '/settings/sports';
   static const language = '/settings/language';
   static const deleteAccount = '/settings/delete';
-  static const verifyPhoneChange = '/settings/personal/verify';
+  static const verifyPhoneChange = '/settings/account-info/verify';
   static const notifications = '/settings/notifications';
   static const privacy = '/settings/privacy';
   static const blocked = '/settings/blocked';
@@ -351,5 +354,5 @@ abstract final class Routes {
   static String courtBooking(String id) => '/court-bookings/$id';
   static String cancelCourtBooking(String id) => '/court-bookings/$id/cancel';
 
-  static const publicPrefixes = [welcome, signUp, logIn, recovery];
+  static const publicPrefixes = [welcome, logIn, recovery];
 }

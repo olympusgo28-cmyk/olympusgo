@@ -128,6 +128,27 @@ abstract final class SkillScale {
     8.0: 'Expert',
   };
 
+  /// Short forms, as in "Mid Beginner (MB)". ADV and EXP are the default
+  /// for the two levels the owner gave no example for (Q252).
+  static final _short = <double, String>{
+    1.0: 'LB',
+    2.0: 'MB',
+    3.0: 'HB',
+    4.0: 'LI',
+    5.0: 'MI',
+    6.0: 'HI',
+    7.0: 'ADV',
+    8.0: 'EXP',
+  };
+
+  /// "Mid Beginner (MB)".
+  static String nameWithShort(double level) {
+    final name = _names[level];
+    final short = _short[level];
+    if (name == null) return level.toStringAsFixed(1);
+    return short == null ? name : '$name ($short)';
+  }
+
   /// Whole levels only: 1.0, 2.0 … 8.0.
   static List<double> get levels => [for (var v = min; v <= max; v += 1) v];
 

@@ -384,8 +384,8 @@ sequenceDiagram
   App->>EF: verify_mobile_code → step-up flag on the session
 ```
 
-- Codes are 6 digits, valid 10 minutes, single-use; a new code cancels the old one.
-- Resend allowed after 30 seconds. After 5 wrong attempts, a 15-minute lockout **[Assumed rule, confirm]**.
+- Codes are 6 digits, valid 3 minutes (Q248), single-use; a new code cancels the old one.
+- Resend allowed after 3 minutes (Q248). After 5 wrong attempts, a 15-minute lockout **[Assumed rule, confirm]**.
 - Send limits apply per target account no matter who asks, so a public username cannot flood someone's inbox.
 - The email is never returned, shown, partly masked or logged.
 - On a phone used before, Face ID or fingerprint unlocks a stored refresh token instead of the mobile code.
