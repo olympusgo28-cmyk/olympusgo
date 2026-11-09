@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 
 /// The outlined field style (Q251): a 2px outline, and a label that rests
 /// inside it and floats into the border while typing or once filled.
@@ -22,7 +22,7 @@ InputDecoration ogOutlinedDecoration(
   );
   return InputDecoration(
     labelText: label,
-    labelStyle: OgText.input.copyWith(color: c.textMuted),
+    labelStyle: context.type.secondary,
     floatingLabelStyle: WidgetStateTextStyle.resolveWith((states) {
       final color = states.contains(WidgetState.error)
           ? c.error
@@ -31,10 +31,10 @@ InputDecoration ogOutlinedDecoration(
           : states.contains(WidgetState.focused)
           ? c.link
           : c.textMuted;
-      return OgText.body(16, weight: FontWeight.w600, color: color);
+      return context.type.caption.copyWith(color: color);
     }),
     hintText: hint,
-    hintStyle: OgText.input.copyWith(color: c.textMuted),
+    hintStyle: context.type.tertiary,
     filled: false,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
     prefixIcon: prefix,
@@ -50,8 +50,8 @@ InputDecoration ogOutlinedDecoration(
     // An empty error draws the red outline alone; the screen writes the
     // sentence underneath with its icon.
     errorStyle: error == ''
-        ? const TextStyle(fontSize: 0, height: 0)
-        : OgText.body(14, weight: FontWeight.w600, color: c.error),
+        ? OgType.collapsed
+        : context.type.body.copyWith(color: c.error),
   );
 }
 
@@ -171,7 +171,7 @@ class OgInput extends StatelessWidget {
         enableSuggestions: autocorrect,
         textCapitalization: capitalization,
         inputFormatters: inputFormatters,
-        style: OgText.input.copyWith(color: context.og.text),
+        style: context.type.body,
         decoration: ogOutlinedDecoration(
           context,
           label: label,
@@ -196,27 +196,23 @@ class OgSelectField extends StatelessWidget {
     this.label,
     this.semanticLabel,
     this.leading,
-    this.bold = false,
     this.chevron = true,
     this.placeholder = false,
     this.height = 56,
-    this.fontSize = 18,
   });
 
   final double height;
-  final double fontSize;
   final String? label;
 
   /// False for compact fields (day, year) where the chevron would crowd the value.
   final bool chevron;
 
-  /// Shows [value] in the muted colour, as a hint.
+  /// Shows [value] in the tertiary colour, as a placeholder.
   final bool placeholder;
   final String value;
   final VoidCallback onTap;
   final String? semanticLabel;
   final Widget? leading;
-  final bool bold;
 
   @override
   Widget build(BuildContext context) {
@@ -249,11 +245,7 @@ class OgSelectField extends StatelessWidget {
                     placeholder ? '' : value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(
-                      fontSize,
-                      weight: bold ? FontWeight.w600 : FontWeight.w400,
-                      color: c.text,
-                    ),
+                    style: context.type.body,
                   ),
                 ),
               )
@@ -277,10 +269,8 @@ class OgSelectField extends StatelessWidget {
                           value,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: OgText.body(
-                            fontSize,
-                            weight: bold ? FontWeight.w600 : FontWeight.w400,
-                            color: placeholder ? c.textMuted : c.text,
+                          style: context.type.body.copyWith(
+                            color: placeholder ? c.textTertiary : c.text,
                           ),
                         ),
                       ),
@@ -341,7 +331,6 @@ class _OgCodeFieldState extends State<OgCodeField> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return TextField(
       controller: widget.controller,
       focusNode: _focus,
@@ -353,11 +342,7 @@ class _OgCodeFieldState extends State<OgCodeField> {
       enableSuggestions: false,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: OgText.body(
-        22,
-        weight: FontWeight.w600,
-        color: c.text,
-      ).copyWith(letterSpacing: 6),
+      style: context.type.section.copyWith(letterSpacing: 6),
       decoration: ogOutlinedDecoration(
         context,
         label: '${widget.length}-digit code',

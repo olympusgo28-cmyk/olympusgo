@@ -8,7 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -33,7 +33,6 @@ class CartScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final cart = ref.watch(cartProvider);
     if (shopWaiting(cart, 'Cart', () => ref.invalidate(cartProvider))
         case final waiting?) {
@@ -63,11 +62,11 @@ class CartScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Your cart is empty', style: OgText.heading(20)),
+                  Text('Your cart is empty', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
                     'Items you add from a product page wait here.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -85,7 +84,7 @@ class CartScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
                   child: Text(
                     e.value.first.product.mallName,
-                    style: OgText.body(15, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                 ),
                 for (final l in e.value)
@@ -105,18 +104,12 @@ class CartScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                l.product.name,
-                                style: OgText.body(14, weight: FontWeight.w600),
-                              ),
+                              Text(l.product.name, style: context.type.body),
                               if (l.variant.isNotEmpty)
-                                Text(
-                                  l.variant,
-                                  style: OgText.body(12, color: c.textMuted),
-                                ),
+                                Text(l.variant, style: context.type.caption),
                               Text(
                                 cash(l.product.priceCents),
-                                style: OgText.body(14, weight: FontWeight.w600),
+                                style: context.type.body,
                               ),
                             ],
                           ),
@@ -142,7 +135,7 @@ class CartScreen extends ConsumerWidget {
           Text(
             'Set an item to 0 to remove it. Each shop is paid separately. '
             'Points are chosen at checkout.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
       ],
@@ -356,7 +349,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   '${cash(o.totalCents)} paid. ${o.mallName} will tell you '
                   'when it’s ready. OlympusGO holds your payment until you '
                   'collect.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
                 const SizedBox(height: 10),
                 KitKeyValue('Collect from', o.collectAddress),
@@ -411,11 +404,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(cash(q.totalCents), style: OgText.heading(22)),
-                  Text(
-                    'Final price',
-                    style: OgText.body(12, color: c.textMuted),
-                  ),
+                  Text(cash(q.totalCents), style: context.type.score),
+                  Text('Final price', style: context.type.caption),
                 ],
               ),
             ),
@@ -446,14 +436,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Collect from $mallName',
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
-                    Text(
-                      q.collectAddress,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
+                    Text('Collect from $mallName', style: context.type.body),
+                    Text(q.collectAddress, style: context.type.caption),
                   ],
                 ),
               ),
@@ -485,13 +469,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Use a voucher',
-                style: OgText.body(15, weight: FontWeight.w600),
-              ),
+              Text('Use a voucher', style: context.type.body),
               Text(
                 'One discount per item: a voucher or points.',
-                style: OgText.body(13, color: c.textMuted),
+                style: context.type.caption,
               ),
               for (final v in q.vouchers)
                 KitChoiceRow(
@@ -530,10 +511,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             KitKeyValue('Total', cash(q.totalCents)),
           ],
         ),
-        Text(
-          q.refundRule,
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
-        ),
+        Text(q.refundRule, style: context.type.caption.copyWith(height: 1.45)),
         if (!canPay)
           const KitNote(
             'Paying in the Shop isn’t open yet. It opens once payments are '
@@ -564,7 +542,6 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final orders = ref.watch(myOrdersProvider);
     if (shopWaiting(orders, 'My orders', () => ref.invalidate(myOrdersProvider))
         case final waiting?) {
@@ -594,7 +571,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Nothing here. Orders in this step show up here.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
@@ -624,7 +601,6 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final o = order;
     final bad = o.step.ended || o.step == OrderStep.reported;
@@ -639,12 +615,7 @@ class OrderCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      o.mallName,
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
-                  ),
+                  Expanded(child: Text(o.mallName, style: context.type.body)),
                   KitTag(
                     o.step.label,
                     background: bad ? t.dangerFill : t.tag,
@@ -653,7 +624,7 @@ class OrderCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(o.summary, style: OgText.body(14, weight: FontWeight.w600)),
+              Text(o.summary, style: context.type.body),
               Text(
                 line ??
                     (o.slotAt != null
@@ -661,10 +632,10 @@ class OrderCard extends StatelessWidget {
                         : o.step.waiting && o.collectBy != null
                         ? 'Collect by ${Fmt.day(o.collectBy!)}'
                         : 'Ordered ${Fmt.day(o.placedAt)}'),
-                style: OgText.body(13, color: c.textMuted),
+                style: context.type.caption,
               ),
               const SizedBox(height: 8),
-              Text(cash(amount ?? o.totalCents), style: OgText.heading(18)),
+              Text(cash(amount ?? o.totalCents), style: context.type.section),
             ],
           ),
         ],
@@ -709,12 +680,15 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Got everything?', style: OgText.heading(24)),
+          Text('Got everything?', style: context.type.title),
           const SizedBox(height: 8),
           Text(
             'OlympusGO pays the shop now, and sports equipment is final once '
             'collected. Only tap this once it’s all in your hands.',
-            style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
+            style: context.type.body.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 18),
           KitButton(
@@ -796,7 +770,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final order = ref.watch(orderDetailProvider(widget.id));
     if (shopWaiting(
           order,
@@ -893,7 +866,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         if (o.slotAt != null)
           KitKeyValue('Drop off', Fmt.dayTimeComma(o.slotAt!)),
         KitKeyValue('Collect from', o.collectAddress),
-        Text(o.mallName, style: OgText.heading(20)),
+        Text(o.mallName, style: context.type.section),
         KitCard(
           children: [
             for (final l in o.lines)
@@ -951,7 +924,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 ? 'Your payment goes to the shop when you tap “Yes, I got it '
                       'all”, or on the date above.'
                 : 'Your payment goes to the shop when you tap “Yes, I got it all”.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
       ],
     );
@@ -1064,7 +1037,6 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final order = ref.watch(orderDetailProvider(widget.id));
     if (_done case final back?) {
       return KitScaffold(
@@ -1103,7 +1075,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
                   'Your voucher is back in My vouchers, with the same use-by '
                       'date.',
               ].join(' '),
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1138,7 +1110,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
             ),
           ],
         ),
-        Text('Why are you cancelling?', style: OgText.heading(20)),
+        Text('Why are you cancelling?', style: context.type.section),
         Column(
           children: [
             for (final r in const [
@@ -1157,7 +1129,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
         Text(
           'You can cancel free until you collect. There is no platform fee on '
           'Shop orders, so all of it goes back to how you paid.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1186,12 +1158,12 @@ class MoneyLine extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: OgText.body(15, weight: FontWeight.w600)),
-              Text(sub, style: OgText.body(13, color: context.og.textMuted)),
+              Text(title, style: context.type.body),
+              Text(sub, style: context.type.caption),
             ],
           ),
         ),
-        Text(amount, style: OgText.heading(18)),
+        Text(amount, style: context.type.section),
       ],
     ),
   );
@@ -1265,9 +1237,7 @@ class RefundStatusScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             '${i + 1}',
-                            style: OgText.body(
-                              12,
-                              weight: FontWeight.w600,
+                            style: context.type.caption.copyWith(
                               color: i < done ? c.onPrimary : t.onTag,
                             ),
                           ),
@@ -1277,15 +1247,9 @@ class RefundStatusScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                title,
-                                style: OgText.body(14, weight: FontWeight.w600),
-                              ),
+                              Text(title, style: context.type.body),
                               if (sub.isNotEmpty)
-                                Text(
-                                  sub,
-                                  style: OgText.body(12, color: c.textMuted),
-                                ),
+                                Text(sub, style: context.type.caption),
                             ],
                           ),
                         ),
@@ -1307,7 +1271,7 @@ class RefundStatusScreen extends ConsumerWidget {
         if (o.receiptNo.isNotEmpty) KitKeyValue('Reference', o.receiptNo),
         Text(
           'Card and PayNow refunds depend on your bank.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -1377,7 +1341,6 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     if (_sent) {
       return KitScaffold(
         header: const KitHeader(title: 'Report'),
@@ -1390,7 +1353,7 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
             child: Text(
               'Thank you. We review every report within 24 hours, and urgent '
               'ones first. If someone is in danger, call 999.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1409,10 +1372,10 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
         KitCard(
           children: [MoneyLine(title: widget.name, sub: 'Listing', amount: '')],
         ),
-        Text('What is wrong with it?', style: OgText.heading(20)),
+        Text('What is wrong with it?', style: context.type.section),
         Text(
           'Reports are private. The shop is not told who reported.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
         Column(
           children: [
@@ -1519,7 +1482,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             child: Text(
               'Thanks. Reviews from players at your level help others pick '
               'the right gear.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1558,14 +1521,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      o.summary,
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
-                    Text(
-                      o.mallName,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
+                    Text(o.summary, style: context.type.body),
+                    Text(o.mallName, style: context.type.caption),
                   ],
                 ),
               ),
@@ -1591,10 +1548,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(_words[_stars], style: OgText.heading(24)),
+            Text(_words[_stars], style: context.type.title),
           ],
         ),
-        Text('What stood out?', style: OgText.heading(20)),
+        Text('What stood out?', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,

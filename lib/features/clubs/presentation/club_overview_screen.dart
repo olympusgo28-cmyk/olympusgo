@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -140,7 +139,6 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
   );
 
   List<Widget> _about(Club d) {
-    final c = context.og;
     return [
       ClipRRect(
         borderRadius: BorderRadius.circular(18),
@@ -164,7 +162,6 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                   expand: false,
                   height: 38,
                   radius: 19,
-                  fontSize: 13,
                   padding: 12,
                   style: KitButtonStyle.outline,
                   onPressed: () => showOgToast(
@@ -184,7 +181,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
         hint: 'Who the club is for, how often it plays, what to expect',
         lines: 4,
       ),
-      Text('Club type', style: OgText.heading(20)),
+      Text('Club type', style: context.type.section),
       Column(
         children: [
           for (final (v, sub) in const [
@@ -203,15 +200,11 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
             ),
         ],
       ),
-      Text(
-        'Changes are saved when you tap Save.',
-        style: OgText.body(13, color: c.textMuted),
-      ),
+      Text('Changes are saved when you tap Save.', style: context.type.caption),
     ];
   }
 
   List<Widget> _rulesTab() {
-    final c = context.og;
     return [
       KitTextArea(
         label: 'Club rules',
@@ -221,11 +214,11 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
             'equipment policy',
         lines: 5,
       ),
-      Text('Default play rules', style: OgText.heading(20)),
+      Text('Default play rules', style: context.type.section),
       Text(
         'Added to every new session of that type. Organizers can change them '
         'per session.',
-        style: OgText.body(13, height: 1.4, color: c.textMuted),
+        style: context.type.caption.copyWith(height: 1.4),
       ),
       for (final (k, label) in _ruleKinds)
         KitTextArea(label: label, controller: _play[k], lines: 3),
@@ -233,16 +226,12 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
   }
 
   List<Widget> _sports(Club d) {
-    final c = context.og;
     final have = {for (final s in d.sports) s.sport};
     return [
       Row(
         children: [
-          Expanded(child: Text('Sports', style: OgText.heading(20))),
-          Text(
-            '${d.sports.length} of 5',
-            style: OgText.body(13, color: c.textMuted),
-          ),
+          Expanded(child: Text('Sports', style: context.type.section)),
+          Text('${d.sports.length} of 5', style: context.type.caption),
         ],
       ),
       Wrap(
@@ -266,7 +255,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
             ),
         ],
       ),
-      Text('Skill level range', style: OgText.heading(20)),
+      Text('Skill level range', style: context.type.section),
       for (final (i, s) in d.sports.indexed)
         KitCard(
           padding: const EdgeInsets.all(14),
@@ -277,10 +266,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        s.sport.label,
-                        style: OgText.body(16, weight: FontWeight.w600),
-                      ),
+                      child: Text(s.sport.label, style: context.type.body),
                     ),
                     if (i == 0)
                       KitTag(
@@ -315,13 +301,12 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
       Text(
         'New sessions start with these ranges. The primary sport shows on the '
         'club card.',
-        style: OgText.body(13, height: 1.4, color: c.textMuted),
+        style: context.type.caption.copyWith(height: 1.4),
       ),
     ];
   }
 
   List<Widget> _ownership(Club club) {
-    final c = context.og;
     final me = ref.watch(currentUserIdProvider).value;
     final mine = ref
         .watch(clubMembersProvider(widget.id))
@@ -329,10 +314,7 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
         ?.where((m) => m.player.id == me)
         .firstOrNull;
     return [
-      Text(
-        'Only the owner sees this tab.',
-        style: OgText.body(13, color: c.textMuted),
-      ),
+      Text('Only the owner sees this tab.', style: context.type.caption),
       KitCard(
         padding: const EdgeInsets.all(14),
         children: [
@@ -342,7 +324,6 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                 me ?? 'me',
                 initials: mine?.player.initials ?? 'Me',
                 size: 44,
-                fontSize: 15,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -351,13 +332,13 @@ class _ClubOverviewScreenState extends ConsumerState<ClubOverviewScreen> {
                   children: [
                     Text(
                       mine?.player.displayName ?? 'You',
-                      style: OgText.body(15, weight: FontWeight.w600),
+                      style: context.type.body,
                     ),
                     Text(
                       club.createdAt == null
                           ? 'Owner'
                           : 'Owner since ${const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][club.createdAt!.month - 1]} ${club.createdAt!.year}',
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                   ],
                 ),

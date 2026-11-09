@@ -7,8 +7,7 @@ import 'package:og_money/og_money.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -122,10 +121,8 @@ String _problem(Object? e) => e is AuthFailure
     ? e.message
     : 'Can’t load this right now. Check your connection.';
 
-Widget _nothing(BuildContext context, String text) => Text(
-  text,
-  style: OgText.body(14, height: 1.4, color: context.og.textMuted),
-);
+Widget _nothing(BuildContext context, String text) =>
+    Text(text, style: context.type.secondary.copyWith(height: 1.4));
 
 // ─── Booking a one-to-one ──────────────────────────────────────────────────
 
@@ -195,10 +192,7 @@ class _OneToOneScreenState extends ConsumerState<OneToOneScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Who is it for?',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Who is it for?', style: context.type.body),
             PlayerChoices(
               players: players,
               selected: _who,
@@ -209,10 +203,7 @@ class _OneToOneScreenState extends ConsumerState<OneToOneScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Pick a time',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Pick a time', style: context.type.body),
             if (list.isEmpty)
               _nothing(context, 'No lessons are open right now.'),
             for (final s in list)
@@ -447,7 +438,6 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final v = ref.watch(lessonBookingProvider(widget.id));
     final blocked = _waiting(
       v,
@@ -545,7 +535,7 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
           Text(
             'Cancel by ${Fmt.dayTimeComma(b.freeCancelUntil!)} for the price '
             'back, without the fee. After that, no refund.',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
       ],
     );
@@ -645,7 +635,7 @@ class _LessonSlotsScreenState extends ConsumerState<LessonSlotsScreen> {
                       children: [
                         Text(
                           Fmt.dayTimeComma(s.startsAt),
-                          style: OgText.body(15, weight: FontWeight.w600),
+                          style: context.type.body,
                         ),
                         Text(
                           [
@@ -653,7 +643,7 @@ class _LessonSlotsScreenState extends ConsumerState<LessonSlotsScreen> {
                             if (s.venue.isNotEmpty) s.venue,
                             if (s.booked) 'Booked',
                           ].join(' · '),
-                          style: OgText.body(13, color: context.og.textMuted),
+                          style: context.type.caption,
                         ),
                       ],
                     ),

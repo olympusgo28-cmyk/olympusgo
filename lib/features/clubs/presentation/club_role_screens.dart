@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -89,7 +89,6 @@ class _MemberPickerState extends ConsumerState<_MemberPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final members = ref.watch(clubMembersProvider(widget.clubId)).value;
     final q = _q.trim().toLowerCase();
     final shown = (members ?? const <ClubMember>[])
@@ -112,7 +111,7 @@ class _MemberPickerState extends ConsumerState<_MemberPicker> {
         if (members == null)
           const CupertinoActivityIndicator()
         else if (shown.isEmpty)
-          Text('Nobody matches.', style: OgText.body(14, color: c.textMuted))
+          Text('Nobody matches.', style: context.type.secondary)
         else
           for (final m in shown)
             KitChoiceRow(
@@ -120,7 +119,6 @@ class _MemberPickerState extends ConsumerState<_MemberPicker> {
                 m.player.id,
                 initials: m.player.initials,
                 size: 40,
-                fontSize: 14,
               ),
               title: m.player.displayName,
               subtitle: m.player.handle,
@@ -202,14 +200,14 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.name, style: OgText.body(15, weight: FontWeight.w600)),
+                  Text(r.name, style: context.type.body),
                   Text(
                     r.isOwner
                         ? 'All permissions · can’t be changed'
                         : r.isLabel
                         ? 'Label'
                         : '${r.permissions.length} permissions',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -244,10 +242,7 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
             ] else ...[
               OgIcon(OgIcons.people, size: 16, color: c.textMuted),
               const SizedBox(width: 4),
-              Text(
-                '${r.memberCount}',
-                style: OgText.body(13, color: c.textMuted),
-              ),
+              Text('${r.memberCount}', style: context.type.caption),
               if (!r.isOwner) ...[
                 const SizedBox(width: 6),
                 OgIcon(OgIcons.chevronRight, size: 16, color: c.textMuted),
@@ -283,7 +278,7 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: kitSpaced([
-                    Text('Everyone', style: OgText.heading(22)),
+                    Text('Everyone', style: context.type.section),
                     const Text('Every member can already:'),
                     const KitCheckList([
                       'Join the club’s Meets, tournaments and events',
@@ -308,7 +303,10 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
         Row(
           children: [
             Expanded(
-              child: Text('Roles – ${list.length}', style: OgText.heading(20)),
+              child: Text(
+                'Roles – ${list.length}',
+                style: context.type.section,
+              ),
             ),
             KitLink(
               _reorder ? 'Done' : 'Reorder',
@@ -333,7 +331,7 @@ class _ManageRolesScreenState extends ConsumerState<ManageRolesScreen> {
         Text(
           'The Owner role can’t be changed. Members show the colour of their '
           'highest role in this list.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -427,7 +425,6 @@ class _CreateRoleScreenState extends ConsumerState<CreateRoleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final name = _name.text.trim();
     final card = _cards[_level.index];
@@ -478,14 +475,14 @@ class _CreateRoleScreenState extends ConsumerState<CreateRoleScreen> {
             hint: 'e.g. Court Captain, Coach, Treasurer, Founding Member',
             maxLength: 30,
           ),
-          Text('Role colour', style: OgText.body(15, weight: FontWeight.w600)),
+          Text('Role colour', style: context.type.body),
           _ColourPicker(
             value: _color,
             onPick: (v) => setState(() => _color = v),
           ),
           Text(
             'Members show the colour of their highest role.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
         1 => [
@@ -507,24 +504,27 @@ class _CreateRoleScreenState extends ConsumerState<CreateRoleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(_level.title, style: OgText.heading(22)),
+                Text(_level.title, style: context.type.section),
                 const SizedBox(height: 4),
                 Text(
                   card.$1,
-                  style: OgText.body(14, height: 1.4, color: t.onTag),
+                  style: context.type.body.copyWith(
+                    color: t.onTag,
+                    height: 1.4,
+                  ),
                 ),
                 if (card.$2.isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  Text(
-                    card.$2,
-                    style: OgText.body(14, weight: FontWeight.w600),
-                  ),
+                  Text(card.$2, style: context.type.body),
                 ],
                 const SizedBox(height: 8),
                 KitCheckList(card.$3),
                 if (card.$4.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(card.$4, style: OgText.body(13, color: t.onTag)),
+                  Text(
+                    card.$4,
+                    style: context.type.caption.copyWith(color: t.onTag),
+                  ),
                 ],
               ],
             ),
@@ -579,7 +579,6 @@ class _RoleEditScreenState extends ConsumerState<RoleEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final role = ref
         .watch(clubRolesProvider(widget.id))
         .value
@@ -595,7 +594,7 @@ class _RoleEditScreenState extends ConsumerState<RoleEditScreen> {
     return KitScaffold(
       header: KitHeader(title: role.name),
       children: [
-        Text('Role', style: OgText.heading(20)),
+        Text('Role', style: context.type.section),
         Focus(
           onFocusChange: (has) {
             if (!has &&
@@ -608,7 +607,7 @@ class _RoleEditScreenState extends ConsumerState<RoleEditScreen> {
         ),
         Text(
           'Role colour · ${_colourName(role.color)}',
-          style: OgText.body(15, weight: FontWeight.w600),
+          style: context.type.body,
         ),
         _ColourPicker(
           value: role.color,
@@ -651,7 +650,7 @@ class _RoleEditScreenState extends ConsumerState<RoleEditScreen> {
         ),
         Text(
           'Changes save right away and are written to the audit log.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -724,7 +723,6 @@ class _RolePermissionsScreenState extends ConsumerState<RolePermissionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final role = ref
         .watch(clubRolesProvider(widget.id))
         .value
@@ -746,10 +744,7 @@ class _RolePermissionsScreenState extends ConsumerState<RolePermissionsScreen> {
         trailing: KitLink('Save', onPressed: _busy ? null : () => _save(role)),
       ),
       children: [
-        Text(
-          'Start from a preset',
-          style: OgText.body(15, weight: FontWeight.w600),
-        ),
+        Text('Start from a preset', style: context.type.body),
         Row(
           children: [
             for (final e in _presets.entries) ...[
@@ -765,13 +760,13 @@ class _RolePermissionsScreenState extends ConsumerState<RolePermissionsScreen> {
         Text(
           'Everyone can already join Meets, invite friends and rate Meets they '
           'attended.',
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.4),
         ),
         for (final (title, perms) in _groups)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: OgText.heading(20)),
+              Text(title, style: context.type.section),
               const SizedBox(height: 4),
               for (final p in perms)
                 Opacity(
@@ -816,7 +811,6 @@ class RoleMembersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final role = ref
         .watch(clubRolesProvider(id))
         .value
@@ -857,10 +851,7 @@ class RoleMembersScreen extends ConsumerWidget {
       ],
       children: [
         if (having.isEmpty)
-          Text(
-            'Nobody has this role yet.',
-            style: OgText.body(14, color: c.textMuted),
-          )
+          Text('Nobody has this role yet.', style: context.type.secondary)
         else
           KitCard(
             children: [
@@ -876,7 +867,6 @@ class RoleMembersScreen extends ConsumerWidget {
                         m.player.id,
                         initials: m.player.initials,
                         size: 40,
-                        fontSize: 14,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -885,12 +875,9 @@ class RoleMembersScreen extends ConsumerWidget {
                           children: [
                             Text(
                               m.player.displayName,
-                              style: OgText.body(15, weight: FontWeight.w600),
+                              style: context.type.body,
                             ),
-                            Text(
-                              m.player.handle,
-                              style: OgText.body(13, color: c.textMuted),
-                            ),
+                            Text(m.player.handle, style: context.type.caption),
                           ],
                         ),
                       ),
@@ -940,7 +927,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
             Expanded(
               child: Text(
                 'Add to ${widget.roleName}',
-                style: OgText.heading(22),
+                style: context.type.section,
               ),
             ),
             KitLink('Add', onPressed: () => Navigator.of(context).pop(_picked)),
@@ -948,7 +935,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
         ),
         Text(
           'Select up to 30 · ${_picked.length} selected',
-          style: OgText.body(13, color: context.og.textMuted),
+          style: context.type.caption,
         ),
         const SizedBox(height: 10),
         _MemberPicker(
@@ -996,7 +983,6 @@ class _RoleDeleteScreenState extends ConsumerState<RoleDeleteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final role = ref
         .watch(clubRolesProvider(widget.id))
         .value
@@ -1037,7 +1023,7 @@ class _RoleDeleteScreenState extends ConsumerState<RoleDeleteScreen> {
           lead:
               '${having.length} ${having.length == 1 ? 'member has' : 'members have'} this role.',
         ),
-        Text('What happens', style: OgText.heading(20)),
+        Text('What happens', style: context.type.section),
         KitCheckList([
           if (names.isNotEmpty)
             '${names.length <= 2 ? names.join(' and ') : '${names.length} members'} '
@@ -1048,7 +1034,7 @@ class _RoleDeleteScreenState extends ConsumerState<RoleDeleteScreen> {
         Text(
           'Meets they already created stay as they are. An Admin can still '
           'edit them.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
       ],
     );

@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -130,7 +130,9 @@ class PlayCard extends ConsumerWidget {
                           a.coverTitle ?? a.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: OgText.heading(30, color: Color(a.coverInk)),
+                          style: context.type.title.copyWith(
+                            color: Color(a.coverInk),
+                          ),
                         ),
                       ),
                     ),
@@ -167,15 +169,11 @@ class PlayCard extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          a.kind.label,
-                          style: OgText.body(15, weight: FontWeight.w600),
-                        ),
+                        Text(a.kind.label, style: context.type.body),
                         const SizedBox(width: 8),
                         KitTag(
                           chip,
                           height: 22,
-                          fontSize: 11,
                           background: chipBg,
                           foreground: chipFg,
                         ),
@@ -199,11 +197,7 @@ class PlayCard extends ConsumerWidget {
                     a.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(
-                      19,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
+                    style: context.type.section,
                   ),
                   const SizedBox(height: 12),
                   _Line(OgIcons.calendarBox, dateLine, dateSub),
@@ -228,7 +222,7 @@ class PlayCard extends ConsumerWidget {
                           people,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: OgText.body(13, weight: FontWeight.w600),
+                          style: context.type.caption,
                         ),
                       ),
                     ],
@@ -272,11 +266,11 @@ class _GenderChip extends StatelessWidget {
             children: [
               OgIcon(OgIcons.male, size: 13, strokeWidth: 2.2),
               const SizedBox(width: 2),
-              Text('$men', style: OgText.body(12, weight: FontWeight.w600)),
+              Text('$men', style: context.type.caption),
               const SizedBox(width: 8),
               OgIcon(OgIcons.female, size: 13, strokeWidth: 2.2),
               const SizedBox(width: 2),
-              Text('$women', style: OgText.body(12, weight: FontWeight.w600)),
+              Text('$women', style: context.type.caption),
             ],
           ),
         ),
@@ -311,14 +305,14 @@ class _Line extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(15, weight: FontWeight.w600),
+                style: context.type.body,
               ),
               // Always takes a line, so cards line up with or without one.
               Text(
                 sub ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(13, color: c.textMuted),
+                style: context.type.caption,
               ),
             ],
           ),
@@ -335,7 +329,6 @@ class _Proof extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Row(
       children: [
         SolidAvatar(
@@ -343,27 +336,19 @@ class _Proof extends StatelessWidget {
           color: Color(proof.color),
           ink: Color(proof.ink),
           size: 28,
-          fontSize: 10,
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(
-                  text: proof.name,
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w600,
-                    color: c.text,
-                  ),
-                ),
+                TextSpan(text: proof.name, style: context.type.caption),
                 TextSpan(text: ' ${proof.text}'),
               ],
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: OgText.body(13, color: context.tones.onTag),
+            style: context.type.caption.copyWith(color: context.tones.onTag),
           ),
         ),
       ],

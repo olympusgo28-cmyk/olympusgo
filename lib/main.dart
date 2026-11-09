@@ -6,8 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/env.dart';
 import 'core/config/session_storage.dart';
 import 'core/router/app_router.dart';
-import 'core/theme/og_text.dart';
 import 'core/theme/og_theme.dart';
+import 'core/theme/og_type.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,17 +25,9 @@ Future<void> main() async {
       'No SUPABASE_ANON_KEY: running in demo mode (nothing is saved).',
     );
   }
-  // iPhones draw Futura from the system. Elsewhere, load Jost before the
-  // first frame so nothing reflows (Q250).
+  // Load Jost's two weights before the first frame so nothing reflows (Q257).
   GoogleFonts.config.allowRuntimeFetching = true;
-  if (!OgText.usesFutura) {
-    await waitForFonts(
-      GoogleFonts.pendingFonts([
-        GoogleFonts.jost(),
-        GoogleFonts.jost(fontWeight: FontWeight.w600),
-      ]),
-    );
-  }
+  await waitForFonts(OgType.preload());
   runApp(const ProviderScope(child: OlympusGoApp()));
 }
 

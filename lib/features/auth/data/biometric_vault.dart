@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../../../core/config/env.dart';
 import '../domain/saved_account.dart';
 
 /// The accounts saved on this phone. Each one's refresh token sits in its own
@@ -15,16 +16,26 @@ import '../domain/saved_account.dart';
 /// checks in the app instead, because its equivalent would ask for a fingerprint
 /// on every hourly token refresh.
 class BiometricVault {
-  BiometricVault({LocalAuthentication? auth, FlutterSecureStorage? storage})
-    : _auth = auth ?? LocalAuthentication(),
-      _storage =
-          storage ??
-          const FlutterSecureStorage(
-            iOptions: IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock_this_device,
-            ),
-          );
+  BiometricVault({
+    LocalAuthentication? auth,
+    FlutterSecureStorage? storage,
+    bool? skip,
+  }) : skipped = skip ?? Env.skipFaceId,
+       _auth = auth ?? LocalAuthentication(),
+       _storage =
+           storage ??
+           const FlutterSecureStorage(
+             iOptions: IOSOptions(
+               accessibility: KeychainAccessibility.first_unlock_this_device,
+             ),
+           );
 
+  /// Local testing only ([Env.skipFaceId]): every check passes without
+  /// asking, and Face ID unlock is off for every account, so nothing is
+  /// saved, read or removed under Face ID. Tiles saved before show again
+  /// when it is off; one whose session ended meanwhile (a log-out) asks
+  /// for a code once.
+  final bool skipped;
   final LocalAuthentication _auth;
   final FlutterSecureStorage _storage;
 
@@ -66,10 +77,11 @@ class BiometricVault {
   /// Face ID unlock is off for every account until that player switches it
   /// on (Q249).
   Future<bool> isEnabledFor(String userId) async =>
-      (await _enabled()).contains(userId);
+      !skipped && (await _enabled()).contains(userId);
 
   /// Switching off removes this account's tile and token, and nobody else's.
   Future<void> setEnabledFor(String userId, bool enabled) async {
+    if (skipped) return;
     final ids = await _enabled();
     enabled ? ids.add(userId) : ids.remove(userId);
     await _storage.write(key: _enabledKey, value: jsonEncode(ids.toList()));
@@ -89,6 +101,7 @@ class BiometricVault {
   /// ID was on by default is removed, with its token, the first time it is
   /// read.
   Future<List<SavedAccount>> accounts() async {
+    if (skipped) return const [];
     final ids = await _enabled();
     final all = await _stored();
     final keep = [
@@ -161,12 +174,14 @@ class BiometricVault {
 
   /// Removing a tile deletes its token.
   Future<void> forget(String userId) async {
+    if (skipped) return;
     await _storage.delete(key: _tokenKey(userId), iOptions: _tokenOptions);
     final rest = (await _stored()).where((a) => a.userId != userId).toList();
     await _writeAccounts(rest);
   }
 
   Future<bool> authenticate(String reason) async {
+    if (skipped) return true;
     try {
       return await _auth.authenticate(localizedReason: reason);
     } on LocalAuthException catch (e) {

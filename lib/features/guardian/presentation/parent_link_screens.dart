@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_rows.dart';
@@ -23,7 +22,6 @@ class RestrictedHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final status = ref.watch(restrictionsProvider).value;
     final pending = status?.pendingParent ?? false;
     final suspended = status?.suspended ?? false;
@@ -31,7 +29,7 @@ class RestrictedHomeScreen extends ConsumerWidget {
       children: [
         Semantics(
           header: true,
-          child: Text('OlympusGO', style: OgText.h1.copyWith(color: c.text)),
+          child: Text('OlympusGO', style: context.type.title),
         ),
         KitNote(
           suspended
@@ -47,7 +45,7 @@ class RestrictedHomeScreen extends ConsumerWidget {
                     'of OlympusGO.'
               : 'Until a parent links your account, you can set up your '
                     'profile, but not join Meets, chat, scan or shop.',
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
         if (!suspended)
           KitButton(
@@ -100,14 +98,13 @@ class _ParentCodeScreenState extends ConsumerState<ParentCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return KitScaffold(
       header: const KitHeader(title: 'Your parent code'),
       children: [
         Text(
           'Show this to your parent or guardian. They open OlympusGO on their '
           'phone and enter it under Profile, then My children.',
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
         FutureBuilder(
           future: _code,
@@ -133,7 +130,7 @@ class _ParentCodeScreenState extends ConsumerState<ParentCodeScreen> {
                           child: ExcludeSemantics(
                             child: SelectableText(
                               code.code,
-                              style: OgText.heading(36, color: c.text),
+                              style: context.type.display,
                             ),
                           ),
                         ),
@@ -142,7 +139,7 @@ class _ParentCodeScreenState extends ConsumerState<ParentCodeScreen> {
                 Center(
                   child: Text(
                     'It works for 24 hours, and only once.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ),
               ],
@@ -213,7 +210,6 @@ class _EnterChildCodeScreenState extends ConsumerState<EnterChildCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final pending = _pending;
     if (pending != null) {
       return KitScaffold(
@@ -222,7 +218,7 @@ class _EnterChildCodeScreenState extends ConsumerState<EnterChildCodeScreen> {
           Text(
             "You're linking ${pending.childName}'s account to yours. You can see "
             'and delete what they post, and end the link at any time.',
-            style: OgText.lead(c.textMuted),
+            style: context.type.secondary,
           ),
           if (_error != null) KitNote(_error!, tone: KitTone.warn),
           KitButton(
@@ -242,7 +238,7 @@ class _EnterChildCodeScreenState extends ConsumerState<EnterChildCodeScreen> {
       children: [
         Text(
           "Enter the 8-character code from your child's phone.",
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
         KitInput(
           label: 'Code',
@@ -263,7 +259,6 @@ class MyChildrenScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final children = ref.watch(myChildrenProvider);
     return KitScaffold(
       header: const KitHeader(title: 'My children'),
@@ -280,7 +275,7 @@ class MyChildrenScreen extends ConsumerWidget {
               ? [
                   Text(
                     "No linked accounts yet. Ask your child for their code.",
-                    style: OgText.lead(c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ]
               : [
@@ -321,7 +316,6 @@ class ChildDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final posts = ref.watch(childPostsProvider(childId));
     final groups =
         ref.watch(childGroupRequestsProvider(childId)).value ?? const [];
@@ -380,9 +374,9 @@ class ChildDetailScreen extends ConsumerWidget {
           KitCard(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(group.name, style: OgText.body(16, color: c.text)),
+              Text(group.name, style: context.type.body),
               if (group.area.isNotEmpty)
-                Text(group.area, style: OgText.body(13, color: c.textMuted)),
+                Text(group.area, style: context.type.caption),
               const SizedBox(height: 8),
               KitButton(
                 label: 'Approve',
@@ -407,23 +401,15 @@ class ChildDetailScreen extends ConsumerWidget {
             ),
           ],
           data: (list) => list.isEmpty
-              ? [
-                  Text(
-                    'Nothing posted yet.',
-                    style: OgText.body(16, color: c.textMuted),
-                  ),
-                ]
+              ? [Text('Nothing posted yet.', style: context.type.secondary)]
               : [
                   for (final post in list)
                     KitCard(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        Text(
-                          post.kindLabel,
-                          style: OgText.body(13, color: c.textMuted),
-                        ),
+                        Text(post.kindLabel, style: context.type.caption),
                         const SizedBox(height: 4),
-                        Text(post.body, style: OgText.body(16, color: c.text)),
+                        Text(post.body, style: context.type.body),
                         const SizedBox(height: 8),
                         KitButton.outline(
                           label: 'Delete',

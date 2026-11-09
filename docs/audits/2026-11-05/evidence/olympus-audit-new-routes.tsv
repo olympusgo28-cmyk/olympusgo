@@ -1,0 +1,16 @@
+OK	fitnessExercises	/fitness/exercises
+ERROR	fitnessExercisePick	/fitness/exercises/pick	MissingPluginException(No implementation found for method read on channel plugins.it_nomads.com/flutter_secure_storage)
+OK	fitnessExercise	/fitness/exercises/squat
+OK	fitnessPrograms	/fitness/programs
+OK	fitnessProgram	/fitness/programs/court-speed
+OK	fitnessTrain	/fitness/train
+OK	fitnessLog	/fitness/log
+OK	fitnessCalculators	/fitness/calculators
+OK	fitnessAiPlan	/fitness/ai-plan
+OK	analysis	/fitness/analysis
+OK	analysisAdd	/fitness/analysis/add
+OK	videos	/videos
+OK	addPost	/videos/add
+OK	myPosts	/videos/mine
+OK	meetRounds	/activities/ts-social/rounds
+REDIRECTED	parentLink	/parent-link	-> /home

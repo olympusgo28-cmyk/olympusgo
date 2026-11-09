@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/providers.dart';
-import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_kit.dart';
 import '../auth/data/auth_repository.dart';
 
@@ -71,7 +70,6 @@ class _HostScanScreenState extends ConsumerState<HostScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return KitScaffold(
       header: const KitHeader(title: 'Scan players'),
       children: [
@@ -86,7 +84,7 @@ class _HostScanScreenState extends ConsumerState<HostScanScreen> {
           KitNote(_last!, tone: _problem ? KitTone.warn : KitTone.success),
         Text(
           '$_present here so far. Point the camera at a player\'s My QR.',
-          style: OgText.body(15, color: c.textMuted),
+          style: context.type.secondary,
         ),
       ],
     );

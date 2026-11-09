@@ -5,8 +5,7 @@ import 'package:og_money/og_money.dart';
 
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../auth/data/auth_repository.dart';
@@ -38,7 +37,6 @@ class WalletScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final v = ref.watch(myVouchersProvider);
     final badges = ref.watch(myBadgesProvider).value ?? const <GameBadge>[];
     final blocked = _waiting(
@@ -54,7 +52,7 @@ class WalletScreen extends ConsumerWidget {
         if (list.isEmpty)
           Text(
             'No vouchers yet. You earn them from counted games and campaigns.',
-            style: OgText.body(14, height: 1.4, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.4),
           ),
         for (final x in list) _VoucherCard(x),
         if (list.isNotEmpty)
@@ -79,7 +77,6 @@ class _VoucherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final (label, fill, ink) = switch (v.status) {
       'issued' => ('Ready to use', t.successFill, t.onSuccessFill),
@@ -95,13 +92,8 @@ class _VoucherCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    v.name,
-                    style: OgText.body(16, weight: FontWeight.w600),
-                  ),
-                ),
-                Text('${Money(v.amountCents)} off', style: OgText.body(14)),
+                Expanded(child: Text(v.name, style: context.type.body)),
+                Text('${Money(v.amountCents)} off', style: context.type.body),
               ],
             ),
             Text(
@@ -110,7 +102,7 @@ class _VoucherCard extends StatelessWidget {
                 if (v.usable && v.expiresAt != null)
                   'Use by ${Fmt.day(v.expiresAt!)}',
               ].join(' · '),
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             const SizedBox(height: 8),
             KitTag(label, background: fill, foreground: ink),
@@ -119,7 +111,10 @@ class _VoucherCard extends StatelessWidget {
               Semantics(
                 label: 'Voucher code ${v.code.split('').join(' ')}',
                 excludeSemantics: true,
-                child: Text(v.code, style: OgText.body(14, letterSpacing: 1)),
+                child: Text(
+                  v.code,
+                  style: context.type.body.copyWith(letterSpacing: 1),
+                ),
               ),
             ],
           ],
@@ -140,7 +135,6 @@ class OrganizerRewardsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final v = ref.watch(organizerRewardsProvider);
     final blocked = _waiting(
       v,
@@ -176,7 +170,7 @@ class OrganizerRewardsScreen extends ConsumerWidget {
         if (r.games.isEmpty)
           Text(
             'Your Meets show up here once their money has settled.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           )
         else
           KitCard(
@@ -188,16 +182,13 @@ class OrganizerRewardsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        g.title,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
+                      Text(g.title, style: context.type.body),
                       Text(
                         [
                           Fmt.day(g.at),
                           if (g.gameNo != null) 'Game ${g.gameNo}' else g.why,
                         ].join(' · '),
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                     ],
                   ),

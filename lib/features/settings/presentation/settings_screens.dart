@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
-import '../../../core/theme/og_tones.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
@@ -17,8 +15,6 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/phone_field.dart';
-import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
@@ -26,749 +22,8 @@ import '../../auth/presentation/code_copy.dart';
 import '../../fitness/application/fitness_providers.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
-import '../application/avatar_upload.dart';
 import '../application/settings_providers.dart';
 import '../domain/settings_models.dart';
-
-/// Settings: account, preferences and more, with Log out at the bottom.
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        const OgBackButton(),
-        const OgHeading(title: 'Settings', topGap: 8),
-        const SectionLabel('Account'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.person,
-              title: 'Edit profile',
-              subtitle: 'Photo, name, username, bio and gender',
-              onTap: () => context.push(Routes.editProfile),
-            ),
-            NavRow(
-              icon: OgIcons.idCard,
-              title: 'Account information',
-              subtitle: 'Email, mobile, birthday, region and Face ID',
-              onTap: () => context.push(Routes.accountInfo),
-            ),
-          ],
-        ),
-        const SectionLabel('Preferences'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.bell,
-              title: 'Notifications',
-              subtitle: 'Meets, messages and followers',
-              onTap: () => context.push(Routes.notifications),
-            ),
-            NavRow(
-              icon: OgIcons.shield,
-              title: 'Privacy and safety',
-              subtitle: 'Who can see and find you',
-              onTap: () => context.push(Routes.privacy),
-            ),
-          ],
-        ),
-        const SectionLabel('More'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.wallet,
-              title: 'Earnings and receipts',
-              subtitle: 'What you’ve paid and what you’ve earned',
-              onTap: () => context.push(Routes.earnings),
-            ),
-            NavRow(
-              icon: OgIcons.bag,
-              title: 'My orders',
-              subtitle: 'Track, collect and review',
-              onTap: () => context.push(Routes.orders()),
-            ),
-            NavRow(
-              icon: OgIcons.bookmark,
-              title: 'Saved',
-              subtitle: 'Meets, players and clubs',
-              onTap: () => context.push(Routes.saved),
-            ),
-            NavRow(
-              icon: OgIcons.block,
-              title: 'Blocked players',
-              subtitle: 'People you blocked',
-              onTap: () => context.push(Routes.blocked),
-            ),
-            NavRow(
-              icon: OgIcons.help,
-              title: 'Help',
-              subtitle: 'Questions and support',
-              onTap: () => context.push(Routes.help),
-            ),
-          ],
-        ),
-      ],
-      bottom: [
-        Pressable(
-          onPressed: () => context.push(Routes.logOut),
-          isButton: true,
-          semanticLabel: 'Log out',
-          child: SizedBox(
-            height: 52,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OgIcon(OgIcons.logOut, size: 22, color: c.link),
-                const SizedBox(width: 10),
-                Text(
-                  'Log out',
-                  style: OgText.body(
-                    16,
-                    weight: FontWeight.w600,
-                    color: c.link,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Edit profile: photo, then one card of rows for name, username, bio and
-/// gender. Each row opens its own editor; Save (Settings) or Continue (right
-/// after onboarding) writes them all (owner, 8 Nov 2026).
-class EditProfileScreen extends ConsumerStatefulWidget {
-  const EditProfileScreen({super.key, this.onboarding = false});
-
-  final bool onboarding;
-
-  @override
-  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
-}
-
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  String _name = '';
-  String _username = '';
-  String _bio = '';
-  Gender _gender = Gender.preferNotToSay;
-  String? _avatarUrl;
-  bool _loaded = false;
-  bool _busy = false;
-  bool _uploading = false;
-  String? _error;
-
-  void _fill(AccountDetails d) {
-    if (_loaded) return;
-    _loaded = true;
-    _name = d.fullName;
-    _username = d.username;
-    _bio = d.bio;
-    _gender = d.gender;
-    _avatarUrl = d.avatarUrl;
-  }
-
-  Future<void> _edit(ProfileField field, String value) async {
-    final edited = await Navigator.of(context).push<String>(
-      CupertinoPageRoute(
-        builder: (_) => ProfileFieldScreen(field: field, initial: value),
-      ),
-    );
-    if (edited == null || !mounted) return;
-    setState(() {
-      _error = null;
-      switch (field) {
-        case ProfileField.name:
-          _name = edited;
-        case ProfileField.username:
-          _username = edited;
-        case ProfileField.bio:
-          _bio = edited;
-      }
-    });
-  }
-
-  Future<void> _pickGender() async {
-    final picked = await showOgListPicker<Gender>(
-      context: context,
-      title: 'Gender',
-      items: Gender.values,
-      selected: _gender,
-      label: (g) => g.label,
-    );
-    if (picked != null) setState(() => _gender = picked);
-  }
-
-  Future<void> _changePhoto() async {
-    final source = await showCupertinoModalPopup<ImageSourceChoice>(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Profile photo'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () =>
-                Navigator.of(context).pop(ImageSourceChoice.camera),
-            child: const Text('Take Photo'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () =>
-                Navigator.of(context).pop(ImageSourceChoice.library),
-            child: const Text('Choose from Library'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-    setState(() => _uploading = true);
-    try {
-      final url = await pickAndUploadAvatar(ref, source);
-      if (url != null && mounted) setState(() => _avatarUrl = url);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
-
-  Future<void> _save() async {
-    final name = _name.trim();
-    final username = _username.trim();
-    final invalid =
-        ProfileField.name.check(name) ?? ProfileField.username.check(username);
-    if (invalid != null) return setState(() => _error = invalid);
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref
-          .read(settingsRepositoryProvider)
-          .saveAccount(
-            AccountDetails(
-              fullName: name,
-              username: username,
-              bio: _bio,
-              gender: _gender,
-            ),
-          );
-      await ref.read(sessionProfileProvider.notifier).reload();
-      if (!mounted) return;
-      if (widget.onboarding) {
-        context.push(Routes.setupPersonal);
-      } else {
-        showOgToast(context, 'Saved');
-        context.pop();
-      }
-    } on AuthFailure catch (e) {
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final details = ref.watch(accountDetailsProvider);
-    details.whenData(_fill);
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        OgBackButton(
-          onPressed: widget.onboarding ? () => context.go(Routes.home) : null,
-        ),
-        const OgHeading(title: 'Edit profile', topGap: 8),
-        const SizedBox(height: 16),
-        // Two rows: the photo, then the link to change it.
-        Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Avatar(
-                initials: _initials(_name),
-                tone: AvatarTone.brand,
-                imageUrl: _avatarUrl,
-                size: 72,
-                fontSize: 28,
-              ),
-              if (_uploading)
-                const CupertinoActivityIndicator(color: OgColors.white),
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        OgTextLink(
-          'Change photo',
-          align: Alignment.center,
-          onPressed: _changePhoto,
-        ),
-        const SizedBox(height: 16),
-        KitCard(
-          children: [
-            DetailRow(
-              label: 'Name',
-              value: _name,
-              onTap: () => _edit(ProfileField.name, _name),
-            ),
-            DetailRow(
-              label: 'Username',
-              value: _username.isEmpty ? '' : '@$_username',
-              onTap: () => _edit(ProfileField.username, _username),
-            ),
-            DetailRow(
-              label: 'Bio',
-              value: _bio,
-              placeholder: 'Add a few words about you',
-              onTap: () => _edit(ProfileField.bio, _bio),
-            ),
-            DetailRow(
-              label: 'Gender',
-              value: _gender.label,
-              onTap: _pickGender,
-            ),
-          ],
-        ),
-        if (_error != null) OgErrorText(_error!),
-      ],
-      bottom: [
-        OgButton(
-          label: widget.onboarding ? 'Continue' : 'Save',
-          loading: _busy,
-          onPressed: details.hasValue ? _save : null,
-        ),
-      ],
-    );
-  }
-}
-
-/// The three profile details with their own editor.
-enum ProfileField {
-  name('Name'),
-  username('Username'),
-  bio('Bio');
-
-  const ProfileField(this.label);
-  final String label;
-
-  /// Null when [value] can be saved, otherwise the sentence to show.
-  String? check(String value) => switch (this) {
-    ProfileField.name => value.trim().isEmpty ? 'Enter your name.' : null,
-    ProfileField.username =>
-      RegExp(r'^[A-Za-z0-9_]{3,30}$').hasMatch(value.trim())
-          ? null
-          : 'Usernames use 3 to 30 letters, numbers or underscores.',
-    ProfileField.bio => null,
-  };
-}
-
-/// One profile detail on its own screen. Done hands the value back to Edit
-/// profile, which saves it with the rest.
-class ProfileFieldScreen extends StatefulWidget {
-  const ProfileFieldScreen({
-    super.key,
-    required this.field,
-    required this.initial,
-  });
-
-  final ProfileField field;
-  final String initial;
-
-  @override
-  State<ProfileFieldScreen> createState() => _ProfileFieldScreenState();
-}
-
-class _ProfileFieldScreenState extends State<ProfileFieldScreen> {
-  late final _text = TextEditingController(text: widget.initial);
-  String? _error;
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  void _done() {
-    final value = _text.text.trim();
-    final invalid = widget.field.check(value);
-    if (invalid != null) return setState(() => _error = invalid);
-    Navigator.of(context).pop(value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final field = switch (widget.field) {
-      ProfileField.name => OgTextField(
-        label: 'Name',
-        controller: _text,
-        autofocus: true,
-        autofillHints: const [AutofillHints.name],
-        capitalization: TextCapitalization.words,
-        textInputAction: TextInputAction.done,
-        onSubmitted: (_) => _done(),
-        error: _error,
-      ),
-      ProfileField.username => OgTextField(
-        label: 'Username',
-        controller: _text,
-        autofocus: true,
-        autocorrect: false,
-        autofillHints: const [AutofillHints.username],
-        textInputAction: TextInputAction.done,
-        onSubmitted: (_) => _done(),
-        error: _error,
-      ),
-      ProfileField.bio => OgTextArea(
-        label: 'Bio',
-        controller: _text,
-        autofocus: true,
-        minLines: 4,
-        hint: 'What you play, when, and who you like to play with',
-      ),
-    };
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        const OgBackButton(),
-        OgHeading(title: widget.field.label, topGap: 8),
-        const SizedBox(height: 16),
-        field,
-      ],
-      bottom: [OgButton(label: 'Done', onPressed: _done)],
-    );
-  }
-}
-
-/// A label over its value, and a chevron when it opens something. The value
-/// wraps, so a long bio shows in full.
-class DetailRow extends StatelessWidget {
-  const DetailRow({
-    super.key,
-    required this.label,
-    required this.value,
-    this.onTap,
-    this.placeholder,
-    this.leading,
-  });
-
-  final String label;
-  final String value;
-  final VoidCallback? onTap;
-
-  /// Shown muted when [value] is empty.
-  final String? placeholder;
-  final Widget? leading;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final empty = value.isEmpty;
-    return Pressable(
-      semanticLabel: '$label, ${empty ? (placeholder ?? 'empty') : value}',
-      onPressed: onTap,
-      dimWhenDisabled: false,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 64),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: ExcludeSemantics(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: OgText.body(13, color: c.textMuted)),
-                    const SizedBox(height: 2),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (leading != null) ...[
-                          leading!,
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          child: Text(
-                            empty ? (placeholder ?? '') : value,
-                            softWrap: true,
-                            style: OgText.body(
-                              16,
-                              height: 1.35,
-                              weight: empty ? FontWeight.w400 : FontWeight.w600,
-                              color: empty ? c.textMuted : c.text,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (onTap != null) ...[
-                const SizedBox(width: 8),
-                OgIcon(OgIcons.chevronRight, size: 20, color: c.borderControl),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String _initials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((p) => p.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) return parts.first[0].toUpperCase();
-  return (parts.first[0] + parts.last[0]).toUpperCase();
-}
-
-/// Account information: email, mobile, date of birth (read only), account
-/// region (read only, Q254) and the Face ID switch (off until switched on,
-/// Q249). Only the owner sees these.
-class AccountInfoScreen extends ConsumerStatefulWidget {
-  const AccountInfoScreen({super.key, this.onboarding = false});
-
-  final bool onboarding;
-
-  @override
-  ConsumerState<AccountInfoScreen> createState() => _AccountInfoScreenState();
-}
-
-class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
-  final _email = TextEditingController();
-  final _mobile = TextEditingController();
-  PrivateInfo? _original;
-  bool _busy = false;
-  String? _error;
-
-  static const _months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _mobile.dispose();
-    super.dispose();
-  }
-
-  /// The mobile's own dialling code, which can differ from the account's
-  /// region (a Malaysian number on a Singapore account).
-  Country get _mobileCountry =>
-      Country.fromPhone(_original?.phone ?? '') ??
-      _original?.country ??
-      Country.singapore;
-
-  void _fill(PrivateInfo info) {
-    if (_original != null) return;
-    _original = info;
-    _email.text = info.email;
-    final dial = _mobileCountry.dialCode.substring(1);
-    var digits = info.phone.replaceAll('+', '');
-    if (digits.startsWith(dial)) digits = digits.substring(dial.length);
-    _mobile.text = digits.length == 8
-        ? '${digits.substring(0, 4)} ${digits.substring(4)}'
-        : digits;
-  }
-
-  Future<void> _finish() async {
-    if (widget.onboarding) {
-      context.go(Routes.profile);
-      return;
-    }
-    final email = _email.text.trim();
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      if (_original != null && email != _original!.email) {
-        await ref.read(authRepositoryProvider).startEmailChange(email);
-        if (mounted) context.push(Routes.verifyPhoneChange, extra: email);
-        return;
-      }
-      final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
-      final phone = '${_mobileCountry.dialCode}$digits';
-      if (_original != null &&
-          digits.isNotEmpty &&
-          phone.replaceAll('+', '') != _original!.phone.replaceAll('+', '')) {
-        await ref.read(authRepositoryProvider).startPhoneChange(phone);
-        if (mounted) context.push(Routes.verifyPhoneChange, extra: phone);
-        return;
-      }
-      if (mounted) context.pop();
-    } on AuthFailure catch (e) {
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _setFaceId(bool on) async {
-    final now = await ref.read(faceIdEnabledProvider.notifier).set(on);
-    if (on && !now && mounted) {
-      showOgToast(
-        context,
-        'Face ID is still off. Check Face ID is set up on this phone, then try again.',
-        error: true,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final info = ref.watch(privateInfoProvider);
-    info.whenData(_fill);
-    final faceId = ref.watch(faceIdEnabledProvider).value ?? false;
-    final birthday = info.value?.birthday;
-    final country = info.value?.country ?? Country.singapore;
-    final born = birthday == null
-        ? ''
-        : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}';
-    final note = OgText.body(14, color: c.textMuted);
-
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        const OgBackButton(),
-        const OgHeading(
-          title: 'Account information',
-          topGap: 8,
-          lead: 'Only you can see these details.',
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: c.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OgTextField(
-                label: 'Email',
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                autocorrect: false,
-              ),
-              const SizedBox(height: 16),
-              // The number keeps its own dialling code; it cannot be changed
-              // here (Q254).
-              PhoneField(
-                country: _mobileCountry,
-                controller: _mobile,
-                label: 'Mobile',
-              ),
-              const SizedBox(height: 16),
-              ReadOnlyField(label: 'Date of birth', value: born),
-              const SizedBox(height: 6),
-              Text("Your date of birth can't be changed.", style: note),
-              const SizedBox(height: 16),
-              ReadOnlyField(
-                label: 'Account region',
-                value: info.hasValue ? country.name : '',
-                leading: info.hasValue ? country.flag() : null,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Sets your currency, emergency number and local rules.',
-                style: note,
-              ),
-              const SizedBox(height: 8),
-              Container(height: 1, color: context.tones.divider),
-              SwitchRow(
-                leading: OgIcon(OgIcons.faceId, size: 26, color: c.text),
-                title: 'Enable Face ID',
-                subtitle: 'Unlock OlympusGO with your face.',
-                value: faceId,
-                onChanged: _setFaceId,
-              ),
-            ],
-          ),
-        ),
-        if (_error != null) OgErrorText(_error!),
-      ],
-      bottom: [
-        OgButton(
-          label: widget.onboarding ? 'Continue' : 'Save',
-          loading: _busy,
-          onPressed: _finish,
-        ),
-      ],
-    );
-  }
-}
-
-/// A greyed, outlined field that cannot be edited (date of birth, region).
-class ReadOnlyField extends StatelessWidget {
-  const ReadOnlyField({
-    super.key,
-    required this.label,
-    required this.value,
-    this.leading,
-  });
-
-  final String label;
-  final String value;
-  final Widget? leading;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    return Semantics(
-      readOnly: true,
-      label: label,
-      value: value,
-      child: ExcludeSemantics(
-        child: InputDecorator(
-          isEmpty: value.isEmpty,
-          decoration: ogOutlinedDecoration(
-            context,
-            label: label,
-            prefix: leading == null
-                ? null
-                : Padding(
-                    padding: const EdgeInsets.only(left: 14, right: 8),
-                    // A Row keeps the flag at its own size, not the field's.
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [leading!],
-                    ),
-                  ),
-          ).copyWith(enabled: false, filled: true, fillColor: c.surface),
-          child: Text(value, style: OgText.input.copyWith(color: c.textMuted)),
-        ),
-      ),
-    );
-  }
-}
 
 enum ImageSourceChoice { camera, library }
 
@@ -778,7 +33,6 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final prefs =
         ref.watch(notificationSettingsProvider).value ??
         const NotificationPrefs();
@@ -843,7 +97,7 @@ class NotificationsScreen extends ConsumerWidget {
         Text(
           'Changes save as you go.',
           textAlign: TextAlign.center,
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
       ],
     );
@@ -856,7 +110,6 @@ class PrivacyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final prefs =
         ref.watch(privacySettingsProvider).value ?? const PrivacyPrefs();
     final notifier = ref.read(privacySettingsProvider.notifier);
@@ -876,7 +129,7 @@ class PrivacyScreen extends ConsumerWidget {
         const OgBackButton(),
         const OgHeading(title: 'Privacy and safety', topGap: 8),
         const SizedBox(height: 20),
-        Text('Who can see my profile', style: OgText.label),
+        Text('Who can see my profile', style: context.type.caption),
         const SizedBox(height: 8),
         OgSelectField(
           value: prefs.visibility.label,
@@ -957,7 +210,7 @@ class PrivacyScreen extends ConsumerWidget {
         Text(
           'Changes save as you go.',
           textAlign: TextAlign.center,
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
       ],
     );
@@ -969,7 +222,6 @@ class BlockedPlayersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final blocked = ref.watch(blockedPlayersProvider);
     return OgFlowScreen(
       asPage: true,
@@ -987,7 +239,7 @@ class BlockedPlayersScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 12),
               child: Text(
                 "You haven't blocked anyone.",
-                style: OgText.body(16, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -1004,7 +256,6 @@ class BlockedPlayersScreen extends ConsumerWidget {
                 trailing: OgButton.outline(
                   label: 'Unblock',
                   height: 40,
-                  fontSize: 15,
                   expand: false,
                   onPressed: () async {
                     try {
@@ -1107,7 +358,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           hint: 'Search help',
           onChanged: (v) => setState(() => _query = v),
         ),
-        const SectionLabel('Common questions', top: 22, size: 13),
+        const SectionLabel('Common questions', top: 22),
         for (final i in shown)
           Container(
             decoration: BoxDecoration(
@@ -1129,14 +380,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              _faqs[i].$1,
-                              style: OgText.body(
-                                16,
-                                weight: FontWeight.w600,
-                                color: c.text,
-                              ),
-                            ),
+                            child: Text(_faqs[i].$1, style: context.type.body),
                           ),
                           AnimatedRotation(
                             turns: _open.contains(i) ? 0.5 : 0,
@@ -1161,10 +405,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Text(
                             _faqs[i].$2,
-                            style: OgText.body(
-                              15,
+                            style: context.type.secondary.copyWith(
                               height: 1.45,
-                              color: c.textMuted,
                             ),
                           ),
                         )
@@ -1178,7 +420,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
             padding: const EdgeInsets.only(top: 16),
             child: Text(
               'No answers match. Contact support below.',
-              style: OgText.body(15, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ),
         const SizedBox(height: 12),
@@ -1195,7 +437,6 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
         OgButton.outline(
           label: 'Contact support',
           height: 52,
-          fontSize: 18,
           onPressed: _contact,
         ),
       ],
@@ -1243,10 +484,7 @@ class _SupportSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Contact support',
-                style: OgText.section.copyWith(color: c.text),
-              ),
+              Text('Contact support', style: context.type.section),
               const SizedBox(height: 12),
               OgTextArea(
                 label: 'How can we help?',
@@ -1311,14 +549,14 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
           child: Text(
             'Log out?',
             textAlign: TextAlign.center,
-            style: OgText.h1.copyWith(color: c.text),
+            style: context.type.title,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'You can log back in with your email, mobile or username.',
           textAlign: TextAlign.center,
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
       ],
       bottom: [
@@ -1327,7 +565,6 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
         OgButton.outline(
           label: 'Cancel',
           height: 52,
-          fontSize: 18,
           onPressed: () => context.pop(),
         ),
       ],
@@ -1394,13 +631,21 @@ class _VerifyPhoneChangeScreenState
       } else {
         await auth.verifyPhoneChange(widget.phone, _code.text);
       }
-      ref.invalidate(privateInfoProvider);
+      ref
+        ..invalidate(privateInfoProvider)
+        ..invalidate(accountInfoProvider);
       if (!mounted) return;
       showOgToast(
         context,
         _isEmail ? 'Email updated' : 'Mobile number updated',
       );
-      context.go(Routes.settings);
+      // Back to the change screen, which closes itself, so the player lands
+      // on Account information (or its onboarding step) with the new value.
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(Routes.accountInfo);
+      }
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
       _code.clear();

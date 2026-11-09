@@ -7,7 +7,7 @@ import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -89,7 +89,6 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                 KitHeader(
                   title: 'Club info',
                   center: false,
-                  titleSize: 20,
                   trailing: club.canManage
                       ? KitIconButton(
                           icon: OgIcons.settings,
@@ -105,16 +104,13 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                   padding: const EdgeInsets.all(14).copyWith(left: 16),
                   child: Row(
                     children: [
-                      ClubMark(club, size: 64, radius: 16, fontSize: 24),
+                      ClubMark(club, size: 64, radius: 16),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              club.name,
-                              style: OgText.display(20, color: c.text),
-                            ),
+                            Text(club.name, style: context.type.section),
                             const SizedBox(height: 3),
                             Text(
                               [
@@ -122,7 +118,7 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                                 club.area,
                                 club.visibility.label,
                               ].join(' · '),
-                              style: OgText.body(14, color: c.textMuted),
+                              style: context.type.secondary,
                             ),
                           ],
                         ),
@@ -148,10 +144,9 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                             club.description.isEmpty
                                 ? 'The organizers have not written about the club yet.'
                                 : club.description,
-                            style: OgText.body(
-                              15,
-                              height: 1.5,
+                            style: context.type.body.copyWith(
                               color: context.tones.onTag,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -160,7 +155,7 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                           child: club.rules.isEmpty
                               ? Text(
                                   'No club rules yet.',
-                                  style: OgText.body(15, color: c.textMuted),
+                                  style: context.type.secondary,
                                 )
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,20 +169,18 @@ class _ClubAboutScreenState extends State<ClubAboutScreen> {
                                             width: 20,
                                             child: Text(
                                               '${i + 1}.',
-                                              style: OgText.body(
-                                                15,
-                                                height: 1.45,
+                                              style: context.type.body.copyWith(
                                                 color: context.tones.onTag,
+                                                height: 1.45,
                                               ),
                                             ),
                                           ),
                                           Expanded(
                                             child: Text(
                                               club.rules[i],
-                                              style: OgText.body(
-                                                15,
-                                                height: 1.45,
+                                              style: context.type.body.copyWith(
                                                 color: context.tones.onTag,
+                                                height: 1.45,
                                               ),
                                             ),
                                           ),
@@ -231,7 +224,7 @@ class _Panel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (title != null) ...[
-            Text(title!, style: OgText.display(16, color: context.og.text)),
+            Text(title!, style: context.type.section),
             SizedBox(height: gap),
           ],
           child,
@@ -248,7 +241,6 @@ class _Details extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final created = club.createdAt;
     final items = [
       ('Sport', club.sportLabels.isEmpty ? 'Not set' : club.sportLabels),
@@ -266,9 +258,9 @@ class _Details extends StatelessWidget {
     Widget cell((String, String) e) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(e.$1, style: OgText.body(13, color: c.textMuted)),
+        Text(e.$1, style: context.type.caption),
         const SizedBox(height: 2),
-        Text(e.$2, style: OgText.body(15, weight: FontWeight.w600)),
+        Text(e.$2, style: context.type.body),
       ],
     );
     return _Panel(
@@ -308,7 +300,7 @@ class _Rating extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: kitSpaced([
-              Text('Rate ${club.name}', style: OgText.heading(22)),
+              Text('Rate ${club.name}', style: context.type.section),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -383,7 +375,6 @@ class _RatingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     if (club.rating == null || club.ratingCount < 10) {
       return const _Panel(
@@ -402,7 +393,7 @@ class _RatingPanel extends StatelessWidget {
             children: [
               Text(
                 club.rating!.toStringAsFixed(1),
-                style: OgText.display(40, height: 1, color: c.text),
+                style: context.type.score.copyWith(height: 1),
               ),
               const SizedBox(width: 10),
               Column(
@@ -429,7 +420,7 @@ class _RatingPanel extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${club.ratingCount} Meet reviews · last 90 days',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -443,10 +434,7 @@ class _RatingPanel extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: 22,
-                    child: Text(
-                      '$star★',
-                      style: OgText.body(13, weight: FontWeight.w600),
-                    ),
+                    child: Text('$star★', style: context.type.caption),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -468,7 +456,7 @@ class _RatingPanel extends StatelessWidget {
                     child: Text(
                       '${club.ratingSpread[5 - star]}',
                       textAlign: TextAlign.right,
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                   ),
                 ],
@@ -477,7 +465,7 @@ class _RatingPanel extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Only players who checked in to a Meet can rate it. Clubs show a rating once they have at least 10 reviews.',
-            style: OgText.body(14, height: 1.5, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.5),
           ),
         ],
       ),
@@ -519,7 +507,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                 KitHeader(
                   title: 'Leaderboard',
                   subtitle: club.name,
-                  titleSize: 19,
                   trailing: Builder(
                     builder: (context) => KitIconButton(
                       icon: OgIcons.shareUp,
@@ -621,10 +608,10 @@ class _Board extends StatelessWidget {
           Text(
             e.player.displayName,
             textAlign: TextAlign.center,
-            style: OgText.body(14, weight: FontWeight.w600, height: 1.2),
+            style: context.type.body.copyWith(height: 1.2),
           ),
           const SizedBox(height: 6),
-          Text(e.score, style: OgText.display(16, color: c.text)),
+          Text(e.score, style: context.type.section),
           const SizedBox(height: 6),
           Container(
             height: heights[i],
@@ -638,7 +625,9 @@ class _Board extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: Text(
               '${i + 1}',
-              style: OgText.display(22, color: const Color(0xFF3A2C00)),
+              style: context.type.score.copyWith(
+                color: const Color(0xFF3A2C00),
+              ),
             ),
           ),
         ],
@@ -658,10 +647,8 @@ class _Board extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(
-              child: Text(title, style: OgText.display(17, color: c.text)),
-            ),
-            Text('Rating', style: OgText.body(13, color: c.textMuted)),
+            Expanded(child: Text(title, style: context.type.section)),
+            Text('Rating', style: context.type.caption),
           ],
         ),
         const SizedBox(height: 14),
@@ -693,11 +680,7 @@ class _Board extends StatelessWidget {
                         child: Text(
                           '${i + 1}',
                           textAlign: TextAlign.center,
-                          style: OgText.body(
-                            14,
-                            weight: FontWeight.w600,
-                            color: t.onTag,
-                          ),
+                          style: context.type.body.copyWith(color: t.onTag),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -709,28 +692,20 @@ class _Board extends StatelessWidget {
                           children: [
                             Text(
                               rows[i].player.displayName,
-                              style: OgText.body(15, weight: FontWeight.w600),
+                              style: context.type.body,
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              rows[i].sub,
-                              style: OgText.body(12, color: c.textMuted),
-                            ),
+                            Text(rows[i].sub, style: context.type.caption),
                           ],
                         ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            rows[i].score,
-                            style: OgText.display(17, color: c.text),
-                          ),
+                          Text(rows[i].score, style: context.type.section),
                           Text(
                             move(rows[i].move).$1,
-                            style: OgText.body(
-                              12,
-                              weight: FontWeight.w600,
+                            style: context.type.caption.copyWith(
                               color: move(rows[i].move).$2,
                             ),
                           ),
@@ -746,7 +721,7 @@ class _Board extends StatelessWidget {
         Text(
           'Only confirmed matches count, with at least 4 this month. Resets monthly.',
           textAlign: TextAlign.center,
-          style: OgText.body(13, height: 1.5, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.5),
         ),
       ],
     );
@@ -779,7 +754,7 @@ class _MeBar extends StatelessWidget {
             child: Text(
               rank == null ? '–' : '#$rank',
               textAlign: TextAlign.center,
-              style: OgText.body(14, weight: FontWeight.w600, color: t.gold),
+              style: context.type.body.copyWith(color: t.gold),
             ),
           ),
           const SizedBox(width: 12),
@@ -796,21 +771,22 @@ class _MeBar extends StatelessWidget {
               children: [
                 Text(
                   'You',
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w600,
-                    color: c.onInverseCard,
-                  ),
+                  style: context.type.body.copyWith(color: c.onInverseCard),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   note,
-                  style: OgText.body(12, color: const Color(0xFFC9C6BC)),
+                  style: context.type.caption.copyWith(
+                    color: const Color(0xFFC9C6BC),
+                  ),
                 ),
               ],
             ),
           ),
-          Text(me.score, style: OgText.display(18, color: c.onInverseCard)),
+          Text(
+            me.score,
+            style: context.type.section.copyWith(color: c.onInverseCard),
+          ),
         ],
       ),
     );

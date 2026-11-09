@@ -23,6 +23,8 @@ Put these in `packages/ui/lib/tokens.dart` (generated from a `tokens.json` copy,
 | `bg` | `#FFFFFF` | `#14171A` | Screen background |
 | `surface` | `#F7F7F4` | `#1C1F23` | Grouped areas and cards on `bg` |
 | `surfaceRaised` | `#FFFFFF` | `#262A2F` | Inputs, sheets, cards on `surface` |
+| `groupedBg` | `#F3F2EC` | `#14171A` | The page and header behind a grouped settings list (owner, 9 Nov) |
+| `groupedSurface` | `#FFFFFF` | `#1C1F23` | Settings groups and the search bar on `groupedBg` |
 | `border` | `#D9D9D2` | `#3A4047` | Decorative hairlines only |
 | `borderControl` | `#7A8088` | `#7C838B` | Edges of inputs, unselected chips, option rows (at least 3:1) |
 | `text` | `#1C1F23` | `#F4F5F2` | Headlines and body |
@@ -37,21 +39,27 @@ Brand constants: `orange500 #E8590C`, `orange700 #C94A00`, `orange300 #FF7A1A`, 
 
 ### Type
 
-Fonts: **Futura** for everything (owner, 8 Nov 2026, Q250): Bold for display (titles, button labels), Medium for the rest. iPhones include Futura; Android, the web and the admin web use **Jost**, the closest free match (Open Font License), until a Futura licence is bought. This replaces Baloo 2 and Nunito Sans (Q15).
+Font: **Jost** everywhere, Regular (400) and Medium (500) only (owner, 9 Nov 2026, Q257). There is no Bold and no Semibold. Hierarchy comes from size and colour first, weight last. The roles live once in the theme (`OgType` in `packages/og_design/lib/og_type.dart`); screens use `context.type.<role>` and never set a size or weight.
 
-| Style | Family | Size / line | Weight | Use |
+| Role | Size | Weight | Colour | Use |
 | --- | --- | --- | --- | --- |
-| `display` | Futura | 48 / 52 | 800 | Splash and celebration only |
-| `h1` | Futura | 34 / 38 | 800 | Screen titles |
-| `h2` | Futura | 24 / 28 | 800 | Section titles |
-| `h3` | Futura | 20 / 24 | 700 | Card titles |
-| `button` | Futura | 20 / 24 | 800 | Button labels (20 px bold counts as large text) |
-| `bodyLg` | Futura | 18 / 26 | 400 | Input text |
-| `body` | Futura | 16 / 24 | 400 | Body copy |
-| `bodyBold` | Futura | 16 / 24 | 700 | Selected options, emphasis |
-| `label` | Futura | 14 / 20 | 700 | Field labels |
-| `small` | Futura | 14 / 20 | 400 | Helper text |
-| `caption` | Futura | 12 / 16 | 600 | The smallest text allowed |
+| `score` | 32 | Medium | primary | Scores, ratings, prices, counters |
+| `display` | 28 | Medium | primary | At most one hero headline a screen |
+| `title` | 20 | Medium | primary | Screen and app bar titles |
+| `section` | 17 | Medium | primary | Card and section headings |
+| `groupLabel` | 15 | Medium | secondary | Headers over settings groups ("How you use OlympusGO"). Asked for as Semibold; Medium per Q257 |
+| `body` | 15 | Regular | primary | Main text, row labels, list items, typed text |
+| `secondary` | 15 | Regular | secondary | Values, meta info |
+| `caption` | 13 | Regular | secondary | Helper text, timestamps, section and field labels, status tags |
+| `button` | 15 | Regular | per button | Buttons, tabs, chips, links |
+| `tertiary` | 15 | Regular | tertiary | Placeholders and disabled text |
+
+Rules:
+
+1. Secondary information goes grey, never bold. At most one emphasised element per row or card, and it stands out by colour.
+2. Buttons stand out by fill and shape. Filled buttons use `primarySmall` (`orange700` in light, 4.7:1 with white), because a 15 Regular label does not count as large text.
+3. Initials on avatars and logos take the role nearest 40 % of the avatar's size (`OgType.initials`).
+4. Text colours: primary `text`, secondary `textMuted`, tertiary `textTertiary` (`#868B92` light, `#737980` dark).
 
 ### Spacing, radius, shadow
 
@@ -70,11 +78,13 @@ Fonts: **Futura** for everything (owner, 8 Nov 2026, Q250): Bold for display (ti
 | `radiusPill` | 999 | Buttons and chips |
 | `shadowCard` | light `0 4 16 rgba(28,31,35,0.08)`, dark `0 4 16 rgba(0,0,0,0.4)` | Floating cards and sheets only; flat screens use borders |
 
+In code these are `OgSpace` (`s1` to `s12`), `OgRadius` (`sm`, `md`, `lg`, `pill`), `OgSize` (row height 56, or 72 with a subtitle; tap target 48; row icon 24; new-item dot 8; 8 px band between settings groups; search bar 44; Edit profile photo 96; readable width 560 from 600 wide) and `OgMotion` (press 150 ms, reduced-motion fade 200 ms, ease-out, 400 ms debounce before a live check) in `packages/og_design/lib/og_layout.dart`. New components take every number from there.
+
 ## Rules
 
 1. Orange fills carry only white text. White on `orange300` is not allowed.
 2. Lime fills carry only charcoal text.
-3. Orange text smaller than 18.66 px bold uses `link` or `orange700`, never `orange500`.
+3. Orange text, and white text on an orange fill, smaller than 24 px Regular uses `link` or `orange700`, never `orange500`.
 4. Control edges use `borderControl`, not `border`.
 5. State is never colour alone: errors and success come with an icon and a sentence.
 6. Focus is a 3 px `focusRing` outline.
@@ -104,6 +114,9 @@ Build these in `packages/ui` before feature screens. Each has a widget test and 
 | `OgField` | Label, helper, error with icon and sentence | Sign-up, create forms |
 | `OgOptionRow` | Radio or checkbox row, 64 tall | Refund choice, reasons |
 | `OgSwitchRow` | Title, subtitle, switch, 60 tall | Notification settings |
+| `SettingsRow` (`lib/core/widgets/settings_list.dart`) | Optional 24 px outline icon, label in `body` with an optional `secondary` subtitle under it, value in `secondary` on the right (one line, ellipsis, at most 60 % of the row; the label wraps but never shortens), optional 8 px "new" dot, then a chevron only when it opens something (or a trailing icon such as copy). No value shows its empty text ("Add") in `link`, because orange text under 24 px cannot be `accent`. 56 tall, 72 with a subtitle. Pressing changes the background for 150 ms instead of a ripple, instantly with reduced motion. A screen reader hears "label, subtitle, value, button"; a keyboard or Switch Control can focus it and it shows the 3 px `focusRing`. `isLoading` shows a grey bar at the same height. At large text a value that won't fit moves under the label | Settings, Account information, Edit profile |
+| `SettingsSection` | `menu` (default): rows edge to edge on `groupedSurface` (white), no dividers, groups 8 px apart on a `groupedBg` page (light grey), with the header on `groupedBg` too. `outlined`: a `radiusLg` card with a `border` hairline, no fill, hairlines between rows, 16 px side margins. Optional `groupLabel` header and `caption` helper text with an optional `link` at its end | Settings; Account information and Edit profile (outlined) |
+| `SettingsList` and `SettingsSearchBar` | The search bar is a 44 px rounded field in `groupedSurface` with "Search". The list filters every group's rows by label and subtitle, hides empty groups and shows "No results" | Settings |
 | `OgSheet` | Bottom sheet with handle and close button | Payment sheet, give up a spot |
 | `PaymentSheet` | Review, then Face ID, then receipt (PAY-1). One widget for every paid flow | MeetPay, MeetConfirm, MeetPaid |
 | `ActivityCard` | One card for Meets, tournaments and events; no Join button on the card (PLY-3) | ActivityCards |

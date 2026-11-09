@@ -10,7 +10,7 @@ import '../../../core/config/env.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -175,7 +175,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     Widget? action,
     double top = 20,
   }) {
-    final c = context.og;
     return Padding(
       padding: EdgeInsets.only(top: top),
       child: Row(
@@ -183,11 +182,10 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           Expanded(
             child: Semantics(
               header: true,
-              child: Text(text, style: OgText.display(20, color: c.text)),
+              child: Text(text, style: context.type.section),
             ),
           ),
-          if (trailing != null)
-            Text(trailing, style: OgText.body(14, color: c.textMuted)),
+          if (trailing != null) Text(trailing, style: context.type.secondary),
           ?action,
         ],
       ),
@@ -238,8 +236,8 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        Text(label, style: OgText.body(12, color: c.textMuted)),
-                        Text(value, style: OgText.display(20, color: c.text)),
+                        Text(label, style: context.type.caption),
+                        Text(value, style: context.type.section),
                       ],
                     ),
                   ),
@@ -268,8 +266,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     ),
                     child: Text(
                       win ? 'W' : 'L',
-                      style: OgText.display(
-                        17,
+                      style: context.type.section.copyWith(
                         color: win ? c.onPrimary : c.text,
                       ),
                     ),
@@ -302,7 +299,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     ? '$played of 5 ranked matches played. Your form and '
                           'stats start after 5.'
                     : 'See your matches in Sessions and rating.',
-                style: OgText.body(15, height: 1.45, color: c.textMuted),
+                style: context.type.secondary.copyWith(height: 1.45),
               );
             },
           ),
@@ -326,7 +323,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 child: SizedBox(
                   height: 54,
                   width: double.infinity,
-                  child: CustomPaint(painter: _LevelPainter(level, c)),
+                  child: CustomPaint(
+                    painter: _LevelPainter(level, c, context.type),
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
@@ -337,14 +336,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     TextSpan(
                       text:
                           '${level.playMin.toStringAsFixed(1)} to ${level.playMax.toStringAsFixed(1)}',
-                      style: TextStyle(
-                        color: c.text,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      // The range stands out by colour, not weight.
+                      style: context.type.body,
                     ),
                   ],
                 ),
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ],
           ),
@@ -370,25 +367,23 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     children: [
                       Text(
                         'NEXT UP · TUE 13 OCT · 7:30 PM',
-                        style: OgText.body(
-                          12,
-                          weight: FontWeight.w600,
-                          letterSpacing: 0.72,
+                        style: context.type.caption.copyWith(
                           color: c.highlight,
+                          letterSpacing: 0.72,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         DemoPassport.upcoming.first.title,
-                        style: OgText.body(
-                          17,
-                          weight: FontWeight.w600,
+                        style: context.type.section.copyWith(
                           color: c.onInverseCard,
                         ),
                       ),
                       Text(
                         DemoPassport.upcoming.first.place,
-                        style: OgText.body(14, color: c.onInverseCardMuted),
+                        style: context.type.body.copyWith(
+                          color: c.onInverseCardMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -427,22 +422,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            card.label,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(card.label, style: context.type.caption),
                           Text(
                             card.value,
-                            style: OgText.display(
-                              26,
-                              height: 1.15,
-                              color: c.text,
-                            ),
+                            style: context.type.score.copyWith(height: 1.15),
                           ),
-                          Text(
-                            card.note,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(card.note, style: context.type.caption),
                         ],
                       ),
                     ),
@@ -468,17 +453,8 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: OgText.body(
-                              15,
-                              weight: FontWeight.w600,
-                              color: c.text,
-                            ),
-                          ),
-                        ),
-                        Text('$pct%', style: OgText.display(18, color: c.text)),
+                        Expanded(child: Text(label, style: context.type.body)),
+                        Text('$pct%', style: context.type.section),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -516,11 +492,11 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 children: [
                   Text(
                     'Your ${sport.label.toLowerCase()} gear',
-                    style: OgText.display(20, color: c.text),
+                    style: context.type.section,
                   ),
                   Text(
                     'Tap an item for details.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -529,7 +505,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
               label: 'Add gear',
               icon: OgIcons.plus,
               height: 44,
-              fontSize: 15,
               expand: false,
               onPressed: () => context.push(Routes.gearEdit('new')),
             ),
@@ -541,7 +516,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'Add your racquet, shoes and strings to track restrings and wear.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ),
       for (final g in gear)
@@ -581,17 +556,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                           children: [
                             Text(
                               g.name,
-                              style: OgText.body(
-                                16,
-                                weight: FontWeight.w600,
-                                height: 1.25,
-                                color: c.text,
-                              ),
+                              style: context.type.body.copyWith(height: 1.25),
                             ),
-                            Text(
-                              g.type,
-                              style: OgText.body(13, color: c.textMuted),
-                            ),
+                            Text(g.type, style: context.type.caption),
                             if (g.tags.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Wrap(
@@ -610,11 +577,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                                       ),
                                       child: Text(
                                         t,
-                                        style: OgText.body(
-                                          12,
-                                          weight: FontWeight.w600,
-                                          color: c.text,
-                                        ),
+                                        style: context.type.caption,
                                       ),
                                     ),
                                 ],
@@ -639,16 +602,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          g.price!,
-                          style: OgText.display(20, color: c.text),
-                        ),
+                        child: Text(g.price!, style: context.type.section),
                       ),
                       OgButton(
                         label: 'Add to cart',
                         icon: OgIcons.cart,
                         height: 40,
-                        fontSize: 16,
                         expand: false,
                         onPressed: () => context.push(Routes.cart),
                       ),
@@ -669,7 +628,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'No games coming up. Join a Meet and it shows here.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ),
       ];
@@ -691,21 +650,10 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   children: [
                     Text(
                       g.when,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.link,
-                      ),
+                      style: context.type.caption.copyWith(color: c.link),
                     ),
-                    Text(
-                      g.title,
-                      style: OgText.body(
-                        16,
-                        weight: FontWeight.w600,
-                        color: c.text,
-                      ),
-                    ),
-                    Text(g.place, style: OgText.body(14, color: c.textMuted)),
+                    Text(g.title, style: context.type.body),
+                    Text(g.place, style: context.type.secondary),
                   ],
                 ),
               ),
@@ -723,9 +671,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 ),
                 child: Text(
                   g.waitlist ? 'Waitlist' : 'Going',
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w600,
+                  style: context.type.caption.copyWith(
                     color: g.waitlist ? c.text : c.onPrimary,
                   ),
                 ),
@@ -763,12 +709,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             const SizedBox(height: 12),
             Text(
               'Challenges are for creators',
-              style: OgText.display(22, height: 1.2, color: c.text),
+              style: context.type.title.copyWith(height: 1.2),
             ),
             const SizedBox(height: 6),
             Text(
               'Reach 1,000 followers to set challenges for your fans, track who joins and reward the winners. If you later drop below 1,000, you keep access for 30 days to get back.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
             const SizedBox(height: 16),
             Semantics(
@@ -787,19 +733,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    '$followers followers',
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
+                  child: Text('$followers followers', style: context.type.body),
                 ),
-                Text(
-                  '1,000 to unlock',
-                  style: OgText.body(14, color: c.textMuted),
-                ),
+                Text('1,000 to unlock', style: context.type.secondary),
               ],
             ),
           ],
@@ -809,7 +745,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
       OgButton.outline(
         label: 'See the creator view',
         height: 52,
-        fontSize: 18,
         onPressed: () => context.push(Routes.creatorChallenges),
       ),
     ];
@@ -926,7 +861,10 @@ class _Hero extends StatelessWidget {
               first,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.display(54, height: 1, color: OgColors.offWhite),
+              style: context.type.display.copyWith(
+                color: OgColors.offWhite,
+                height: 1,
+              ),
             ),
           ),
           if (level != null)
@@ -943,11 +881,9 @@ class _Hero extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'DOUBLES · LEVEL ${level!.toStringAsFixed(1)}',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      letterSpacing: 0.78,
+                    style: context.type.caption.copyWith(
                       color: OgColors.grey400,
+                      letterSpacing: 0.78,
                     ),
                   ),
                 ],
@@ -1023,7 +959,6 @@ class _InfoCard extends StatelessWidget {
                 tone: AvatarTone.brand,
                 imageUrl: profile?.avatarUrl,
                 size: 60,
-                fontSize: 22,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1032,17 +967,14 @@ class _InfoCard extends StatelessWidget {
                   children: [
                     Text(
                       profile?.fullName ?? '',
-                      style: OgText.display(24, height: 1.1, color: c.text),
+                      style: context.type.title.copyWith(height: 1.1),
                     ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
                         OgIcon(OgIcons.location, size: 16, color: c.textMuted),
                         const SizedBox(width: 4),
-                        Text(
-                          country,
-                          style: OgText.body(15, color: c.textMuted),
-                        ),
+                        Text(country, style: context.type.secondary),
                       ],
                     ),
                   ],
@@ -1067,10 +999,10 @@ class _InfoCard extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        Text(label, style: OgText.body(12, color: c.textMuted)),
+                        Text(label, style: context.type.caption),
                         Text(
                           value,
-                          style: OgText.display(19, height: 1.2, color: c.text),
+                          style: context.type.section.copyWith(height: 1.2),
                         ),
                       ],
                     ),
@@ -1171,9 +1103,7 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
                               const SizedBox(width: 8),
                               Text(
                                 s.label,
-                                style: OgText.body(
-                                  16,
-                                  weight: FontWeight.w600,
+                                style: context.type.body.copyWith(
                                   color: OgColors.offWhite,
                                 ),
                               ),
@@ -1223,9 +1153,7 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
                           child: ExcludeSemantics(
                             child: Text(
                               t,
-                              style: OgText.body(
-                                15,
-                                weight: FontWeight.w600,
+                              style: context.type.body.copyWith(
                                 color: i == tab ? c.text : c.textMuted,
                               ),
                             ),
@@ -1252,10 +1180,11 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
 
 /// Level marker on the 1.0–8.0 track with the play-with range shaded.
 class _LevelPainter extends CustomPainter {
-  _LevelPainter(this.sport, this.c);
+  _LevelPainter(this.sport, this.c, this.type);
 
   final PlayerSport sport;
   final OgColors c;
+  final OgType type;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1298,22 +1227,11 @@ class _LevelPainter extends CustomPainter {
       canvas,
       sport.level.toStringAsFixed(1),
       Offset(cx, 0),
-      OgText.display(14, color: c.text),
+      type.section,
       center: true,
     );
-    _text(
-      canvas,
-      '1.0',
-      const Offset(left, 40),
-      OgText.body(11, color: c.textMuted),
-    );
-    _text(
-      canvas,
-      '8.0',
-      Offset(left + width, 40),
-      OgText.body(11, color: c.textMuted),
-      right: true,
-    );
+    _text(canvas, '1.0', const Offset(left, 40), type.caption);
+    _text(canvas, '8.0', Offset(left + width, 40), type.caption, right: true);
   }
 
   void _text(
@@ -1384,6 +1302,7 @@ class _WinRateChartState extends State<_WinRateChart> {
                   _selected,
                   c,
                   '${m.label} ${m.year}',
+                  context.type,
                 ),
               ),
             ),
@@ -1395,12 +1314,13 @@ class _WinRateChartState extends State<_WinRateChart> {
 }
 
 class _WinRatePainter extends CustomPainter {
-  _WinRatePainter(this.months, this.selected, this.c, this.title);
+  _WinRatePainter(this.months, this.selected, this.c, this.title, this.type);
 
   final List<MonthPoint> months;
   final int selected;
   final OgColors c;
   final String title;
+  final OgType type;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1410,7 +1330,7 @@ class _WinRatePainter extends CustomPainter {
     double y(int pct) => (130 - pct * 1.2) * sy;
     final step = (right - left) / (months.length - 1);
     double x(int i) => left + i * step;
-    final muted = OgText.body(11, color: c.textMuted);
+    final muted = type.caption;
 
     for (final pct in [0, 25, 50, 75, 100]) {
       canvas.drawLine(
@@ -1480,11 +1400,7 @@ class _WinRatePainter extends CustomPainter {
         canvas,
         months[i].label,
         Offset(x(i), 148 * sy),
-        OgText.body(
-          12,
-          weight: i == selected ? FontWeight.w600 : FontWeight.w400,
-          color: i == selected ? c.text : c.textMuted,
-        ),
+        type.caption.copyWith(color: i == selected ? c.text : c.textMuted),
         center: true,
       );
     }
@@ -1508,12 +1424,7 @@ class _WinRatePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );
-    _text(
-      canvas,
-      title,
-      Offset(tx + 10, 14 * sy + 7),
-      OgText.body(13, weight: FontWeight.w600, color: c.text),
-    );
+    _text(canvas, title, Offset(tx + 10, 14 * sy + 7), type.caption);
     _rich(
       canvas,
       'Win rate  ',
@@ -1532,11 +1443,12 @@ class _WinRatePainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: a,
-        style: OgText.body(12, color: c.textMuted),
+        style: type.caption,
         children: [
+          // The value stands out by colour, not weight.
           TextSpan(
             text: b,
-            style: OgText.body(12, weight: FontWeight.w600, color: c.text),
+            style: type.caption.copyWith(color: c.text),
           ),
         ],
       ),

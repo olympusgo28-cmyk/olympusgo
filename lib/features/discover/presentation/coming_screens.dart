@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 
 /// A category with nothing in it yet. The tile still opens something, so the
@@ -23,7 +22,7 @@ class EmptyCategoryScreen extends StatelessWidget {
       DashedBox(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(message, style: OgText.lead(context.og.textMuted)),
+          child: Text(message, style: context.type.secondary),
         ),
       ),
     ],

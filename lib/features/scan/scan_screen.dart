@@ -9,7 +9,7 @@ import '../../core/config/env.dart';
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/share.dart';
@@ -175,7 +175,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                         child: Text(
                           'Scan',
                           textAlign: TextAlign.center,
-                          style: OgText.display(19, color: Colors.white),
+                          style: context.type.section.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -256,9 +258,7 @@ class _ModeSwitch extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: OgText.body(
-              14,
-              weight: on ? FontWeight.w600 : FontWeight.w600,
+            style: context.type.body.copyWith(
               color: on ? OgColors.ink : Colors.white,
             ),
           ),
@@ -355,17 +355,13 @@ class _Scanner extends StatelessWidget {
                     const SizedBox(height: 18),
                     Text(
                       'Point at an Olympus QR code',
-                      style: OgText.body(
-                        15,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      style: context.type.body.copyWith(color: Colors.white),
                     ),
                     if (demo) ...[
                       const SizedBox(height: 6),
                       Text(
                         'Demo: tap a row below to see a result',
-                        style: OgText.body(13, color: _muted),
+                        style: context.type.caption.copyWith(color: _muted),
                       ),
                     ],
                   ],
@@ -411,9 +407,7 @@ class _Scanner extends StatelessWidget {
                           alignment: Alignment.center,
                           child: Text(
                             '${i + 1}',
-                            style: OgText.body(
-                              12,
-                              weight: FontWeight.w600,
+                            style: context.type.caption.copyWith(
                               color: const Color(0xFF3A2C00),
                             ),
                           ),
@@ -426,16 +420,16 @@ class _Scanner extends StatelessWidget {
                             children: [
                               Text(
                                 uses[i].$1,
-                                style: OgText.body(
-                                  14,
-                                  weight: FontWeight.w600,
+                                style: context.type.body.copyWith(
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 1),
                               Text(
                                 uses[i].$2,
-                                style: OgText.body(12, color: _muted),
+                                style: context.type.caption.copyWith(
+                                  color: _muted,
+                                ),
                               ),
                             ],
                           ),
@@ -466,7 +460,7 @@ class _ParentScansIfNeeded extends ConsumerWidget {
       child: Text(
         'Ask a parent to scan for you. Hosts can scan the code below.',
         textAlign: TextAlign.center,
-        style: OgText.body(15, height: 1.4, color: _muted),
+        style: context.type.body.copyWith(color: _muted, height: 1.4),
       ),
     );
   }
@@ -521,12 +515,14 @@ class _MyCode extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Text(
                   profile?.fullName ?? username,
-                  style: OgText.heading(19, color: OgColors.ink),
+                  style: context.type.section.copyWith(color: OgColors.ink),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   ['@$username', ?level].join(' · '),
-                  style: OgText.body(13, color: const Color(0xFF5B6168)),
+                  style: context.type.caption.copyWith(
+                    color: const Color(0xFF5B6168),
+                  ),
                 ),
               ],
             ),
@@ -538,7 +534,7 @@ class _MyCode extends ConsumerWidget {
               'Show this at an event door, to an organizer adding a walk-in, '
               'or to a player who wants to add you.',
               textAlign: TextAlign.center,
-              style: OgText.body(14, height: 1.45, color: _muted),
+              style: context.type.body.copyWith(color: _muted, height: 1.45),
             ),
           ),
           const SizedBox(height: 16),
@@ -557,11 +553,7 @@ class _MyCode extends ConsumerWidget {
                 children: [
                   Text(
                     'My tickets · $tickets',
-                    style: OgText.body(
-                      15,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.body.copyWith(color: Colors.white),
                   ),
                 ],
               ),

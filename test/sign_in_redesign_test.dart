@@ -32,7 +32,7 @@ import 'package:olympus_go/features/profile/domain/profile.dart';
 import 'package:olympus_go/features/settings/application/settings_providers.dart';
 import 'package:olympus_go/features/settings/data/settings_repository.dart';
 import 'package:olympus_go/features/settings/domain/settings_models.dart';
-import 'package:olympus_go/features/settings/presentation/settings_screens.dart';
+import 'package:olympus_go/features/settings/presentation/account_info_screens.dart';
 
 class _Auth implements AuthRepository {
   _Auth({this.saved = const [], this.userId});
@@ -78,16 +78,12 @@ class _Auth implements AuthRepository {
 }
 
 class _Settings implements SettingsRepository {
-  final saved = <AccountDetails>[];
-
   @override
   Future<AccountDetails> account() async => const AccountDetails(
     fullName: 'Nicholas Ong',
     username: 'nicholas28',
     bio: 'Badminton on weekday nights, pickleball on Sundays.',
   );
-  @override
-  Future<void> saveAccount(AccountDetails details) async => saved.add(details);
   @override
   Future<PrivateInfo> privateInfo() async => PrivateInfo(
     phone: '+6580000003',
@@ -135,10 +131,6 @@ Future<GoRouter> _open(
         path: '${Routes.skills}/:sport',
         builder: (_, s) =>
             SportSkillScreen(sport: Sport.fromId(s.pathParameters['sport']!)),
-      ),
-      GoRoute(
-        path: Routes.editProfile,
-        builder: (_, _) => const EditProfileScreen(),
       ),
       GoRoute(
         path: Routes.accountInfo,
@@ -434,47 +426,6 @@ void main() {
     });
   });
 
-  group('Edit profile', () {
-    testWidgets('rows open their own editor, and Save writes the change', (
-      tester,
-    ) async {
-      final settings = _Settings();
-      await _open(tester, Routes.editProfile, settings: settings);
-      expect(find.text('Edit profile'), findsWidgets);
-      expect(find.text('Change photo'), findsOneWidget);
-      expect(find.text('Personal information settings'), findsNothing);
-      expect(find.text('@nicholas28'), findsOneWidget);
-      expect(
-        find.text('Badminton on weekday nights, pickleball on Sundays.'),
-        findsOneWidget,
-      );
-
-      await _tap(tester, find.text('Nicholas Ong'));
-      await tester.enterText(find.byType(TextField), 'Nick Ong');
-      await _tap(tester, find.text('Done'));
-      expect(find.text('Nick Ong'), findsOneWidget);
-      expect(settings.saved, isEmpty, reason: 'nothing saved before Save');
-
-      await _tap(tester, find.text('Save'));
-      expect(settings.saved.single.fullName, 'Nick Ong');
-      expect(settings.saved.single.username, 'nicholas28');
-      expect(find.text('at start'), findsOneWidget);
-      // Let the "Saved" message finish.
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets('a username editor refuses a bad username', (tester) async {
-      await _open(tester, Routes.editProfile);
-      await _tap(tester, find.text('@nicholas28'));
-      await tester.enterText(find.byType(TextField), 'no spaces');
-      await _tap(tester, find.text('Done'));
-      expect(
-        find.text('Usernames use 3 to 30 letters, numbers or underscores.'),
-        findsOneWidget,
-      );
-    });
-  });
-
   group('Face ID switch (Q249)', () {
     Future<(ProviderContainer, _Vault)> make({
       bool biometrics = true,
@@ -532,28 +483,22 @@ void main() {
     });
   });
 
-  group('Account information (Q249, Q254)', () {
-    testWidgets(
-      'one card: email, merged mobile, birthday, region, Face ID off',
-      (tester) async {
-        await _open(tester, Routes.accountInfo);
-        expect(find.text('Account information'), findsWidgets);
-        expect(find.text('Only you can see these details.'), findsOneWidget);
-        expect(find.text('+65'), findsOneWidget);
-        expect(find.text('8000 0003'), findsOneWidget);
-        expect(find.text('8 June 1996'), findsOneWidget);
-        expect(
-          find.text("Your date of birth can't be changed."),
-          findsOneWidget,
-        );
-        expect(find.text('Account region'), findsOneWidget);
-        expect(find.text('Singapore'), findsOneWidget);
-        final faceId = tester.widget<CupertinoSwitch>(
-          find.byType(CupertinoSwitch),
-        );
-        expect(faceId.value, isFalse);
-      },
-    );
+  group('Account information (Q249, Q254, Q258)', () {
+    testWidgets('one card: masked phone, Add for no email, birthday, region; '
+        'Face ID off in its own card', (tester) async {
+      await _open(tester, Routes.accountInfo);
+      expect(find.text('Account information'), findsWidgets);
+      expect(find.text('+65 •••• 0003'), findsOneWidget);
+      expect(find.text('Add'), findsOneWidget);
+      expect(find.text('8 June 1996'), findsOneWidget);
+      expect(find.text('Account region'), findsOneWidget);
+      expect(find.text('Singapore'), findsOneWidget);
+      expect(find.text(AccountInfoScreen.regionNote), findsOneWidget);
+      final faceId = tester.widget<CupertinoSwitch>(
+        find.byType(CupertinoSwitch),
+      );
+      expect(faceId.value, isFalse);
+    });
   });
 }
 

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/format.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -51,9 +51,7 @@ class ActivityCard extends StatelessWidget {
         children: [
           OgIcon(icon, size: 20, color: c.textMuted),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(text, style: OgText.body(14, color: c.textMuted)),
-          ),
+          Expanded(child: Text(text, style: context.type.secondary)),
         ],
       ),
     );
@@ -78,11 +76,7 @@ class ActivityCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       eyebrow ?? a.eyebrow,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.link,
-                      ),
+                      style: context.type.caption.copyWith(color: c.link),
                     ),
                   ),
                   Container(
@@ -97,9 +91,7 @@ class ActivityCard extends StatelessWidget {
                     ),
                     child: Text(
                       pill.label,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
+                      style: context.type.caption.copyWith(
                         color: strongSolid
                             ? c.onPrimary
                             : (pill.strong ? c.link : c.textMuted),
@@ -109,10 +101,7 @@ class ActivityCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                a.title,
-                style: OgText.body(18, weight: FontWeight.w600, color: c.text),
-              ),
+              Text(a.title, style: context.type.section),
               const SizedBox(height: 4),
               line(OgIcons.calendar, Fmt.dayTime(a.startsAt)),
               line(OgIcons.pinSmall, a.venue.name),
@@ -150,14 +139,7 @@ class ChipChoice<T> extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: OgText.body(
-            labelSize,
-            weight: FontWeight.w600,
-            color: context.og.text,
-          ),
-        ),
+        Text(label, style: context.type.body),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -203,9 +185,7 @@ class LabeledSelect<T> extends StatelessWidget {
       children: [
         Text(
           label,
-          style: OgText.body(
-            14,
-            weight: FontWeight.w600,
+          style: context.type.body.copyWith(
             color: mutedLabel ? c.textMuted : c.text,
           ),
         ),
@@ -214,7 +194,6 @@ class LabeledSelect<T> extends StatelessWidget {
           value: text(value),
           semanticLabel: label,
           height: 52,
-          fontSize: 17,
           onTap: () async {
             final picked = await showOgListPicker<T>(
               context: context,
@@ -306,13 +285,13 @@ class PickerRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(label, style: OgText.body(16, color: c.textMuted)),
+            Text(label, style: context.type.secondary),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: OgText.body(16, weight: FontWeight.w600, color: c.text),
+                style: context.type.body,
               ),
             ),
             const SizedBox(width: 10),
@@ -377,19 +356,9 @@ class OptionRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        title,
-                        style: OgText.body(
-                          titleSize,
-                          weight: FontWeight.w600,
-                          color: c.text,
-                        ),
-                      ),
+                      Text(title, style: context.type.body),
                       if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          style: OgText.body(14, color: c.textMuted),
-                        ),
+                        Text(subtitle!, style: context.type.secondary),
                     ],
                   ),
                 ),
@@ -506,7 +475,7 @@ class _MonthCalendarState extends State<MonthCalendar> {
             Expanded(
               child: Text(
                 '${Fmt.monthsLong[_month.month - 1]} ${_month.year}',
-                style: OgText.body(18, weight: FontWeight.w600, color: c.text),
+                style: context.type.section,
               ),
             ),
             arrow(OgIcons.back, 'Previous month', canGoBack, -1),
@@ -521,7 +490,7 @@ class _MonthCalendarState extends State<MonthCalendar> {
                 child: Text(
                   d,
                   textAlign: TextAlign.center,
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ),
           ],
@@ -575,9 +544,7 @@ class _MonthCalendarState extends State<MonthCalendar> {
                               child: ExcludeSemantics(
                                 child: Text(
                                   '$n',
-                                  style: OgText.body(
-                                    16,
-                                    weight: FontWeight.w600,
+                                  style: context.type.body.copyWith(
                                     color: on
                                         ? c.onPrimary
                                         : (past ? OgColors.grey400 : c.text),

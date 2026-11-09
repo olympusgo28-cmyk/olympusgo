@@ -8,7 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -90,12 +90,12 @@ class TournamentManageScreen extends ConsumerWidget {
                 foreground: context.tones.onGold,
               ),
               const SizedBox(height: 8),
-              Text(a.title, style: OgText.heading(26)),
+              Text(a.title, style: context.type.title),
               const SizedBox(height: 4),
               Text(
                 '${tournamentDates(a)} · ${t.entries} entries · registration '
                 '${open ? 'open' : 'closed'}',
-                style: OgText.body(14, color: context.og.textMuted),
+                style: context.type.secondary,
               ),
             ],
           ),
@@ -216,7 +216,6 @@ class _TournamentEntriesScreenState
     id: widget.activityId,
     title: 'Entries',
     body: (t) {
-      final c = context.og;
       final tones = context.tones;
       final d = t.divisions.firstWhere(
         (d) => d.id == _division,
@@ -252,7 +251,7 @@ class _TournamentEntriesScreenState
           Text(
             '${d.entries} of ${d.capacity} entries'
             '${d.waiting > 0 ? ', ${d.waiting} waiting' : ''}',
-            style: OgText.heading(22),
+            style: context.type.section,
           ),
           if (list == null)
             const CupertinoActivityIndicator()
@@ -273,24 +272,21 @@ class _TournamentEntriesScreenState
                           width: 28,
                           child: Text(
                             e.seed == null ? '' : '${e.seed}',
-                            style: OgText.heading(17),
+                            style: context.type.section,
                           ),
                         ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                e.names,
-                                style: OgText.body(15, weight: FontWeight.w600),
-                              ),
+                              Text(e.names, style: context.type.body),
                               Text(
                                 [
                                   ?e.club,
                                   if (e.rating != null)
                                     'rating ${e.rating!.toStringAsFixed(1)}',
                                 ].join(', '),
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
@@ -315,7 +311,7 @@ class _TournamentEntriesScreenState
             ),
           Text(
             'Seeding follows each player’s main rating.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
       );
@@ -357,7 +353,6 @@ class _TournamentCheckInScreenState
     id: widget.activityId,
     title: 'Check-in',
     body: (t) {
-      final c = context.og;
       final tones = context.tones;
       final d = t.divisions.firstWhere(
         (d) => d.id == _division,
@@ -390,13 +385,13 @@ class _TournamentCheckInScreenState
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('$count', style: OgText.heading(44)),
+              Text('$count', style: context.type.score),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'of ${entries.length} $unit here',
-                  style: OgText.body(15, weight: FontWeight.w600),
+                  style: context.type.body,
                 ),
               ),
             ],
@@ -428,22 +423,15 @@ class _TournamentCheckInScreenState
                             .take(2)
                             .join(),
                         size: 44,
-                        fontSize: 14,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              e.names,
-                              style: OgText.body(15, weight: FontWeight.w600),
-                            ),
+                            Text(e.names, style: context.type.body),
                             if (e.firstMatch != null)
-                              Text(
-                                e.firstMatch!,
-                                style: OgText.body(13, color: c.textMuted),
-                              ),
+                              Text(e.firstMatch!, style: context.type.caption),
                           ],
                         ),
                       ),
@@ -454,7 +442,6 @@ class _TournamentCheckInScreenState
                               expand: false,
                               height: 40,
                               radius: 20,
-                              fontSize: 14,
                               padding: 14,
                               style: KitButtonStyle.dark,
                               onPressed: () => _set(t.activity.id, e, false),
@@ -464,7 +451,6 @@ class _TournamentCheckInScreenState
                               expand: false,
                               height: 40,
                               radius: 20,
-                              fontSize: 14,
                               padding: 14,
                               style: KitButtonStyle.outline,
                               onPressed: () => _set(t.activity.id, e, true),
@@ -478,7 +464,7 @@ class _TournamentCheckInScreenState
             '${d.doubles ? 'Pairs' : 'Players'} who are not here 10 minutes '
             'before their first match get a reminder. Tap Here to undo a '
             'check-in.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       );
@@ -548,7 +534,6 @@ class _TournamentMessageScreenState
     id: widget.activityId,
     title: 'Message entrants',
     body: (t) {
-      final c = context.og;
       final audiences = [
         'All ${t.entries} entrants',
         if (t.divisions.length > 1) '${t.divisions.first.name} only',
@@ -572,7 +557,7 @@ class _TournamentMessageScreenState
                   const SizedBox(height: 8),
                   Text(
                     _text.text.trim(),
-                    style: OgText.body(15, height: 1.45, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.45),
                   ),
                 ],
               ),
@@ -593,7 +578,7 @@ class _TournamentMessageScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Who gets it', style: OgText.heading(20)),
+              Text('Who gets it', style: context.type.section),
               const SizedBox(height: 6),
               for (final (i, label) in audiences.indexed)
                 KitChoiceRow(
@@ -606,7 +591,7 @@ class _TournamentMessageScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Message', style: OgText.heading(20)),
+              Text('Message', style: context.type.section),
               const SizedBox(height: 6),
               for (final (i, (name, sub)) in _templates.indexed)
                 KitChoiceRow(
@@ -624,7 +609,7 @@ class _TournamentMessageScreenState
           Text(
             'Sent as a notification from ${t.activity.title}. Players cannot '
             'reply to it.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       );
@@ -679,7 +664,6 @@ class _TournamentCancelScreenState
     id: widget.activityId,
     title: 'Cancel tournament',
     body: (t) {
-      final c = context.og;
       final a = t.activity;
       final entryCents = t.divisions.fold(
         0,
@@ -713,7 +697,7 @@ class _TournamentCancelScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Refunds', style: OgText.heading(20)),
+              Text('Refunds', style: context.type.section),
               const SizedBox(height: 4),
               KitKeyValue('Entries refunded', '${t.entries}'),
               KitKeyValue('Entry fees', 'S\$${money(entryCents)}'),
@@ -727,7 +711,7 @@ class _TournamentCancelScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Also cancelled', style: OgText.heading(20)),
+              Text('Also cancelled', style: context.type.section),
               const SizedBox(height: 8),
               KitCheckList([
                 'The draw and all scheduled matches',
@@ -751,10 +735,7 @@ class _TournamentCancelScreenState
             checked: _understood,
             onChanged: (v) => setState(() => _understood = v),
           ),
-          Text(
-            'Entrants are told straight away.',
-            style: OgText.body(13, color: c.textMuted),
-          ),
+          Text('Entrants are told straight away.', style: context.type.caption),
         ],
       );
     },
@@ -790,7 +771,7 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
         children: [
           Text(
             again ? 'Make the draw again?' : 'Make the ${d.name} draw?',
-            style: OgText.heading(22),
+            style: context.type.section,
           ),
           const SizedBox(height: 8),
           Text(
@@ -799,7 +780,7 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
             'Everyone in the draw is told their ${t.activity.format == ActivityFormat.knockout ? 'first match' : 'group and first match'}. '
             '${d.doubles ? 'Pairs still waiting on a partner are left out. ' : ''}'
             'Registration for this event closes.',
-            style: OgText.body(15, height: 1.45, color: context.og.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
           const SizedBox(height: 18),
           KitButton(
@@ -851,7 +832,7 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('${m.a} vs ${m.b}', style: OgText.heading(22)),
+            Text('${m.a} vs ${m.b}', style: context.type.section),
             const SizedBox(height: 4),
             Text(
               [
@@ -859,14 +840,11 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
                 if (m.at != null) Fmt.dayTimeComma(m.at!),
                 if (m.court != null) 'Court ${m.court}',
               ].join(' · '),
-              style: OgText.body(14, color: sheet.og.textMuted),
+              style: context.type.body.copyWith(color: sheet.og.textMuted),
             ),
             if (m.done && m.games.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                gamesText(m.games),
-                style: OgText.body(15, weight: FontWeight.w600),
-              ),
+              Text(gamesText(m.games), style: context.type.body),
             ],
             const SizedBox(height: 18),
             if (!m.done && m.state != DrawMatchState.called) ...[
@@ -898,7 +876,6 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
     id: widget.activityId,
     title: 'Run the draw',
     body: (t) {
-      final c = context.og;
       final id = t.activity.id;
       final d = t.divisions.firstWhere(
         (d) => d.id == _division,
@@ -952,23 +929,20 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
                   children: [
                     Text(
                       '${d.entries} $unit entered',
-                      style: OgText.heading(22),
+                      style: context.type.section,
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      switch (t.activity.format) {
-                        ActivityFormat.knockout =>
-                          'A straight knockout, seeded by rating. Top seeds '
-                              'get a bye if the numbers are uneven.',
-                        ActivityFormat.roundRobin =>
-                          'Everyone plays everyone. The table decides the '
-                              'winner.',
-                        _ =>
-                          'Groups of about four, seeded by rating. The top 2 '
-                              'in each group go through to the knockout.',
-                      },
-                      style: OgText.body(15, height: 1.45, color: c.textMuted),
-                    ),
+                    Text(switch (t.activity.format) {
+                      ActivityFormat.knockout =>
+                        'A straight knockout, seeded by rating. Top seeds '
+                            'get a bye if the numbers are uneven.',
+                      ActivityFormat.roundRobin =>
+                        'Everyone plays everyone. The table decides the '
+                            'winner.',
+                      _ =>
+                        'Groups of about four, seeded by rating. The top 2 '
+                            'in each group go through to the knockout.',
+                    }, style: context.type.secondary.copyWith(height: 1.45)),
                   ],
                 ),
               ),
@@ -993,31 +967,31 @@ class _TournamentRunScreenState extends ConsumerState<TournamentRunScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${played.length}', style: OgText.heading(44)),
+              Text('${played.length}', style: context.type.score),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'of ${ms.length} matches played',
-                  style: OgText.body(15, weight: FontWeight.w600),
+                  style: context.type.body,
                 ),
               ),
             ],
           ),
           if (next.isNotEmpty) ...[
-            Text('Up next', style: OgText.heading(20)),
+            Text('Up next', style: context.type.section),
             KitCard(children: [for (final m in next) row(m)]),
           ],
           if (waiting > 0)
             Text(
               '$waiting ${waiting == 1 ? 'match waits' : 'matches wait'} on '
               'earlier results.',
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             ),
           if (next.isEmpty && waiting == 0)
             const KitNote('Every match is played. Results are out.'),
           if (played.isNotEmpty) ...[
-            Text('Played', style: OgText.heading(20)),
+            Text('Played', style: context.type.section),
             KitCard(children: [for (final m in played) row(m)]),
           ],
           if (!scored)
@@ -1047,11 +1021,8 @@ class _RunMatchRow extends StatelessWidget {
     final c = context.og;
     final tones = context.tones;
     final m = match;
-    TextStyle name(bool? win) => OgText.body(
-      15,
-      weight: win == false ? FontWeight.w500 : FontWeight.w600,
-      color: win == false ? c.textMuted : c.text,
-    );
+    TextStyle name(bool? win) =>
+        context.type.body.copyWith(color: win == false ? c.textMuted : c.text);
     return Pressable(
       semanticLabel: '${m.a} vs ${m.b}, $stage',
       onPressed: onTap,
@@ -1066,11 +1037,11 @@ class _RunMatchRow extends StatelessWidget {
                 children: [
                   Text(
                     m.at == null ? '–' : Fmt.time(m.at!),
-                    style: OgText.body(14, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                   Text(
                     m.court == null ? '' : 'Court ${m.court}',
-                    style: OgText.body(12, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -1091,7 +1062,7 @@ class _RunMatchRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: name(m.winnerA == null ? null : !m.winnerA!),
                   ),
-                  Text(stage, style: OgText.body(12, color: c.textMuted)),
+                  Text(stage, style: context.type.caption),
                 ],
               ),
             ),
@@ -1099,7 +1070,7 @@ class _RunMatchRow extends StatelessWidget {
             if (m.done)
               Text(
                 m.walkover ? 'W/O' : '${m.gamesA}–${m.gamesB}',
-                style: OgText.body(15, weight: FontWeight.w600),
+                style: context.type.body,
               )
             else if (m.state == DrawMatchState.called)
               KitTag(

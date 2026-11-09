@@ -6,7 +6,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -58,7 +58,7 @@ class ExerciseTile extends StatelessWidget {
         color: context.tones.soft,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(mark, style: OgText.heading(18, color: context.og.text)),
+      child: Text(mark, style: context.type.section),
     ),
   );
 }
@@ -102,16 +102,9 @@ class ExerciseRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: OgText.body(
-                        15,
-                        weight: FontWeight.w700,
-                        color: c.text,
-                      ),
-                    ),
+                    Text(title, style: context.type.body),
                     const SizedBox(height: 2),
-                    Text(line, style: OgText.body(13, color: c.textMuted)),
+                    Text(line, style: context.type.caption),
                   ],
                 ),
               ),
@@ -142,16 +135,9 @@ class _Stat extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: OgText.heading(28, color: context.og.text)),
+            Text(value, style: context.type.score),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: OgText.body(
-                12,
-                weight: FontWeight.w600,
-                color: context.og.textMuted,
-              ),
-            ),
+            Text(label, style: context.type.caption),
           ],
         ),
       ),
@@ -240,7 +226,6 @@ class FitnessHomeScreen extends ConsumerWidget {
       );
     }
     final s = summary.requireValue;
-    final c = context.og;
 
     final list = programs.requireValue;
     final program = list.isEmpty ? null : list.first;
@@ -331,7 +316,7 @@ class FitnessHomeScreen extends ConsumerWidget {
         Text(
           'Your workouts are private to you. Practice here is not timed or '
           'ranked.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
       ],
     );
@@ -367,12 +352,18 @@ class _Hero extends StatelessWidget {
         children: [
           Text(
             eyebrow,
-            style: OgText.body(13, weight: FontWeight.w700, color: c.highlight),
+            style: context.type.caption.copyWith(color: c.highlight),
           ),
           const SizedBox(height: 10),
-          Text(title, style: OgText.heading(34, color: c.onInverseCard)),
+          Text(
+            title,
+            style: context.type.display.copyWith(color: c.onInverseCard),
+          ),
           const SizedBox(height: 10),
-          Text(line, style: OgText.body(15, color: c.onInverseCardMuted)),
+          Text(
+            line,
+            style: context.type.body.copyWith(color: c.onInverseCardMuted),
+          ),
           const SizedBox(height: 14),
           KitButton(label: button, onPressed: onTap),
         ],
@@ -431,10 +422,7 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
           Column(
             children: [
               const SizedBox(height: 24),
-              Text(
-                'No exercise matches',
-                style: OgText.heading(24, color: context.og.text),
-              ),
+              Text('No exercise matches', style: context.type.title),
               const SizedBox(height: 6),
               const KitMuted('Try a muscle name, like calves.'),
             ],
@@ -474,7 +462,6 @@ class ExerciseDetailScreen extends ConsumerWidget {
         children: [KitNote('This exercise isn’t available.')],
       );
     }
-    final c = context.og;
     final history = ref.watch(exerciseHistoryProvider(id)).value;
     final minor = ref.watch(workoutSummaryProvider(30)).value?.minor ?? true;
     final best = history?.best;
@@ -489,9 +476,7 @@ class ExerciseDetailScreen extends ConsumerWidget {
           children: [
             ExerciseTile(e.mark),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(e.name, style: OgText.heading(30, color: c.text)),
-            ),
+            Expanded(child: Text(e.name, style: context.type.title)),
           ],
         ),
         Wrap(
@@ -503,7 +488,7 @@ class ExerciseDetailScreen extends ConsumerWidget {
         for (final (i, step) in e.steps.indexed)
           Text(
             '${i + 1}. $step',
-            style: OgText.body(15, height: 1.45, color: c.text),
+            style: context.type.body.copyWith(height: 1.45),
           ),
         if (history != null && history.times > 0) ...[
           const KitSection('Your records'),
@@ -584,7 +569,6 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final days = _ranges[_range].$2;
     final v = ref.watch(workoutSummaryProvider(days));
     final blocked = fitnessWaiting(
@@ -624,7 +608,7 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
         if (s.recent.isEmpty)
           Text(
             'No workouts yet. Start one from My workouts.',
-            style: OgText.body(14, height: 1.4, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.4),
           ),
         for (final w in s.recent)
           KitNavTile(
@@ -635,7 +619,7 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
                 '${plural(w.exercises, 'exercise')}',
             trailing: Text(
               w.liftedG > 0 ? liftedText(w.liftedG) : 'Bodyweight',
-              style: OgText.body(14, weight: FontWeight.w600, color: c.text),
+              style: context.type.body,
             ),
             padding: EdgeInsets.zero,
             minHeight: 68,
@@ -708,17 +692,16 @@ class _CalculatorsScreenState extends ConsumerState<CalculatorsScreen> {
         children: [
           Text(
             label,
-            style: OgText.body(
-              13,
-              weight: FontWeight.w600,
-              color: c.onInverseCardMuted,
-            ),
+            style: context.type.caption.copyWith(color: c.onInverseCardMuted),
           ),
-          Text(value, style: OgText.heading(54, color: c.highlight)),
+          Text(value, style: context.type.score.copyWith(color: c.highlight)),
           if (line.isNotEmpty)
             Text(
               line,
-              style: OgText.body(13, height: 1.4, color: c.onInverseCardMuted),
+              style: context.type.caption.copyWith(
+                color: c.onInverseCardMuted,
+                height: 1.4,
+              ),
             ),
         ],
       ),

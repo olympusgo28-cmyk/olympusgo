@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/og_toast.dart';
@@ -106,14 +106,8 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            h.label,
-                            style: OgText.body(15, weight: FontWeight.w600),
-                          ),
-                          Text(
-                            h.sub,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(h.label, style: context.type.body),
+                          Text(h.sub, style: context.type.caption),
                         ],
                       ),
                     ),

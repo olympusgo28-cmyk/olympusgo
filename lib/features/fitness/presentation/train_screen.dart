@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/format.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -170,13 +170,12 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
   }
 
   Widget _tile(String value, String label) {
-    final c = context.og;
     return Expanded(
       child: MergeSemantics(
         child: Column(
           children: [
-            Text(value, style: OgText.heading(34, color: c.text)),
-            Text(label, style: OgText.body(13, color: c.textMuted)),
+            Text(value, style: context.type.score),
+            Text(label, style: context.type.caption),
           ],
         ),
       ),
@@ -238,9 +237,9 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
           Text(
             'EXERCISE ${w.item + 1} OF ${w.plan.length} · '
             'SET ${setsDoneHere + 1} OF ${item.sets}',
-            style: OgText.body(13, weight: FontWeight.w700, color: c.textMuted),
+            style: context.type.caption,
           ),
-          Text(item.exercise, style: OgText.heading(34, color: c.text)),
+          Text(item.exercise, style: context.type.display),
           Row(
             children: [
               if (item.weighted)
@@ -275,19 +274,21 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
                     children: [
                       Text(
                         'REST',
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w700,
+                        style: context.type.caption.copyWith(
                           color: c.highlight,
                         ),
                       ),
                       Text(
                         clockText(_resting),
-                        style: OgText.heading(54, color: c.onInverseCard),
+                        style: context.type.score.copyWith(
+                          color: c.onInverseCard,
+                        ),
                       ),
                       Text(
                         'Next: set ${setsDoneHere + 1} of ${item.sets}',
-                        style: OgText.body(14, color: c.onInverseCardMuted),
+                        style: context.type.body.copyWith(
+                          color: c.onInverseCardMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -304,17 +305,12 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Set $s',
-                      style: OgText.body(15, color: c.text),
-                    ),
-                  ),
+                  Expanded(child: Text('Set $s', style: context.type.body)),
                   Text(
                     s <= setsDoneHere
                         ? 'Done'
                         : (s == setsDoneHere + 1 ? 'Now' : 'Next'),
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),

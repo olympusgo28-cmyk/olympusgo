@@ -7,7 +7,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -103,7 +103,6 @@ class MyReportsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final reports = ref.watch(myReportsProvider).value;
     return KitScaffold(
       header: const KitHeader(title: 'My reports'),
@@ -120,7 +119,7 @@ class MyReportsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Nothing reported yet. Use Report on a message, player, club or listing.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
@@ -202,7 +201,6 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final r = ref.watch(safetyReportProvider(widget.id)).value;
     if (r == null) {
@@ -244,15 +242,12 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      r.heading,
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
-                    Text(r.detail, style: OgText.body(13, color: c.textMuted)),
+                    Text(r.heading, style: context.type.body),
+                    Text(r.detail, style: context.type.caption),
                     const SizedBox(height: 4),
                     Text(
                       'Reported for: ${r.reason.toLowerCase()}',
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                   ],
                 ),
@@ -284,7 +279,10 @@ class _ReportStatusScreenState extends ConsumerState<ReportStatusScreen> {
         else if (r.result != null)
           KitBlock(
             title: 'Result',
-            child: Text(r.result!, style: OgText.body(15, height: 1.45)),
+            child: Text(
+              r.result!,
+              style: context.type.body.copyWith(height: 1.45),
+            ),
           ),
         if (r.secondLook)
           const KitNote(
@@ -336,8 +334,8 @@ class _Step extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
-                Text(line, style: OgText.body(13, color: c.textMuted)),
+                Text(title, style: context.type.body),
+                Text(line, style: context.type.caption),
               ],
             ),
           ),
@@ -436,7 +434,10 @@ class _RemovalNoticeScreenState extends ConsumerState<RemovalNoticeScreen> {
           ),
           child: Text(
             'We removed a message you posted. Nobody else can see it now.',
-            style: OgText.body(14, height: 1.45, color: t.onDangerFill),
+            style: context.type.body.copyWith(
+              color: t.onDangerFill,
+              height: 1.45,
+            ),
           ),
         ),
         Column(
@@ -449,7 +450,7 @@ class _RemovalNoticeScreenState extends ConsumerState<RemovalNoticeScreen> {
         ),
         KitBlock(
           title: 'Why',
-          child: Text(n.why, style: OgText.body(15, height: 1.45)),
+          child: Text(n.why, style: context.type.body.copyWith(height: 1.45)),
         ),
         KitBlock(title: 'What happens now', child: KitCheckList(n.next)),
         KitTextArea(

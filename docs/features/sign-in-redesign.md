@@ -26,13 +26,13 @@ Decisions: Q247 to Q254 in `docs/OPEN_QUESTIONS.md`. Rules changed: R-ACC-1, R-A
 - **Skill editor**: sport icon and name, no progress bar; level picker starts empty; "Play with levels", the Min and Max readouts, the slider, then each end's name with its short form, for example "Mid Beginner (MB)" (Q252); helper "We recommend Meets and partners inside this range."; **Done** saves to the draft.
 
 ### Profile and account
-- **Edit profile** (was Account centre): avatar, then "Change photo" under it; a card of rows (Name, Username, Bio, Gender). Name, Username and Bio open their own editor with Done; Gender opens the picker. Edits come back to the screen and **Save** (Settings) or **Continue** (onboarding) writes them, disabled until the details have loaded. The Personal information row is gone.
-- **Account information** (was Personal information): one card with Email, Mobile (one field: flag, country code, divider, number), Date of birth (read only), Account region (read only, Q254) and Enable Face ID (off by default, Q249). Turning Face ID on asks for Face ID once and saves this session for a tile at once. Save works as before.
-- Settings rows renamed to Edit profile and Account information; the Account Centre hub's Face ID row shows On or Off.
+- **Edit profile** (rebuilt 9 Nov 2026, see `docs/features/settings-and-profile.md`): photo, Change photo, name and @username; outlined cards for Name, Username, Profile link, and About you (Bio, Sports, Level, Gender). Each edit saves on its own screen.
+- **Account information** (was Personal information; rebuilt 9 Nov 2026 with `InfoRow` and `InfoCard`): a card of rows, Phone number (masked "+65 •••• 1234", or "Add"), Email (masked "n***8@gmail.com", or "Add"), Date of birth and Account region (both read only, Q254), with the region note under it; then a Sign-in card with Enable Face ID (off by default, Q249, Q258). Phone number and Email open their own screens (Mobile field or Email field, Send code, then the code screen); a verified code returns to Account information, or to its onboarding step, instead of Settings. Turning Face ID on asks for Face ID once and saves this session for a tile at once. Loading shows grey rows at full height; a failed load shows the error and Try again, without retrying on its own. Data comes from `accountInfoProvider` (`AccountInfo`, freezed).
+- Settings rows renamed to Edit profile and Account information (Settings was rebuilt on 9 Nov 2026); the Account Centre hub's Face ID row shows On or Off.
 
 ### Look
 - Text fields use the outlined style with a floating label (Q251).
-- Font Futura on iPhone, Jost elsewhere (Q250).
+- Font Jost everywhere, Regular and Medium only (Q250, Q257).
 
 ### Tests
 - Widget tests for each changed screen, the code field, the resend timer format, the skill short forms and the Face ID default.

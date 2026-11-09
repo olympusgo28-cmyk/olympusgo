@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
@@ -118,14 +118,7 @@ class _SportTile extends StatelessWidget {
                         color: selected ? c.link : c.text,
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        sport.label,
-                        style: OgText.body(
-                          16,
-                          weight: FontWeight.w600,
-                          color: c.text,
-                        ),
-                      ),
+                      Text(sport.label, style: context.type.body),
                     ],
                   ),
                 ),
@@ -224,16 +217,12 @@ class SkillLevelScreen extends ConsumerWidget {
                       children: [
                         Text(
                           sport.label,
-                          style: OgText.display(20, height: 1.2, color: c.text),
+                          style: context.type.section.copyWith(height: 1.2),
                         ),
                         if (draft.skills.containsKey(sport))
                           Text(
                             draft.skillFor(sport).summary,
-                            style: OgText.body(
-                              15,
-                              height: 1.4,
-                              color: c.textMuted,
-                            ),
+                            style: context.type.secondary.copyWith(height: 1.4),
                           ),
                       ],
                     ),
@@ -256,7 +245,7 @@ class SkillLevelScreen extends ConsumerWidget {
           Text(
             'Set a level for each sport to continue.',
             textAlign: TextAlign.center,
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
           const SizedBox(height: 12),
         ],
@@ -314,14 +303,14 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
     Widget end(String label, double value, CrossAxisAlignment align) => Column(
       crossAxisAlignment: align,
       children: [
-        Text(label, style: OgText.body(14, color: c.textMuted)),
+        Text(label, style: context.type.secondary),
         Text(
           value.toStringAsFixed(1),
-          style: OgText.display(24, height: 1.1, color: c.text),
+          style: context.type.score.copyWith(height: 1.1),
         ),
       ],
     );
-    final helper = OgText.body(14, height: 1.4, color: c.textMuted);
+    final helper = context.type.secondary.copyWith(height: 1.4);
     return OgFlowScreen(
       children: [
         const OgBackButton(),
@@ -343,7 +332,7 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
           style: helper,
         ),
         const SizedBox(height: 28),
-        Text('Play with levels', style: OgText.label),
+        Text('Play with levels', style: context.type.caption),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -397,7 +386,7 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
             Expanded(
               child: Text(
                 SkillScale.nameWithShort(_skill.playMin),
-                style: OgText.body(15, weight: FontWeight.w600, color: c.text),
+                style: context.type.body,
               ),
             ),
             const SizedBox(width: 12),
@@ -405,7 +394,7 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
               child: Text(
                 SkillScale.nameWithShort(_skill.playMax),
                 textAlign: TextAlign.end,
-                style: OgText.body(15, weight: FontWeight.w600, color: c.text),
+                style: context.type.body,
               ),
             ),
           ],

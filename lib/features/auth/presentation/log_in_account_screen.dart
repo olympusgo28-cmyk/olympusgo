@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/domain/country.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -161,7 +161,7 @@ class _LogInAccountScreenState extends ConsumerState<LogInAccountScreen> {
               Expanded(child: Container(height: 2, color: c.border)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('or', style: OgText.body(14, color: c.textMuted)),
+                child: Text('or', style: context.type.secondary),
               ),
               Expanded(child: Container(height: 2, color: c.border)),
             ],

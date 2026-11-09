@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:match_engine/match_engine.dart';
 
 import '../../../core/providers.dart';
-import '../../../core/theme/og_text.dart';
-import '../../../core/theme/og_colors.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -113,7 +112,6 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
     id: widget.activityId,
     title: 'Match rounds',
     body: (a) {
-      final c = context.og;
       final players = (ref.watch(meetPlayersProvider(a.id)).value ?? const [])
           .where(
             (p) =>
@@ -165,7 +163,6 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
               KitSegments(
                 labels: [for (final p in presets) p.$2],
                 selected: picked < 0 ? 0 : picked,
-                fontSize: 13,
                 onSelect: (i) => _pickPreset(a.id, presets[i].$1),
               ),
             ],
@@ -229,7 +226,7 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
               a.iAmHost
                   ? 'No rounds yet.'
                   : 'The organizer has not set the rounds yet.',
-              style: OgText.body(16, color: c.textMuted),
+              style: context.type.secondary,
             ),
           for (final r in saved) ...[
             KitSection('Round ${r.number}'),
@@ -237,20 +234,17 @@ class _MeetRoundsScreenState extends ConsumerState<MeetRoundsScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 for (final m in r.matches) ...[
-                  Text(
-                    'Court ${m.court}',
-                    style: OgText.body(13, color: c.textMuted),
-                  ),
+                  Text('Court ${m.court}', style: context.type.caption),
                   Text(
                     '${side(m.sideA)} vs ${side(m.sideB)}',
-                    style: OgText.body(16, color: c.text),
+                    style: context.type.body,
                   ),
                   const SizedBox(height: 8),
                 ],
                 if (r.byes.isNotEmpty)
                   Text(
                     'Sitting out: ${side(r.byes)}',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
               ],
             ),
@@ -279,9 +273,7 @@ class _Count extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Expanded(
-        child: Text(label, style: OgText.body(16, color: context.og.text)),
-      ),
+      Expanded(child: Text(label, style: context.type.body)),
       KitQty(
         value: value,
         label: label,

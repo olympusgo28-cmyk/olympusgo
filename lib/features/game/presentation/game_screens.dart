@@ -12,7 +12,7 @@ import '../../../core/providers.dart';
 import '../../../core/config/env.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -34,40 +34,31 @@ class StandingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
           SizedBox(
             width: 28,
-            child: Text('${s.rank}', style: OgText.heading(17)),
+            child: Text('${s.rank}', style: context.type.section),
           ),
-          SolidAvatar.forId(
-            s.name,
-            initials: s.initials,
-            size: 38,
-            fontSize: 13,
-          ),
+          SolidAvatar.forId(s.name, initials: s.initials, size: 38),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  s.mine ? 'You' : s.name,
-                  style: OgText.body(15, weight: FontWeight.w600),
-                ),
+                Text(s.mine ? 'You' : s.name, style: context.type.body),
                 Text(
                   s.sub,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: OgText.body(12, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
             ),
           ),
-          Text(s.score, style: OgText.heading(18)),
+          Text(s.score, style: context.type.section),
         ],
       ),
     );
@@ -110,22 +101,26 @@ class CampaignCard extends StatelessWidget {
                   child: Text(
                     c.reward,
                     textAlign: TextAlign.end,
-                    style: OgText.body(13, weight: FontWeight.w600, color: ink),
+                    style: context.type.caption.copyWith(color: ink),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            Text(c.title, style: OgText.heading(24, color: ink)),
+            Text(c.title, style: context.type.title.copyWith(color: ink)),
             const SizedBox(height: 4),
             Text(
               c.task,
-              style: OgText.body(14, color: ink.withValues(alpha: 0.85)),
+              style: context.type.body.copyWith(
+                color: ink.withValues(alpha: 0.85),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               c.meta,
-              style: OgText.body(13, color: ink.withValues(alpha: 0.7)),
+              style: context.type.caption.copyWith(
+                color: ink.withValues(alpha: 0.7),
+              ),
             ),
             if (c.joined && c.target > 0 && c.state == CampaignState.live) ...[
               const SizedBox(height: 10),
@@ -159,7 +154,6 @@ class _GameHomeScreenState extends ConsumerState<GameHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final campaigns = ref.watch(campaignsProvider);
     final all = campaigns.value;
     final shown = (all ?? const <Campaign>[])
@@ -230,11 +224,11 @@ class _GameHomeScreenState extends ConsumerState<GameHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Nothing here yet', style: OgText.heading(20)),
+                  Text('Nothing here yet', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
                     'New campaigns show up here when they start.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -376,23 +370,23 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
             children: [
               Text(
                 eyebrow,
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w600,
+                style: context.type.caption.copyWith(
                   color: Color(x.ink).withValues(alpha: 0.8),
                   letterSpacing: 0.6,
                 ),
               ),
               const SizedBox(height: 6),
-              Text(x.title, style: OgText.heading(28, color: Color(x.ink))),
+              Text(
+                x.title,
+                style: context.type.title.copyWith(color: Color(x.ink)),
+              ),
               if (x.about.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
                   x.about,
-                  style: OgText.body(
-                    14,
-                    height: 1.4,
+                  style: context.type.body.copyWith(
                     color: Color(x.ink).withValues(alpha: 0.9),
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -414,12 +408,12 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                           x.kind == CampaignKind.creator
                               ? 'Your count'
                               : 'Your progress',
-                          style: OgText.body(15, weight: FontWeight.w600),
+                          style: context.type.body,
                         ),
                       ),
                       Text(
                         '${x.progress} / ${x.target}',
-                        style: OgText.heading(22),
+                        style: context.type.score,
                       ),
                     ],
                   ),
@@ -435,17 +429,14 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                   ),
                   if (x.progressNote.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Text(
-                      x.progressNote,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
+                    Text(x.progressNote, style: context.type.caption),
                   ],
                 ],
               ),
             ],
           ),
         if (x.counted.isNotEmpty) ...[
-          Text('Your Meets', style: OgText.heading(20)),
+          Text('Your Meets', style: context.type.section),
           KitCard(
             children: [
               for (final (title, sub) in x.counted)
@@ -469,7 +460,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
           ),
         ],
         if (workout) ...[
-          Text('The set, in this order', style: OgText.heading(20)),
+          Text('The set, in this order', style: context.type.section),
           KitCard(
             children: [
               for (final (i, e) in x.exercises.indexed)
@@ -483,19 +474,13 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                           children: [
                             Text(
                               '${i + 1}. ${e.name}',
-                              style: OgText.body(15, weight: FontWeight.w600),
+                              style: context.type.body,
                             ),
-                            Text(
-                              e.form,
-                              style: OgText.body(13, color: c.textMuted),
-                            ),
+                            Text(e.form, style: context.type.caption),
                           ],
                         ),
                       ),
-                      Text(
-                        '${e.reps} reps',
-                        style: OgText.body(14, weight: FontWeight.w600),
-                      ),
+                      Text('${e.reps} reps', style: context.type.body),
                     ],
                   ),
                 ),
@@ -522,8 +507,13 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                       ),
                       child: Column(
                         children: [
-                          Text(big, style: OgText.heading(22)),
-                          Text(small, style: OgText.body(12, color: t.onTag)),
+                          Text(big, style: context.type.section),
+                          Text(
+                            small,
+                            style: context.type.caption.copyWith(
+                              color: t.onTag,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -535,14 +525,14 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
         if (x.standings.isNotEmpty) ...[
           Text(
             workout ? 'Fastest times' : 'Leaderboard',
-            style: OgText.heading(20),
+            style: context.type.section,
           ),
           KitCard(children: [for (final s in x.standings) StandingRow(s: s)]),
         ],
         if (x.rewards.isNotEmpty) ...[
           Text(
             x.kind == CampaignKind.creator ? 'Prize' : 'Rewards',
-            style: OgText.heading(20),
+            style: context.type.section,
           ),
           Column(
             children: [
@@ -553,18 +543,18 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
         if (x.rules.isNotEmpty) ...[
           Text(
             x.kind == CampaignKind.creator ? 'How it works' : 'Rules',
-            style: OgText.heading(20),
+            style: context.type.section,
           ),
           KitCheckList(x.rules),
         ],
         if (x.sponsor != null)
           Text(
             'Paid partnership with ${x.sponsor}',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         Text(
           '${_n(x.players)} ${x.players == 1 ? 'player' : 'players'} ${live ? (x.players == 1 ? 'has joined' : 'have joined') : 'took part'}. Free to join.${workout ? ' Stop if you feel pain.' : ''}',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -579,7 +569,6 @@ class CameraSetupScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     return KitScaffold(
       header: const KitHeader(title: 'Camera setup'),
       bottom: [
@@ -627,7 +616,7 @@ class CameraSetupScreen extends ConsumerWidget {
             ],
           ),
         ),
-        Text('Set up your camera', style: OgText.heading(22)),
+        Text('Set up your camera', style: context.type.section),
         const KitCheckList([
           'Prop your phone 2 to 3 metres away, at hip height',
           'Head to feet inside the dashed frame',
@@ -640,7 +629,7 @@ class CameraSetupScreen extends ConsumerWidget {
         ),
         Text(
           'The attempt is recorded so top times can be checked.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -761,15 +750,13 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
         Center(
           child: Text(
             _countdown > 0 ? '$_countdown' : clock(_seconds),
-            style: OgText.heading(72, color: white),
+            style: context.type.score.copyWith(color: white),
           ),
         ),
         Center(
           child: Text(
             '${_exercise + 1} OF ${x.exercises.length} · ${ex.name.toUpperCase()}',
-            style: OgText.body(
-              13,
-              weight: FontWeight.w600,
+            style: context.type.caption.copyWith(
               color: const Color(0xFFC9C6BC),
               letterSpacing: 0.8,
             ),
@@ -778,13 +765,13 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
         Center(
           child: Text(
             '$_reps',
-            style: OgText.heading(96, color: const Color(0xFFFF7A1A)),
+            style: context.type.score.copyWith(color: const Color(0xFFFF7A1A)),
           ),
         ),
         Center(
           child: Text(
             'of ${ex.reps} ${ex.name.toLowerCase()}',
-            style: OgText.body(16, color: white),
+            style: context.type.body.copyWith(color: white),
           ),
         ),
         Container(
@@ -798,20 +785,19 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
                 ? 'Paused at ${clock(_seconds)}. Your reps are kept.'
                 : (_countdown > 0 ? 'Starting in $_countdown' : _feedback),
             textAlign: TextAlign.center,
-            style: OgText.body(15, weight: FontWeight.w600, color: white),
+            style: context.type.body.copyWith(color: white),
           ),
         ),
         Text(
           'Preview: reps are simulated in this build.',
           textAlign: TextAlign.center,
-          style: OgText.body(12, color: const Color(0xFFC9C6BC)),
+          style: context.type.caption.copyWith(color: const Color(0xFFC9C6BC)),
         ),
       ],
     );
   }
 
   Widget _resultPage(AttemptResult r) {
-    final c = context.og;
     final t = context.tones;
     return KitScaffold(
       header: const KitHeader(title: 'Result'),
@@ -830,7 +816,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
       children: [
         if (r.best)
           KitTag('New personal best', background: t.gold, foreground: t.onGold),
-        Text(clock(r.seconds), style: OgText.heading(64)),
+        Text(clock(r.seconds), style: context.type.display),
         Row(
           children: [
             for (final (i, (big, small)) in [
@@ -848,8 +834,11 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(big, style: OgText.heading(20)),
-                      Text(small, style: OgText.body(12, color: t.onTag)),
+                      Text(big, style: context.type.section),
+                      Text(
+                        small,
+                        style: context.type.caption.copyWith(color: t.onTag),
+                      ),
                     ],
                   ),
                 ),
@@ -857,7 +846,7 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
             ],
           ],
         ),
-        Text('Split by exercise', style: OgText.heading(20)),
+        Text('Split by exercise', style: context.type.section),
         KitCard(
           children: [
             for (final (name, sub, time) in r.splits)
@@ -869,15 +858,12 @@ class _AttemptScreenState extends ConsumerState<AttemptScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            name,
-                            style: OgText.body(15, weight: FontWeight.w600),
-                          ),
-                          Text(sub, style: OgText.body(13, color: c.textMuted)),
+                          Text(name, style: context.type.body),
+                          Text(sub, style: context.type.caption),
                         ],
                       ),
                     ),
-                    Text(time, style: OgText.heading(17)),
+                    Text(time, style: context.type.section),
                   ],
                 ),
               ),
@@ -925,7 +911,6 @@ class _AttemptReviewScreenState extends ConsumerState<AttemptReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     if (_sent) {
       return KitScaffold(
         header: const KitHeader(title: 'Send for review'),
@@ -942,7 +927,7 @@ class _AttemptReviewScreenState extends ConsumerState<AttemptReviewScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'We’ll check your video. You get a message when it is reviewed. You can try again any time.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -970,7 +955,7 @@ class _AttemptReviewScreenState extends ConsumerState<AttemptReviewScreen> {
           ),
         const KitKeyValue('Reviewed by', 'The Olympus team, within 2 days'),
         const KitKeyValue('Until then', 'Your time is not on the leaderboard'),
-        Text('What went wrong?', style: OgText.heading(20)),
+        Text('What went wrong?', style: context.type.section),
         Column(
           children: [
             for (final (name, sub) in const [
@@ -989,7 +974,7 @@ class _AttemptReviewScreenState extends ConsumerState<AttemptReviewScreen> {
         Text(
           'A reviewed time can earn the finisher reward but not a top 10 prize. '
           'For a ranked time, try again with the camera tracking you.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1048,16 +1033,15 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
               s.name,
               initials: s.initials,
               size: i == 0 ? 56 : 46,
-              fontSize: i == 0 ? 17 : 14,
             ),
             const SizedBox(height: 4),
             Text(
               s.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(13, weight: FontWeight.w600),
+              style: context.type.caption,
             ),
-            Text(s.score, style: OgText.body(12, color: c.textMuted)),
+            Text(s.score, style: context.type.caption),
             const SizedBox(height: 6),
             Container(
               height: heights[i],
@@ -1071,7 +1055,9 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
               ),
               child: Text(
                 '${i + 1}',
-                style: OgText.heading(24, color: const Color(0xFF3A2C00)),
+                style: context.type.score.copyWith(
+                  color: const Color(0xFF3A2C00),
+                ),
               ),
             ),
           ],
@@ -1107,21 +1093,18 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
         ),
         Text(
           _local ? '$area · $month' : '${now.year} season · Singapore',
-          style: OgText.heading(22),
+          style: context.type.section,
         ),
         Text(
           _local
               ? 'Skill rating from confirmed matches in ${_sport.toLowerCase()}'
               : 'Ranking points from tournament placings in ${_sport.toLowerCase()}',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
         if (rows == null)
           const CupertinoActivityIndicator()
         else if (rows.isEmpty)
-          Text(
-            'No ranked players yet.',
-            style: OgText.body(14, color: c.textMuted),
-          )
+          Text('No ranked players yet.', style: context.type.secondary)
         else ...[
           if (rows.length >= 3)
             Row(
@@ -1145,19 +1128,21 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
             ),
             child: Row(
               children: [
-                Text('#12', style: OgText.heading(20, color: t.onSuccessFill)),
+                Text(
+                  '#12',
+                  style: context.type.section.copyWith(color: t.onSuccessFill),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'You · 6 confirmed matches this month',
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: t.onSuccessFill,
-                    ),
+                    style: context.type.body.copyWith(color: t.onSuccessFill),
                   ),
                 ),
-                Text('5.4', style: OgText.heading(18, color: t.onSuccessFill)),
+                Text(
+                  '5.4',
+                  style: context.type.section.copyWith(color: t.onSuccessFill),
+                ),
               ],
             ),
           ),
@@ -1165,18 +1150,18 @@ class _LeaderboardsScreenState extends ConsumerState<LeaderboardsScreen> {
           _local
               ? 'Local ranks by skill rating. Only players with at least 4 confirmed matches this month appear. It resets on the 1st of each month; your rating does not reset.'
               : 'Tournament ranks by ranking points from placings, weighted by tier: Club, Regional or National. Points count only from verified organizers with 16 or more entries. It resets each January; titles stay on your Passport as badges.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
         Text(
           'Rank itself never earns points or money. The top 10 at the end of each season get a badge on their Passport.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
         Pressable(
           semanticLabel: 'Report a result that looks wrong',
           onPressed: () => context.push(Routes.help),
           child: Text(
             'Report a result that looks wrong',
-            style: OgText.body(14, weight: FontWeight.w600, color: c.link),
+            style: context.type.button.copyWith(color: c.link),
           ),
         ),
       ],

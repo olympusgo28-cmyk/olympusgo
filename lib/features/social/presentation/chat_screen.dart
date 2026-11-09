@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -169,7 +169,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 : AvatarTone.forId(partner.id),
                             imageUrl: partner?.avatarUrl,
                             size: 40,
-                            fontSize: 15,
                           ),
                           const SizedBox(width: 10),
                           Flexible(
@@ -178,15 +177,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               children: [
                                 Text(
                                   partner?.displayName ?? '',
-                                  style: OgText.body(
-                                    16,
-                                    weight: FontWeight.w600,
-                                    color: c.text,
-                                  ),
+                                  style: context.type.body,
                                 ),
                                 Text(
                                   partner?.handle ?? '',
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                               ],
                             ),
@@ -216,7 +211,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Center(
                     child: Text(
                       'Say hi to ${partner?.displayName ?? 'them'}.',
-                      style: OgText.body(15, color: c.textMuted),
+                      style: context.type.secondary,
                     ),
                   ),
                 AsyncData(:final value) => ListView.builder(
@@ -248,7 +243,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Text(
                               _dayLabel(m.createdAt),
-                              style: OgText.body(13, color: c.textMuted),
+                              style: context.type.caption,
                             ),
                           ),
                         _Bubble(
@@ -265,7 +260,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 AsyncError() => Center(
                   child: Text(
                     "Can't load messages.",
-                    style: OgText.body(15, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ),
                 _ => const Center(child: CupertinoActivityIndicator()),
@@ -282,11 +277,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     onSubmitted: (_) => _send(),
                     minLines: 1,
                     maxLines: 4,
-                    style: OgText.body(16, color: c.text),
+                    style: context.type.body,
                     decoration: InputDecoration(
                       isDense: true,
                       hintText: 'Message',
-                      hintStyle: OgText.body(16, color: c.textMuted),
+                      hintStyle: context.type.secondary,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 14,
@@ -394,7 +389,7 @@ class _PendingBubble extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Not sent. Tap to try again.',
-                  style: OgText.body(13, color: c.error),
+                  style: context.type.caption.copyWith(color: c.error),
                 ),
               ),
           ],
@@ -435,11 +430,11 @@ class _Bubble extends StatelessWidget {
           ),
           child: Text(
             message.body,
-            style: OgText.body(
-              16,
-              height: 1.35,
+            style: context.type.body.copyWith(
               color: mine ? c.onPrimary : c.text,
-            ).copyWith(fontStyle: message.deleted ? FontStyle.italic : null),
+              height: 1.35,
+              fontStyle: message.deleted ? FontStyle.italic : null,
+            ),
           ),
         ),
       ),

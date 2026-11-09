@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../features/auth/data/auth_repository.dart';
-import '../theme/og_text.dart';
 import 'og_kit.dart';
 import 'og_toast.dart';
+import '../../core/theme/og_type.dart';
 
 /// A group's, venue's or vendor's code, with a way to replace it. Anyone holding
 /// an old code gets "That code isn't valid."
@@ -53,7 +53,7 @@ class _PlaceCodeState extends State<_PlaceCode> {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(widget.title, style: OgText.heading(24)),
+      Text(widget.title, style: context.type.title),
       const SizedBox(height: 16),
       if (_token == null)
         const CupertinoActivityIndicator()

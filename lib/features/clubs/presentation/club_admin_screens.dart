@@ -8,7 +8,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -71,16 +71,7 @@ Widget _countTile(
   title: title,
   subtitle: sub,
   danger: danger,
-  trailing: count == null
-      ? null
-      : Text(
-          count,
-          style: OgText.body(
-            14,
-            weight: FontWeight.w600,
-            color: context.og.textMuted,
-          ),
-        ),
+  trailing: count == null ? null : Text(count, style: context.type.secondary),
   onTap: onTap,
 );
 
@@ -100,7 +91,7 @@ class ClubSettingsScreen extends ConsumerWidget {
       return KitScaffold(
         header: KitHeader(title: 'Club settings', subtitle: club.name),
         children: [
-          Text('Settings', style: OgText.heading(20)),
+          Text('Settings', style: context.type.section),
           KitCard(
             children: [
               if (owner || can.contains(ClubPermission.editPage))
@@ -139,7 +130,7 @@ class ClubSettingsScreen extends ConsumerWidget {
                 ),
             ],
           ),
-          Text('User management', style: OgText.heading(20)),
+          Text('User management', style: context.type.section),
           KitCard(
             children: [
               _countTile(
@@ -290,7 +281,7 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
           else if (shown.isEmpty)
             Text(
               'Nobody matches. Check the spelling or clear the search.',
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             )
           else
             for (final k in keys)
@@ -311,18 +302,12 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                       Expanded(
                         child: Text(
                           k.toUpperCase(),
-                          style: OgText.body(
-                            12,
-                            weight: FontWeight.w600,
-                            color: c.textMuted,
+                          style: context.type.caption.copyWith(
                             letterSpacing: 0.6,
                           ),
                         ),
                       ),
-                      Text(
-                        '${groups[k]!.length}',
-                        style: OgText.body(12, color: c.textMuted),
-                      ),
+                      Text('${groups[k]!.length}', style: context.type.caption),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -345,26 +330,18 @@ class _ClubMembersScreenState extends ConsumerState<ClubMembersScreen> {
                                   m.player.id,
                                   initials: m.player.initials,
                                   size: 40,
-                                  fontSize: 14,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     m.player.displayName,
-                                    style: OgText.body(
-                                      15,
-                                      weight: FontWeight.w600,
-                                    ),
+                                    style: context.type.body,
                                   ),
                                 ),
                                 if (m.rating != null)
                                   Text(
                                     '${m.band!.code} ${m.rating!.toStringAsFixed(1)}',
-                                    style: OgText.body(
-                                      13,
-                                      weight: FontWeight.w600,
-                                      color: c.textMuted,
-                                    ),
+                                    style: context.type.caption,
                                   ),
                                 const SizedBox(width: 6),
                                 OgIcon(
@@ -463,7 +440,6 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
     id: widget.id,
     title: 'Member',
     body: (club) {
-      final c = context.og;
       final t = context.tones;
       final m = ref
           .watch(clubMembersProvider(widget.id))
@@ -495,8 +471,8 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
           ),
           child: Column(
             children: [
-              Text(big, style: OgText.heading(22)),
-              Text(small, style: OgText.body(12, color: t.onTag)),
+              Text(big, style: context.type.section),
+              Text(small, style: context.type.caption.copyWith(color: t.onTag)),
             ],
           ),
         ),
@@ -510,21 +486,20 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
                 m.player.id,
                 initials: m.player.initials,
                 size: 64,
-                fontSize: 22,
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(m.player.displayName, style: OgText.heading(24)),
+                    Text(m.player.displayName, style: context.type.title),
                     Text(
                       [
                         if (m.rating != null)
                           '${m.band!.code} ${m.rating!.toStringAsFixed(1)}',
                         if (m.joinedAt != null) 'Joined ${ago(m.joinedAt!)}',
                       ].join(' · '),
-                      style: OgText.body(14, color: c.textMuted),
+                      style: context.type.secondary,
                     ),
                   ],
                 ),
@@ -541,7 +516,7 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
             ],
           ),
           if (canManage) ...[
-            Text('Role', style: OgText.heading(20)),
+            Text('Role', style: context.type.section),
             Column(
               children: [
                 KitChoiceRow(
@@ -564,11 +539,7 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
             if (_saved)
               Text(
                 'Saved',
-                style: OgText.body(
-                  13,
-                  weight: FontWeight.w600,
-                  color: t.successInk,
-                ),
+                style: context.type.caption.copyWith(color: t.successInk),
               ),
           ],
           KitCard(
@@ -600,7 +571,7 @@ class _ClubMemberScreenState extends ConsumerState<ClubMemberScreen> {
           if (canManage)
             Text(
               'Role changes save right away and are written to the audit log.',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
         ],
       );
@@ -625,12 +596,9 @@ class _Confirm extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(title, style: OgText.heading(24)),
+      Text(title, style: context.type.title),
       const SizedBox(height: 8),
-      Text(
-        body,
-        style: OgText.body(15, height: 1.45, color: context.og.textMuted),
-      ),
+      Text(body, style: context.type.secondary.copyWith(height: 1.45)),
       const SizedBox(height: 20),
       KitButton(
         label: action,
@@ -664,18 +632,15 @@ class _BanSheetState extends State<_BanSheet> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Ban ${widget.name}?', style: OgText.heading(24)),
+        Text('Ban ${widget.name}?', style: context.type.title),
         const SizedBox(height: 8),
         Text(
           'They are removed, refunded for upcoming Meets, and cannot see the '
           'club or ask to join again.',
-          style: OgText.body(15, height: 1.45, color: context.og.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
         const SizedBox(height: 14),
-        Text(
-          'Reason, shown to other Admins',
-          style: OgText.body(15, weight: FontWeight.w600),
-        ),
+        Text('Reason, shown to other Admins', style: context.type.body),
         for (final r in const [
           'No-shows',
           'Unpaid fees',
@@ -737,7 +702,6 @@ class JoinRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final list = ref.watch(joinRequestsProvider(id)).value;
     final pending =
@@ -755,12 +719,12 @@ class JoinRequestsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('No one is waiting', style: OgText.heading(20)),
+                  Text('No one is waiting', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
                     'New requests show here. Members are told when you '
                     'approve them.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -780,7 +744,6 @@ class JoinRequestsScreen extends ConsumerWidget {
                           r.player.id,
                           initials: r.player.initials,
                           size: 44,
-                          fontSize: 15,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -789,7 +752,7 @@ class JoinRequestsScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 r.player.displayName,
-                                style: OgText.body(15, weight: FontWeight.w600),
+                                style: context.type.body,
                               ),
                               Text(
                                 [
@@ -799,7 +762,7 @@ class JoinRequestsScreen extends ConsumerWidget {
                                   if (r.mutual > 0) '${r.mutual} mutual',
                                   'asked ${ago(r.createdAt)}',
                                 ].join(' · '),
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
@@ -830,7 +793,7 @@ class JoinRequestsScreen extends ConsumerWidget {
                       const SizedBox(height: 10),
                       Text(
                         '“${r.message}”',
-                        style: OgText.body(14, height: 1.4),
+                        style: context.type.body.copyWith(height: 1.4),
                       ),
                     ],
                     const SizedBox(height: 12),
@@ -888,7 +851,6 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final all = ref.watch(clubAuditProvider(widget.id)).value;
     final shown = (all ?? const <AuditEntry>[])
         .where((e) => _only == null || e.category == _only)
@@ -919,7 +881,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
         if (all == null)
           const CupertinoActivityIndicator()
         else if (shown.isEmpty)
-          Text('Nothing here yet.', style: OgText.body(14, color: c.textMuted))
+          Text('Nothing here yet.', style: context.type.secondary)
         else
           KitCard(
             children: [
@@ -935,25 +897,21 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                       Text.rich(
                         TextSpan(
                           children: [
+                            // Who did it stands out by colour, not weight.
+                            TextSpan(text: e.actor),
                             TextSpan(
-                              text: e.actor,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              text: ' ${e.action}',
+                              style: context.type.secondary,
                             ),
-                            TextSpan(text: ' ${e.action}'),
                           ],
                         ),
-                        style: OgText.body(15),
+                        style: context.type.body,
                       ),
                       if (e.detail.isNotEmpty)
-                        Text(
-                          e.detail,
-                          style: OgText.body(13, color: c.textMuted),
-                        ),
+                        Text(e.detail, style: context.type.caption),
                       Text(
                         '${e.category.label} · ${Fmt.dayTimeComma(e.at)}',
-                        style: OgText.body(12, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                     ],
                   ),
@@ -1004,7 +962,6 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final bans = ref.watch(clubBansProvider(widget.id)).value;
     return KitScaffold(
@@ -1019,7 +976,7 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
         if (bans == null)
           const CupertinoActivityIndicator()
         else if (bans.isEmpty)
-          Text('Nobody is banned.', style: OgText.body(14, color: c.textMuted))
+          Text('Nobody is banned.', style: context.type.secondary)
         else
           KitCard(
             children: [
@@ -1038,7 +995,6 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                             b.player.id,
                             initials: b.player.initials,
                             size: 40,
-                            fontSize: 14,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1047,14 +1003,11 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                               children: [
                                 Text(
                                   b.player.displayName,
-                                  style: OgText.body(
-                                    15,
-                                    weight: FontWeight.w600,
-                                  ),
+                                  style: context.type.body,
                                 ),
                                 Text(
                                   'Banned by ${b.bannedBy} · ${Fmt.day(b.at)}',
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                               ],
                             ),
@@ -1066,7 +1019,6 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                                   expand: false,
                                   height: 40,
                                   radius: 20,
-                                  fontSize: 14,
                                   padding: 14,
                                   style: KitButtonStyle.outline,
                                   onPressed: () => _unban(b),
@@ -1077,13 +1029,15 @@ class _ClubBansScreenState extends ConsumerState<ClubBansScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Unbanned. They can ask to join again.',
-                          style: OgText.body(13, color: t.successInk),
+                          style: context.type.caption.copyWith(
+                            color: t.successInk,
+                          ),
                         ),
                       ] else if (b.reason.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           'Reason: ${b.reason}',
-                          style: OgText.body(13, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                       ],
                     ],
@@ -1147,7 +1101,6 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
     id: widget.id,
     title: 'Invite',
     body: (club) {
-      final c = context.og;
       final people = ref.watch(inviteCandidatesProvider).value;
       final q = _q.trim().toLowerCase();
       final shown = (people ?? const <InviteCandidate>[])
@@ -1176,14 +1129,11 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Invite link',
-                    style: OgText.body(15, weight: FontWeight.w600),
-                  ),
+                  Text('Invite link', style: context.type.body),
                   const SizedBox(height: 4),
                   Text(
                     link.replaceFirst('https://', ''),
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -1219,7 +1169,7 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
               ),
             ],
           ),
-          Text('People you play with', style: OgText.heading(20)),
+          Text('People you play with', style: context.type.section),
           KitSearchField(
             hint: 'Search players',
             onChanged: (v) => setState(() => _q = v),
@@ -1229,7 +1179,7 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
           else if (shown.isEmpty)
             Text(
               'Nobody matches. Check the spelling or clear the search.',
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             )
           else
             Column(
@@ -1240,7 +1190,6 @@ class _ClubInviteScreenState extends ConsumerState<ClubInviteScreen> {
                       p.player.id,
                       initials: p.player.initials,
                       size: 40,
-                      fontSize: 14,
                     ),
                     title: p.player.displayName,
                     subtitle: [
@@ -1297,7 +1246,6 @@ class _ClubTransferScreenState extends ConsumerState<ClubTransferScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final members = ref.watch(clubMembersProvider(widget.id)).value;
     final roles = ref.watch(clubRolesProvider(widget.id)).value ?? const [];
     final adminIds = {
@@ -1345,7 +1293,6 @@ class _ClubTransferScreenState extends ConsumerState<ClubTransferScreen> {
                     m.player.id,
                     initials: m.player.initials,
                     size: 40,
-                    fontSize: 14,
                   ),
                   title: m.player.displayName,
                   subtitle: 'Admin · ${m.meetsPlayed} Meets',
@@ -1357,7 +1304,7 @@ class _ClubTransferScreenState extends ConsumerState<ClubTransferScreen> {
         Text(
           'After they accept, you become an Admin. Payouts move to the new '
           'owner once their identity is verified.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1399,7 +1346,6 @@ class _ClubLeaveScreenState extends ConsumerState<ClubLeaveScreen> {
     id: widget.id,
     title: 'Leave club',
     body: (club) {
-      final c = context.og;
       final mine =
           ref
               .watch(clubSessionsProvider(widget.id))
@@ -1429,13 +1375,13 @@ class _ClubLeaveScreenState extends ConsumerState<ClubLeaveScreen> {
             'Leave ${club.name}?',
             lead: 'You can ask to join again at any time.',
           ),
-          Text('You keep', style: OgText.heading(20)),
+          Text('You keep', style: context.type.section),
           const KitCheckList([
             'Your rating and Passport history',
             'Points you already earned',
             'Your match results on past leaderboards',
           ]),
-          Text('You lose', style: OgText.heading(20)),
+          Text('You lose', style: context.type.section),
           KitCheckList([
             'Club chat and member prices',
             'Your spot on this season’s club leaderboard',
@@ -1462,7 +1408,7 @@ class _ClubLeaveScreenState extends ConsumerState<ClubLeaveScreen> {
             Text(
               'You are ${club.myRoleName} here. Your role is removed when you '
               'leave.',
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             ),
           if (mine > 0 && !club.isOwner)
             KitConfirmBox(
@@ -1555,7 +1501,7 @@ class _ClubDeleteScreenState extends ConsumerState<ClubDeleteScreen> {
               'Only the owner can delete the club.',
               tone: KitTone.warn,
             ),
-          Text('What is removed', style: OgText.heading(20)),
+          Text('What is removed', style: context.type.section),
           KitCheckList([
             '${sessions.length} upcoming ${sessions.length == 1 ? 'session' : 'sessions'}',
             'Club chat, photos and files',

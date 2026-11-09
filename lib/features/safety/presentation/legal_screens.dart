@@ -9,7 +9,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -266,8 +266,8 @@ class Under18ProtectionScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
-                Text(sub, style: OgText.body(13, color: c.textMuted)),
+                Text(title, style: context.type.body),
+                Text(sub, style: context.type.caption),
               ],
             ),
           ),
@@ -531,7 +531,6 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     if (_reference case final refNo?) {
       return KitScaffold(
         header: const KitHeader(title: 'Legal notice'),
@@ -579,7 +578,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           'Send a legal notice',
           lead: 'For a person harmed by something on Olympus, or someone acting for them. You do not need an account.',
         ),
-        Text('I am', style: OgText.body(15, weight: FontWeight.w600)),
+        Text('I am', style: context.type.body),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -599,7 +598,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           hint: 'name@example.com',
           keyboardType: TextInputType.emailAddress,
         ),
-        Text('Country', style: OgText.body(15, weight: FontWeight.w600)),
+        Text('Country', style: context.type.body),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -617,7 +616,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
           controller: _where,
           hint: 'Link, or the club, chat, video or shop name',
         ),
-        Text('What is it?', style: OgText.heading(24)),
+        Text('What is it?', style: context.type.title),
         Column(
           children: [
             for (final (name, sub, urgent) in _reasons)
@@ -643,7 +642,7 @@ class _LegalNoticeScreenState extends ConsumerState<LegalNoticeScreen> {
         ),
         Text(
           'We use these details only to handle this notice.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );

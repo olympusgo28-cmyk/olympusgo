@@ -19,6 +19,8 @@ supabase db reset
 flutter run --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_ANON_KEY=<anon key from supabase status>
 ```
 
+On a simulator with no face set up, add `--dart-define=SKIP_FACE_ID=true`: every Face ID check passes without asking and the Face ID switch is hidden. Only a debug build on a local stack honours it. Leave it out to test Face ID itself.
+
 Log in with `+65 8000 0001`, code `123456`. That is seeded as Aaron Ng; `+65 8000 0002` is Hannah Goh. See `docs/features/dev-setup.md` for the tests and every check.
 
 ## Supabase setup

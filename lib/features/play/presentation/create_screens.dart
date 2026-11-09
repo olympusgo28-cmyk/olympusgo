@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/theme/og_tones.dart';
@@ -135,14 +135,11 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      k.label,
-                      style: OgText.body(17, weight: FontWeight.w600),
-                    ),
+                    Text(k.label, style: context.type.section),
                     const SizedBox(height: 3),
                     Text(
                       sub,
-                      style: OgText.body(14, height: 1.4, color: c.textMuted),
+                      style: context.type.secondary.copyWith(height: 1.4),
                     ),
                   ],
                 ),
@@ -168,12 +165,9 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Create', style: OgText.heading(22)),
+                Text('Create', style: context.type.section),
                 if (host != null)
-                  Text(
-                    'Hosted by ${host.name}',
-                    style: OgText.body(14, color: c.textMuted),
-                  ),
+                  Text('Hosted by ${host.name}', style: context.type.secondary),
               ],
             ),
           ),
@@ -193,16 +187,13 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Start a group first',
-                    style: OgText.body(17, weight: FontWeight.w600),
-                  ),
+                  Text('Start a group first', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
                     'Meets, tournaments and events are hosted by a club. Start '
                     'your own, or ask a club admin for a role that can create '
                     'them.',
-                    style: OgText.body(14, height: 1.45, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.45),
                   ),
                 ],
               ),
@@ -256,7 +247,7 @@ class _CreateMenuState extends ConsumerState<_CreateMenu> {
                 'You only see what your role allows. Meets need "Create '
                 'Meets", tournaments need "Run tournaments", events need '
                 '"Create events".',
-                style: OgText.body(13, height: 1.45, color: c.textMuted),
+                style: context.type.caption.copyWith(height: 1.45),
               ),
             ),
           ],
@@ -293,8 +284,7 @@ class _Step extends StatelessWidget {
     header: KitHeader(title: title),
     bottom: [KitButton(label: button, onPressed: onNext)],
     children: [
-      if (lead != null)
-        Text(lead!, style: OgText.body(15, color: context.og.textMuted)),
+      if (lead != null) Text(lead!, style: context.type.secondary),
       ...children.where((w) => w is! SizedBox || w.child != null),
     ],
   );
@@ -505,7 +495,7 @@ class _PickTimeScreenState extends ConsumerState<PickTimeScreen> {
           }),
         ),
         if (!tournament) ...[
-          Text('Lasts', style: OgText.body(15, weight: FontWeight.w600)),
+          Text('Lasts', style: context.type.body),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -527,7 +517,7 @@ class _PickTimeScreenState extends ConsumerState<PickTimeScreen> {
             '${Fmt.clock(_hour, _minute)} to '
             '${Fmt.clock((_hour * 60 + _minute + _duration) ~/ 60 % 24, (_minute + _duration) % 60)}. '
             'A Meet starts and ends on the same day.',
-            style: OgText.body(14, color: context.og.textMuted),
+            style: context.type.secondary,
           ),
         ],
       ],
@@ -555,7 +545,6 @@ class _PickVenueScreenState extends ConsumerState<PickVenueScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final venues = ref.watch(venueSearchProvider(_q));
     return _Step(
       title: 'Venue',
@@ -591,7 +580,7 @@ class _PickVenueScreenState extends ConsumerState<PickVenueScreen> {
           AsyncData(:final value) when value.isEmpty => [
             Text(
               'Nothing matches. Check the spelling or clear the search.',
-              style: OgText.body(15, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ],
           AsyncData(:final value) => [
@@ -610,10 +599,7 @@ class _PickVenueScreenState extends ConsumerState<PickVenueScreen> {
             if (!widget.forClub &&
                 ref.read(activityDraftControllerProvider).kind !=
                     ActivityKind.event) ...[
-              Text(
-                'Courts to book',
-                style: OgText.body(15, weight: FontWeight.w600),
-              ),
+              Text('Courts to book', style: context.type.body),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -629,7 +615,7 @@ class _PickVenueScreenState extends ConsumerState<PickVenueScreen> {
               Text(
                 'Court fees are set by the venue and paid to them. Split them '
                 'across players in the fee you set.',
-                style: OgText.body(13, height: 1.45, color: c.textMuted),
+                style: context.type.caption.copyWith(height: 1.45),
               ),
             ],
           ],

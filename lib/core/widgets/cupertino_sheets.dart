@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 
 /// Native iOS bottom picker with a Done button, used for dates, countries
 /// and levels so they feel like the system pickers.
@@ -35,31 +35,20 @@ Future<T?> showOgPickerSheet<T>({
                     children: [
                       CupertinoButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          'Cancel',
-                          style: OgText.body(17, color: c.textMuted),
-                        ),
+                        child: Text('Cancel', style: context.type.secondary),
                       ),
                       Expanded(
                         child: Text(
                           title,
                           textAlign: TextAlign.center,
-                          style: OgText.body(
-                            17,
-                            weight: FontWeight.w600,
-                            color: c.text,
-                          ),
+                          style: context.type.section,
                         ),
                       ),
                       CupertinoButton(
                         onPressed: () => Navigator.of(context).pop(value),
                         child: Text(
                           'Done',
-                          style: OgText.body(
-                            17,
-                            weight: FontWeight.w600,
-                            color: c.link,
-                          ),
+                          style: context.type.button.copyWith(color: c.link),
                         ),
                       ),
                     ],
@@ -71,8 +60,8 @@ Future<T?> showOgPickerSheet<T>({
                     data: CupertinoThemeData(
                       brightness: Theme.of(context).brightness,
                       textTheme: CupertinoTextThemeData(
-                        pickerTextStyle: OgText.body(21, color: c.text),
-                        dateTimePickerTextStyle: OgText.body(21, color: c.text),
+                        pickerTextStyle: context.type.body,
+                        dateTimePickerTextStyle: context.type.body,
                       ),
                     ),
                     child: picker((v) => value = v),

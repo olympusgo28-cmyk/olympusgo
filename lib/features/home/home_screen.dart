@@ -9,7 +9,7 @@ import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
@@ -126,7 +126,10 @@ class _Hero extends ConsumerWidget {
               ),
               alignment: Alignment.center,
               child: demo
-                  ? Text('CR', style: OgText.heading(92, color: t.gold))
+                  ? Text(
+                      'CR',
+                      style: context.type.score.copyWith(color: t.gold),
+                    )
                   : OgIcon(
                       OgIcons.racquet,
                       size: 96,
@@ -147,15 +150,13 @@ class _Hero extends ConsumerWidget {
                     children: [
                       Text(
                         date,
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
+                        style: context.type.caption.copyWith(
                           color: c.onPrimary,
                         ),
                       ),
                       Text(
                         first.isEmpty ? 'Hi there' : 'Hi $first',
-                        style: OgText.heading(32, color: c.onPrimary),
+                        style: context.type.title.copyWith(color: c.onPrimary),
                       ),
                     ],
                   ),
@@ -195,7 +196,6 @@ class _Hero extends ConsumerWidget {
                 children: [
                   KitTag(
                     demo ? 'Creator challenge' : 'Play',
-                    fontSize: 12,
                     background: OgColors.ink,
                     foreground: Colors.white,
                   ),
@@ -208,16 +208,15 @@ class _Hero extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     // Baloo 2 runs much wider than the artboard's condensed
                     // face, so 26 keeps three lines clear of the circle.
-                    style: OgText.heading(26, color: c.onPrimary, height: 1),
+                    style: context.type.title.copyWith(
+                      color: c.onPrimary,
+                      height: 1,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     demo ? '412 players joined' : 'Meets, tournaments, events',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: c.onPrimary,
-                    ),
+                    style: context.type.caption.copyWith(color: c.onPrimary),
                   ),
                 ],
               ),
@@ -278,9 +277,7 @@ class _Categories extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: OgText.body(
-              13,
-              weight: FontWeight.w600,
+            style: context.type.caption.copyWith(
               color: muted ? c.textMuted : c.text,
             ),
           ),
@@ -388,26 +385,21 @@ class _Balances extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: labelColor,
-                      ),
+                      style: context.type.caption.copyWith(color: labelColor),
                     ),
                   ),
                   OgIcon(icon, size: 20, strokeWidth: stroke, color: iconColor),
                 ],
               ),
               const SizedBox(height: 6),
-              Text(value, style: OgText.heading(34, color: valueColor)),
+              Text(
+                value,
+                style: context.type.score.copyWith(color: valueColor),
+              ),
               const SizedBox(height: 6),
               Text(
                 note,
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w600,
-                  color: noteColor,
-                ),
+                style: context.type.caption.copyWith(color: noteColor),
               ),
             ],
           ),
@@ -456,7 +448,7 @@ class _YourGroups extends ConsumerWidget {
         children: [
           Semantics(
             header: true,
-            child: Text('Your groups', style: OgText.section),
+            child: Text('Your groups', style: context.type.section),
           ),
           const SizedBox(height: 8),
           for (final item in groups.take(3))

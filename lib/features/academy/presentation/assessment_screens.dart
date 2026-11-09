@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
@@ -61,16 +61,16 @@ class AssessmentTemplatesScreen extends ConsumerWidget {
         if (list.isEmpty)
           Text(
             'No templates yet. Make one for what your coaches score.',
-            style: OgText.body(14, color: context.og.textMuted),
+            style: context.type.secondary,
           ),
         for (final t in list)
           KitCard(
             padding: const EdgeInsets.all(14),
             children: [
-              Text(t.name, style: OgText.body(15, weight: FontWeight.w600)),
+              Text(t.name, style: context.type.body),
               Text(
                 '${t.criteria.map((c) => c.$2).join(', ')} · out of ${t.scaleMax}',
-                style: OgText.body(13, color: context.og.textMuted),
+                style: context.type.caption,
               ),
               KitLink(
                 'Stop using',
@@ -238,7 +238,6 @@ class _AssessStudentScreenState extends ConsumerState<AssessStudentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final student = ref.watch(studentProvider(widget.studentId));
     final blocked = _waiting(
       student,
@@ -299,7 +298,7 @@ class _AssessStudentScreenState extends ConsumerState<AssessStudentScreen> {
           if (list.isEmpty)
             Text(
               'Your head coach needs to make a template first.',
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             ),
           for (final x in list)
             KitChoiceRow(
@@ -316,7 +315,7 @@ class _AssessStudentScreenState extends ConsumerState<AssessStudentScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(label, style: OgText.body(15, weight: FontWeight.w600)),
+              Text(label, style: context.type.body),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
@@ -336,10 +335,7 @@ class _AssessStudentScreenState extends ConsumerState<AssessStudentScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Academy level (optional)',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Academy level (optional)', style: context.type.body),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
@@ -388,13 +384,8 @@ class ScoreSparkline extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  line.label,
-                  style: OgText.body(14, weight: FontWeight.w600),
-                ),
-              ),
-              Text('$last / ${line.max}', style: OgText.body(14)),
+              Expanded(child: Text(line.label, style: context.type.body)),
+              Text('$last / ${line.max}', style: context.type.body),
             ],
           ),
           const SizedBox(height: 6),
@@ -409,7 +400,7 @@ class ScoreSparkline extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(words, style: OgText.body(12, color: c.textMuted)),
+          Text(words, style: context.type.caption),
         ],
       ),
     );
@@ -472,7 +463,6 @@ class AssessmentHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final v = ref.watch(playerAssessmentsProvider(playerId));
     final blocked = _waiting(
       v,
@@ -491,29 +481,26 @@ class AssessmentHistoryScreen extends ConsumerWidget {
         if (all.isEmpty)
           Text(
             'No assessments yet. They show up here once a coach writes one.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
         for (final g in groups.values) ...[
-          Text(g.last.template, style: OgText.heading(20)),
+          Text(g.last.template, style: context.type.section),
           for (final line in scoreLines(g)) ScoreSparkline(line: line),
           for (final a in g.reversed)
             KitCard(
               padding: const EdgeInsets.all(14),
               children: [
-                Text(
-                  '${Fmt.day(a.on)} · ${a.coach}',
-                  style: OgText.body(14, weight: FontWeight.w600),
-                ),
+                Text('${Fmt.day(a.on)} · ${a.coach}', style: context.type.body),
                 Text(
                   [
                     a.academy,
                     if (a.level != null) 'Academy level ${a.level}',
                     if (a.edited) 'Edited',
                   ].join(' · '),
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
                 if (a.note.isNotEmpty)
-                  Text(a.note, style: OgText.body(14, height: 1.4)),
+                  Text(a.note, style: context.type.body.copyWith(height: 1.4)),
                 if (a.mine && studentId != null)
                   KitLink(
                     'Correct this',

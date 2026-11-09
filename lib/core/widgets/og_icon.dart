@@ -208,6 +208,9 @@ abstract final class OgIcons {
   static const mortarboard =
       '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/>';
   static const dots = '<path d="M5 12h.01M12 12h.01M19 12h.01"/>';
+  static const menu = '<path d="M4 7h16M4 12h16M4 17h16"/>';
+  static const copy =
+      '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/>';
   static const walletCard =
       '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/>';
   static const pointsStar =

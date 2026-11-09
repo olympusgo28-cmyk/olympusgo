@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -64,7 +64,6 @@ class CreateStepHeader extends StatelessWidget {
           KitHeader(
             title: title,
             subtitle: showSteps ? 'Step $step of $of · $name' : name,
-            titleSize: 19,
             border: false,
           ),
           if (showSteps)
@@ -104,7 +103,7 @@ class CreateSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: kitSpaced([
-      Semantics(header: true, child: Text(title, style: OgText.heading(20))),
+      Semantics(header: true, child: Text(title, style: context.type.section)),
       ...children,
     ], 12),
   );
@@ -154,14 +153,14 @@ class CreatePickRow extends StatelessWidget {
                 children: [
                   Text(
                     hint == null ? label : '$label · $hint',
-                    style: OgText.body(12, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(16, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                 ],
               ),
@@ -202,8 +201,7 @@ class CreateStepper extends StatelessWidget {
         decoration: BoxDecoration(color: context.og.bg, shape: BoxShape.circle),
         child: Text(
           sign,
-          style: OgText.heading(
-            20,
+          style: context.type.section.copyWith(
             color: tap == null ? context.og.textMuted : context.og.text,
           ),
         ),
@@ -217,16 +215,14 @@ class CreateStepper extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(label, style: OgText.body(15, weight: FontWeight.w600)),
-          ),
+          Expanded(child: Text(label, style: context.type.body)),
           button('−', 'Lower $label', onLess),
           SizedBox(
             width: 64,
             child: Text(
               value,
               textAlign: TextAlign.center,
-              style: OgText.heading(18),
+              style: context.type.section,
             ),
           ),
           button('+', 'Raise $label', onMore),
@@ -516,7 +512,6 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
   }
 
   List<Widget> _basics(ActivityDraft d) {
-    final c = context.og;
     final repeating = d.repeat != Repeat.once;
     final dates = d.occurrences;
     const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -561,7 +556,6 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
             KitSegments(
               labels: [for (final r in Repeat.values) r.label],
               selected: d.repeat.index,
-              fontSize: 14,
               onSelect: (i) => _edit(
                 (d) => d.copyWith(
                   repeat: Repeat.values[i],
@@ -587,7 +581,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
           if (repeating) ...[
             Text(
               'Repeats on · Pick one or more days',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             Row(
               children: [
@@ -650,7 +644,6 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
   }
 
   List<Widget> _game(ActivityDraft d) {
-    final c = context.og;
     final type = d.gameType ?? GameType.doubles;
     final min = _mins[type] ?? 4;
     final lo = (d.levelMin.floor() - 1).clamp(0, 7);
@@ -661,7 +654,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
       CreateSection(
         'Game setup',
         children: [
-          Text('Game type', style: OgText.body(13, color: c.textMuted)),
+          Text('Game type', style: context.type.caption),
           Row(
             children: [
               for (final (i, g) in _mins.keys.indexed) ...[
@@ -685,7 +678,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
               ],
             ],
           ),
-          Text('Players', style: OgText.body(13, color: c.textMuted)),
+          Text('Players', style: context.type.caption),
           CreateStepper(
             label: 'Minimum',
             value: '${d.minPlayers}',
@@ -731,9 +724,9 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
             '${type.label} needs at least $min. Extra sign-ups join a '
             'waitlist. Below ${d.minPlayers} sign-ups 24 hours before, you '
             'choose to cancel or play.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
-          Text('Who it\'s for', style: OgText.body(13, color: c.textMuted)),
+          Text('Who it\'s for', style: context.type.caption),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -790,13 +783,12 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Show level on the Meet card as',
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
                 const SizedBox(height: 8),
                 KitSegments(
                   labels: ['Short form · $short', 'Numbers · $numbers'],
                   selected: d.levelAsNumbers ? 1 : 0,
-                  fontSize: 13,
                   onSelect: (i) =>
                       _edit((d) => d.copyWith(levelAsNumbers: i == 1)),
                 ),
@@ -831,7 +823,6 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
   }
 
   List<Widget> _feePart(ActivityDraft d) {
-    final c = context.og;
     final paid = d.chargeFee;
     final cut = platformFee(d.feeCents);
     Widget rows(List<(String, String, bool)> lines) => Column(
@@ -841,21 +832,16 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
+                // The total stands out by colour, not weight.
                 Expanded(
                   child: Text(
                     k,
-                    style: OgText.body(
-                      14,
-                      weight: bold ? FontWeight.w600 : FontWeight.w400,
-                    ),
+                    style: bold ? context.type.body : context.type.secondary,
                   ),
                 ),
                 Text(
                   v,
-                  style: OgText.body(
-                    14,
-                    weight: bold ? FontWeight.w600 : FontWeight.w600,
-                  ),
+                  style: bold ? context.type.body : context.type.secondary,
                 ),
               ],
             ),
@@ -892,10 +878,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 10, bottom: 16),
-                  child: Text(
-                    '/ person',
-                    style: OgText.body(14, color: c.textMuted),
-                  ),
+                  child: Text('/ person', style: context.type.secondary),
                 ),
               ],
             ),
@@ -916,10 +899,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
               ],
             ),
           ] else ...[
-            Text(
-              'Who pays the S\$2 platform fee?',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Who pays the S\$2 platform fee?', style: context.type.body),
             KitChoiceRow(
               title: 'Me, the organizer',
               subtitle:
@@ -960,7 +940,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
           Text(
             'Platform fee: 10%, minimum S\$2. '
             '${!paid && !d.playersPayFee ? 'If a player leaves before the Meet starts, your S\$2 for them is refunded.' : 'Players who leave before the Meet starts get the price back, without the platform fee. If you cancel, they get all of it back and card fees come off your earnings.'}',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       ),
@@ -974,7 +954,7 @@ class _NewMeetDetailsScreenState extends ConsumerState<NewMeetDetailsScreen> {
       ),
       Text(
         'You mark attendance at the Meet. Present players get Passport credit.',
-        style: OgText.body(14, height: 1.45, color: c.textMuted),
+        style: context.type.secondary.copyWith(height: 1.45),
       ),
       CreateSection(
         'Optional details',
@@ -1063,9 +1043,7 @@ class _PartPill extends StatelessWidget {
               ),
               child: Text(
                 '$n',
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w600,
+                style: context.type.caption.copyWith(
                   color: on
                       ? c.onPrimary
                       : done
@@ -1077,9 +1055,7 @@ class _PartPill extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: OgText.body(
-                14,
-                weight: FontWeight.w600,
+              style: context.type.body.copyWith(
                 color: on ? Colors.white : c.text,
               ),
             ),
@@ -1123,11 +1099,7 @@ class _DayDot extends StatelessWidget {
         ),
         child: Text(
           letter,
-          style: OgText.body(
-            14,
-            weight: FontWeight.w600,
-            color: on ? c.onPrimary : c.text,
-          ),
+          style: context.type.body.copyWith(color: on ? c.onPrimary : c.text),
         ),
       ),
     );
@@ -1168,16 +1140,13 @@ class _TypeCard extends StatelessWidget {
           children: [
             Text(
               label,
-              style: OgText.body(
-                15,
-                weight: FontWeight.w600,
+              style: context.type.body.copyWith(
                 color: on ? Colors.white : c.text,
               ),
             ),
             Text(
               sub,
-              style: OgText.body(
-                12,
+              style: context.type.caption.copyWith(
                 color: on ? const Color(0xFFC9C6BC) : c.textMuted,
               ),
             ),

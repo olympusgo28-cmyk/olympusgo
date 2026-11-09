@@ -7,7 +7,7 @@ import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
@@ -69,12 +69,15 @@ class _FullNameScreenState extends ConsumerState<FullNameScreen> {
             onChanged: (_) => setState(() {}),
             onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             onSubmitted: (_) => _continue(),
-            style: OgText.display(36, height: 1.2, color: c.text),
+            style: context.type.display.copyWith(height: 1.2),
             decoration: InputDecoration(
               counterText: '',
               border: InputBorder.none,
               hintText: 'Full name',
-              hintStyle: OgText.display(36, height: 1.2, color: c.border),
+              hintStyle: context.type.display.copyWith(
+                color: c.border,
+                height: 1.2,
+              ),
             ),
           ),
         ),
@@ -210,7 +213,6 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     Widget part(
       String label,
       String value, {
@@ -265,7 +267,7 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
         const SizedBox(height: 8),
         Text(
           'Sets your currency, emergency number and local rules.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.4),
         ),
         if (_error != null) OgErrorText(_error!),
       ],

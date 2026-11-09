@@ -10,7 +10,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -60,9 +60,7 @@ class _BalanceCard extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: OgText.body(
-              12,
-              weight: FontWeight.w600,
+            style: context.type.caption.copyWith(
               color: t.gold,
               letterSpacing: 0.8,
             ),
@@ -70,12 +68,15 @@ class _BalanceCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: OgText.heading(44, color: const Color(0xFFFFFFFF)),
+            style: context.type.score.copyWith(color: const Color(0xFFFFFFFF)),
           ),
           const SizedBox(height: 6),
           Text(
             note,
-            style: OgText.body(14, height: 1.4, color: const Color(0xFFC9C6BC)),
+            style: context.type.body.copyWith(
+              color: const Color(0xFFC9C6BC),
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -115,17 +116,15 @@ class MoneyRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: OgText.body(15, weight: FontWeight.w600)),
-                  Text(sub, style: OgText.body(13, color: c.textMuted)),
+                  Text(title, style: context.type.body),
+                  Text(sub, style: context.type.caption),
                 ],
               ),
             ),
             const SizedBox(width: 10),
             Text(
               amount,
-              style: OgText.body(
-                15,
-                weight: FontWeight.w600,
+              style: context.type.body.copyWith(
                 color: good ? context.tones.successInk : c.text,
               ),
             ),
@@ -190,15 +189,15 @@ class PointsWalletScreen extends ConsumerWidget {
                 children: [
                   TextSpan(
                     text: '${pointsText(p.pendingMinor)} points pending ',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  TextSpan(text: p.pendingNote),
+                  // The amount stands out by colour, not weight.
+                  TextSpan(text: p.pendingNote, style: context.type.secondary),
                 ],
               ),
-              style: OgText.body(14, height: 1.4),
+              style: context.type.body.copyWith(height: 1.4),
             ),
           ),
-        Text('How points work', style: OgText.heading(20)),
+        Text('How points work', style: context.type.section),
         KitCard(
           children: [
             for (final (i, (title, text)) in how.indexed)
@@ -217,9 +216,7 @@ class PointsWalletScreen extends ConsumerWidget {
                       ),
                       child: Text(
                         '${i + 1}',
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
+                        style: context.type.caption.copyWith(
                           color: c.onPrimary,
                         ),
                       ),
@@ -229,17 +226,10 @@ class PointsWalletScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: OgText.body(15, weight: FontWeight.w600),
-                          ),
+                          Text(title, style: context.type.body),
                           Text(
                             text,
-                            style: OgText.body(
-                              13,
-                              height: 1.4,
-                              color: c.textMuted,
-                            ),
+                            style: context.type.caption.copyWith(height: 1.4),
                           ),
                         ],
                       ),
@@ -253,7 +243,7 @@ class PointsWalletScreen extends ConsumerWidget {
           KitKeyValue('Oldest points run out', Fmt.day(p.nextExpiry!)),
         Row(
           children: [
-            Expanded(child: Text('Use points', style: OgText.heading(20))),
+            Expanded(child: Text('Use points', style: context.type.section)),
             KitLink(
               'Open the shop',
               onPressed: () => context.push(Routes.shop),
@@ -277,10 +267,10 @@ class PointsWalletScreen extends ConsumerWidget {
         Text(
           '1 point takes S\$0.10 off. Each item has its own limit. Points left '
           'over stay with you, and run out after 12 months.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
         if (p.activity.isNotEmpty) ...[
-          Text('Activity', style: OgText.heading(20)),
+          Text('Activity', style: context.type.section),
           KitCard(
             children: [
               for (final (title, sub, amt) in p.activity)
@@ -317,17 +307,15 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
         children: [
           Text(
             'RECEIPT',
-            style: OgText.body(
-              12,
-              weight: FontWeight.w600,
+            style: context.type.caption.copyWith(
               color: sheet.og.textMuted,
               letterSpacing: 0.8,
             ),
           ),
-          Text(r.title, style: OgText.heading(24)),
+          Text(r.title, style: context.type.title),
           Text(
             '${r.kind} · ${Fmt.day(r.at)} · ${r.no}',
-            style: OgText.body(14, color: sheet.og.textMuted),
+            style: context.type.body.copyWith(color: sheet.og.textMuted),
           ),
           const SizedBox(height: 12),
           for (final (k, v) in r.lines) KitKeyValue(k, v),
@@ -353,7 +341,6 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final all = ref.watch(receiptsProvider).value;
     final kinds = [
       'All',
@@ -388,14 +375,14 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'No receipts here yet. Try another filter.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
         else ...[
           Text(
             '${shown.length} ${shown.length == 1 ? 'receipt' : 'receipts'}',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
           KitCard(
             children: [
@@ -412,7 +399,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
         Text(
           'Receipts stay here for 5 years, also after an account is deleted, '
           'because payment records must be kept by law.',
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.4),
         ),
       ],
     );
@@ -425,7 +412,6 @@ class EarningsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final e = ref.watch(earningsProvider).value;
     final account = ref.watch(payoutAccountProvider).value;
@@ -444,11 +430,11 @@ class EarningsScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            FittedBox(child: Text(big, style: OgText.heading(20))),
+            FittedBox(child: Text(big, style: context.type.section)),
             Text(
               small,
               textAlign: TextAlign.center,
-              style: OgText.body(12, color: t.onTag),
+              style: context.type.caption.copyWith(color: t.onTag),
             ),
           ],
         ),
@@ -480,11 +466,11 @@ class EarningsScreen extends ConsumerWidget {
             tile(cashShort(e.yearCents), 'this year'),
           ],
         ),
-        Text('Where it came from', style: OgText.heading(20)),
+        Text('Where it came from', style: context.type.section),
         if (e.sources.isEmpty)
           Text(
             'Nothing yet. Paid Meets, tournaments and events you run show here.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           )
         else
           KitCard(
@@ -578,7 +564,6 @@ class EarningsDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final d = ref.watch(earningsDetailProvider(id));
     return switch (d) {
       AsyncData(:final value) => KitScaffold(
@@ -588,12 +573,12 @@ class EarningsDetailScreen extends ConsumerWidget {
             '${cash(value.earnedCents)} earned',
             lead: '${value.sub}\n${value.released}',
           ),
-          Text('How it adds up', style: OgText.heading(20)),
+          Text('How it adds up', style: context.type.section),
           Column(
             children: [for (final (k, v) in value.lines) KitKeyValue(k, v)],
           ),
           KitKeyValue('You receive', cash(value.earnedCents)),
-          Text('Players', style: OgText.heading(20)),
+          Text('Players', style: context.type.section),
           KitCard(
             children: [
               for (final (name, sub, amt) in value.players)
@@ -604,7 +589,7 @@ class EarningsDetailScreen extends ConsumerWidget {
             'Absent players are not refunded, so you still receive their spot. '
             'A player who left in time costs you nothing: their refund comes '
             'from the money Olympus was holding.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       ),
@@ -681,7 +666,6 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final a = ref.watch(payoutAccountProvider).value;
     if (_unlocked != true || a == null) {
       return KitScaffold(
@@ -720,7 +704,7 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
                   ref.read(playRepositoryProvider).vendorCode(rotate: rotate),
             ),
           ),
-          Text('Automatic payout', style: OgText.heading(20)),
+          Text('Automatic payout', style: context.type.section),
           Column(
             children: [
               for (final o in const ['Every Monday', 'Every month', 'Off'])
@@ -739,7 +723,7 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
         Text(
           'For a club or academy, the owner sets this. Admins and coaches can '
           'see earnings but can’t change the account.',
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.4),
         ),
       ],
     );

@@ -5,8 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:og_money/og_money.dart';
 
 import '../../../core/providers.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pay_sheet.dart';
@@ -279,7 +278,6 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final gateway = ref.watch(paymentGatewayProvider);
     final noun = widget.paying.noun;
     final spot = widget.paying == PayingFor.spot;
@@ -329,7 +327,7 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
           ),
         Text(
           '${Money(widget.hold.totalCents)} to OlympusGO',
-          style: OgText.heading(24),
+          style: context.type.title,
         ),
         Text(switch (widget.paying) {
           PayingFor.order =>
@@ -341,7 +339,7 @@ class _PaymentWaitingScreenState extends ConsumerState<PaymentWaitingScreen> {
           PayingFor.spot =>
             'OlympusGO holds your payment until the organizer marks attendance. '
                 'You’re in as soon as your bank or card confirms it.',
-        }, style: OgText.body(14, height: 1.45, color: c.textMuted)),
+        }, style: context.type.secondary.copyWith(height: 1.45)),
       ],
     );
   }

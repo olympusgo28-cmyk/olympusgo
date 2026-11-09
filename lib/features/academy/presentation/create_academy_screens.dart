@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -35,7 +35,6 @@ class _Header extends StatelessWidget {
             title: 'Create academy',
             subtitle: 'Step $step of 5 · $name',
             lead: step == 1 ? KitLead.close : KitLead.back,
-            titleSize: 19,
             border: false,
           ),
           Padding(
@@ -63,8 +62,8 @@ class _Header extends StatelessWidget {
   }
 }
 
-Widget _label(String text) =>
-    Text(text, style: OgText.body(15, weight: FontWeight.w600));
+/// Plain text takes the body role from the theme.
+Widget _label(String text) => Text(text);
 
 // ─── 1 Details ─────────────────────────────────────────────────────────────
 
@@ -86,7 +85,6 @@ class _NewAcademyScreenState extends ConsumerState<NewAcademyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final d = ref.watch(academyDraftControllerProvider);
     final draft = ref.read(academyDraftControllerProvider.notifier);
     final gaps = [
@@ -106,7 +104,7 @@ class _NewAcademyScreenState extends ConsumerState<NewAcademyScreen> {
           Text(
             'Add ${gaps.join(' and ')} to continue.',
             textAlign: TextAlign.center,
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
       ],
       children: [
@@ -159,7 +157,7 @@ class _NewAcademyScreenState extends ConsumerState<NewAcademyScreen> {
         for (final v in d.venues)
           Row(
             children: [
-              Expanded(child: Text(v, style: OgText.body(15))),
+              Expanded(child: Text(v, style: context.type.body)),
               KitLink(
                 'Remove',
                 onPressed: () => draft.edit(
@@ -230,13 +228,13 @@ class NewAcademyLevelsScreen extends ConsumerWidget {
         Text(
           'One sport per academy. Add another sport later as a second '
           'programme.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
         _label('Levels and curriculum'),
         Text(
           'Every coach teaches from the same plan. Start from a template and '
           'edit it any time in Curriculum.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
         KitSegments(
           labels: ['${d.sport.label} template', 'Start blank'],
@@ -258,11 +256,8 @@ class NewAcademyLevelsScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name,
-                          style: OgText.body(15, weight: FontWeight.w600),
-                        ),
-                        Text(meta, style: OgText.body(13, color: c.textMuted)),
+                        Text(name, style: context.type.body),
+                        Text(meta, style: context.type.caption),
                       ],
                     ),
                   ),
@@ -289,7 +284,6 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final d = ref.watch(academyDraftControllerProvider);
     final draft = ref.read(academyDraftControllerProvider.notifier);
     return KitScaffold(
@@ -316,7 +310,7 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
         Text(
           'Platform fee: 10%, minimum S\$2 per payment. A S\$280 term costs '
           'parents S\$308. You receive S\$280.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
         _label('Make-up classes'),
         Row(
@@ -325,10 +319,10 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Make-ups a month', style: OgText.body(15)),
+                  Text('Make-ups a month', style: context.type.body),
                   Text(
                     'For classes missed with notice',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -346,7 +340,7 @@ class NewAcademyPoliciesScreen extends ConsumerWidget {
               child: Text(
                 '${d.makeups}',
                 textAlign: TextAlign.center,
-                style: OgText.heading(22),
+                style: context.type.score,
               ),
             ),
             KitIconButton(
@@ -412,24 +406,15 @@ class NewAcademyVerifyScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 14,
                   backgroundColor: t.soft,
-                  child: Text(
-                    '${i + 1}',
-                    style: OgText.body(13, weight: FontWeight.w600),
-                  ),
+                  child: Text('${i + 1}', style: context.type.caption),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _docs[i].$2,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
-                      Text(
-                        _docs[i].$3,
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
+                      Text(_docs[i].$2, style: context.type.body),
+                      Text(_docs[i].$3, style: context.type.caption),
                     ],
                   ),
                 ),
@@ -487,7 +472,6 @@ class _NewAcademyCoachesScreenState
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final d = ref.watch(academyDraftControllerProvider);
     final draft = ref.read(academyDraftControllerProvider.notifier);
     final validEmail = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -508,11 +492,8 @@ class _NewAcademyCoachesScreenState
         for (final e in d.coachEmails)
           Row(
             children: [
-              Expanded(child: Text(e, style: OgText.body(15))),
-              Text(
-                'Coach · invite on create',
-                style: OgText.body(13, color: c.textMuted),
-              ),
+              Expanded(child: Text(e, style: context.type.body)),
+              Text('Coach · invite on create', style: context.type.caption),
             ],
           ),
         KitInput(
@@ -566,8 +547,8 @@ class _Role extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: OgText.body(15, weight: FontWeight.w600)),
-        Text(body, style: OgText.body(13, color: context.og.textMuted)),
+        Text(title, style: context.type.body),
+        Text(body, style: context.type.caption),
       ],
     ),
   );

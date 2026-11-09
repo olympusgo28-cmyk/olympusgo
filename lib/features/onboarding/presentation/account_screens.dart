@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/mascot.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
@@ -127,11 +127,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
           child: switch (_status) {
             _Availability.checking => Text(
               'Checking…',
-              style: OgText.body(
-                14,
-                weight: FontWeight.w600,
-                color: c.textMuted,
-              ),
+              style: context.type.secondary,
             ),
             _Availability.available => Row(
               children: [
@@ -151,14 +147,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '$name is available',
-                  style: OgText.body(
-                    14,
-                    weight: FontWeight.w600,
-                    color: c.text,
-                  ),
-                ),
+                Text('$name is available', style: context.type.body),
               ],
             ),
             _Availability.taken => const OgErrorText(
@@ -409,7 +398,9 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                     header: true,
                     child: Text(
                       "You're in.",
-                      style: OgText.display(38, color: OgColors.offWhite),
+                      style: context.type.display.copyWith(
+                        color: OgColors.offWhite,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -418,10 +409,9 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                     child: Text(
                       'Your Passport is ready. Next, check your account details.',
                       textAlign: TextAlign.center,
-                      style: OgText.body(
-                        17,
-                        height: 1.45,
+                      style: context.type.body.copyWith(
                         color: OgColors.grey400,
+                        height: 1.45,
                       ),
                     ),
                   ),
@@ -449,8 +439,7 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                             alignment: Alignment.center,
                             child: Text(
                               initials,
-                              style: OgText.display(
-                                18,
+                              style: context.type.section.copyWith(
                                 color: OgColors.charcoal900,
                               ),
                             ),
@@ -462,16 +451,14 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                               children: [
                                 Text(
                                   '${first.sport.label} · ${first.level.toStringAsFixed(1)}',
-                                  style: OgText.display(
-                                    19,
-                                    height: 1.2,
+                                  style: context.type.section.copyWith(
                                     color: OgColors.offWhite,
+                                    height: 1.2,
                                   ),
                                 ),
                                 Text(
                                   'Starting level. Adjusts after a few matches.',
-                                  style: OgText.body(
-                                    14,
+                                  style: context.type.body.copyWith(
                                     color: OgColors.grey400,
                                   ),
                                 ),

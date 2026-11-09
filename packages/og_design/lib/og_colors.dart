@@ -16,10 +16,13 @@ class OgColors extends ThemeExtension<OgColors> {
     required this.bg,
     required this.surface,
     required this.surfaceRaised,
+    required this.groupedBg,
+    required this.groupedSurface,
     required this.border,
     required this.borderControl,
     required this.text,
     required this.textMuted,
+    required this.textTertiary,
     required this.link,
     required this.focusRing,
     required this.success,
@@ -46,10 +49,20 @@ class OgColors extends ThemeExtension<OgColors> {
   final Color bg;
   final Color surface;
   final Color surfaceRaised;
+
+  /// The page behind a grouped settings list: light grey, or the dark
+  /// background.
+  final Color groupedBg;
+
+  /// A settings group on [groupedBg]: white, or the dark surface.
+  final Color groupedSurface;
   final Color border;
   final Color borderControl;
   final Color text;
   final Color textMuted;
+
+  /// Placeholders and disabled text: lighter than [textMuted] (Q257).
+  final Color textTertiary;
   final Color link;
   final Color focusRing;
   final Color success;
@@ -91,10 +104,13 @@ class OgColors extends ThemeExtension<OgColors> {
     bg: white,
     surface: paper,
     surfaceRaised: white,
+    groupedBg: Color(0xFFF3F2EC),
+    groupedSurface: white,
     border: Color(0xFFD9D9D2),
     borderControl: Color(0xFF7A8088),
     text: charcoal900,
     textMuted: Color(0xFF5A5F66),
+    textTertiary: Color(0xFF868B92),
     link: orange800,
     focusRing: charcoal900,
     success: Color(0xFF1A7F4B),
@@ -117,10 +133,13 @@ class OgColors extends ThemeExtension<OgColors> {
     bg: charcoal950,
     surface: charcoal900,
     surfaceRaised: Color(0xFF262A2F),
+    groupedBg: charcoal950,
+    groupedSurface: charcoal900,
     border: Color(0xFF3A4047),
     borderControl: Color(0xFF7C838B),
     text: offWhite,
     textMuted: grey400,
+    textTertiary: Color(0xFF737980),
     link: lime400,
     focusRing: lime400,
     success: Color(0xFF5AD68F),
@@ -150,10 +169,13 @@ class OgColors extends ThemeExtension<OgColors> {
       bg: l(bg, other.bg),
       surface: l(surface, other.surface),
       surfaceRaised: l(surfaceRaised, other.surfaceRaised),
+      groupedBg: l(groupedBg, other.groupedBg),
+      groupedSurface: l(groupedSurface, other.groupedSurface),
       border: l(border, other.border),
       borderControl: l(borderControl, other.borderControl),
       text: l(text, other.text),
       textMuted: l(textMuted, other.textMuted),
+      textTertiary: l(textTertiary, other.textTertiary),
       link: l(link, other.link),
       focusRing: l(focusRing, other.focusRing),
       success: l(success, other.success),

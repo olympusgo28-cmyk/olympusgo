@@ -7,7 +7,8 @@ import 'package:og_money/og_money.dart' show pointsText;
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_layout.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/pressable.dart';
@@ -19,7 +20,6 @@ import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
 import '../../shell/main_shell.dart';
-import '../../shop/application/shop_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../../earnings/application/earnings_providers.dart';
 import '../domain/profile.dart';
@@ -46,10 +46,8 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(sessionProfileProvider).value;
     final summary = ref.watch(mySummaryProvider).value;
     final sports = ref.watch(mySportsProvider).value ?? const [];
-    final social = ref.watch(mySocialProvider).value;
     final wallet = ref.watch(pointsSummaryProvider).value;
     final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
-    final teams = ref.watch(teamListProvider(ClubTab.mine)).value ?? const [];
     final upcoming = (ref.watch(myScheduleProvider).value ?? const [])
         .take(3)
         .toList();
@@ -59,16 +57,6 @@ class ProfileScreen extends ConsumerWidget {
       if (profile?.username != null) '@${profile!.username}',
       ?summary?.area,
     ].join(' · ');
-    final levels = sports
-        .map((s) {
-          final sport = Sport.fromId(s.sport);
-          return '${sport.label} ${SkillBand.forLevel(s.level).code}';
-        })
-        .join(' · ');
-    final groups = [
-      ...clubs.map((c) => c.club.name),
-      ...teams.map((t) => t.team.name),
-    ];
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -96,7 +84,6 @@ class ProfileScreen extends ConsumerWidget {
                         color: const Color(0xFFF2C14E),
                         ink: const Color(0xFF3A2C00),
                         size: 76,
-                        fontSize: 26,
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -107,14 +94,11 @@ class ProfileScreen extends ConsumerWidget {
                               header: true,
                               child: Text(
                                 profile?.fullName ?? profile?.username ?? '',
-                                style: OgText.heading(24),
+                                style: context.type.title,
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              handle,
-                              style: OgText.body(14, color: c.textMuted),
-                            ),
+                            Text(handle, style: context.type.secondary),
                           ],
                         ),
                       ),
@@ -126,6 +110,18 @@ class ProfileScreen extends ConsumerWidget {
                         background: c.bg,
                         border: true,
                         onPressed: () => context.push(Routes.shareProfile),
+                      ),
+                      const SizedBox(width: OgSpace.s2),
+                      // Everything that was the Account list lives in
+                      // Settings and activity now.
+                      KitIconButton(
+                        icon: OgIcons.menu,
+                        label: 'Settings and activity',
+                        size: 20,
+                        strokeWidth: 1.9,
+                        background: c.bg,
+                        border: true,
+                        onPressed: () => context.push(Routes.settings),
                       ),
                     ],
                   ),
@@ -160,9 +156,7 @@ class ProfileScreen extends ConsumerWidget {
                                 children: [
                                   Text(
                                     '${pointsText(wallet.minor)} points',
-                                    style: OgText.body(
-                                      16,
-                                      weight: FontWeight.w600,
+                                    style: context.type.body.copyWith(
                                       color: const Color(0xFF7A3B00),
                                     ),
                                   ),
@@ -172,8 +166,7 @@ class ProfileScreen extends ConsumerWidget {
                                         : wallet.earning
                                         ? 'Earn points by playing'
                                         : 'Use them in the Shop',
-                                    style: OgText.body(
-                                      13,
+                                    style: context.type.caption.copyWith(
                                       color: const Color(0xFF7A3B00),
                                     ),
                                   ),
@@ -182,9 +175,7 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             Text(
                               'Use points',
-                              style: OgText.body(
-                                14,
-                                weight: FontWeight.w600,
+                              style: context.type.body.copyWith(
                                 color: const Color(0xFF7A3B00),
                               ),
                             ),
@@ -197,7 +188,7 @@ class ProfileScreen extends ConsumerWidget {
                       title: 'Badges',
                       trailing: Text(
                         '${summary.badgeCount} earned',
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -237,108 +228,6 @@ class ProfileScreen extends ConsumerWidget {
                             subtitle: _sessionLine(a, ref),
                             onTap: () => context.push(Routes.activity(a.id)),
                           ),
-                      ],
-                    ),
-                  ),
-                  _Section(
-                    title: 'Account',
-                    child: KitCard(
-                      children: [
-                        _ListRow(
-                          title: 'Edit profile',
-                          subtitle:
-                              'Name, photo, username, who sees your sessions',
-                          onTap: () => context.push(Routes.editProfile),
-                        ),
-                        _ListRow(
-                          title: 'Sessions and rating',
-                          subtitle: 'Past Meets, tournaments and classes',
-                          value: '${summary?.sessions ?? 0}',
-                          onTap: () => context.push(Routes.passport),
-                        ),
-                        _ListRow(
-                          title: 'Earnings and receipts',
-                          subtitle: 'What you’ve paid and what you’ve earned',
-                          onTap: () => context.push(Routes.earnings),
-                        ),
-                        _ListRow(
-                          title: 'Followers and following',
-                          subtitle: social == null
-                              ? 'Your people'
-                              : '${social.followers} followers · ${social.following} following',
-                          onTap: () =>
-                              context.push(Routes.connections(followers: true)),
-                        ),
-                        _ListRow(
-                          title: 'My orders',
-                          subtitle: 'Gear from the shop',
-                          onTap: () => context.push(Routes.orders()),
-                        ),
-                        _ListRow(
-                          title: 'My children',
-                          subtitle: 'Link and look after a child\'s account',
-                          onTap: () => context.push(Routes.children),
-                        ),
-                        if (ref.watch(myShopProvider).value case final shop?)
-                          _ListRow(
-                            title: 'My shop',
-                            subtitle: '${shop.name}: orders to get ready',
-                            onTap: () => context.push(Routes.ownerOrders),
-                          ),
-                        _ListRow(
-                          title: 'My lessons',
-                          subtitle: 'Trials and one-to-ones you’ve booked',
-                          onTap: () => context.push(Routes.lessons),
-                        ),
-                        _ListRow(
-                          title: 'Sports and levels',
-                          subtitle: levels.isEmpty ? 'Add your sports' : levels,
-                          onTap: () => context.push(Routes.profileSports),
-                        ),
-                        _ListRow(
-                          title: 'My clubs and teams',
-                          subtitle: groups.isEmpty
-                              ? 'Find a club to join'
-                              : groups.take(2).join(', '),
-                          value: groups.isEmpty ? null : '${groups.length}',
-                          onTap: () => context.push(Routes.clubs),
-                        ),
-                        _ListRow(
-                          title: 'Account Centre',
-                          subtitle:
-                              'Email, mobile, payments · opens with Face ID',
-                          onTap: () => context.push(Routes.accountHub),
-                        ),
-                        _ListRow(
-                          title: 'My gear',
-                          subtitle: 'Racquets, paddles and shoes · string and rubber setup',
-                          onTap: () => context.push(Routes.gear),
-                        ),
-                        _ListRow(
-                          title: 'Challenges',
-                          subtitle: 'Create and join challenges',
-                          onTap: () => context.push(Routes.creatorChallenges),
-                        ),
-                        _ListRow(
-                          title: 'Share profile',
-                          subtitle: 'QR code and link',
-                          onTap: () => context.push(Routes.shareProfile),
-                        ),
-                        _ListRow(
-                          title: 'Saved',
-                          subtitle: 'Meets, players and clubs you kept',
-                          onTap: () => context.push(Routes.saved),
-                        ),
-                        _ListRow(
-                          title: 'Settings',
-                          subtitle: 'Notifications, privacy and safety',
-                          onTap: () => context.push(Routes.settings),
-                        ),
-                        _ListRow(
-                          title: 'Help',
-                          subtitle: 'Questions, support, terms',
-                          onTap: () => context.push(Routes.help),
-                        ),
                       ],
                     ),
                   ),
@@ -382,11 +271,7 @@ class _Section extends StatelessWidget {
                   header: true,
                   child: Text(
                     title,
-                    style: OgText.display(
-                      18,
-                      height: 1.2,
-                      color: context.og.text,
-                    ),
+                    style: context.type.section.copyWith(height: 1.2),
                   ),
                 ),
               ),
@@ -406,19 +291,16 @@ class _ListRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.value,
   });
 
   final String title;
   final String subtitle;
-  final String? value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Pressable(
-      semanticLabel: [title, subtitle, ?value].join('. '),
+      semanticLabel: '$title. $subtitle',
       onPressed: onTap,
       child: Container(
         constraints: const BoxConstraints(minHeight: 56),
@@ -430,23 +312,12 @@ class _ListRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: OgText.body(15, weight: FontWeight.w600)),
+                  Text(title, style: context.type.body),
                   const SizedBox(height: 1),
-                  Text(subtitle, style: OgText.body(13, color: c.textMuted)),
+                  Text(subtitle, style: context.type.caption),
                 ],
               ),
             ),
-            if (value != null) ...[
-              const SizedBox(width: 12),
-              Text(
-                value!,
-                style: OgText.body(
-                  14,
-                  weight: FontWeight.w600,
-                  color: const Color(0xFF3A3F45),
-                ),
-              ),
-            ],
             const SizedBox(width: 12),
             OgIcon(
               OgIcons.chevronRight,
@@ -492,9 +363,12 @@ class _PassportCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(big, style: OgText.heading(20, color: Colors.white)),
+            Text(
+              big,
+              style: context.type.section.copyWith(color: Colors.white),
+            ),
             const SizedBox(height: 2),
-            Text(small, style: OgText.body(12, color: _muted)),
+            Text(small, style: context.type.caption.copyWith(color: _muted)),
           ],
         ),
       ),
@@ -517,9 +391,7 @@ class _PassportCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'PASSPORT · ${label.toUpperCase()}',
-                    style: OgText.body(
-                      12,
-                      weight: FontWeight.w600,
+                    style: context.type.caption.copyWith(
                       color: _muted,
                       letterSpacing: 0.6,
                     ),
@@ -536,9 +408,7 @@ class _PassportCard extends StatelessWidget {
                   ),
                   child: Text(
                     'MAIN SPORT',
-                    style: OgText.body(
-                      11,
-                      weight: FontWeight.w600,
+                    style: context.type.caption.copyWith(
                       color: const Color(0xFF3A2C00),
                     ),
                   ),
@@ -552,17 +422,16 @@ class _PassportCard extends StatelessWidget {
               children: [
                 Text(
                   sport.level.toStringAsFixed(1),
-                  style: OgText.heading(44, color: Colors.white, height: 1),
+                  style: context.type.score.copyWith(
+                    color: Colors.white,
+                    height: 1,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Flexible(
                   child: Text(
                     '${band.label} · ${band.code}',
-                    style: OgText.body(
-                      16,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.body.copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -595,14 +464,13 @@ class _PassportCard extends StatelessWidget {
                         localRank == null
                             ? 'See leaderboards'
                             : 'Local #$localRank${area == null ? '' : ' in $area'} · See leaderboards',
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: context.type.body.copyWith(color: Colors.white),
                       ),
                     ),
-                    const Text('›', style: TextStyle(color: Colors.white)),
+                    Text(
+                      '›',
+                      style: context.type.body.copyWith(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
@@ -637,13 +505,12 @@ class _BadgeTile extends StatelessWidget {
             color: Color(badge.color),
             ink: Color(badge.ink),
             size: 44,
-            fontSize: 14,
           ),
           const SizedBox(height: 6),
           Text(
             badge.name,
             textAlign: TextAlign.center,
-            style: OgText.body(12, weight: FontWeight.w600, height: 1.25),
+            style: context.type.caption.copyWith(height: 1.25),
           ),
         ],
       ),

@@ -8,7 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -88,7 +88,6 @@ class MyClipsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final status = ref.watch(analysisStatusProvider);
     final clips = ref.watch(myClipsProvider);
     const title = 'Analyse my game';
@@ -106,7 +105,7 @@ class MyClipsScreen extends ConsumerWidget {
         Text(
           'Film a singles game from a tripod. You get your distance, your '
           'speed and a map of where you moved.',
-          style: OgText.body(16, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
         if (open)
           KitButton(
@@ -139,7 +138,6 @@ class ChildClipsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final status = ref.watch(analysisStatusProvider);
     final clips = ref.watch(childClipsProvider(childId));
     const title = 'Game clips';
@@ -167,7 +165,7 @@ class ChildClipsScreen extends ConsumerWidget {
         else
           const KitNote('Clips of children aren’t open yet.'),
         if (list.isEmpty)
-          Text('No clips yet.', style: OgText.body(16, color: c.textMuted))
+          Text('No clips yet.', style: context.type.secondary)
         else
           _ClipList(
             list,
@@ -291,7 +289,6 @@ class _AddClipScreenState extends ConsumerState<AddClipScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final status = ref.watch(analysisStatusProvider);
     const title = 'Add a clip';
     final blocked = fitnessWaiting(status, title, () {
@@ -357,7 +354,7 @@ class _AddClipScreenState extends ConsumerState<AddClipScreen> {
               : 'Only you and ${child.$2}’s other linked parents can see this. '
                     'You can withdraw at any time, and we delete the clip '
                     'within 7 days.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
         if (_error != null) KitNote(_error!, tone: KitTone.warn),
         if (_busy)
@@ -490,16 +487,12 @@ class _Plain extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return KitScaffold(
       header: KitHeader(title: '${_their(clip)} clip'),
       children: [
         if (waiting) const CupertinoActivityIndicator(),
-        Text(
-          title,
-          style: OgText.body(20, weight: FontWeight.w700, color: c.text),
-        ),
-        Text(body, style: OgText.body(16, height: 1.45, color: c.textMuted)),
+        Text(title, style: context.type.section),
+        Text(body, style: context.type.secondary.copyWith(height: 1.45)),
         if (stuck != null) ...[
           const KitNote(
             'Can’t check on your clip right now. Check your connection.',
@@ -677,7 +670,6 @@ class _CourtScreenState extends ConsumerState<_CourtScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final clip = widget.clip;
     final path = clip.framePath;
     final frame = path == null ? null : ref.watch(clipFrameProvider(path));
@@ -687,7 +679,7 @@ class _CourtScreenState extends ConsumerState<_CourtScreen> {
       children: [
         Text(
           'Drag each dot onto a corner of the court, then choose a side.',
-          style: OgText.body(16, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
         if (frame?.hasError ?? false) ...[
           const KitNote(
@@ -730,7 +722,7 @@ class _CourtScreenState extends ConsumerState<_CourtScreen> {
         Text(
           'We measure only the player on that side, and keep no numbers about '
           'the other player.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
         KitButton(
           label: 'Analyse this game',
@@ -917,7 +909,6 @@ class _ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final report = clip.report;
     return KitScaffold(
       header: KitHeader(title: '${_their(clip)} report'),
@@ -948,7 +939,7 @@ class _ReportScreen extends StatelessWidget {
         if (clip.status != ClipStatus.withdrawn)
           Text(
             _keptLine(clip),
-            style: OgText.body(14, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         _ClipActions(clip, page: page),
       ],

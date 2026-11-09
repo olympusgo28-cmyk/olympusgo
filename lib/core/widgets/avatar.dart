@@ -4,7 +4,7 @@ import '../config/env.dart';
 
 import 'package:flutter/material.dart';
 
-import '../theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 
 /// The pastel avatar colours used across the design.
 enum AvatarTone {
@@ -58,7 +58,6 @@ class Avatar extends StatelessWidget {
     this.imageUrl,
     this.size = 48,
     this.square = false,
-    this.fontSize,
   });
 
   final String initials;
@@ -66,7 +65,6 @@ class Avatar extends StatelessWidget {
   final String? imageUrl;
   final double size;
   final bool square;
-  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +76,7 @@ class Avatar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: OgText.display(fontSize ?? size * 0.375, color: tone.ink),
+        style: context.type.initials(size).copyWith(color: tone.ink),
       ),
     );
     if (imageUrl == null) return ExcludeSemantics(child: fallback);

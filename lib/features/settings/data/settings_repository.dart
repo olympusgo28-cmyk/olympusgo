@@ -10,10 +10,21 @@ import '../domain/settings_models.dart';
 /// The signed-in player's own account, personal details and preferences.
 abstract interface class SettingsRepository {
   Future<AccountDetails> account();
-  Future<void> saveAccount(AccountDetails details);
+
+  /// Writes only the details given; the others stay as they are, so a
+  /// change made elsewhere is never overwritten with an old value.
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  });
 
   /// Uploads a new profile photo and returns its public URL.
   Future<String> uploadAvatar(Uint8List bytes, String extension);
+
+  /// Clears the profile photo and deletes its file.
+  Future<void> removeAvatar();
 
   Future<PrivateInfo> privateInfo();
 
@@ -86,14 +97,19 @@ class SupabaseSettingsRepository implements SettingsRepository {
   });
 
   @override
-  Future<void> saveAccount(AccountDetails d) => _guard(
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  }) => _guard(
     () => _client
         .from('profiles')
         .update({
-          'full_name': d.fullName.trim(),
-          'username': d.username.trim(),
-          'bio': d.bio.trim().isEmpty ? null : d.bio.trim(),
-          'gender': d.gender.id,
+          'full_name': ?fullName?.trim(),
+          'username': ?username?.trim(),
+          if (bio != null) 'bio': bio.trim().isEmpty ? null : bio.trim(),
+          'gender': ?gender?.id,
         })
         .eq('id', _me),
   );
@@ -125,6 +141,28 @@ class SupabaseSettingsRepository implements SettingsRepository {
     await _client.from('profiles').update({'avatar_url': url}).eq('id', _me);
     return url;
   });
+
+  @override
+  Future<void> removeAvatar() async {
+    const failed = AuthFailure("Your photo wasn't removed. Try again.");
+    try {
+      final bucket = _client.storage.from('avatars');
+      // The files go first, so a photo is never left readable after the
+      // profile stops pointing at it. Both names an upload can have.
+      await bucket.remove(['$_me/avatar.jpeg', '$_me/avatar.png']);
+      // remove() says nothing when a file stays, so look again.
+      final left = await bucket.list(
+        path: _me,
+        searchOptions: const SearchOptions(search: 'avatar.'),
+      );
+      if (left.isNotEmpty) throw failed;
+      await _client.from('profiles').update({'avatar_url': null}).eq('id', _me);
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw failed;
+    }
+  }
 
   @override
   Future<PrivateInfo> privateInfo() => _guard(() async {
@@ -266,15 +304,20 @@ class DemoSettingsRepository implements SettingsRepository {
   }
 
   @override
-  Future<void> saveAccount(AccountDetails d) async {
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  }) async {
     await _tick();
-    _gender = d.gender;
+    if (gender != null) _gender = gender;
     final p = _profiles.profile;
     if (p != null) {
       _profiles.profile = p.copyWith(
-        fullName: d.fullName.trim(),
-        username: d.username.trim(),
-        bio: d.bio.trim().isEmpty ? null : d.bio.trim(),
+        fullName: fullName?.trim() ?? p.fullName,
+        username: username?.trim() ?? p.username,
+        bio: bio == null ? p.bio : (bio.trim().isEmpty ? null : bio.trim()),
       );
     }
   }
@@ -283,6 +326,13 @@ class DemoSettingsRepository implements SettingsRepository {
   Future<String> uploadAvatar(Uint8List bytes, String extension) async {
     await _tick();
     throw const AuthFailure('Photos upload once Supabase is connected.');
+  }
+
+  @override
+  Future<void> removeAvatar() async {
+    await _tick();
+    final p = _profiles.profile;
+    if (p != null) _profiles.profile = p.copyWith(avatarUrl: null);
   }
 
   @override

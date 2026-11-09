@@ -32,6 +32,9 @@ import '../../features/academy/presentation/academy_more_screens.dart';
 import '../../features/game/presentation/creator_screens.dart';
 import '../../features/game/presentation/game_screens.dart';
 import '../../features/game/presentation/gear_screens.dart';
+import '../../features/settings/presentation/account_info_screens.dart';
+import '../../features/settings/presentation/edit_profile_screens.dart';
+import '../../features/settings/presentation/settings_menu_screen.dart';
 import '../../features/settings/presentation/account_screens.dart';
 import '../../features/shop/domain/commerce_models.dart';
 import '../../features/shop/presentation/order_screens.dart';
@@ -90,6 +93,7 @@ import '../../features/home/edit_categories_screen.dart';
 import '../navigation/breadcrumbs.dart';
 import '../providers.dart';
 import '../share.dart';
+import 'motion_page.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -173,6 +177,14 @@ GoRouter appRouter(Ref ref) {
   // CupertinoPage gives every screen the iOS slide and edge swipe-back.
   GoRoute page(String path, Widget Function(GoRouterState s) build) =>
       GoRoute(path: path, pageBuilder: (_, s) => cupertinoPage(s, build(s)));
+
+  // The same slide, or a fade when reduced motion is on.
+  GoRoute motionPage(String path, Widget Function(GoRouterState s) build) =>
+      GoRoute(
+        path: path,
+        pageBuilder: (_, s) =>
+            MotionPage<void>(key: s.pageKey, child: build(s)),
+      );
 
   String id(GoRouterState s) => s.pathParameters['id']!;
 
@@ -415,23 +427,38 @@ GoRouter appRouter(Ref ref) {
         ),
       ),
       page(Routes.ready, (_) => const ReadyScreen()),
-      page(
+      motionPage(
         Routes.setupAccount,
         (_) => const EditProfileScreen(onboarding: true),
       ),
-      page(
+      motionPage(
         Routes.setupPersonal,
         (_) => const AccountInfoScreen(onboarding: true),
       ),
-      page(Routes.settings, (_) => const SettingsScreen()),
-      page(Routes.editProfile, (_) => const EditProfileScreen()),
-      page(Routes.accountInfo, (_) => const AccountInfoScreen()),
+      motionPage(Routes.settings, (_) => const SettingsScreen()),
+      motionPage(
+        Routes.timeManagement,
+        (_) => const ComingSoonScreen(title: 'Time management'),
+      ),
+      motionPage(Routes.editProfile, (_) => const EditProfileScreen()),
+      motionPage(
+        Routes.editName,
+        (_) => const ProfileFieldScreen(field: ProfileField.name),
+      ),
+      motionPage(Routes.editUsername, (_) => const ChangeUsernameScreen()),
+      motionPage(
+        Routes.editBio,
+        (_) => const ProfileFieldScreen(field: ProfileField.bio),
+      ),
+      motionPage(Routes.accountInfo, (_) => const AccountInfoScreen()),
+      motionPage(Routes.changePhone, (_) => const ChangePhoneScreen()),
+      motionPage(Routes.changeEmail, (_) => const ChangeEmailScreen()),
       GoRoute(
         path: Routes.verifyPhoneChange,
         redirect: (_, s) => verifyChangeRedirect(s.extra),
-        pageBuilder: (_, s) => cupertinoPage(
-          s,
-          VerifyPhoneChangeScreen(phone: s.extra! as String),
+        pageBuilder: (_, s) => MotionPage<void>(
+          key: s.pageKey,
+          child: VerifyPhoneChangeScreen(phone: s.extra! as String),
         ),
       ),
       page(Routes.notifications, (_) => const NotificationsScreen()),

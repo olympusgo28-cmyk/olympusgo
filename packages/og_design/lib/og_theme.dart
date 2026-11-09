@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'og_colors.dart';
-import 'og_text.dart';
 import 'og_tones.dart';
+import 'og_type.dart';
 
 /// App-wide theme. Screens draw from [OgColors]; this sets the platform
 /// behaviour: iOS page transitions and swipe-back on every route, bouncing
@@ -15,6 +15,11 @@ abstract final class OgTheme {
       _build(OgColors.dark, OgTones.dark, Brightness.dark);
 
   static ThemeData _build(OgColors c, OgTones tones, Brightness brightness) {
+    final type = OgType.of(c);
+    final text = type.textTheme(c.text);
+    // Buttons, tabs and chips use the button role: they stand out by fill
+    // and shape, not weight (Q257).
+    final buttonText = WidgetStatePropertyAll(type.button);
     final base = ThemeData(
       brightness: brightness,
       useMaterial3: true,
@@ -47,12 +52,30 @@ abstract final class OgTheme {
         selectionColor: c.primary.withValues(alpha: 0.3),
         selectionHandleColor: c.primary,
       ),
-      // Text with no style of its own uses the app font too (Q250).
-      fontFamily: OgText.body(16).fontFamily,
-      extensions: [c, tones],
+      textTheme: text,
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        titleTextStyle: text.titleLarge,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(textStyle: buttonText),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(textStyle: buttonText),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(textStyle: buttonText),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(textStyle: buttonText),
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelStyle: type.button,
+        unselectedLabelStyle: type.button,
+      ),
+      chipTheme: ChipThemeData(labelStyle: type.button),
+      extensions: [c, tones, type],
     );
-    return base.copyWith(
-      textTheme: base.textTheme.apply(bodyColor: c.text, displayColor: c.text),
-    );
+    return base;
   }
 }

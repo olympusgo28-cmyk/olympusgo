@@ -10,7 +10,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -104,7 +104,6 @@ class TeamPageScreen extends ConsumerWidget {
     id: id,
     title: 'Team',
     body: (team) {
-      final c = context.og;
       final t = context.tones;
       Crumbs.name(context, team.name);
       final me = ref.watch(currentUserIdProvider).value;
@@ -143,11 +142,11 @@ class TeamPageScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(team.name, style: OgText.heading(24)),
+                    Text(team.name, style: context.type.title),
                     if (team.represents.isNotEmpty)
                       Text(
                         'Represents ${team.represents}',
-                        style: OgText.body(14, color: c.textMuted),
+                        style: context.type.secondary,
                       ),
                   ],
                 ),
@@ -166,14 +165,14 @@ class TeamPageScreen extends ConsumerWidget {
           Text(
             '${team.playerCount} players · ${team.reserveCount} reserves · '
             '${team.staffCount} staff',
-            style: OgText.body(14, weight: FontWeight.w600),
+            style: context.type.body,
           ),
           if (team.linkedClubs.isNotEmpty)
             Text(
               'Picks players from ${team.linkedClubs.length} '
               '${team.linkedClubs.length == 1 ? 'club' : 'clubs'}: '
               '${team.linkedClubs.map((c) => c.name).join(', ')}',
-              style: OgText.body(13, height: 1.4, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.4),
             ),
           Row(
             children: [
@@ -211,9 +210,7 @@ class TeamPageScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           'NEXT FIXTURE',
-                          style: OgText.body(
-                            12,
-                            weight: FontWeight.w600,
+                          style: context.type.caption.copyWith(
                             color: t.gold,
                             letterSpacing: 0.8,
                           ),
@@ -222,8 +219,7 @@ class TeamPageScreen extends ConsumerWidget {
                       if (fixture.lineupLocksAt != null)
                         Text(
                           'Lineup locks ${Fmt.dayTimeComma(fixture.lineupLocksAt!)}',
-                          style: OgText.body(
-                            12,
+                          style: context.type.caption.copyWith(
                             color: const Color(0xFFC9C6BC),
                           ),
                         ),
@@ -232,19 +228,21 @@ class TeamPageScreen extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Text(
                     '${fixture.competition.isEmpty ? '' : '${fixture.competition} '}vs ${fixture.opponent}',
-                    style: OgText.heading(22, color: const Color(0xFFFFFFFF)),
+                    style: context.type.section.copyWith(
+                      color: const Color(0xFFFFFFFF),
+                    ),
                   ),
                   Text(
                     '${Fmt.dayTimeComma(fixture.startsAt)}${fixture.venue.isEmpty ? '' : ' · ${fixture.venue}'}',
-                    style: OgText.body(14, color: const Color(0xFFC9C6BC)),
+                    style: context.type.body.copyWith(
+                      color: const Color(0xFFC9C6BC),
+                    ),
                   ),
                   if (myLine != null) ...[
                     const SizedBox(height: 10),
                     Text(
                       "You're in · $myLine",
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
+                      style: context.type.body.copyWith(
                         color: const Color(0xFFFF7A1A),
                       ),
                     ),
@@ -253,9 +251,7 @@ class TeamPageScreen extends ConsumerWidget {
                   if (fixture.myAvailability == Availability.noReply) ...[
                     Text(
                       'Are you available?',
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
+                      style: context.type.body.copyWith(
                         color: const Color(0xFFFFFFFF),
                       ),
                     ),
@@ -297,9 +293,7 @@ class TeamPageScreen extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             'You said: ${fixture.myAvailability.label}',
-                            style: OgText.body(
-                              14,
-                              weight: FontWeight.w600,
+                            style: context.type.body.copyWith(
                               color: const Color(0xFFFFFFFF),
                             ),
                           ),
@@ -331,7 +325,7 @@ class TeamPageScreen extends ConsumerWidget {
               ),
             ),
           if (sessions.isNotEmpty) ...[
-            Text('Schedule', style: OgText.heading(20)),
+            Text('Schedule', style: context.type.section),
             KitCard(
               children: [
                 for (final s in sessions)
@@ -367,15 +361,13 @@ class TeamPageScreen extends ConsumerWidget {
                                     'SAT',
                                     'SUN',
                                   ][s.startsAt.weekday - 1],
-                                  style: OgText.body(
-                                    11,
-                                    weight: FontWeight.w600,
+                                  style: context.type.caption.copyWith(
                                     color: t.onTag,
                                   ),
                                 ),
                                 Text(
                                   '${s.startsAt.day}',
-                                  style: OgText.heading(18),
+                                  style: context.type.section,
                                 ),
                               ],
                             ),
@@ -385,16 +377,10 @@ class TeamPageScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  s.title,
-                                  style: OgText.body(
-                                    15,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
+                                Text(s.title, style: context.type.body),
                                 Text(
                                   '${Fmt.time(s.startsAt)}${s.venue.isEmpty ? '' : ' · ${s.venue}'}',
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                               ],
                             ),
@@ -412,7 +398,7 @@ class TeamPageScreen extends ConsumerWidget {
             ),
           ],
           if (results.isNotEmpty) ...[
-            Text('Results', style: OgText.heading(20)),
+            Text('Results', style: context.type.section),
             KitCard(
               children: [
                 for (final r in results)
@@ -435,19 +421,19 @@ class TeamPageScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 'vs ${r.opponent}',
-                                style: OgText.body(15, weight: FontWeight.w600),
+                                style: context.type.body,
                               ),
                               Text(
                                 [
                                   Fmt.day(r.at),
                                   if (r.competition.isNotEmpty) r.competition,
                                 ].join(' · '),
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
                         ),
-                        Text(r.score, style: OgText.heading(18)),
+                        Text(r.score, style: context.type.section),
                       ],
                     ),
                   ),
@@ -472,7 +458,6 @@ class TeamSettingsScreen extends StatelessWidget {
     title: 'Team settings',
     body: (team) => Consumer(
       builder: (context, ref, _) {
-        final c = context.og;
         final nextId = ref.watch(nextFixtureIdProvider(id)).value;
         final fixture = nextId == null
             ? null
@@ -488,10 +473,10 @@ class TeamSettingsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(team.name, style: OgText.heading(20)),
+                      Text(team.name, style: context.type.section),
                       Text(
                         '${team.sport.label} · ${team.playerCount} players · ${team.staffCount} staff · Private',
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                     ],
                   ),
@@ -626,7 +611,6 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
     id: widget.id,
     title: 'Team overview',
     body: (team) {
-      final c = context.og;
       if (_draft == null) {
         _draft = team;
         _name.text = team.name;
@@ -646,7 +630,6 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
                 expand: false,
                 height: 40,
                 radius: 20,
-                fontSize: 14,
                 style: KitButtonStyle.outline,
                 onPressed: () =>
                     showOgToast(context, 'Logos come with photo uploads.'),
@@ -660,7 +643,7 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
             hint: 'School name',
           ),
           KitKeyValue('Sport', '${d.sport.label} · set when created'),
-          Text('Sub-teams', style: OgText.heading(20)),
+          Text('Sub-teams', style: context.type.section),
           Column(
             children: [
               for (final (i, s) in d.subTeams.indexed)
@@ -681,7 +664,7 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
             ],
           ),
           if (d.linkedClubs.isNotEmpty) ...[
-            Text('Linked clubs', style: OgText.heading(20)),
+            Text('Linked clubs', style: context.type.section),
             for (final club in d.linkedClubs)
               Row(
                 children: [
@@ -696,13 +679,10 @@ class _TeamOverviewScreenState extends ConsumerState<TeamOverviewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          club.name,
-                          style: OgText.body(15, weight: FontWeight.w600),
-                        ),
+                        Text(club.name, style: context.type.body),
                         Text(
                           'You can add players from this club',
-                          style: OgText.body(13, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                       ],
                     ),
@@ -763,7 +743,6 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
               m.player.id,
               initials: m.player.initials,
               size: 40,
-              fontSize: 14,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -775,7 +754,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                       Flexible(
                         child: Text(
                           m.player.displayName,
-                          style: OgText.body(15, weight: FontWeight.w600),
+                          style: context.type.body,
                         ),
                       ),
                       if (m.captain != null) ...[
@@ -783,14 +762,13 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                         KitTag(
                           m.captain!,
                           height: 20,
-                          fontSize: 10,
                           background: t.gold,
                           foreground: t.onGold,
                         ),
                       ],
                     ],
                   ),
-                  Text(sub, style: OgText.body(13, color: c.textMuted)),
+                  Text(sub, style: context.type.caption),
                 ],
               ),
             ),
@@ -843,15 +821,12 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                                 children: [
                                   Text(
                                     'vs ${fixture.opponent} · ${Fmt.day(fixture.startsAt)}',
-                                    style: OgText.heading(18),
+                                    style: context.type.section,
                                   ),
                                   if (fixture.lineupLocksAt != null)
                                     Text(
                                       'Locks ${Fmt.dayTimeComma(fixture.lineupLocksAt!)} · then only staff can change it',
-                                      style: OgText.body(
-                                        13,
-                                        color: c.textMuted,
-                                      ),
+                                      style: context.type.caption,
                                     ),
                                 ],
                               ),
@@ -880,10 +855,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                                   children: [
                                     Text(
                                       s.label.toUpperCase(),
-                                      style: OgText.body(
-                                        11,
-                                        weight: FontWeight.w600,
-                                        color: c.textMuted,
+                                      style: context.type.caption.copyWith(
                                         letterSpacing: 0.6,
                                       ),
                                     ),
@@ -895,9 +867,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                                             ? 'Open'
                                             : (byId[id]?.player.displayName ??
                                                   'Player'),
-                                        style: OgText.body(
-                                          15,
-                                          weight: FontWeight.w600,
+                                        style: context.type.body.copyWith(
                                           color: id == null
                                               ? c.textMuted
                                               : c.text,
@@ -909,7 +879,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
                           ],
                         ),
                         if (fixture.slots.any((s) => s.isReserve)) ...[
-                          Text('Reserves', style: OgText.heading(18)),
+                          Text('Reserves', style: context.type.section),
                           KitCard(
                             children: [
                               for (final s in fixture.slots.where(
@@ -927,7 +897,7 @@ class _TeamRosterScreenState extends ConsumerState<TeamRosterScreen> {
               1 => [
                 Text(
                   '${players.length} players${fixture == null ? '' : ' · availability for ${Fmt.day(fixture.startsAt)}'}',
-                  style: OgText.body(14, weight: FontWeight.w600),
+                  style: context.type.body,
                 ),
                 KitCard(
                   children: [
@@ -1019,7 +989,6 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
     id: widget.id,
     title: 'Add players',
     body: (team) {
-      final c = context.og;
       final people = ref.watch(teamCandidatesProvider(widget.id)).value;
       final q = _q.trim().toLowerCase();
       final shown = (people ?? const <InviteCandidate>[])
@@ -1048,14 +1017,13 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
             KitSegments(
               labels: sources,
               selected: _source,
-              fontSize: 13,
               onSelect: (i) => setState(() => _source = i),
             ),
           if (onLink) ...[
             Text(
               'Send this link to players who are not in a linked club. It '
               'works for 7 days.',
-              style: OgText.body(14, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
             KitCard(
               padding: const EdgeInsets.all(14),
@@ -1065,7 +1033,7 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
                   children: [
                     Text(
                       link.replaceFirst('https://', ''),
-                      style: OgText.body(15, weight: FontWeight.w600),
+                      style: context.type.body,
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -1106,7 +1074,7 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
             Text(
               'Anyone with the link sends a request. You approve each one in '
               'the roster.',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ] else ...[
             KitSearchField(
@@ -1115,14 +1083,14 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
             ),
             Text(
               'Players from linked clubs. They get a request and join when they accept.',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             if (people == null)
               const CupertinoActivityIndicator()
             else if (shown.isEmpty)
               Text(
                 'Nothing matches. Check the spelling or clear the search.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               )
             else
               Column(
@@ -1133,7 +1101,6 @@ class _TeamAddPlayersScreenState extends ConsumerState<TeamAddPlayersScreen> {
                         p.player.id,
                         initials: p.player.initials,
                         size: 40,
-                        fontSize: 14,
                       ),
                       title: p.player.displayName,
                       subtitle: [
@@ -1177,7 +1144,6 @@ class TeamFixtureScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final f = ref.watch(fixtureProvider(fixtureId)).value;
     final members = ref.watch(teamMembersProvider(teamId)).value ?? const [];
@@ -1213,22 +1179,17 @@ class TeamFixtureScreen extends ConsumerWidget {
         if (f.competition.isNotEmpty)
           Text(
             f.competition.toUpperCase(),
-            style: OgText.body(
-              12,
-              weight: FontWeight.w600,
-              color: c.textMuted,
-              letterSpacing: 0.8,
-            ),
+            style: context.type.caption.copyWith(letterSpacing: 0.8),
           ),
         Text(
           '${f.teamName}\nvs ${f.opponent}',
-          style: OgText.heading(26, height: 1.15),
+          style: context.type.title.copyWith(height: 1.15),
         ),
         Text(
           '${Fmt.dayTimeComma(f.startsAt)}${f.venue.isEmpty ? '' : ' · ${f.venue}'}',
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
-        Text('Can you play?', style: OgText.heading(20)),
+        Text('Can you play?', style: context.type.section),
         Column(
           children: [
             for (final a in const [
@@ -1243,7 +1204,7 @@ class TeamFixtureScreen extends ConsumerWidget {
               ),
           ],
         ),
-        Text('Lineup', style: OgText.heading(20)),
+        Text('Lineup', style: context.type.section),
         if (!f.published)
           const KitNote(
             'The lineup is not published yet. You are told when it is.',
@@ -1261,19 +1222,12 @@ class TeamFixtureScreen extends ConsumerWidget {
                     children: [
                       SizedBox(
                         width: 90,
-                        child: Text(
-                          s.label,
-                          style: OgText.body(
-                            13,
-                            weight: FontWeight.w600,
-                            color: c.textMuted,
-                          ),
-                        ),
+                        child: Text(s.label, style: context.type.caption),
                       ),
                       Expanded(
                         child: Text(
                           who(f.lineup[s.key] ?? const []),
-                          style: OgText.body(15, weight: FontWeight.w600),
+                          style: context.type.body,
                         ),
                       ),
                     ],
@@ -1282,7 +1236,7 @@ class TeamFixtureScreen extends ConsumerWidget {
             ],
           ),
         if (f.notes.isNotEmpty) ...[
-          Text('Before the day', style: OgText.heading(20)),
+          Text('Before the day', style: context.type.section),
           KitCheckList(f.notes),
         ],
         if (f.lineupLocksAt != null)
@@ -1290,7 +1244,7 @@ class TeamFixtureScreen extends ConsumerWidget {
         if (f.setBy.isNotEmpty)
           Text(
             '${f.setBy} set the lineup. Tell them in team chat if anything changes.',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
         if ((ref.watch(teamProvider(teamId)).value?.isStaff ?? false) &&
             f.startsAt.isBefore(DateTime.now()))
@@ -1381,14 +1335,14 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
           children: [
             Text(
               s.isReserve ? 'Pick reserve' : 'Pick player for ${s.label}',
-              style: OgText.heading(22),
+              style: context.type.section,
             ),
             const SizedBox(height: 4),
             Text(
               s.isReserve
                   ? 'Reserves can’t also be in the lineup.'
                   : 'Players already in another slot are left out.',
-              style: OgText.body(13, color: sheet.og.textMuted),
+              style: context.type.caption.copyWith(color: sheet.og.textMuted),
             ),
             const SizedBox(height: 10),
             KitChoiceRow(
@@ -1404,7 +1358,6 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
                   m.player.id,
                   initials: m.player.initials,
                   size: 40,
-                  fontSize: 14,
                 ),
                 title: m.player.displayName,
                 subtitle: [
@@ -1467,7 +1420,7 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
               'Locks ${Fmt.dayTimeComma(f.lineupLocksAt!)}',
             filled ? 'Every slot is filled.' : 'Some slots are still open.',
           ].join('. '),
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
         if (f.lineupRule.isNotEmpty)
           KitNote(
@@ -1477,7 +1430,7 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(s.label, style: OgText.body(15, weight: FontWeight.w600)),
+              Text(s.label, style: context.type.body),
               const SizedBox(height: 6),
               for (var i = 0; i < s.size; i++)
                 Padding(
@@ -1497,21 +1450,16 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              () {
-                                final id =
-                                    (lineup[s.key] ?? const []).length > i
-                                    ? lineup[s.key]![i]
-                                    : null;
-                                return id == null
-                                    ? (s.isReserve
-                                          ? 'Pick reserve'
-                                          : 'Pick player')
-                                    : (byId[id]?.player.displayName ??
-                                          'Player');
-                              }(),
-                              style: OgText.body(15, weight: FontWeight.w600),
-                            ),
+                            child: Text(() {
+                              final id = (lineup[s.key] ?? const []).length > i
+                                  ? lineup[s.key]![i]
+                                  : null;
+                              return id == null
+                                  ? (s.isReserve
+                                        ? 'Pick reserve'
+                                        : 'Pick player')
+                                  : (byId[id]?.player.displayName ?? 'Player');
+                            }(), style: context.type.body),
                           ),
                           OgIcon(
                             OgIcons.chevronDown,
@@ -1527,7 +1475,7 @@ class _EditLineupScreenState extends ConsumerState<EditLineupScreen> {
           ),
         Text(
           'Players are told and it is posted in the team chat.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -1596,12 +1544,12 @@ class _TeamLeaveScreenState extends ConsumerState<TeamLeaveScreen> {
             'Leave ${team.name}?',
             lead: 'A coach or manager can add you again.',
           ),
-          Text('You keep', style: OgText.heading(20)),
+          Text('You keep', style: context.type.section),
           const KitCheckList([
             'Your match results and rating',
             'Your Passport history',
           ]),
-          Text('You lose', style: OgText.heading(20)),
+          Text('You lose', style: context.type.section),
           KitCheckList([
             if (inLineup)
               'Your place in the lineup for ${Fmt.day(f.startsAt)}. The coach is told.',
@@ -1694,7 +1642,7 @@ class _TeamDeleteScreenState extends ConsumerState<TeamDeleteScreen> {
             lead:
                 'This cannot be undone. All ${team.playerCount} players and ${team.staffCount} staff are told.',
           ),
-          Text('What is removed', style: OgText.heading(20)),
+          Text('What is removed', style: context.type.section),
           KitCheckList([
             'The roster, lineups and sub-teams',
             '$fixtures upcoming ${fixtures == 1 ? 'fixture' : 'fixtures'}',
@@ -1816,7 +1764,7 @@ class _NewFixtureScreenState extends ConsumerState<NewFixtureScreen> {
       children: [
         Text(
           'Players are told and asked if they can play.',
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
         KitInput(
           label: 'Opponent',
@@ -1840,13 +1788,10 @@ class _NewFixtureScreenState extends ConsumerState<NewFixtureScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Match time',
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
+                      Text('Match time', style: context.type.caption),
                       Text(
                         at == null ? 'Choose a date and time' : Fmt.dayTime(at),
-                        style: OgText.body(16, weight: FontWeight.w600),
+                        style: context.type.body,
                       ),
                     ],
                   ),
@@ -1894,7 +1839,7 @@ Future<void> showRecordResult(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: kitSpaced([
-          Text('Result vs ${f.opponent}', style: OgText.heading(22)),
+          Text('Result vs ${f.opponent}', style: context.type.section),
           KitSegments(
             labels: const ['We won', 'We lost'],
             selected: won ? 0 : 1,

@@ -13,7 +13,7 @@ import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -125,15 +125,9 @@ class _MeetPlayersScreenState extends State<MeetPlayersScreen> {
               ),
               if (a.men + a.women > 0) ...[
                 OgIcon(OgIcons.male, size: 18, color: c.textMuted),
-                Text(
-                  ' ${a.men}  ',
-                  style: OgText.body(14, weight: FontWeight.w600),
-                ),
+                Text(' ${a.men}  ', style: context.type.body),
                 OgIcon(OgIcons.female, size: 18, color: c.textMuted),
-                Text(
-                  ' ${a.women}',
-                  style: OgText.body(14, weight: FontWeight.w600),
-                ),
+                Text(' ${a.women}', style: context.type.body),
               ],
             ],
           ),
@@ -153,7 +147,7 @@ class _MeetPlayersScreenState extends State<MeetPlayersScreen> {
                   children: [
                     Text(
                       _tab == 0 ? 'Nobody is going yet' : 'Nobody is waiting',
-                      style: OgText.heading(20),
+                      style: context.type.section,
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -162,7 +156,7 @@ class _MeetPlayersScreenState extends State<MeetPlayersScreen> {
                           : 'When the Meet is full, extra sign-ups queue here '
                                 'in order. The first in the queue gets the '
                                 'next free spot.',
-                      style: OgText.body(14, height: 1.45, color: c.textMuted),
+                      style: context.type.secondary.copyWith(height: 1.45),
                     ),
                   ],
                 ),
@@ -231,7 +225,6 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
     id: widget.activityId,
     title: 'Add a walk-in',
     body: (a) {
-      final c = context.og;
       final all =
           ref.watch(walkInCandidatesProvider(a.id)).value ??
           const <MeetPlayer>[];
@@ -274,7 +267,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
               all.isEmpty
                   ? 'Everyone who has played with you is already on the list.'
                   : 'Nothing matches. Check the spelling or clear the search.',
-              style: OgText.body(14, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             )
           else
             Column(
@@ -285,7 +278,6 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
                       p.player.id,
                       initials: p.player.initials,
                       size: 40,
-                      fontSize: 14,
                     ),
                     title: p.player.displayName,
                     subtitle: [p.role, ?p.band].join(' · '),
@@ -299,7 +291,7 @@ class _MeetWalkInScreenState extends ConsumerState<MeetWalkInScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('How did they pay?', style: OgText.heading(20)),
+                Text('How did they pay?', style: context.type.section),
                 const SizedBox(height: 6),
                 KitChoiceRow(
                   title: 'Pay in app',
@@ -428,11 +420,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
           ),
           child: Text(
             label,
-            style: OgText.body(
-              13,
-              weight: FontWeight.w600,
-              color: on ? fg : c.textMuted,
-            ),
+            style: context.type.caption.copyWith(color: on ? fg : c.textMuted),
           ),
         ),
       );
@@ -453,11 +441,11 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
           ),
         ],
         children: [
-          Text(_short(a), style: OgText.body(14, color: c.textMuted)),
+          Text(_short(a), style: context.type.secondary),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('$present', style: OgText.heading(44)),
+              Text('$present', style: context.type.score),
               const SizedBox(width: 8),
               Expanded(
                 child: Padding(
@@ -467,13 +455,13 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                     children: [
                       Text(
                         'of ${going.length} present',
-                        style: OgText.body(15, weight: FontWeight.w600),
+                        style: context.type.body,
                       ),
                       Text(
                         unmarked == 0
                             ? 'Everyone is marked'
                             : '$unmarked not marked yet',
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                     ],
                   ),
@@ -516,9 +504,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         : _checkedIn
                         ? 'You checked in'
                         : 'Your own attendance is automatic',
-                    style: OgText.body(
-                      15,
-                      weight: FontWeight.w600,
+                    style: context.type.body.copyWith(
                       color: hostIn ? t.onSuccessFill : t.onWarnFill,
                     ),
                   ),
@@ -536,10 +522,9 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                         : 'You are marked Present when your phone reaches '
                               '${a.venue.name}. Keep location on. You mark the '
                               'other players below.',
-                    style: OgText.body(
-                      13,
-                      height: 1.45,
+                    style: context.type.caption.copyWith(
                       color: hostIn ? t.onSuccessFill : t.onWarnFill,
+                      height: 1.45,
                     ),
                   ),
                 ],
@@ -570,7 +555,6 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                                 label: 'Check in',
                                 height: 36,
                                 radius: 18,
-                                fontSize: 13,
                                 padding: 12,
                                 expand: false,
                                 onPressed: open ? () => _checkIn(a) : null,
@@ -618,10 +602,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                     children: [
                       OgIcon(OgIcons.scan, size: 18, color: c.text),
                       const SizedBox(width: 6),
-                      Text(
-                        'Scan a player',
-                        style: OgText.body(14, weight: FontWeight.w600),
-                      ),
+                      Text('Scan a player', style: context.type.body),
                     ],
                   ),
                 ),
@@ -636,10 +617,7 @@ class _MeetAttendanceScreenState extends ConsumerState<MeetAttendanceScreen> {
                     children: [
                       OgIcon(OgIcons.plus, size: 18, color: c.text),
                       const SizedBox(width: 6),
-                      Text(
-                        'Add a walk-in member',
-                        style: OgText.body(14, weight: FontWeight.w600),
-                      ),
+                      Text('Add a walk-in member', style: context.type.body),
                     ],
                   ),
                 ),
@@ -753,7 +731,7 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Show on the card', style: OgText.heading(20)),
+              Text('Show on the card', style: context.type.section),
               const SizedBox(height: 4),
               for (final (label, hint, on, set) in [
                 (
@@ -788,14 +766,8 @@ class _MeetRecapScreenState extends ConsumerState<MeetRecapScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                label,
-                                style: OgText.body(15, weight: FontWeight.w600),
-                              ),
-                              Text(
-                                hint,
-                                style: OgText.body(13, color: c.textMuted),
-                              ),
+                              Text(label, style: context.type.body),
+                              Text(hint, style: context.type.caption),
                             ],
                           ),
                         ),
@@ -880,19 +852,20 @@ class _RecapCard extends StatelessWidget {
         children: [
           Text(
             a.eyebrow.toUpperCase(),
-            style: OgText.body(
-              12,
-              weight: FontWeight.w600,
+            style: context.type.caption.copyWith(
               color: t.gold,
               letterSpacing: 1,
             ),
           ),
           const SizedBox(height: 6),
-          Text(a.title, style: OgText.heading(28, color: Colors.white)),
+          Text(
+            a.title,
+            style: context.type.title.copyWith(color: Colors.white),
+          ),
           const SizedBox(height: 2),
           Text(
             [Fmt.day(a.startsAt), ?r.clubName].join(' · '),
-            style: OgText.body(14, color: muted),
+            style: context.type.body.copyWith(color: muted),
           ),
           const SizedBox(height: 16),
           Row(
@@ -914,14 +887,16 @@ class _RecapCard extends StatelessWidget {
                         FittedBox(
                           child: Text(
                             big,
-                            style: OgText.heading(24, color: Colors.white),
+                            style: context.type.title.copyWith(
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           small,
                           textAlign: TextAlign.center,
-                          style: OgText.body(12, color: muted),
+                          style: context.type.caption.copyWith(color: muted),
                         ),
                       ],
                     ),
@@ -940,20 +915,14 @@ class _RecapCard extends StatelessWidget {
                     children: [
                       Text(
                         'RATING',
-                        style: OgText.body(
-                          11,
-                          weight: FontWeight.w600,
+                        style: context.type.caption.copyWith(
                           color: muted,
                           letterSpacing: 1,
                         ),
                       ),
                       Text(
                         '${r.ratingBefore!.toStringAsFixed(1)} → ${r.ratingAfter!.toStringAsFixed(1)}${r.band == null ? '' : ' · ${r.band}'}',
-                        style: OgText.body(
-                          16,
-                          weight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: context.type.body.copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -963,7 +932,6 @@ class _RecapCard extends StatelessWidget {
                   background: t.gold,
                   foreground: t.onGold,
                   height: 30,
-                  fontSize: 14,
                 ),
               ],
             ),
@@ -977,10 +945,8 @@ class _RecapCard extends StatelessWidget {
                   TextSpan(
                     text:
                         '${partner!.first}${partner.length > 1 ? ' ${partner.last[0]}.' : ''}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    // The name stands out by colour, not weight.
+                    style: context.type.body.copyWith(color: Colors.white),
                   ),
                   TextSpan(
                     text:
@@ -988,7 +954,7 @@ class _RecapCard extends StatelessWidget {
                   ),
                 ],
               ),
-              style: OgText.body(14, color: muted),
+              style: context.type.body.copyWith(color: muted),
             ),
           ],
           const SizedBox(height: 16),
@@ -998,14 +964,14 @@ class _RecapCard extends StatelessWidget {
             children: [
               Text(
                 '$playerName · session ${r.session}',
-                style: OgText.body(13, weight: FontWeight.w600, color: muted),
+                style: context.type.caption.copyWith(color: muted),
               ),
             ],
           ),
           if (r.clubLink != null)
             Text(
               'Play with us: ${r.clubLink}',
-              style: OgText.body(12, color: muted),
+              style: context.type.caption.copyWith(color: muted),
             ),
         ],
       ),
@@ -1058,7 +1024,6 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
     id: widget.activityId,
     title: 'Cancel Meet',
     body: (a) {
-      final c = context.og;
       Crumbs.name(context, 'Cancel Meet');
       final p = ref.watch(cancelPreviewProvider(a.id)).value;
       if (p == null) {
@@ -1095,7 +1060,7 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Which Meets?', style: OgText.heading(20)),
+                Text('Which Meets?', style: context.type.section),
                 const SizedBox(height: 6),
                 KitChoiceRow(
                   title: 'This Meet only',
@@ -1116,7 +1081,7 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Refunds', style: OgText.heading(20)),
+                Text('Refunds', style: context.type.section),
                 const SizedBox(height: 4),
                 KitKeyValue('Players refunded', '${p.players}'),
                 KitKeyValue(
@@ -1134,7 +1099,7 @@ class _MeetCancelScreenState extends ConsumerState<MeetCancelScreen> {
                   'so the S\$${money(p.cardFeeCents)} for ${p.cardPayments} '
                   'card ${p.cardPayments == 1 ? 'payment' : 'payments'} comes '
                   'off your earnings.',
-                  style: OgText.body(13, height: 1.45, color: c.textMuted),
+                  style: context.type.caption.copyWith(height: 1.45),
                 ),
               ],
             ),

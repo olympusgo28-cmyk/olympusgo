@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_screen.dart';
 import 'saved_accounts.dart';
@@ -90,7 +90,7 @@ class LegalLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    final link = OgText.body(13, weight: FontWeight.w600, color: c.link);
+    final link = context.type.button.copyWith(color: c.link);
     return Semantics(
       button: true,
       label: 'Read the Terms of use and the Privacy policy',
@@ -112,7 +112,7 @@ class LegalLine extends StatelessWidget {
                   ],
                 ),
                 textAlign: TextAlign.center,
-                style: OgText.body(13, height: 1.4, color: c.textMuted),
+                style: context.type.caption.copyWith(height: 1.4),
               ),
             ),
           ),

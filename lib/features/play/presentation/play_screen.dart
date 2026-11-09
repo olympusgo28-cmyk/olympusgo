@@ -8,7 +8,7 @@ import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -189,7 +189,7 @@ class _Hero extends StatelessWidget {
                   header: true,
                   child: Text(
                     'Play',
-                    style: OgText.heading(30, color: c.onPrimary),
+                    style: context.type.title.copyWith(color: c.onPrimary),
                   ),
                 ),
               ],
@@ -207,16 +207,15 @@ class _Hero extends StatelessWidget {
                 children: [
                   Text(
                     'Host your own session',
-                    style: OgText.heading(28, color: c.onPrimary, height: 1),
+                    style: context.type.title.copyWith(
+                      color: c.onPrimary,
+                      height: 1,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Meet, tournament, event',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: c.onPrimary,
-                    ),
+                    style: context.type.caption.copyWith(color: c.onPrimary),
                   ),
                   const SizedBox(height: 12),
                   Container(
@@ -230,11 +229,7 @@ class _Hero extends StatelessWidget {
                       widthFactor: 1,
                       child: Text(
                         'Create',
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: context.type.body.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
@@ -299,20 +294,13 @@ class _FilterBar extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        bar[i].title,
-                        style: OgText.body(12, weight: FontWeight.w600),
-                      ),
+                      Text(bar[i].title, style: context.type.caption),
                       const SizedBox(height: 1),
                       Text(
                         value(bar[i]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w500,
-                          color: c.textMuted,
-                        ),
+                        style: context.type.secondary,
                       ),
                     ],
                   ),
@@ -431,9 +419,7 @@ class _SportPill extends StatelessWidget {
                   ExcludeSemantics(
                     child: Text(
                       '•',
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
+                      style: context.type.body.copyWith(
                         color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
@@ -441,11 +427,7 @@ class _SportPill extends StatelessWidget {
                   const SizedBox(width: 7),
                   Text(
                     text,
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.body.copyWith(color: Colors.white),
                   ),
                 ],
               ),
@@ -496,7 +478,7 @@ class _AddSportChip extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Add sport',
-                style: OgText.body(14, weight: FontWeight.w600, color: c.link),
+                style: context.type.button.copyWith(color: c.link),
               ),
             ],
           ),
@@ -535,15 +517,16 @@ class _NextSession extends StatelessWidget {
                 children: [
                   Text(
                     days[next.startsAt.weekday - 1],
-                    style: OgText.body(
-                      11,
-                      weight: FontWeight.w600,
+                    style: context.type.caption.copyWith(
                       color: const Color(0xFFF2C14E),
                     ),
                   ),
                   Text(
                     '${next.startsAt.day}',
-                    style: OgText.heading(30, color: Colors.white, height: 1.1),
+                    style: context.type.score.copyWith(
+                      color: Colors.white,
+                      height: 1.1,
+                    ),
                   ),
                 ],
               ),
@@ -557,9 +540,7 @@ class _NextSession extends StatelessWidget {
                     children: [
                       Text(
                         'My next session',
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
+                        style: context.type.caption.copyWith(
                           color: const Color(0xFFC9C9CF),
                         ),
                       ),
@@ -567,7 +548,6 @@ class _NextSession extends StatelessWidget {
                       KitTag(
                         '$count',
                         height: 20,
-                        fontSize: 11,
                         background: OgColors.orange300,
                         foreground: OgColors.ink,
                       ),
@@ -576,16 +556,14 @@ class _NextSession extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     next.title,
-                    style: OgText.body(
-                      17,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.section.copyWith(color: Colors.white),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$when, ${next.venue.name}',
-                    style: OgText.body(13, color: const Color(0xFFC9C9CF)),
+                    style: context.type.caption.copyWith(
+                      color: const Color(0xFFC9C9CF),
+                    ),
                   ),
                 ],
               ),
@@ -610,7 +588,6 @@ class _Empty extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final what = switch (tab) {
       HubTab.all => 'sessions',
       HubTab.meet => 'Meets',
@@ -624,20 +601,19 @@ class _Empty extends ConsumerWidget {
           Text(
             'No $what match these filters',
             textAlign: TextAlign.center,
-            style: OgText.body(17, weight: FontWeight.w600),
+            style: context.type.section,
           ),
           const SizedBox(height: 6),
           Text(
             'Try another day or sport, or host your own.',
             textAlign: TextAlign.center,
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
           const SizedBox(height: 16),
           KitButton.outline(
             label: 'Clear filters',
             expand: false,
             height: 44,
-            fontSize: 15,
             onPressed: () {
               ref.read(hubFiltersProvider.notifier).reset(tab);
               ref.read(playSportsProvider.notifier).clear();
@@ -692,7 +668,7 @@ class _HubFiltersSheet extends ConsumerWidget {
               Expanded(
                 child: Text(
                   tab == HubTab.all ? 'Filters' : '${tab.label} filters',
-                  style: OgText.heading(26, color: c.text),
+                  style: context.type.title,
                 ),
               ),
               KitIconButton(
@@ -715,10 +691,7 @@ class _HubFiltersSheet extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        g.title,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
+                      Text(g.title, style: context.type.body),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
@@ -774,11 +747,7 @@ class _HubFiltersSheet extends ConsumerWidget {
                         const SizedBox(height: 10),
                         Text(
                           note,
-                          style: OgText.body(
-                            13,
-                            height: 1.35,
-                            color: c.textMuted,
-                          ),
+                          style: context.type.caption.copyWith(height: 1.35),
                         ),
                       ],
                     ],
@@ -925,7 +894,6 @@ class _SportOptionsSheetState extends State<_SportOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final games = _teamless(widget.sport)
         ? const [null, GameType.social]
         : const [null, GameType.singles, GameType.doubles, GameType.social];
@@ -957,7 +925,7 @@ class _SportOptionsSheetState extends State<_SportOptionsSheet> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(widget.sport.label, style: OgText.heading(26)),
+                child: Text(widget.sport.label, style: context.type.title),
               ),
               KitIconButton(
                 icon: OgIcons.close,
@@ -1013,7 +981,7 @@ class _SportOptionsSheetState extends State<_SportOptionsSheet> {
                     : mine == null
                     ? 'Set a level on your Passport to see where you sit.'
                     : 'Your ${widget.sport.label} Passport level is ${mine.label}.',
-                style: OgText.body(13, height: 1.35, color: c.textMuted),
+                style: context.type.caption.copyWith(height: 1.35),
               ),
             ],
           ),
@@ -1066,7 +1034,7 @@ class _Options extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title, style: OgText.body(15, weight: FontWeight.w600)),
+        Text(title, style: context.type.body),
         const SizedBox(height: 10),
         Wrap(spacing: 8, runSpacing: 8, children: children),
         ...footer,
@@ -1159,36 +1127,16 @@ class _BandRangePickerState extends State<BandRangePicker> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Min',
-                      style: OgText.body(
-                        12,
-                        weight: FontWeight.w600,
-                        color: c.textMuted,
-                      ),
-                    ),
-                    Text(
-                      bands[lo].label,
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
+                    Text('Min', style: context.type.caption),
+                    Text(bands[lo].label, style: context.type.body),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    'Max',
-                    style: OgText.body(
-                      12,
-                      weight: FontWeight.w600,
-                      color: c.textMuted,
-                    ),
-                  ),
-                  Text(
-                    bands[hi].label,
-                    style: OgText.body(15, weight: FontWeight.w600),
-                  ),
+                  Text('Max', style: context.type.caption),
+                  Text(bands[hi].label, style: context.type.body),
                 ],
               ),
             ],
@@ -1263,9 +1211,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: Text(
                                     bands[k].code,
-                                    style: OgText.body(
-                                      12,
-                                      weight: FontWeight.w600,
+                                    style: context.type.caption.copyWith(
                                       color: k >= lo && k <= hi
                                           ? c.text
                                           : const Color(0xFF8A8A90),
@@ -1282,10 +1228,7 @@ class _BandRangePickerState extends State<BandRangePicker> {
               },
             ),
           ),
-          Text(
-            'Drag either end, or tap a level.',
-            style: OgText.body(12, color: c.textMuted),
-          ),
+          Text('Drag either end, or tap a level.', style: context.type.caption),
         ],
       ),
     );
@@ -1334,7 +1277,7 @@ class _PlayAddSportScreenState extends ConsumerState<PlayAddSportScreen> {
           tab.hasLevels
               ? 'Pick a sport, then set its ${tab.hasGameType ? 'game type and ' : ''}skill level range. You can add more than one.'
               : 'Tap a sport to add it, tap it again to remove it.',
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.4),
         ),
         const SizedBox(height: 6),
         if (shown.isEmpty)
@@ -1342,7 +1285,7 @@ class _PlayAddSportScreenState extends ConsumerState<PlayAddSportScreen> {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               'No sport matches. Check the spelling or clear the search.',
-              style: OgText.body(15, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ),
         for (final s in shown)
@@ -1399,15 +1342,9 @@ class _PlayAddSportScreenState extends ConsumerState<PlayAddSportScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              s.label,
-                              style: OgText.body(16, weight: FontWeight.w600),
-                            ),
+                            Text(s.label, style: context.type.body),
                             const SizedBox(height: 2),
-                            Text(
-                              sub,
-                              style: OgText.body(13, color: c.textMuted),
-                            ),
+                            Text(sub, style: context.type.caption),
                           ],
                         ),
                       ),

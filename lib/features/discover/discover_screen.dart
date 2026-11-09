@@ -7,7 +7,7 @@ import '../../core/config/env.dart';
 import '../../core/format.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/pressable.dart';
@@ -178,11 +178,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         // see "near you" rather than a neighbourhood.
                         '${_filters['sport'] ?? sport?.label ?? 'Sports'} '
                         'near ${Env.hasSupabase ? 'you' : 'Tampines'}',
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w600,
-                          color: c.textMuted,
-                        ),
+                        style: context.type.secondary,
                       ),
                     ),
                     KitLink(
@@ -319,7 +315,7 @@ class _Hero extends ConsumerWidget {
                     header: true,
                     child: Text(
                       'Discover',
-                      style: OgText.heading(32, color: Colors.white),
+                      style: context.type.title.copyWith(color: Colors.white),
                     ),
                   ),
                 ),
@@ -379,18 +375,17 @@ class _Hero extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     // Sized down from the artboard's condensed face, as on
                     // Home, to stay clear of the circle.
-                    style: OgText.heading(26, color: Colors.white, height: 1),
+                    style: context.type.title.copyWith(
+                      color: Colors.white,
+                      height: 1,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     closes != null
                         ? 'Entries close ${Fmt.day(closes)}'
                         : 'Meets, tournaments, events',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.caption.copyWith(color: Colors.white),
                   ),
                 ],
               ),

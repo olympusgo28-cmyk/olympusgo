@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/pressable.dart';
@@ -91,7 +91,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               children: [
                 Semantics(
                   header: true,
-                  child: Text('Inbox', style: OgText.heading(24)),
+                  child: Text('Inbox', style: context.type.title),
                 ),
                 const SizedBox(height: 12),
                 KitSegments(
@@ -100,7 +100,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                   onSelect: (i) => setState(() => _show = _Show.values[i]),
                   height: 40,
                   radius: 20,
-                  fontSize: 14,
                   track: t.track,
                 ),
               ],
@@ -200,7 +199,7 @@ class _Section extends StatelessWidget {
                 header: true,
                 child: Text(
                   title,
-                  style: OgText.display(18, height: 1.2, color: c.text),
+                  style: context.type.section.copyWith(height: 1.2),
                 ),
               ),
             ),
@@ -244,10 +243,7 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Text(
-        text,
-        style: OgText.body(14, height: 1.45, color: context.og.textMuted),
-      ),
+      child: Text(text, style: context.type.secondary.copyWith(height: 1.45)),
     );
   }
 }
@@ -276,10 +272,7 @@ class _Mark extends StatelessWidget {
         borderRadius: BorderRadius.circular(square ? 14 : 24),
       ),
       alignment: Alignment.center,
-      child: Text(
-        mark,
-        style: OgText.body(14, weight: FontWeight.w600, color: ink),
-      ),
+      child: Text(mark, style: context.type.body.copyWith(color: ink)),
     );
   }
 }
@@ -323,16 +316,14 @@ class _ChatRow extends StatelessWidget {
                     chat.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     chat.preview ?? 'No messages yet',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(
-                      13,
-                      weight: unread ? FontWeight.w600 : FontWeight.w400,
+                    style: context.type.caption.copyWith(
                       color: unread ? c.text : c.textMuted,
                     ),
                   ),
@@ -344,10 +335,7 @@ class _ChatRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (chat.at != null)
-                  Text(
-                    inboxStamp(chat.at!),
-                    style: OgText.body(12, color: c.textMuted),
-                  ),
+                  Text(inboxStamp(chat.at!), style: context.type.caption),
                 if (unread) ...[
                   const SizedBox(height: 4),
                   chat.unread > 0
@@ -378,7 +366,6 @@ class _UpdateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final u = update;
     return Pressable(
       semanticLabel: [
@@ -404,15 +391,12 @@ class _UpdateRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    u.title,
-                    style: OgText.body(15, weight: FontWeight.w600),
-                  ),
+                  Text(u.title, style: context.type.body),
                   if (u.body.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       u.body,
-                      style: OgText.body(13, height: 1.35, color: c.textMuted),
+                      style: context.type.caption.copyWith(height: 1.35),
                     ),
                   ],
                 ],
@@ -422,10 +406,7 @@ class _UpdateRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  inboxStamp(u.at),
-                  style: OgText.body(12, color: c.textMuted),
-                ),
+                Text(inboxStamp(u.at), style: context.type.caption),
                 if (!u.read) ...[
                   const SizedBox(height: 6),
                   Container(

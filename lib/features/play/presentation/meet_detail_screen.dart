@@ -10,7 +10,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/share.dart';
@@ -303,10 +303,7 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                         const SizedBox(width: 8),
                                         Text(
                                           a.kind.label,
-                                          style: OgText.body(
-                                            15,
-                                            weight: FontWeight.w600,
-                                          ),
+                                          style: context.type.body,
                                         ),
                                         if (a.ranked) ...[
                                           const SizedBox(width: 8),
@@ -328,7 +325,9 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                       header: true,
                                       child: Text(
                                         a.title,
-                                        style: OgText.heading(24, height: 1.15),
+                                        style: context.type.title.copyWith(
+                                          height: 1.15,
+                                        ),
                                       ),
                                     ),
                                     _HostLine(
@@ -355,7 +354,6 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                                 p.id,
                                                 initials: p.initials,
                                                 size: 44,
-                                                fontSize: 13,
                                               ),
                                               const SizedBox(width: 8),
                                             ],
@@ -370,11 +368,8 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                                 alignment: Alignment.center,
                                                 child: Text(
                                                   '+$rest',
-                                                  style: OgText.body(
-                                                    13,
-                                                    weight: FontWeight.w600,
-                                                    color: t.onTag,
-                                                  ),
+                                                  style: context.type.caption
+                                                      .copyWith(color: t.onTag),
                                                 ),
                                               ),
                                           ],
@@ -382,9 +377,7 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                                       ),
                                     Text(
                                       count,
-                                      style: OgText.body(
-                                        14,
-                                        weight: FontWeight.w600,
+                                      style: context.type.body.copyWith(
                                         color: t.onTag,
                                       ),
                                     ),
@@ -513,15 +506,14 @@ class _MeetPageState extends ConsumerState<_MeetPage> {
                             children: [
                               Text(
                                 'About this $_noun',
-                                style: OgText.display(17, color: c.text),
+                                style: context.type.section,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 a.description!,
-                                style: OgText.body(
-                                  15,
-                                  height: 1.5,
+                                style: context.type.body.copyWith(
                                   color: t.onTag,
+                                  height: 1.5,
                                 ),
                               ),
                             ],
@@ -633,12 +625,7 @@ class _Caps extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: OgText.body(
-          11,
-          weight: FontWeight.w600,
-          color: ink,
-          letterSpacing: 0.4,
-        ),
+        style: context.type.caption.copyWith(color: ink, letterSpacing: 0.4),
       ),
     );
   }
@@ -675,20 +662,18 @@ class _HostLine extends StatelessWidget {
               ink: Color(logo.$3),
               size: 24,
               radius: 7,
-              fontSize: 10,
             )
           else
             SolidAvatar.forId(
               activity.host.id,
               initials: activity.host.initials,
               size: 24,
-              fontSize: 10,
             ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               clubName == null ? 'Hosted by $host' : '$clubName · by $host',
-              style: OgText.body(14, weight: FontWeight.w600, color: t.onTag),
+              style: context.type.body.copyWith(color: t.onTag),
             ),
           ),
         ],
@@ -733,13 +718,10 @@ class _InfoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(main, style: OgText.body(15, weight: FontWeight.w600)),
+                Text(main, style: context.type.body),
                 if (sub != null) ...[
                   const SizedBox(height: 3),
-                  Text(
-                    sub!,
-                    style: OgText.body(13, height: 1.4, color: c.textMuted),
-                  ),
+                  Text(sub!, style: context.type.caption.copyWith(height: 1.4)),
                 ],
               ],
             ),
@@ -780,11 +762,7 @@ class _RankedCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 'Ranked game',
-                style: OgText.body(
-                  16,
-                  weight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: context.type.body.copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -792,10 +770,9 @@ class _RankedCard extends StatelessWidget {
           Text(
             'Results update your rating and leaderboard spot. Both sides '
             'confirm each score.',
-            style: OgText.body(
-              14,
-              height: 1.45,
+            style: context.type.body.copyWith(
               color: const Color(0xFFC9C6BC),
+              height: 1.45,
             ),
           ),
           if (onScore != null) ...[
@@ -815,11 +792,7 @@ class _RankedCard extends StatelessWidget {
                   children: [
                     Text(
                       'Enter a score',
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
-                        color: t.onGold,
-                      ),
+                      style: context.type.body.copyWith(color: t.onGold),
                     ),
                   ],
                 ),
@@ -839,7 +812,6 @@ class _Players extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final a = activity;
     final noun = switch (a.kind) {
       ActivityKind.meet => 'Players',
@@ -865,12 +837,12 @@ class _Players extends ConsumerWidget {
             Expanded(
               child: Semantics(
                 header: true,
-                child: Text(noun, style: OgText.display(18, color: c.text)),
+                child: Text(noun, style: context.type.section),
               ),
             ),
             Text(
               '${a.spotsTaken} going · waitlist ${a.waitlistCount}',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ],
         ),
@@ -882,7 +854,7 @@ class _Players extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'No one yet. Be the first to join.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             for (final (p, meta, rating) in rows)
@@ -900,7 +872,7 @@ class _Players extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       'See all ${a.spotsTaken} ${noun.toLowerCase()}',
-                      style: OgText.body(14, weight: FontWeight.w600),
+                      style: context.type.body,
                     ),
                   ),
                 ),
@@ -930,7 +902,6 @@ class PlayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final guest = player.id.startsWith('g-') || player.id.endsWith(':guest');
     return Pressable(
       semanticLabel: '${player.displayName}, $meta',
@@ -940,12 +911,7 @@ class PlayerRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Row(
           children: [
-            SolidAvatar.forId(
-              player.id,
-              initials: player.initials,
-              size: 40,
-              fontSize: 14,
-            ),
+            SolidAvatar.forId(player.id, initials: player.initials, size: 40),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -955,18 +921,18 @@ class PlayerRow extends StatelessWidget {
                     player.displayName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                   Text(
                     meta,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
             ),
-            if (rating != null) Text(rating!, style: OgText.heading(17)),
+            if (rating != null) Text(rating!, style: context.type.section),
             ?trailing,
           ],
         ),
@@ -1063,7 +1029,7 @@ class _HostCardState extends ConsumerState<_HostCard> {
         children: [
           Text(
             playing ? 'You are playing too' : 'You are organizing only',
-            style: OgText.display(17, color: c.text),
+            style: context.type.section,
           ),
           const SizedBox(height: 6),
           Text(
@@ -1075,7 +1041,10 @@ class _HostCardState extends ConsumerState<_HostCard> {
                       '${a.capacity} spots are taken. To play too, take a spot'
                       '${fee > 0 ? ' and pay the S\$${money(fee)} platform fee' : ''}. '
                       'There is no session fee for you.',
-            style: OgText.body(14, height: 1.45, color: context.tones.onTag),
+            style: context.type.body.copyWith(
+              color: context.tones.onTag,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 12),
           if (playing)
@@ -1150,11 +1119,7 @@ class _BottomBar extends StatelessWidget {
               ],
               Text(
                 label,
-                style: OgText.body(
-                  15,
-                  weight: FontWeight.w600,
-                  color: fg ?? c.text,
-                ),
+                style: context.type.body.copyWith(color: fg ?? c.text),
               ),
             ],
           ),
@@ -1203,11 +1168,7 @@ class _BottomBar extends StatelessWidget {
                   Flexible(
                     child: Text(
                       "You're going",
-                      style: OgText.body(
-                        16,
-                        weight: FontWeight.w600,
-                        color: t.successInk,
-                      ),
+                      style: context.type.body.copyWith(color: t.successInk),
                     ),
                   ),
                 ],
@@ -1244,11 +1205,7 @@ class _BottomBar extends StatelessWidget {
             Expanded(
               child: Text(
                 'Waiting for the host to accept you',
-                style: OgText.body(
-                  15,
-                  weight: FontWeight.w600,
-                  color: c.textMuted,
-                ),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -1256,7 +1213,7 @@ class _BottomBar extends StatelessWidget {
             Expanded(
               child: Text(
                 "You're #${a.myWaitlistPosition} on the waitlist",
-                style: OgText.body(16, weight: FontWeight.w600),
+                style: context.type.body,
               ),
             ),
             pill(
@@ -1273,7 +1230,7 @@ class _BottomBar extends StatelessWidget {
                 children: [
                   Text(
                     a.isFree ? 'Free' : 'S\$${money(a.totalCents)}',
-                    style: OgText.heading(20),
+                    style: context.type.section,
                   ),
                   Text(
                     a.isFree
@@ -1281,7 +1238,7 @@ class _BottomBar extends StatelessWidget {
                               ? 'Free entry'
                               : 'No fee')
                         : 'per ${a.kind == ActivityKind.tournament ? 'entry' : 'person'} · incl. S\$${money(a.platformCents)} fee',
-                    style: OgText.body(12, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -1438,7 +1395,6 @@ class _DoneSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     return SingleChildScrollView(
       child: Column(
@@ -1465,10 +1421,10 @@ class _DoneSheet extends StatelessWidget {
           const SizedBox(height: 14),
           Semantics(
             header: true,
-            child: Text(title, style: OgText.heading(26)),
+            child: Text(title, style: context.type.title),
           ),
           const SizedBox(height: 6),
-          Text(body, style: OgText.body(15, height: 1.45, color: c.textMuted)),
+          Text(body, style: context.type.secondary.copyWith(height: 1.45)),
           if (rows.isNotEmpty) ...[
             const SizedBox(height: 12),
             for (final (k, v) in rows) KitKeyValue(k, v),
@@ -1541,7 +1497,6 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final host = a.host.displayName.split(' ').first;
     if (_refunded case final refunded?) {
@@ -1578,22 +1533,17 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
         children: [
           Text(
             'YOUR SPOT',
-            style: OgText.body(
-              12,
-              weight: FontWeight.w600,
-              color: c.textMuted,
-              letterSpacing: 0.8,
-            ),
+            style: context.type.caption.copyWith(letterSpacing: 0.8),
           ),
           const SizedBox(height: 4),
           Semantics(
             header: true,
-            child: Text('Give up your spot?', style: OgText.heading(26)),
+            child: Text('Give up your spot?', style: context.type.title),
           ),
           const SizedBox(height: 4),
           Text(
             '${a.title}, ${meetWhen(a).split(',').first.toLowerCase().startsWith('tonight') ? 'tonight' : Fmt.day(a.startsAt)} at ${Fmt.time(a.startsAt)}',
-            style: OgText.body(15, color: c.textMuted),
+            style: context.type.secondary,
           ),
           const SizedBox(height: 14),
           Container(
@@ -1607,17 +1557,18 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        head,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
-                    ),
-                    Text('S\$${money(_amount)}', style: OgText.heading(20)),
+                    Expanded(child: Text(head, style: context.type.body)),
+                    Text('S\$${money(_amount)}', style: context.type.section),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(sub, style: OgText.body(13, height: 1.4, color: t.onTag)),
+                Text(
+                  sub,
+                  style: context.type.caption.copyWith(
+                    color: t.onTag,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1627,7 +1578,7 @@ class _LeaveSheetState extends ConsumerState<_LeaveSheet> {
                 ? 'Your spot opens for the next player. You are still the organizer.'
                 : 'Your spot goes to the next player on the waitlist. $host is '
                       "told you can't come.",
-            style: OgText.body(14, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
           const SizedBox(height: 20),
           KitButton(

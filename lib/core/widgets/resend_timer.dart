@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../domain/code_rules.dart';
-import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import 'og_buttons.dart';
+import '../../core/theme/og_type.dart';
 
 /// "Send a new code in 2:59", which turns into a link when it reaches zero.
 /// It waits as long as a code works (Q248).
@@ -58,7 +57,7 @@ class _ResendTimerState extends State<ResendTimer> {
         padding: const EdgeInsets.only(top: 16),
         child: Text(
           'Send a new code in ${resendClock(_left)}',
-          style: OgText.body(15, color: context.og.textMuted),
+          style: context.type.secondary,
         ),
       );
     }

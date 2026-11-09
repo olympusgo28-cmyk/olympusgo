@@ -10,7 +10,7 @@ import '../../../core/format.dart';
 import '../../../core/share.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -139,7 +139,9 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                             header: true,
                             child: Text(
                               'Academy',
-                              style: OgText.heading(44, color: Colors.white),
+                              style: context.type.display.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -220,14 +222,11 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Run an academy?',
-                                style: OgText.body(16, weight: FontWeight.w600),
-                              ),
+                              Text('Run an academy?', style: context.type.body),
                               const SizedBox(height: 2),
                               Text(
                                 'Business licence, NROC coaches',
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
@@ -236,7 +235,6 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                           label: 'Create',
                           expand: false,
                           height: 44,
-                          fontSize: 15,
                           style: KitButtonStyle.dark,
                           onPressed: () {
                             ref
@@ -253,7 +251,7 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                       Expanded(
                         child: Text(
                           'Academies near you',
-                          style: OgText.heading(22),
+                          style: context.type.section,
                         ),
                       ),
                     ],
@@ -280,12 +278,12 @@ class _AcademiesScreenState extends ConsumerState<AcademiesScreen> {
                           children: [
                             Text(
                               'No academy matches',
-                              style: OgText.heading(24),
+                              style: context.type.title,
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Check the spelling or try an area name.',
-                              style: OgText.body(14, color: c.textMuted),
+                              style: context.type.secondary,
                             ),
                           ],
                         ),
@@ -340,17 +338,13 @@ class _AcademyRow extends StatelessWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          a.name,
-                          style: OgText.body(17, weight: FontWeight.w600),
-                        ),
+                        child: Text(a.name, style: context.type.section),
                       ),
                       if (a.verified) ...[
                         const SizedBox(width: 6),
                         KitTag(
                           'Verified',
                           height: 22,
-                          fontSize: 11,
                           background: t.successFill,
                           foreground: t.onSuccessFill,
                         ),
@@ -358,16 +352,12 @@ class _AcademyRow extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(sub, style: OgText.body(13, color: c.textMuted)),
+                  Text(sub, style: context.type.caption),
                   if (from != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       'From S\$${money(from, decimals: false)} a ${a.billing.unit}',
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.link,
-                      ),
+                      style: context.type.caption.copyWith(color: c.link),
                     ),
                   ],
                 ],
@@ -434,11 +424,8 @@ class AcademyPageScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        label,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
-                      Text(sub, style: OgText.body(13, color: c.textMuted)),
+                      Text(label, style: context.type.body),
+                      Text(sub, style: context.type.caption),
                     ],
                   ),
                 ),
@@ -476,12 +463,12 @@ class AcademyPageScreen extends ConsumerWidget {
                     children: [
                       Semantics(
                         header: true,
-                        child: Text(a.name, style: OgText.heading(28)),
+                        child: Text(a.name, style: context.type.title),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         [a.sport.label, a.area].join(', '),
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                       const SizedBox(height: 3),
                       Row(
@@ -489,7 +476,7 @@ class AcademyPageScreen extends ConsumerWidget {
                           if (a.rating != null) ...[
                             Text(
                               '${a.rating!.toStringAsFixed(1)} (${a.ratingCount})',
-                              style: OgText.body(13, weight: FontWeight.w600),
+                              style: context.type.caption,
                             ),
                             const SizedBox(width: 8),
                           ],
@@ -497,7 +484,6 @@ class AcademyPageScreen extends ConsumerWidget {
                             KitTag(
                               'Verified',
                               height: 22,
-                              fontSize: 11,
                               background: t.successFill,
                               foreground: t.onSuccessFill,
                             ),
@@ -607,12 +593,15 @@ class AcademyPageScreen extends ConsumerWidget {
               sliver: SliverList.list(
                 children: kitSpaced([
                   if (a.blurb.isNotEmpty)
-                    Text(a.blurb, style: OgText.body(15, height: 1.5)),
+                    Text(
+                      a.blurb,
+                      style: context.type.body.copyWith(height: 1.5),
+                    ),
                   if (a.classes.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('Classes', style: OgText.heading(22)),
+                        Text('Classes', style: context.type.section),
                         const SizedBox(height: 8),
                         for (final x in a.classes)
                           Container(
@@ -633,17 +622,13 @@ class AcademyPageScreen extends ConsumerWidget {
                                           Flexible(
                                             child: Text(
                                               x.name,
-                                              style: OgText.body(
-                                                15,
-                                                weight: FontWeight.w600,
-                                              ),
+                                              style: context.type.body,
                                             ),
                                           ),
                                           const SizedBox(width: 6),
                                           KitTag(
                                             'Level ${x.level}',
                                             height: 20,
-                                            fontSize: 11,
                                           ),
                                         ],
                                       ),
@@ -653,10 +638,7 @@ class AcademyPageScreen extends ConsumerWidget {
                                           classWhen(x),
                                           if (x.ages.isNotEmpty) x.ages,
                                         ].join(' · '),
-                                        style: OgText.body(
-                                          13,
-                                          color: c.textMuted,
-                                        ),
+                                        style: context.type.caption,
                                       ),
                                     ],
                                   ),
@@ -667,18 +649,13 @@ class AcademyPageScreen extends ConsumerWidget {
                                   children: [
                                     Text(
                                       classFee(a, x),
-                                      style: OgText.body(
-                                        14,
-                                        weight: FontWeight.w600,
-                                      ),
+                                      style: context.type.body,
                                     ),
                                     Text(
                                       x.full
                                           ? 'Full, join the waitlist'
                                           : '${x.spotsLeft} ${x.spotsLeft == 1 ? 'spot' : 'spots'} left',
-                                      style: OgText.body(
-                                        12,
-                                        weight: FontWeight.w600,
+                                      style: context.type.caption.copyWith(
                                         color: x.full ? t.dangerText : c.link,
                                       ),
                                     ),
@@ -692,7 +669,7 @@ class AcademyPageScreen extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Coaches', style: OgText.heading(22)),
+                      Text('Coaches', style: context.type.section),
                       const SizedBox(height: 8),
                       for (final co in a.coaches)
                         Pressable(
@@ -708,7 +685,6 @@ class AcademyPageScreen extends ConsumerWidget {
                                   co.name,
                                   initials: co.initials,
                                   size: 44,
-                                  fontSize: 14,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -716,19 +692,10 @@ class AcademyPageScreen extends ConsumerWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        co.name,
-                                        style: OgText.body(
-                                          15,
-                                          weight: FontWeight.w600,
-                                        ),
-                                      ),
+                                      Text(co.name, style: context.type.body),
                                       Text(
                                         '${co.role}${co.nroc ? ' · NROC licensed' : ''}',
-                                        style: OgText.body(
-                                          13,
-                                          color: c.textMuted,
-                                        ),
+                                        style: context.type.caption,
                                       ),
                                     ],
                                   ),
@@ -737,7 +704,6 @@ class AcademyPageScreen extends ConsumerWidget {
                                   KitTag(
                                     'NROC',
                                     height: 22,
-                                    fontSize: 11,
                                     background: OgColors.ink,
                                     foreground: OgColors.orange300,
                                   ),
@@ -820,7 +786,6 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final a = ref.watch(academyProvider(widget.id)).value;
     final players = ref.watch(myPlayersProvider);
     if (a == null) {
@@ -850,7 +815,7 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
               'For ${who?.name}, ${cls!.name}. '
               '${a.name} answers within 2 working days. '
               'If they accept, you pay the academy directly.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -877,7 +842,7 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Student', style: OgText.body(15, weight: FontWeight.w600)),
+            Text('Student', style: context.type.body),
             PlayerChoices(
               players: players,
               selected: _who,
@@ -888,7 +853,7 @@ class _AcademyEnrolScreenState extends ConsumerState<AcademyEnrolScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Class', style: OgText.body(15, weight: FontWeight.w600)),
+            Text('Class', style: context.type.body),
             for (final x in a.classes)
               KitChoiceRow(
                 title: x.name,
@@ -926,11 +891,10 @@ class PlayerChoices extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     if (players.hasError) {
       return Text(
         'Can’t load this right now. Check your connection.',
-        style: OgText.body(14, color: c.textMuted),
+        style: context.type.secondary,
       );
     }
     if (!players.hasValue) return const CupertinoActivityIndicator();
@@ -950,7 +914,7 @@ class PlayerChoices extends StatelessWidget {
         if (people.isEmpty)
           Text(
             'A parent needs to do this for you.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           )
         else ...[
           const SizedBox(height: 8),
@@ -1064,7 +1028,6 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final title = _kind.label;
     final a = ref.watch(academyProvider(widget.id)).value;
     final players = ref.watch(myPlayersProvider);
@@ -1099,12 +1062,12 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
               children: [
                 Text(
                   '${s.className}, ${Fmt.dayTimeComma(s.at)}',
-                  style: OgText.heading(24),
+                  style: context.type.title,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${s.coach} is expecting ${who?.name}.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -1133,10 +1096,7 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Who is it for?',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Who is it for?', style: context.type.body),
             PlayerChoices(
               players: players,
               selected: _who,
@@ -1147,16 +1107,13 @@ class _TrialClassScreenState extends ConsumerState<TrialClassScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Pick a class',
-              style: OgText.body(15, weight: FontWeight.w600),
-            ),
+            Text('Pick a class', style: context.type.body),
             if (slots == null)
               const CupertinoActivityIndicator()
             else if (slots.isEmpty)
               Text(
                 'No class is open in the next two weeks.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             for (final s in slots ?? const <MakeupSlot>[])
               KitChoiceRow(

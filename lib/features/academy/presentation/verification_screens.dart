@@ -6,8 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -420,7 +419,6 @@ class CoachPageScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final v = ref.watch(coachProfileProvider(id));
     final blocked = _waiting(
       v,
@@ -445,7 +443,7 @@ class CoachPageScreen extends ConsumerWidget {
         if (p.yearsCoaching != null)
           KitKeyValue('Coaching for', plural(p.yearsCoaching!, 'year')),
         if (p.bio.isNotEmpty)
-          Text(p.bio, style: OgText.body(15, height: 1.45, color: c.textMuted)),
+          Text(p.bio, style: context.type.secondary.copyWith(height: 1.45)),
         for (final (academy, name, role) in p.academies)
           KitNavTile(
             icon: OgIcons.mortarboard,

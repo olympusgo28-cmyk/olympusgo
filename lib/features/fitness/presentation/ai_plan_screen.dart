@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
@@ -145,7 +144,6 @@ class _AiPlanScreenState extends ConsumerState<AiPlanScreen> {
       );
     }
     if (!s.agreed) return _consent();
-    final c = context.og;
     // A plan under way keeps its goal and days, whatever is tapped.
     final pending = ref.watch(aiPlanRequestProvider);
     final goal = pending?.goal ?? _goal;
@@ -201,7 +199,7 @@ class _AiPlanScreenState extends ConsumerState<AiPlanScreen> {
               Expanded(
                 child: Text(
                   'Writing your plan. This can take a minute.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             ],
@@ -215,7 +213,7 @@ class _AiPlanScreenState extends ConsumerState<AiPlanScreen> {
                 : s.left > 0
                 ? '${plural(s.left, 'plan')} left today.'
                 : 'You’ve made today’s plans. Try again tomorrow.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
         const KitNote(
           'You’ll get a draft to edit. AI suggests it, so it isn’t advice from '

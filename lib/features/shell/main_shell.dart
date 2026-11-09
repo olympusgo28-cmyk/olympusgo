@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/navigation/breadcrumbs.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../inbox/application/inbox_providers.dart';
@@ -180,9 +180,7 @@ class _TabButton extends StatelessWidget {
                               alignment: Alignment.center,
                               child: Text(
                                 badge > 9 ? '9+' : '$badge',
-                                style: OgText.body(
-                                  10,
-                                  weight: FontWeight.w600,
+                                style: context.type.caption.copyWith(
                                   color: Colors.white,
                                 ),
                               ),
@@ -192,14 +190,7 @@ class _TabButton extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(
-                    label,
-                    style: OgText.body(
-                      12,
-                      weight: selected ? FontWeight.w600 : FontWeight.w600,
-                      color: fg,
-                    ),
-                  ),
+                  Text(label, style: context.type.caption.copyWith(color: fg)),
                 ],
               ),
             ),
@@ -260,9 +251,7 @@ class _ScanButton extends StatelessWidget {
                   bottom: 6,
                   child: Text(
                     'Scan',
-                    style: OgText.body(
-                      12,
-                      weight: FontWeight.w600,
+                    style: context.type.caption.copyWith(
                       color: selected ? c.link : c.textMuted,
                     ),
                   ),

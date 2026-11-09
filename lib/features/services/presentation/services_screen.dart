@@ -2,8 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
@@ -17,7 +16,6 @@ class ServicesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final partners = ref.watch(servicePartnersProvider);
     return KitScaffold(
       header: const KitHeader(title: 'Services'),
@@ -42,12 +40,7 @@ class ServicesScreen extends ConsumerWidget {
             ),
           ],
           data: (list) => list.isEmpty
-              ? [
-                  Text(
-                    'None are open yet.',
-                    style: OgText.body(14, color: c.textMuted),
-                  ),
-                ]
+              ? [Text('None are open yet.', style: context.type.secondary)]
               : [for (final p in list) _PartnerCard(p)],
         ),
       ],
@@ -106,7 +99,6 @@ class _PartnerCardState extends ConsumerState<_PartnerCard> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final p = widget.partner;
     return KitCard(
       padding: const EdgeInsets.all(16),
@@ -114,12 +106,11 @@ class _PartnerCardState extends ConsumerState<_PartnerCard> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(p.name, style: OgText.body(16, weight: FontWeight.w600)),
-            if (p.area.isNotEmpty)
-              Text(p.area, style: OgText.body(13, color: c.textMuted)),
+            Text(p.name, style: context.type.body),
+            if (p.area.isNotEmpty) Text(p.area, style: context.type.caption),
             if (p.blurb.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(p.blurb, style: OgText.body(14, height: 1.4)),
+              Text(p.blurb, style: context.type.body.copyWith(height: 1.4)),
             ],
             const SizedBox(height: 12),
             KitButton(

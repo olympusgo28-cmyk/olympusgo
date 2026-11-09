@@ -6,8 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -50,7 +49,7 @@ class ProgramsScreen extends ConsumerWidget {
         if (mine.isEmpty)
           Text(
             'No programs yet. Build your own or start from a template.',
-            style: OgText.body(14, height: 1.4, color: context.og.textMuted),
+            style: context.type.secondary.copyWith(height: 1.4),
           ),
         for (final p in mine)
           KitNavTile(

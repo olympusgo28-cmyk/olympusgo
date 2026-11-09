@@ -12,7 +12,7 @@ import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -78,30 +78,21 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
     }
     final info = ref.watch(privateInfoProvider).value;
     final children = ref.watch(myStudentsProvider).value ?? const [];
-    Widget verified(String value) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            value,
-            overflow: TextOverflow.ellipsis,
-            style: OgText.body(13, color: c.textMuted),
-          ),
-        ),
-        const SizedBox(width: 6),
-        KitTag(
-          'Verified',
-          height: 22,
-          fontSize: 11,
-          background: t.successFill,
-          foreground: t.onSuccessFill,
-        ),
-      ],
-    );
+    // The address goes under the label, where a long one can wrap; on the
+    // right it squeezed the label to a letter per line.
+    String? value(String? v) => v == null || v.isEmpty ? null : v;
+    Widget? verified(String? v) => value(v) == null
+        ? null
+        : KitTag(
+            'Verified',
+            height: 22,
+            background: t.successFill,
+            foreground: t.onSuccessFill,
+          );
     Widget section(String title, List<Widget> rows) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title, style: OgText.heading(20)),
+        Text(title, style: context.type.section),
         const SizedBox(height: 8),
         KitCard(children: rows),
       ],
@@ -112,29 +103,32 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
         Text(
           'Opened with Face ID. You are asked again before any change to '
           'sign-in or payment details.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.4),
         ),
         section('Sign-in', [
           KitNavTile(
             icon: OgIcons.mail,
             title: 'Email',
-            trailing: info == null ? null : verified(info.email),
+            subtitle: value(info?.email),
+            trailing: verified(info?.email),
             onTap: () => context.push(Routes.accountInfo),
           ),
           KitNavTile(
             icon: OgIcons.phone,
             title: 'Mobile',
-            trailing: info == null ? null : verified(info.phone),
+            subtitle: value(info?.phone),
+            trailing: verified(info?.phone),
             onTap: () => context.push(Routes.accountInfo),
           ),
-          KitNavTile(
-            icon: OgIcons.faceId,
-            title: 'Face ID',
-            subtitle: ref.watch(faceIdEnabledProvider).value ?? false
-                ? 'On. It replaces the text code on this phone'
-                : 'Off. Switch it on in Account information',
-            onTap: () => context.push(Routes.accountInfo),
-          ),
+          if (!ref.watch(biometricVaultProvider).skipped)
+            KitNavTile(
+              icon: OgIcons.faceId,
+              title: 'Face ID',
+              subtitle: ref.watch(faceIdEnabledProvider).value ?? false
+                  ? 'On. It replaces the text code on this phone'
+                  : 'Off. Switch it on in Account information',
+              onTap: () => context.push(Routes.accountInfo),
+            ),
         ]),
         section('Payments', [
           KitNavTile(
@@ -290,7 +284,7 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
           children: [
             Text(
               'Level for ${Sport.fromId(s.sport).label}',
-              style: OgText.heading(22),
+              style: context.type.section,
             ),
             const SizedBox(height: 8),
             for (final b in SkillBand.values)
@@ -318,7 +312,6 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final loaded = ref.watch(mySportsProvider).value;
     if (loaded != null && _sports == null) _sports = [...loaded];
     final sports = _sports;
@@ -340,10 +333,7 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
               'the default range in filters.',
         ),
         if (sports.isEmpty)
-          Text(
-            'No sports yet. Add one below.',
-            style: OgText.body(14, color: c.textMuted),
-          ),
+          Text('No sports yet. Add one below.', style: context.type.secondary),
         KitCard(
           children: [
             for (final (i, s) in sports.indexed)
@@ -361,7 +351,7 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
               ),
           ],
         ),
-        Text('Add a sport', style: OgText.heading(20)),
+        Text('Add a sport', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -386,7 +376,7 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
         Text(
           'You choose your own level. Your rating is separate: it only moves '
           'when ranked game scores are confirmed by both sides or an umpire.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -406,7 +396,6 @@ class _LanguageScreenState extends State<LanguageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     const options = [
       ('English', 'English', true),
       ('中文', 'Chinese, simplified', false),
@@ -445,7 +434,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         ),
         Text(
           'More languages are being translated.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -474,13 +463,16 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Delete your account?', style: OgText.heading(24)),
+          Text('Delete your account?', style: context.type.title),
           const SizedBox(height: 8),
           Text(
             'Your upcoming Meets and lessons are refunded in full. Linked '
             'children keep their accounts but need another adult to link. '
             'You have 30 days to undo it.',
-            style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
+            style: context.type.body.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 18),
           KitButton(
@@ -530,7 +522,6 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final wallet = ref.watch(pointsSummaryProvider).value;
     final upcoming = (ref.watch(myScheduleProvider).value ?? const <Activity>[])
@@ -552,13 +543,13 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
               children: [
                 Text(
                   'You can still change your mind',
-                  style: OgText.heading(22),
+                  style: context.type.section,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Log in before ${Fmt.day(closingUntil)} to keep your account. '
                   'After that it is erased.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -580,9 +571,12 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: OgText.body(15, weight: FontWeight.w600)),
+          Text(title, style: context.type.body),
           const SizedBox(height: 2),
-          Text(body, style: OgText.body(13, height: 1.4, color: t.onTag)),
+          Text(
+            body,
+            style: context.type.caption.copyWith(color: t.onTag, height: 1.4),
+          ),
           if (action != null)
             KitLink(action, underline: true, onPressed: onAction),
         ],
@@ -626,7 +620,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             action: 'Use your points first',
             onAction: () => context.push(Routes.shop),
           ),
-        Text('What happens', style: OgText.heading(20)),
+        Text('What happens', style: context.type.section),
         const KitCheckList([
           'Your profile, photos, chats and Passport leave the app at once.',
           'Upcoming Meets and lessons are refunded in full, platform fee included. Shop orders finish first.',
@@ -634,7 +628,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
           'After 30 days your data is erased. Your match results stay on other players’ records as “Former player”.',
           'Receipts are kept for as long as the law requires.',
         ]),
-        Text('Why are you leaving? (optional)', style: OgText.heading(20)),
+        Text('Why are you leaving? (optional)', style: context.type.section),
         Column(
           children: [
             for (final r in const [
@@ -689,13 +683,12 @@ class _AccountClosingScreenState extends ConsumerState<AccountClosingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final until = ref.watch(restrictionsProvider).value?.closingUntil;
     return KitScaffold(
       children: [
         Semantics(
           header: true,
-          child: Text('OlympusGO', style: OgText.h1.copyWith(color: c.text)),
+          child: Text('OlympusGO', style: context.type.title),
         ),
         const KitNote('Your account is closing', tone: KitTone.warn),
         Text(
@@ -704,7 +697,7 @@ class _AccountClosingScreenState extends ConsumerState<AccountClosingScreen> {
                     'use the rest of OlympusGO.'
               : 'It is erased on ${Fmt.day(until)} unless you keep it. Until '
                     'then you can’t use the rest of OlympusGO.',
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
         KitButton(
           label: 'Keep my account',
@@ -749,7 +742,10 @@ class IdentityCheckScreen extends ConsumerWidget {
             ),
             child: Text(
               'Your identity is checked. You can run paid tournaments and receive payouts.',
-              style: OgText.body(14, height: 1.45, color: t.onSuccessFill),
+              style: context.type.body.copyWith(
+                color: t.onSuccessFill,
+                height: 1.45,
+              ),
             ),
           )
         else

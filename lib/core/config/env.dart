@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Build-time configuration, passed with
 /// `flutter run --dart-define-from-file=env.json` (see `env.example.json`).
 abstract final class Env {
@@ -19,6 +21,25 @@ abstract final class Env {
     return hasSupabase &&
         (host == '127.0.0.1' || host == 'localhost' || host == '10.0.2.2');
   }
+
+  /// Local testing only: no Face ID check asks for a face, and the Face ID
+  /// switch is hidden, for a simulator with no face set up.
+  /// `--dart-define=SKIP_FACE_ID=true`. Only a debug build on a local stack
+  /// honours it, so a hosted or release build always asks.
+  static bool get skipFaceId => skipFaceIdWhen(
+    debug: kDebugMode,
+    local: localStandIn,
+    asked: _skipFaceId,
+  );
+  static const _skipFaceId = bool.fromEnvironment('SKIP_FACE_ID');
+
+  /// All three must hold, so a hosted or release build always asks.
+  @visibleForTesting
+  static bool skipFaceIdWhen({
+    required bool debug,
+    required bool local,
+    required bool asked,
+  }) => debug && local && asked;
 
   /// Demo mode only: start signed in as the design's sample player, Aaron Ng,
   /// with onboarding done. `--dart-define=DEMO_SIGNED_IN=true`.

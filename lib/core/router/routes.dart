@@ -86,6 +86,12 @@ abstract final class Routes {
   static const language = '/settings/language';
   static const deleteAccount = '/settings/delete';
   static const verifyPhoneChange = '/settings/account-info/verify';
+  static const changePhone = '/settings/account-info/phone';
+  static const changeEmail = '/settings/account-info/email';
+  static const timeManagement = '/settings/time';
+  static const editName = '/settings/profile/name';
+  static const editUsername = '/settings/profile/username';
+  static const editBio = '/settings/profile/bio';
   static const notifications = '/settings/notifications';
   static const privacy = '/settings/privacy';
   static const blocked = '/settings/blocked';

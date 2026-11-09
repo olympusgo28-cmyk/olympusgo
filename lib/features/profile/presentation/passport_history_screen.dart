@@ -6,7 +6,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -74,11 +74,9 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
             children: [
               Text(
                 '${sport.label} rating'.toUpperCase(),
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w600,
-                  letterSpacing: 0.6,
+                style: context.type.caption.copyWith(
                   color: c.highlight,
+                  letterSpacing: 0.6,
                 ),
               ),
               const SizedBox(height: 6),
@@ -90,7 +88,9 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                         ? '—'
                         : '${SkillBand.forLevel(level).code} '
                               '${level.toStringAsFixed(1)}',
-                    style: OgText.display(48, color: c.onInverseCard),
+                    style: context.type.display.copyWith(
+                      color: c.onInverseCard,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   if (level != null)
@@ -98,9 +98,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
                         SkillBand.forLevel(level).label,
-                        style: OgText.body(
-                          16,
-                          weight: FontWeight.w600,
+                        style: context.type.body.copyWith(
                           color: c.onInverseCard,
                         ),
                       ),
@@ -112,7 +110,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                 Text(
                   'Your level settles after 5 confirmed matches. You have '
                   'played ${rating.matches}.',
-                  style: OgText.body(13, color: c.onInverseCard),
+                  style: context.type.caption.copyWith(color: c.onInverseCard),
                 ),
               ],
               if (rating != null && rating.history.length > 1) ...[
@@ -163,8 +161,8 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                     ),
                     child: Column(
                       children: [
-                        Text(value, style: OgText.heading(22)),
-                        Text(label, style: OgText.body(13, color: c.textMuted)),
+                        Text(value, style: context.type.score),
+                        Text(label, style: context.type.caption),
                       ],
                     ),
                   ),
@@ -175,7 +173,6 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
           KitSegments(
             labels: _filters,
             selected: _filter,
-            fontSize: 13,
             onSelect: (i) => setState(() => _filter = i),
           ),
           if (h.items.where(_shown).isEmpty)
@@ -186,7 +183,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                   h.items.isEmpty
                       ? 'No ${sport.label.toLowerCase()} sessions yet. Join a Meet and it shows here.'
                       : 'Nothing here yet.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             )

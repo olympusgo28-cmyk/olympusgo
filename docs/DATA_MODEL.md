@@ -122,6 +122,7 @@ insert into platform.app_settings (key, value, note) values
   ('waitlist.offer_minutes', '30', 'R-MET-6, Q5'),
   ('funds.release_after_hours', '24', 'R-HOLD-2'),
   ('account.delete_undo_days', '30', 'R-ACC-11'),
+  ('account.audit_keep_years', '10', 'R-ACC-11, Q264'),
   ('account_centre.unlock_minutes', '5', 'R-ACC-8, Q19');
 ```
 

@@ -8,7 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -124,7 +124,6 @@ class _GuestScreenState extends ConsumerState<GuestScreen> {
     id: widget.activityId,
     title: 'Bring a guest',
     body: (a) {
-      final c = context.og;
       final spots = a.myStatus == MyStatus.joined ? 1 : 2;
       final each = a.totalCents;
       return KitScaffold(
@@ -155,7 +154,7 @@ class _GuestScreenState extends ConsumerState<GuestScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Their level', style: OgText.heading(20)),
+              Text('Their level', style: context.type.section),
               const SizedBox(height: 6),
               for (final (label, level) in _guestLevels)
                 KitChoiceRow(
@@ -169,7 +168,7 @@ class _GuestScreenState extends ConsumerState<GuestScreen> {
             Text(
               'You are not on this Meet yet, so you pay for your spot and '
               'theirs.',
-              style: OgText.body(14, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           const KitNote(
             'Guests do not earn Passport credit or points. You are responsible '
@@ -216,7 +215,6 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
     id: widget.activityId,
     title: 'Join the waitlist',
     body: (a) {
-      final c = context.og;
       final place =
           _place ??
           (a.myStatus == MyStatus.waitlist ? a.myWaitlistPosition : null);
@@ -239,13 +237,13 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
                 children: [
                   Text(
                     'On the waitlist for ${a.title}',
-                    style: OgText.heading(22),
+                    style: context.type.section,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'We message you the moment a spot opens. Nothing is '
                     'charged until then.',
-                    style: OgText.body(15, height: 1.45, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.45),
                   ),
                 ],
               ),
@@ -287,7 +285,7 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('If a spot opens, pay with', style: OgText.heading(20)),
+                Text('If a spot opens, pay with', style: context.type.section),
                 const SizedBox(height: 6),
                 for (final m in methods)
                   KitChoiceRow(
@@ -329,7 +327,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final joined = ref.watch(myScheduleProvider);
     final hosting = ref.watch(hostingProvider);
     final joinList = (joined.value ?? const <Activity>[])
@@ -360,10 +357,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: Text(title, style: OgText.heading(20))),
+            Expanded(child: Text(title, style: context.type.section)),
             Text(
               '${items.length} ${items.length == 1 ? 'session' : 'sessions'}',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ],
         ),
@@ -414,10 +411,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         else if (list.isEmpty)
           _Empty(hosting: _tab == 1)
         else if (shown.isEmpty)
-          Text(
-            'Nothing on ${Fmt.day(_day!)}.',
-            style: OgText.body(15, color: c.textMuted),
-          )
+          Text('Nothing on ${Fmt.day(_day!)}.', style: context.type.secondary)
         else ...[
           if (thisWeek.isNotEmpty) section('This week', thisWeek),
           if (later.isNotEmpty) section('Later', later),
@@ -478,14 +472,12 @@ class _DayTile extends StatelessWidget {
           children: [
             Text(
               _names[day.weekday - 1],
-              style: OgText.body(
-                12,
-                weight: FontWeight.w600,
+              style: context.type.caption.copyWith(
                 color: on ? fg : c.textMuted,
               ),
             ),
             const SizedBox(height: 2),
-            Text('${day.day}', style: OgText.heading(18, color: fg)),
+            Text('${day.day}', style: context.type.section.copyWith(color: fg)),
             const SizedBox(height: 4),
             Container(
               width: 6,
@@ -510,7 +502,6 @@ class _ScheduleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final a = activity;
     const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -544,13 +535,9 @@ class _ScheduleRow extends StatelessWidget {
                 children: [
                   Text(
                     days[a.startsAt.weekday - 1],
-                    style: OgText.body(
-                      11,
-                      weight: FontWeight.w600,
-                      color: t.onTag,
-                    ),
+                    style: context.type.caption.copyWith(color: t.onTag),
                   ),
-                  Text('${a.startsAt.day}', style: OgText.heading(18)),
+                  Text('${a.startsAt.day}', style: context.type.section),
                 ],
               ),
             ),
@@ -563,14 +550,14 @@ class _ScheduleRow extends StatelessWidget {
                     a.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     line,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -591,7 +578,6 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return DashedBox(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -600,7 +586,7 @@ class _Empty extends StatelessWidget {
           children: [
             Text(
               hosting ? 'Nothing hosted yet' : 'Nothing joined yet',
-              style: OgText.heading(20),
+              style: context.type.section,
             ),
             const SizedBox(height: 6),
             Text(
@@ -608,7 +594,7 @@ class _Empty extends StatelessWidget {
                   ? 'Meets, tournaments and events you run show up here, '
                         'with their organizer tools.'
                   : 'Meets, tournaments and events you join show up here.',
-              style: OgText.body(14, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
             const SizedBox(height: 14),
             KitButton(

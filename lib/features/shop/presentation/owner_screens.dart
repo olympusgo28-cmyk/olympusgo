@@ -7,7 +7,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -32,7 +32,6 @@ class _OwnerOrdersScreenState extends ConsumerState<OwnerOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final orders = ref.watch(ownerOrdersProvider);
     if (shopWaiting(
           orders,
@@ -66,7 +65,7 @@ class _OwnerOrdersScreenState extends ConsumerState<OwnerOrdersScreen> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Nothing here. New orders show up as soon as they’re paid.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
@@ -122,12 +121,15 @@ class _OwnerOrderScreenState extends ConsumerState<OwnerOrderScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Cancel this order?', style: OgText.heading(24)),
+          Text('Cancel this order?', style: context.type.title),
           const SizedBox(height: 8),
           Text(
             'The buyer gets everything back, and the card fee comes out of '
             'your next payout.',
-            style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
+            style: context.type.body.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 12),
           for (final r in const [
@@ -152,7 +154,6 @@ class _OwnerOrderScreenState extends ConsumerState<OwnerOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final repo = ref.read(shopRepositoryProvider);
     final order = ref.watch(orderDetailProvider(widget.id));
     if (shopWaiting(
@@ -243,7 +244,7 @@ class _OwnerOrderScreenState extends ConsumerState<OwnerOrderScreen> {
         ),
         Text(
           'Points a buyer uses never change what you get.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );

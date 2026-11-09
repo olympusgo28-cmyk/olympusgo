@@ -8,7 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -187,18 +187,14 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
                 children: [
                   Text(
                     'Waiting for ${s.sideB.map((p) => p.displayName.split(' ').first).join(' or ')}',
-                    style: OgText.heading(22),
+                    style: context.type.section,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${s.sideB.length > 1 ? 'Either of them' : 'They'} can '
                     'confirm. If nobody answers in 24 hours, the organizer '
                     'decides.',
-                    style: OgText.body(
-                      15,
-                      height: 1.45,
-                      color: context.og.textMuted,
-                    ),
+                    style: context.type.secondary.copyWith(height: 1.45),
                   ),
                 ],
               ),
@@ -305,9 +301,7 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
                                 child: Text(
                                   'Game ${g + 1}',
                                   textAlign: TextAlign.center,
-                                  style: OgText.body(
-                                    13,
-                                    weight: FontWeight.w600,
+                                  style: context.type.caption.copyWith(
                                     color: _muted,
                                   ),
                                 ),
@@ -336,16 +330,9 @@ class _ScoreEntryScreenState extends ConsumerState<ScoreEntryScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(head, style: OgText.heading(22)),
+              Text(head, style: context.type.section),
               const SizedBox(height: 4),
-              Text(
-                hint,
-                style: OgText.body(
-                  14,
-                  height: 1.4,
-                  color: context.og.textMuted,
-                ),
-              ),
+              Text(hint, style: context.type.secondary.copyWith(height: 1.4)),
             ],
           ),
           if (_camera)
@@ -534,7 +521,6 @@ class _TournamentUmpireScreenState
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final info = ref.watch(tournamentInfoProvider(widget.activityId)).value;
     final all = ref.watch(allDrawMatchesProvider(widget.activityId)).value;
     final m = all?.where((m) => m.id == widget.matchId).firstOrNull;
@@ -596,7 +582,7 @@ class _TournamentUmpireScreenState
             child: Text(
               'The draw is updated and both sides can see the result. The '
               'winner moves on to their next match.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -662,9 +648,7 @@ class _TournamentUmpireScreenState
                               child: Text(
                                 'Game ${g + 1}',
                                 textAlign: TextAlign.center,
-                                style: OgText.body(
-                                  13,
-                                  weight: FontWeight.w600,
+                                style: context.type.caption.copyWith(
                                   color: _muted,
                                 ),
                               ),
@@ -690,9 +674,9 @@ class _TournamentUmpireScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(head, style: OgText.heading(22)),
+            Text(head, style: context.type.section),
             const SizedBox(height: 4),
-            Text(hint, style: OgText.body(14, height: 1.4, color: c.textMuted)),
+            Text(hint, style: context.type.secondary.copyWith(height: 1.4)),
           ],
         ),
       ],
@@ -719,16 +703,12 @@ class _TeamLine extends StatelessWidget {
             name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: OgText.body(
-              16,
-              weight: FontWeight.w600,
-              color: Colors.white,
-            ),
+            style: context.type.body.copyWith(color: Colors.white),
           ),
         ),
         Text(
           '$wins ${wins == 1 ? 'game' : 'games'}',
-          style: OgText.body(14, weight: FontWeight.w600, color: _muted),
+          style: context.type.body.copyWith(color: _muted),
         ),
       ],
     ),
@@ -771,8 +751,7 @@ class _ScoreBox extends StatelessWidget {
       ),
       child: Text(
         text.isEmpty ? '–' : text,
-        style: OgText.heading(
-          36,
+        style: context.type.display.copyWith(
           color: active
               ? Colors.white
               : won
@@ -813,7 +792,7 @@ class _Keypad extends StatelessWidget {
               color: t.tag,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: child ?? Text(label, style: OgText.heading(22)),
+            child: child ?? Text(label, style: context.type.section),
           ),
         ),
       ),
@@ -828,14 +807,7 @@ class _Keypad extends StatelessWidget {
           Row(children: [for (final d in row) key('$d', () => onDigit(d))]),
         Row(
           children: [
-            key(
-              'Next',
-              onNext,
-              child: Text(
-                'Next',
-                style: OgText.body(16, weight: FontWeight.w600),
-              ),
-            ),
+            key('Next', onNext, child: Text('Next', style: context.type.body)),
             key('0', () => onDigit(0)),
             key(
               'Delete',
@@ -873,12 +845,8 @@ class _SidesPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget avatar(MeetPlayer p) => SolidAvatar.forId(
-      p.player.id,
-      initials: p.player.initials,
-      size: 40,
-      fontSize: 14,
-    );
+    Widget avatar(MeetPlayer p) =>
+        SolidAvatar.forId(p.player.id, initials: p.player.initials, size: 40);
     return KitScaffold(
       header: const KitHeader(title: 'Enter score'),
       bottom: [
@@ -898,7 +866,7 @@ class _SidesPicker extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Your partner', style: OgText.heading(20)),
+                Text('Your partner', style: context.type.section),
                 const SizedBox(height: 6),
                 for (final p in players)
                   KitChoiceRow(
@@ -915,7 +883,7 @@ class _SidesPicker extends StatelessWidget {
             children: [
               Text(
                 singles ? 'You played' : 'The other pair',
-                style: OgText.heading(20),
+                style: context.type.section,
               ),
               const SizedBox(height: 6),
               for (final p in players.where((p) => p.player.id != partner))
@@ -1068,15 +1036,13 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                           _side(side, me: me),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: OgText.body(
-                            16,
-                            weight: FontWeight.w600,
+                          style: context.type.body.copyWith(
                             color: Colors.white,
                           ),
                         ),
                         Text(
                           '$wins ${wins == 1 ? 'game' : 'games'}',
-                          style: OgText.body(13, color: _muted),
+                          style: context.type.caption.copyWith(color: _muted),
                         ),
                       ],
                     ),
@@ -1087,8 +1053,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                       child: Text(
                         '${isTop ? g.$1 : g.$2}',
                         textAlign: TextAlign.center,
-                        style: OgText.heading(
-                          26,
+                        style: context.type.score.copyWith(
                           color: (isTop ? g.$1 > g.$2 : g.$2 > g.$1)
                               ? _lime
                               : const Color(0x8CFFFFFF),
@@ -1107,7 +1072,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                   child: Text(
                     'Game ${i + 1}',
                     textAlign: TextAlign.center,
-                    style: OgText.body(11, color: _muted),
+                    style: context.type.caption.copyWith(color: _muted),
                   ),
                 ),
             ],
@@ -1125,7 +1090,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
             [s.activityTitle, Fmt.day(s.enteredAt), ?s.court].join(', '),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
         ),
       ],
@@ -1134,22 +1099,22 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
     final (List<Widget> body, List<Widget> actions) = switch (s.status) {
       ScoreStatus.confirmed => (
         [
-          Text('Confirmed', style: OgText.heading(26)),
+          Text('Confirmed', style: context.type.title),
           if (s.ratingBefore != null && s.ratingAfter != null)
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
                   s.ratingBefore!.toStringAsFixed(1),
-                  style: OgText.heading(40, color: c.textMuted),
+                  style: context.type.score.copyWith(color: c.textMuted),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                  child: Text('to', style: OgText.body(15, color: c.textMuted)),
+                  child: Text('to', style: context.type.secondary),
                 ),
                 Text(
                   s.ratingAfter!.toStringAsFixed(1),
-                  style: OgText.heading(40),
+                  style: context.type.score,
                 ),
               ],
             ),
@@ -1158,7 +1123,7 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
                 ? 'It counts toward ratings and the leaderboard.'
                 : 'Your rating went ${s.ratingAfter! >= s.ratingBefore! ? 'up' : 'down'}. '
                       'It counts toward the leaderboard too.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ],
         [
@@ -1175,20 +1140,20 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
       ),
       ScoreStatus.superseded => (
         [
-          Text('This score was corrected', style: OgText.heading(26)),
+          Text('This score was corrected', style: context.type.title),
           Text(
             'A newer result replaced it.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ],
         [KitButton(label: 'Done', onPressed: () => kitPop(context))],
       ),
       ScoreStatus.disputed when organizing && !played => (
         [
-          Text('Set the final score', style: OgText.heading(26)),
+          Text('Set the final score', style: context.type.title),
           Text(
             'Both sides are told what you decide. Ratings wait until then.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
           if (s.reason != null) KitKeyValue('Reason', s.reason!),
         ],
@@ -1207,22 +1172,22 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
       ),
       ScoreStatus.disputed when organizing => (
         [
-          Text('The OlympusGO team decides', style: OgText.heading(26)),
+          Text('The OlympusGO team decides', style: context.type.title),
           Text(
             'You played in this match, so someone else sets the final score. '
             'Ratings wait until then.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ],
         [KitButton(label: 'Done', onPressed: () => kitPop(context))],
       ),
       ScoreStatus.disputed => (
         [
-          Text('Sent to $org', style: OgText.heading(26)),
+          Text('Sent to $org', style: context.type.title),
           Text(
             'You and $entered are told when they set the final score. Ratings '
             'wait until then.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
           if (s.reason != null) KitKeyValue('Your reason', s.reason!),
         ],
@@ -1237,19 +1202,19 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
         [
           Text(
             'Waiting for ${s.sideB.map((p) => p.displayName.split(' ').first).join(' or ')}',
-            style: OgText.heading(26),
+            style: context.type.title,
           ),
           Text(
             'You sent this ${_ago(s.enteredAt)}. If nobody answers in 24 '
             'hours, $org decides.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ],
         [KitButton(label: 'Done', onPressed: () => kitPop(context))],
       ),
       ScoreStatus.waiting when _saying => (
         [
-          Text('What is wrong?', style: OgText.heading(26)),
+          Text('What is wrong?', style: context.type.title),
           Column(
             children: [
               for (final why in const [
@@ -1284,11 +1249,11 @@ class _ScoreConfirmScreenState extends ConsumerState<ScoreConfirmScreen> {
       ),
       ScoreStatus.waiting => (
         [
-          Text('Is this score right?', style: OgText.heading(26)),
+          Text('Is this score right?', style: context.type.title),
           Text(
             '$entered entered it ${_ago(s.enteredAt)}. Your rating changes '
             'only after you confirm.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ],
         [

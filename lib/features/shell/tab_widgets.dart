@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 export '../../core/widgets/avatar.dart';
 
@@ -41,32 +41,14 @@ class MeetCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                when,
-                style: OgText.body(13, weight: FontWeight.w600, color: c.link),
-              ),
+              Text(when, style: context.type.caption.copyWith(color: c.link)),
               const SizedBox(height: 2),
-              Text(
-                name,
-                style: OgText.body(17, weight: FontWeight.w600, color: c.text),
-              ),
+              Text(name, style: context.type.section),
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      venue,
-                      style: OgText.body(14, color: c.textMuted),
-                    ),
-                  ),
-                  Text(
-                    spots,
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
+                  Expanded(child: Text(venue, style: context.type.secondary)),
+                  Text(spots, style: context.type.body),
                 ],
               ),
             ],
@@ -125,15 +107,8 @@ class CategoryRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: OgText.body(
-                        16,
-                        weight: FontWeight.w600,
-                        color: c.text,
-                      ),
-                    ),
-                    Text(subtitle, style: OgText.body(14, color: c.textMuted)),
+                    Text(title, style: context.type.body),
+                    Text(subtitle, style: context.type.secondary),
                   ],
                 ),
               ),
@@ -183,10 +158,9 @@ class SmallPillButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: OgText.display(
-            15,
-            height: 1.2,
+          style: context.type.section.copyWith(
             color: filled ? c.onPrimary : c.text,
+            height: 1.2,
           ),
         ),
       ),

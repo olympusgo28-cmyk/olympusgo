@@ -7,7 +7,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -41,7 +41,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final status = ref.watch(feedStatusProvider);
     const title = 'Videos';
     final blocked = fitnessWaiting(status, title, () {
@@ -97,7 +96,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   ? 'No videos here yet. Public posts in your sports show up '
                         'here.'
                   : 'No videos yet. Follow people to see theirs here.',
-              style: OgText.body(16, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ],
           AsyncValue(hasValue: true, :final value?) => [
@@ -105,7 +104,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             Text(
               'That’s everything for now.',
               textAlign: TextAlign.center,
-              style: OgText.body(14, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ],
           _ => [const Center(child: CupertinoActivityIndicator())],
@@ -272,7 +271,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
                   post.author,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: OgText.body(16, weight: FontWeight.w600),
+                  style: context.type.body,
                 ),
               ),
             ),
@@ -285,7 +284,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
         ),
         PostPlayer(id: post.id, poster: widget.poster),
         if (post.caption.isNotEmpty)
-          Text(post.caption, style: OgText.body(15, height: 1.4)),
+          Text(post.caption, style: context.type.body.copyWith(height: 1.4)),
         Row(
           children: [
             Semantics(
@@ -304,7 +303,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
                 ),
               ),
             ),
-            Text('${post.likes}', style: OgText.body(14, color: c.textMuted)),
+            Text('${post.likes}', style: context.type.secondary),
           ],
         ),
       ],
@@ -480,7 +479,7 @@ class _PostPlayerState extends ConsumerState<PostPlayer> {
                       : _failed
                       ? Text(
                           'Can’t play this. Tap to try again.',
-                          style: OgText.body(14, color: c.textMuted),
+                          style: context.type.secondary,
                         )
                       : OgIcon(OgIcons.video, size: 40, color: c.textMuted),
                 ),
@@ -600,7 +599,6 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final status = ref.watch(feedStatusProvider);
     const title = 'Add a post';
     final blocked = fitnessWaiting(status, title, () {
@@ -644,7 +642,7 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
             onPressed: idle ? () => _pick(s, camera: false) : null,
           ),
         ] else ...[
-          Text('Video chosen', style: OgText.body(16, weight: FontWeight.w600)),
+          Text('Video chosen', style: context.type.body),
           KitLink(
             'Choose another',
             onPressed: idle ? () => _pick(s, camera: false) : null,
@@ -686,7 +684,7 @@ class _AddPostScreenState extends ConsumerState<AddPostScreen> {
         if (_error != null) KitNote(_error!, tone: KitTone.warn),
         Text(
           'A person checks your first posts, so they may take a while to show.',
-          style: OgText.body(14, height: 1.45, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.45),
         ),
       ],
     );
@@ -754,7 +752,6 @@ class MyPostsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final status = ref.watch(feedStatusProvider);
     final posts = ref.watch(myPostsProvider);
     final uploads = ref.watch(postUploadsProvider);
@@ -777,7 +774,7 @@ class MyPostsScreen extends ConsumerWidget {
             onPressed: () => context.push(Routes.addPost),
           ),
         if (list.isEmpty)
-          Text('No posts yet.', style: OgText.body(16, color: c.textMuted))
+          Text('No posts yet.', style: context.type.secondary)
         else
           for (final post in list)
             Builder(
@@ -797,16 +794,14 @@ class MyPostsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           post.caption.isEmpty ? 'No caption' : post.caption,
-                          style: OgText.body(16, weight: FontWeight.w600),
+                          style: context.type.body,
                         ),
-                        Text(line, style: OgText.body(14, color: c.textMuted)),
+                        Text(line, style: context.type.secondary),
                         if (detail != null)
                           Text(
                             detail,
-                            style: OgText.body(
-                              14,
+                            style: context.type.secondary.copyWith(
                               height: 1.45,
-                              color: c.textMuted,
                             ),
                           ),
                         if (post.canRetry)

@@ -8,7 +8,7 @@ import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -143,7 +143,6 @@ class ProductTile extends StatelessWidget {
                     child: KitTag(
                       p.deal!,
                       height: 22,
-                      fontSize: 11,
                       background: const Color(0xFFD2342C),
                       foreground: const Color(0xFFFFFFFF),
                     ),
@@ -155,7 +154,6 @@ class ProductTile extends StatelessWidget {
                     child: KitTag(
                       'Sold out',
                       height: 22,
-                      fontSize: 11,
                       background: OgColors.ink,
                       foreground: const Color(0xFFFFFFFF),
                     ),
@@ -167,21 +165,19 @@ class ProductTile extends StatelessWidget {
               p.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(14, weight: FontWeight.w600, height: 1.25),
+              style: context.type.body.copyWith(height: 1.25),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                Text(cash(p.priceCents), style: OgText.heading(16)),
+                Text(cash(p.priceCents), style: context.type.section),
                 if (p.oldPriceCents != null) ...[
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       cash(p.oldPriceCents!),
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(
-                        12,
-                        color: c.textMuted,
+                      style: context.type.caption.copyWith(
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -189,14 +185,13 @@ class ProductTile extends StatelessWidget {
                 ],
               ],
             ),
-            Text(p.soldLine, style: OgText.body(12, color: c.textMuted)),
+            Text(p.soldLine, style: context.type.caption),
             if (p.pointsCapCents > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: KitTag(
                   'Up to ${pointsText(p.pointsCapCents)} pts off',
                   height: 22,
-                  fontSize: 11,
                   background: t.successFill,
                   foreground: t.onSuccessFill,
                 ),
@@ -300,7 +295,6 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final p = widget.product;
     final price = p.priceCents;
     return SingleChildScrollView(
@@ -315,16 +309,10 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(cash(price * _qty), style: OgText.heading(22)),
-                    Text(
-                      p.name,
-                      style: OgText.body(14, weight: FontWeight.w600),
-                    ),
+                    Text(cash(price * _qty), style: context.type.score),
+                    Text(p.name, style: context.type.body),
                     if (_variant.isNotEmpty)
-                      Text(
-                        _variant,
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
+                      Text(_variant, style: context.type.caption),
                   ],
                 ),
               ),
@@ -332,7 +320,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
           ),
           for (final (gi, g) in widget.options.indexed) ...[
             const SizedBox(height: 14),
-            Text(g.title, style: OgText.body(15, weight: FontWeight.w600)),
+            Text(g.title, style: context.type.body),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -350,12 +338,7 @@ class _BuySheetState extends ConsumerState<_BuySheet> {
           const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Quantity',
-                  style: OgText.body(15, weight: FontWeight.w600),
-                ),
-              ),
+              Expanded(child: Text('Quantity', style: context.type.body)),
               KitQty(
                 value: _qty,
                 onLess: _qty <= 1 ? null : () => setState(() => _qty--),
@@ -401,7 +384,6 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final loading = ref.watch(shopProductsProvider(null, _q));
     final products = loading.value;
@@ -439,7 +421,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   'Nothing matches. Try a product type, a brand or a shop name.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             )
@@ -455,7 +437,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
           ...switch (_tab) {
             0 => [
               if (deals.isNotEmpty) ...[
-                Text('Flash deals', style: OgText.heading(20)),
+                Text('Flash deals', style: context.type.section),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
@@ -470,7 +452,7 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                   ),
                 ),
               ],
-              Text('For you', style: OgText.heading(20)),
+              Text('For you', style: context.type.section),
               if (loading.hasError)
                 const _ShopEmpty('Can’t load the Shop. Check your connection.')
               else if (products == null)
@@ -526,17 +508,8 @@ class _ShopHomeScreenState extends ConsumerState<ShopHomeScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    m.name,
-                                    style: OgText.body(
-                                      15,
-                                      weight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    m.blurb,
-                                    style: OgText.body(13, color: c.textMuted),
-                                  ),
+                                  Text(m.name, style: context.type.body),
+                                  Text(m.blurb, style: context.type.caption),
                                 ],
                               ),
                             ),
@@ -589,8 +562,8 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
     Widget stat(String big, String small) => Expanded(
       child: Column(
         children: [
-          Text(big, style: OgText.heading(18)),
-          Text(small, style: OgText.body(12, color: c.textMuted)),
+          Text(big, style: context.type.section),
+          Text(small, style: context.type.caption),
         ],
       ),
     );
@@ -612,13 +585,14 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                 children: [
                   Row(
                     children: [
-                      Flexible(child: Text(m.name, style: OgText.heading(22))),
+                      Flexible(
+                        child: Text(m.name, style: context.type.section),
+                      ),
                       const SizedBox(width: 6),
                       if (d.verified)
                         KitTag(
                           'Verified',
                           height: 22,
-                          fontSize: 11,
                           background: t.successFill,
                           foreground: t.onSuccessFill,
                         ),
@@ -626,7 +600,7 @@ class _MallPageScreenState extends ConsumerState<MallPageScreen> {
                   ),
                   Text(
                     d.about,
-                    style: OgText.body(13, height: 1.4, color: c.textMuted),
+                    style: context.type.caption.copyWith(height: 1.4),
                   ),
                 ],
               ),
@@ -784,14 +758,12 @@ class ProductPageScreen extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(cash(p.priceCents), style: OgText.heading(30)),
+            Text(cash(p.priceCents), style: context.type.score),
             if (p.deal case final deal?) ...[
               const SizedBox(width: 8),
               Text(
                 cash(p.oldPriceCents!),
-                style: OgText.body(
-                  15,
-                  color: c.textMuted,
+                style: context.type.secondary.copyWith(
                   decoration: TextDecoration.lineThrough,
                 ),
               ),
@@ -804,14 +776,14 @@ class ProductPageScreen extends ConsumerWidget {
             ],
           ],
         ),
-        Text(value.headline, style: OgText.heading(20, height: 1.2)),
+        Text(value.headline, style: context.type.section.copyWith(height: 1.2)),
         Text(
           value.ratings == 0 && p.sold == 0
               ? 'New in the Shop'
               : value.ratings == 0
               ? '${compact(p.sold)} sold'
               : '${p.rating.toStringAsFixed(1)} · from ${compact(value.ratings)} ${value.ratings == 1 ? 'rating' : 'ratings'}, ${compact(p.sold)} sold',
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
         if (p.pointsCapCents > 0)
           Container(
@@ -827,17 +799,13 @@ class ProductPageScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'Use up to ${pointsText(p.pointsCapCents)} points here. You have ${pointsText(points)}.',
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: t.onSuccessFill,
-                    ),
+                    style: context.type.body.copyWith(color: t.onSuccessFill),
                   ),
                 ),
               ],
             ),
           ),
-        Text(value.collectLine, style: OgText.body(14, color: c.textMuted)),
+        Text(value.collectLine, style: context.type.secondary),
         if (value.options.isNotEmpty && !p.service && !soldOut)
           KitCard(
             children: [
@@ -852,15 +820,12 @@ class ProductPageScreen extends ConsumerWidget {
               ),
             ],
           ),
-        Text('About this item', style: OgText.heading(20)),
+        Text('About this item', style: context.type.section),
         KitCheckList(value.about),
         Row(
           children: [
-            Expanded(child: Text('Reviews', style: OgText.heading(20))),
-            Text(
-              'All ${compact(value.ratings)}',
-              style: OgText.body(13, color: c.textMuted),
-            ),
+            Expanded(child: Text('Reviews', style: context.type.section)),
+            Text('All ${compact(value.ratings)}', style: context.type.caption),
           ],
         ),
         for (final r in value.reviews)
@@ -871,20 +836,19 @@ class ProductPageScreen extends ConsumerWidget {
                 r.name,
                 initials: r.name.split(' ').map((w) => w[0]).take(2).join(),
                 size: 36,
-                fontSize: 13,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      r.name,
-                      style: OgText.body(14, weight: FontWeight.w600),
-                    ),
-                    Text(r.meta, style: OgText.body(12, color: c.textMuted)),
+                    Text(r.name, style: context.type.body),
+                    Text(r.meta, style: context.type.caption),
                     const SizedBox(height: 4),
-                    Text(r.text, style: OgText.body(14, height: 1.4)),
+                    Text(
+                      r.text,
+                      style: context.type.body.copyWith(height: 1.4),
+                    ),
                   ],
                 ),
               ),
@@ -901,7 +865,7 @@ class ProductPageScreen extends ConsumerWidget {
           ],
         ),
         if (value.related.isNotEmpty) ...[
-          Text('Goes well with', style: OgText.heading(20)),
+          Text('Goes well with', style: context.type.section),
           ProductGrid(products: value.related),
         ],
         Align(
@@ -965,7 +929,6 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final detail = ref.watch(productDetailProvider(widget.id));
     if (shopWaiting(
           detail,
@@ -994,17 +957,17 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(p.name, style: OgText.heading(20)),
+                  Text(p.name, style: context.type.section),
                   Text(
                     '${p.mallName} · ${p.rating.toStringAsFixed(1)} from ${compact(d.ratings)} reviews',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
             ),
           ],
         ),
-        Text('String tension', style: OgText.heading(18)),
+        Text('String tension', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1017,7 +980,7 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
               ),
           ],
         ),
-        Text('Drop-off day', style: OgText.heading(18)),
+        Text('Drop-off day', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1030,7 +993,7 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
               ),
           ],
         ),
-        Text('Drop-off time', style: OgText.heading(18)),
+        Text('Drop-off time', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1051,7 +1014,7 @@ class _ServiceBookScreenState extends ConsumerState<ServiceBookScreen> {
         Text(
           'Pay now. OlympusGO holds your payment until you collect your '
           'racket, and you can cancel until the shop starts work.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1067,7 +1030,7 @@ class _ShopEmpty extends StatelessWidget {
   Widget build(BuildContext context) => DashedBox(
     child: Padding(
       padding: const EdgeInsets.all(20),
-      child: Text(text, style: OgText.body(14, color: context.og.textMuted)),
+      child: Text(text, style: context.type.secondary),
     ),
   );
 }

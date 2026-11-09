@@ -39,6 +39,8 @@ final auditRoutes = <(String, String)>[
   ('settings', Routes.settings),
   ('editProfile', Routes.editProfile),
   ('accountInfo', Routes.accountInfo),
+  ('changePhone', Routes.changePhone),
+  ('changeEmail', Routes.changeEmail),
   ('accountHub', Routes.accountHub),
   ('profileSports', Routes.profileSports),
   ('language', Routes.language),

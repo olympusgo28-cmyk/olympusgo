@@ -9,7 +9,7 @@ import '../../../core/geohash.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -110,7 +110,6 @@ class _FindScreenState extends ConsumerState<FindScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final found = ref.watch(foundSessionsProvider(_filter));
     return KitScaffold(
       header: const KitHeader(title: 'Find a Meet'),
@@ -186,7 +185,7 @@ class _FindScreenState extends ConsumerState<FindScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Text(
                       'No Meets match. Try another day, or clear a filter.',
-                      style: OgText.lead(c.textMuted),
+                      style: context.type.secondary,
                     ),
                   ),
                 ),
@@ -207,7 +206,7 @@ class _FindScreenState extends ConsumerState<FindScreen> {
                               '${s.km!.toStringAsFixed(1)} km away',
                             if (s.fitsMe) 'Fits your level',
                           ].join(' · '),
-                          style: OgText.body(13, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                       ),
                     PlayCard(activity: s.activity),
@@ -276,16 +275,13 @@ class _DateStrip extends StatelessWidget {
                       children: [
                         Text(
                           _names[day.weekday - 1],
-                          style: OgText.body(
-                            12,
+                          style: context.type.caption.copyWith(
                             color: on ? c.onPrimary : c.textMuted,
                           ),
                         ),
                         Text(
                           '${day.day}',
-                          style: OgText.body(
-                            16,
-                            weight: FontWeight.w600,
+                          style: context.type.body.copyWith(
                             color: on ? c.onPrimary : c.text,
                           ),
                         ),

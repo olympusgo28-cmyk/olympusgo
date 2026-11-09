@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../application/club_providers.dart';
@@ -15,14 +14,13 @@ class GroupRankScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     return KitScaffold(
       header: const KitHeader(title: 'Most active groups'),
       children: [
         Text(
           'Ranked on games with 6 or more players checked in by QR, over the '
           'last 90 days.',
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
         ...ref
             .watch(groupRankingProvider)
@@ -41,7 +39,7 @@ class GroupRankScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(20),
                           child: Text(
                             'No groups are ranked yet.',
-                            style: OgText.lead(c.textMuted),
+                            style: context.type.secondary,
                           ),
                         ),
                       ),

@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../domain/country.dart';
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import 'og_fields.dart';
 import 'og_screen.dart';
+import '../../core/theme/og_type.dart';
 
 /// One outlined field: flag and country code, a divider, then the number.
 /// With [onCountryChanged] the country part opens a list; without it the
@@ -52,13 +52,7 @@ class _PhoneFieldState extends State<PhoneField> {
         children: [
           widget.country.flag(),
           const SizedBox(width: 8),
-          Text(
-            widget.country.dialCode,
-            style: OgText.input.copyWith(
-              fontWeight: FontWeight.w600,
-              color: c.text,
-            ),
-          ),
+          Text(widget.country.dialCode, style: context.type.body),
           if (_canPick)
             Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: c.text),
           const SizedBox(width: 10),
@@ -184,20 +178,8 @@ class _PhoneFieldState extends State<PhoneField> {
               children: [
                 country.flag(),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    country.name,
-                    style: OgText.body(
-                      16,
-                      weight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: c.text,
-                    ),
-                  ),
-                ),
-                Text(
-                  country.dialCode,
-                  style: OgText.body(16, color: c.textMuted),
-                ),
+                Expanded(child: Text(country.name, style: context.type.body)),
+                Text(country.dialCode, style: context.type.secondary),
               ],
             ),
           ),

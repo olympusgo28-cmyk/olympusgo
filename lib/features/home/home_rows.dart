@@ -7,7 +7,7 @@ import 'package:og_money/og_money.dart' show pointsText;
 import '../../core/format.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
@@ -183,7 +183,7 @@ class SearchPill extends StatelessWidget {
             Expanded(
               child: Text(
                 'Search Meets, clubs, players, shops',
-                style: OgText.body(16, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -214,7 +214,6 @@ class HomeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Padding(
       padding: EdgeInsets.only(top: top),
       child: Column(
@@ -230,7 +229,7 @@ class HomeSection extends StatelessWidget {
                     header: true,
                     child: Text(
                       title,
-                      style: OgText.display(26, height: 1.1, color: c.text),
+                      style: context.type.title.copyWith(height: 1.1),
                     ),
                   ),
                 ),
@@ -405,7 +404,10 @@ class _ClubTile extends ConsumerWidget {
                     Positioned(
                       left: 14,
                       bottom: 10,
-                      child: Text(mark, style: OgText.heading(44, color: ink)),
+                      child: Text(
+                        mark,
+                        style: context.type.score.copyWith(color: ink),
+                      ),
                     ),
                     if (unread > 0)
                       Positioned(
@@ -414,7 +416,6 @@ class _ClubTile extends ConsumerWidget {
                         child: KitTag(
                           '$unread new',
                           height: 22,
-                          fontSize: 11,
                           background: c.accent,
                           foreground: OgColors.ink,
                         ),
@@ -432,18 +433,14 @@ class _ClubTile extends ConsumerWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(16, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     next ?? (isClub ? 'No sessions this week' : team!.meta),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: c.link,
-                    ),
+                    style: context.type.caption.copyWith(color: c.link),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -465,7 +462,6 @@ class _ClubTile extends ConsumerWidget {
                                     faces[i].player.id,
                                     initials: faces[i].player.initials,
                                     size: 20,
-                                    fontSize: 8,
                                   ),
                                 ),
                               ),
@@ -473,14 +469,7 @@ class _ClubTile extends ConsumerWidget {
                         ),
                       ),
                       if (faces.isNotEmpty) const SizedBox(width: 8),
-                      Text(
-                        '$count members',
-                        style: OgText.body(
-                          12,
-                          weight: FontWeight.w600,
-                          color: c.textMuted,
-                        ),
-                      ),
+                      Text('$count members', style: context.type.caption),
                     ],
                   ),
                 ],
@@ -558,7 +547,6 @@ class _PlayerTile extends ConsumerWidget {
                   p.player.id,
                   initials: p.player.initials,
                   size: 60,
-                  fontSize: 18,
                 ),
                 if (p.level != null)
                   Positioned(
@@ -574,11 +562,7 @@ class _PlayerTile extends ConsumerWidget {
                       alignment: Alignment.center,
                       child: Text(
                         p.level!.toStringAsFixed(1),
-                        style: OgText.body(
-                          11,
-                          weight: FontWeight.w600,
-                          color: c.accent,
-                        ),
+                        style: context.type.caption.copyWith(color: c.accent),
                       ),
                     ),
                   ),
@@ -588,13 +572,13 @@ class _PlayerTile extends ConsumerWidget {
             Text(
               p.player.displayName,
               textAlign: TextAlign.center,
-              style: OgText.body(14, weight: FontWeight.w600),
+              style: context.type.body,
             ),
             const SizedBox(height: 8),
             Text(
               p.note,
               textAlign: TextAlign.center,
-              style: OgText.body(12, color: c.textMuted),
+              style: context.type.caption,
             ),
             const SizedBox(height: 8),
             const Spacer(),
@@ -627,9 +611,7 @@ class _PlayerTile extends ConsumerWidget {
                 alignment: Alignment.center,
                 child: Text(
                   following ? 'Following' : 'Follow',
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w600,
+                  style: context.type.caption.copyWith(
                     color: following ? c.text : c.onInverseCard,
                   ),
                 ),
@@ -679,7 +661,7 @@ class MallShelf extends ConsumerWidget {
                       alignment: Alignment.center,
                       child: Text(
                         m.initials,
-                        style: OgText.heading(44, color: Color(m.ink)),
+                        style: context.type.score.copyWith(color: Color(m.ink)),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -687,25 +669,20 @@ class MallShelf extends ConsumerWidget {
                       m.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
-                        height: 1.25,
-                      ),
+                      style: context.type.body.copyWith(height: 1.25),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       m.blurb,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(12, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                     if (m.pointsAccepted) ...[
                       const SizedBox(height: 6),
                       KitTag(
                         'Points accepted',
                         height: 20,
-                        fontSize: 11,
                         background: c.primaryTint,
                         foreground: const Color(0xFF7A3B00),
                       ),
@@ -764,30 +741,22 @@ class ProductShelf extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Text(
                         p.name,
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w600,
-                          height: 1.25,
-                        ),
+                        style: context.type.body.copyWith(height: 1.25),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        p.mallName,
-                        style: OgText.body(12, color: c.textMuted),
-                      ),
+                      Text(p.mallName, style: context.type.caption),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Text(
                             'S\$${money(p.priceCents, decimals: p.priceCents % 100 != 0)}',
-                            style: OgText.body(15, weight: FontWeight.w600),
+                            style: context.type.body,
                           ),
                           if (p.pointsCapCents > 0) ...[
                             const SizedBox(width: 8),
                             KitTag(
                               'up to ${pointsText(p.pointsCapCents)} pts',
                               height: 20,
-                              fontSize: 11,
                               background: c.primaryTint,
                               foreground: const Color(0xFF7A3B00),
                             ),

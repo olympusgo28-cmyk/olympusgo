@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/mascot.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_screen.dart';
@@ -25,7 +24,6 @@ class WelcomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     // Start reading the Keychain now, so Get started does not wait for it.
     ref.watch(savedAccountsProvider);
     return OgFlowScreen(
@@ -46,7 +44,7 @@ class WelcomeScreen extends ConsumerWidget {
                   child: Text(
                     'Find a game.\nJoin a Meet.',
                     textAlign: TextAlign.center,
-                    style: OgText.display(36, color: c.text),
+                    style: context.type.display,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -55,7 +53,7 @@ class WelcomeScreen extends ConsumerWidget {
                   child: Text(
                     'Play with people near you, keep your Passport, and grow your rating.',
                     textAlign: TextAlign.center,
-                    style: OgText.lead(c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ),
               ],

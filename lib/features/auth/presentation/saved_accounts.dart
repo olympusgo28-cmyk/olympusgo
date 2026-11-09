@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -78,16 +78,12 @@ class AccountTile extends ConsumerWidget {
                           children: [
                             Text(
                               account.displayName,
-                              style: OgText.body(
-                                16,
-                                weight: FontWeight.w600,
-                                color: c.text,
-                              ),
+                              style: context.type.body,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               account.maskedIdentifier,
-                              style: OgText.body(13, color: c.textMuted),
+                              style: context.type.caption,
                             ),
                           ],
                         ),
