@@ -27,6 +27,7 @@ import 'package:olympus_go/features/guardian/domain/guardian_models.dart';
 import 'package:olympus_go/features/play/application/play_providers.dart';
 import 'package:olympus_go/features/profile/domain/profile.dart';
 import 'package:olympus_go/features/profile/presentation/profile_screen.dart';
+import 'package:olympus_go/features/settings/application/settings_providers.dart';
 import 'package:olympus_go/features/settings/data/settings_repository.dart';
 import 'package:olympus_go/features/settings/domain/settings_models.dart';
 import 'package:olympus_go/features/settings/presentation/settings_menu_screen.dart';
@@ -66,6 +67,8 @@ final List<Override> _data = [
   clubListProvider(ClubTab.mine).overrideWith((_) async => const []),
   teamListProvider(ClubTab.mine).overrideWith((_) async => const []),
   myShopProvider.overrideWith((_) async => null),
+  savedCardProvider.overrideWith((_) async => 'Visa ending 4242'),
+  privateInfoProvider.overrideWith((_) async => const PrivateInfo()),
   myChildrenProvider.overrideWith(
     (_) async => const [
       GuardianLink(linkId: 'l1', name: 'Kai', status: LinkStatus.approved),
@@ -296,7 +299,7 @@ void main() {
         label: 'Your account',
         rows: [
           SettingsRow(
-            label: 'Account Centre',
+            label: 'Account information',
             subtitle: 'Sign-in, security, personal details',
             onTap: () {},
           ),
@@ -321,7 +324,7 @@ void main() {
     testWidgets('finds rows by label and hides empty groups', (tester) async {
       await list(tester, 'edit');
       expect(find.text('Edit profile'), findsOneWidget);
-      expect(find.text('Account Centre'), findsNothing);
+      expect(find.text('Account information'), findsNothing);
       expect(find.text('Your account'), findsOneWidget);
       expect(find.text('Support'), findsNothing);
       expect(find.text('Help'), findsNothing);
@@ -329,7 +332,7 @@ void main() {
 
     testWidgets('finds rows by subtitle', (tester) async {
       await list(tester, 'SECURITY');
-      expect(find.text('Account Centre'), findsOneWidget);
+      expect(find.text('Account information'), findsOneWidget);
       expect(find.text('Edit profile'), findsNothing);
     });
 
@@ -398,7 +401,7 @@ void main() {
       for (final group in [
         'Your account',
         'How you use OlympusGO',
-        'Your activity',
+        'Payments and orders',
         'Family',
         'Who can see your content',
         'Support',
@@ -419,27 +422,77 @@ void main() {
       );
     });
 
-    testWidgets('holds what was the Profile account list', (tester) async {
+    testWidgets('holds its own rows and what only the Account Centre had', (
+      tester,
+    ) async {
       await _openSettings(tester);
       for (final row in [
         'Edit profile',
-        'Sessions and rating',
-        'Earnings and receipts',
+        'Account information',
         'Followers and following',
-        'My orders',
-        'My lessons',
-        'Sports and levels',
-        'My clubs and teams',
-        'Account Centre',
-        'My gear',
-        'Challenges',
-        'Share profile',
+        'Identity check',
         'Saved',
+        'Bookings',
+        'Language',
+        'Country',
+        'Payment methods',
+        'Earnings and receipts',
+        'My orders',
+        'Guardian controls',
+        'Under-18 protection',
+        'Account privacy',
+        'Blocked accounts',
         'Help',
+        'My reports',
+        'About',
+        'Log out',
+        'Delete account',
       ]) {
         await tester.scrollUntilVisible(find.text(row), 200, scrollable: _page);
         expect(find.text(row), findsOneWidget, reason: row);
       }
+      // Screens behind Face ID show nothing of theirs here.
+      expect(find.text('Visa ending 4242'), findsNothing);
+      expect(find.text('Not yet'), findsNothing);
+      expect(find.text('Singapore'), findsOneWidget);
+    });
+
+    testWidgets(
+      'the Account Centre, sport rows, lessons and clubs are gone (Q265)',
+      (tester) async {
+        await _openSettings(tester);
+        for (final gone in [
+          'Account Centre',
+          'Your activity',
+          'Sessions and rating',
+          'Sports and levels',
+          'My lessons',
+          'My clubs and teams',
+          'Challenges',
+          'My gear',
+          'Share profile',
+        ]) {
+          expect(
+            find.text(gone, skipOffstage: false),
+            findsNothing,
+            reason: gone,
+          );
+        }
+      },
+    );
+
+    testWidgets('Followers and following sits under Your account', (
+      tester,
+    ) async {
+      await _openSettings(tester);
+      double y(String text) =>
+          tester.getTopLeft(find.text(text, skipOffstage: false)).dy;
+      expect(y('Followers and following'), greaterThan(y('Your account')));
+      expect(
+        y('Followers and following'),
+        lessThan(y('How you use OlympusGO')),
+      );
+      expect(find.text('3 · 5'), findsOneWidget);
     });
 
     testWidgets('search filters every group; empty groups hide', (
@@ -476,6 +529,8 @@ void main() {
         'Edit profile',
         'Notifications',
         'Guardian controls',
+        'Under-18 protection',
+        'Delete account',
       ]) {
         await tester.scrollUntilVisible(
           find.text(shown),
@@ -487,9 +542,10 @@ void main() {
       for (final hidden in [
         'Saved',
         'Bookings',
-        'Sessions and rating',
+        'Payment methods',
         'My orders',
         'Payments and orders',
+        'Followers and following',
       ]) {
         expect(find.text(hidden, skipOffstage: false), findsNothing);
       }
@@ -526,44 +582,54 @@ void main() {
   });
 
   group('Profile', () {
-    testWidgets('the menu button beside the QR button opens Settings', (
-      tester,
-    ) async {
-      // Wide, so the test font's square letters fit Profile's other rows.
-      await tester.binding.setSurfaceSize(_tablet);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      final router = GoRouter(
-        routes: [
-          GoRoute(path: '/', builder: (_, _) => const ProfileScreen()),
-          GoRoute(
-            path: Routes.settings,
-            builder: (_, _) => const Text('at settings'),
-          ),
-          GoRoute(path: '/:rest(.*)', builder: (_, s) => Text('at ${s.uri}')),
-        ],
-      );
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            ..._data,
-            sessionProfileProvider.overrideWith(_Me.new),
-            pointsSummaryProvider.overrideWith(
-              (_) async => const PointsSummary(),
+    testWidgets(
+      'the header reads QR, Sport Passport, menu; each opens its page',
+      (tester) async {
+        // Wide, so the test font's square letters fit Profile's other rows.
+        await tester.binding.setSurfaceSize(_tablet);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final router = GoRouter(
+          routes: [
+            GoRoute(path: '/', builder: (_, _) => const ProfileScreen()),
+            GoRoute(
+              path: Routes.settings,
+              builder: (_, _) => const Text('at settings'),
             ),
+            GoRoute(path: '/:rest(.*)', builder: (_, s) => Text('at ${s.uri}')),
           ],
-          child: MaterialApp.router(
-            theme: OgTheme.light(),
-            routerConfig: router,
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              ..._data,
+              sessionProfileProvider.overrideWith(_Me.new),
+              pointsSummaryProvider.overrideWith(
+                (_) async => const PointsSummary(),
+              ),
+            ],
+            child: MaterialApp.router(
+              theme: OgTheme.light(),
+              routerConfig: router,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('My QR code'), findsOneWidget);
-      expect(find.text('Sessions and rating'), findsNothing);
-      await tester.tap(find.bySemanticsLabel('Settings and activity'));
-      await tester.pumpAndSettle();
-      expect(find.text('at settings'), findsOneWidget);
-    });
+        );
+        await tester.pumpAndSettle();
+        final qr = find.bySemanticsLabel('My QR code');
+        final card = find.bySemanticsLabel('Sport Passport');
+        final menu = find.bySemanticsLabel('Settings and activity');
+        expect(tester.getCenter(qr).dx, lessThan(tester.getCenter(card).dx));
+        expect(tester.getCenter(card).dx, lessThan(tester.getCenter(menu).dx));
+        expect(find.text('Sessions and rating'), findsNothing);
+        await tester.tap(card);
+        await tester.pumpAndSettle();
+        expect(find.text('at ${Routes.sportPassport}'), findsOneWidget);
+        router.pop();
+        await tester.pumpAndSettle();
+        await tester.tap(menu);
+        await tester.pumpAndSettle();
+        expect(find.text('at settings'), findsOneWidget);
+      },
+    );
   });
 
   group('goldens', () {

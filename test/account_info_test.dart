@@ -18,16 +18,14 @@ import 'package:olympus_go/core/theme/og_theme.dart';
 import 'package:olympus_go/core/theme/og_tones.dart';
 import 'package:olympus_go/core/widgets/og_icon.dart';
 import 'package:olympus_go/core/widgets/settings_list.dart';
-import 'package:olympus_go/features/academy/application/academy_providers.dart';
 import 'package:olympus_go/features/auth/data/auth_repository.dart';
 import 'package:olympus_go/features/auth/data/biometric_vault.dart';
-import 'package:olympus_go/features/earnings/application/earnings_providers.dart';
 import 'package:olympus_go/features/settings/application/settings_providers.dart';
 import 'package:olympus_go/features/settings/data/settings_repository.dart';
 import 'package:olympus_go/features/settings/domain/account_info.dart';
 import 'package:olympus_go/features/settings/domain/settings_models.dart';
 import 'package:olympus_go/features/settings/presentation/account_info_screens.dart';
-import 'package:olympus_go/features/settings/presentation/account_screens.dart';
+import 'package:olympus_go/features/settings/presentation/confirm_its_you_screen.dart';
 import 'package:olympus_go/features/settings/presentation/settings_screens.dart';
 
 final _full = PrivateInfo(
@@ -59,29 +57,53 @@ class _Settings implements SettingsRepository {
 }
 
 class _Auth implements AuthRepository {
-  _Auth({this.refuse});
+  _Auth({this.refuse, this.needsStepUp = false});
 
   /// Thrown by every start, when set.
   final AuthFailure? refuse;
+
+  /// The server wants "Confirm it's you" before any contact changes.
+  bool needsStepUp;
   final phones = <String>[];
   final emails = <String>[];
   final verified = <String>[];
+  final stepUps = <LoginContact>[];
 
   @override
   Future<void> startPhoneChange(String phone) async {
     if (refuse != null) throw refuse!;
+    if (needsStepUp) throw const StepUpNeeded();
     phones.add(phone);
   }
 
   @override
   Future<void> startEmailChange(String email) async {
     if (refuse != null) throw refuse!;
+    if (needsStepUp) throw const StepUpNeeded();
     emails.add(email);
   }
 
   @override
-  Future<void> verifyPhoneChange(String phone, String code) async =>
-      verified.add(phone);
+  Future<LoginContact> startStepUp(LoginContact changing) async {
+    stepUps.add(changing);
+    return changing == LoginContact.mobile
+        ? LoginContact.email
+        : LoginContact.mobile;
+  }
+
+  @override
+  Future<void> verifyStepUp(LoginContact changing, String code) async {
+    if (code != '123456') {
+      throw const AuthFailure("That code didn't work. Check it and try again.");
+    }
+    needsStepUp = false;
+  }
+
+  @override
+  Future<void> verifyPhoneChange(String phone, String code) async {
+    if (needsStepUp) throw const StepUpNeeded();
+    verified.add(phone);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -182,34 +204,6 @@ Finder _row(String label) =>
 Finder _chevron(String label) =>
     find.descendant(of: _row(label), matching: find.byType(OgIcon));
 
-/// The Account Centre on a phone, opened (demo mode skips Face ID).
-Future<void> _openHub(
-  WidgetTester tester, {
-  PrivateInfo info = const PrivateInfo(),
-  bool skipFaceId = false,
-}) async {
-  await tester.binding.setSurfaceSize(_phone);
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        biometricVaultProvider.overrideWithValue(
-          BiometricVault(skip: skipFaceId),
-        ),
-        faceIdEnabledProvider.overrideWith(_FaceIdOff.new),
-        privateInfoProvider.overrideWith((_) async => info),
-        myStudentsProvider.overrideWith((_) async => const []),
-        savedCardProvider.overrideWith((_) async => null),
-      ],
-      child: MaterialApp(
-        theme: OgTheme.light(),
-        home: const AccountHubScreen(),
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
@@ -257,50 +251,13 @@ void main() {
       expect(find.text('Sign-in'), findsOneWidget);
     });
 
-    testWidgets('local testing without Face ID hides the switch, here and '
-        'in the Account Centre', (tester) async {
-      final vault = BiometricVault(skip: true);
-      await _open(tester, vault: vault);
+    testWidgets('local testing without Face ID hides the switch', (
+      tester,
+    ) async {
+      await _open(tester, vault: BiometricVault(skip: true));
       expect(find.text('Phone number'), findsOneWidget);
       expect(find.text('Enable Face ID'), findsNothing);
       expect(find.text('Sign-in'), findsNothing);
-
-      for (final skip in [false, true]) {
-        await tester.pumpWidget(const SizedBox());
-        await _openHub(tester, skipFaceId: skip);
-        expect(find.text('Account Centre'), findsOneWidget);
-        expect(find.text('Face ID'), skip ? findsNothing : findsOneWidget);
-      }
-    });
-
-    testWidgets('the Account Centre keeps a long email from squeezing its '
-        'label', (tester) async {
-      const email = 'nicholas.ong.with.a.long.address@example.com';
-      await _openHub(
-        tester,
-        info: const PrivateInfo(email: email, phone: '+6587654321'),
-      );
-      expect(tester.takeException(), isNull);
-      expect(find.text(email), findsOneWidget);
-      expect(find.text('+6587654321'), findsOneWidget);
-      expect(find.text('Verified'), findsNWidgets(2));
-      // One line, like Mobile, not a letter per line.
-      expect(
-        tester.getSize(find.text('Email')).height,
-        tester.getSize(find.text('Mobile')).height,
-      );
-      expect(
-        tester.getSize(find.text('Email')).width,
-        greaterThan(tester.getSize(find.text('Email')).height * 3),
-      );
-    });
-
-    testWidgets('the Account Centre shows no Verified tag without an email', (
-      tester,
-    ) async {
-      await _openHub(tester, info: const PrivateInfo(phone: '+6587654321'));
-      expect(find.text('Email'), findsOneWidget);
-      expect(find.text('Verified'), findsOneWidget);
     });
 
     testWidgets('masks the email and the phone by default', (tester) async {
@@ -462,6 +419,120 @@ void main() {
         tester.getSize(_row('Email')).width,
         _phone.width - 2 * OgSpace.s4 - 2 * OgSize.hairline,
       );
+    });
+  });
+
+  group('confirm it\u2019s you (R-ACC-9, Q268)', () {
+    Future<_Auth> toPhone(WidgetTester tester, _Auth auth) async {
+      await _open(tester, auth: auth);
+      await tester.tap(find.text('Phone number'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), '8123 4567');
+      await tester.tap(find.text('Send code'));
+      await tester.pumpAndSettle();
+      return auth;
+    }
+
+    testWidgets('a session that just logged in goes straight to the new '
+        'number\u2019s code', (tester) async {
+      final auth = await toPhone(tester, _Auth());
+      expect(find.byType(ConfirmItsYouScreen), findsNothing);
+      expect(auth.stepUps, isEmpty);
+      expect(find.text('at verify +6581234567'), findsOneWidget);
+    });
+
+    testWidgets('otherwise changing the mobile first sends a code to the '
+        'email, and never shows the address', (tester) async {
+      final auth = await toPhone(tester, _Auth(needsStepUp: true));
+      expect(find.byType(ConfirmItsYouScreen), findsOneWidget);
+      expect(find.text('Confirm it\u2019s you'), findsOneWidget);
+      expect(auth.stepUps, [LoginContact.mobile]);
+      expect(find.textContaining('we sent to your email'), findsOneWidget);
+      expect(find.textContaining('@'), findsNothing);
+      expect(
+        auth.phones,
+        isEmpty,
+        reason: 'nothing sent to the new number yet',
+      );
+    });
+
+    testWidgets('the right code carries on to the new number\u2019s code', (
+      tester,
+    ) async {
+      final auth = await toPhone(tester, _Auth(needsStepUp: true));
+      await tester.enterText(find.byType(EditableText).last, '123456');
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsNothing);
+      expect(auth.phones, ['+6581234567']);
+      expect(find.text('at verify +6581234567'), findsOneWidget);
+    });
+
+    testWidgets('a wrong code says so and stays', (tester) async {
+      final auth = await toPhone(tester, _Auth(needsStepUp: true));
+      await tester.enterText(find.byType(EditableText).last, '000000');
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsOneWidget);
+      expect(find.textContaining("That code didn't work"), findsOneWidget);
+      expect(auth.phones, isEmpty);
+    });
+
+    testWidgets('backing out sends nothing and leaves the number as it was', (
+      tester,
+    ) async {
+      final auth = await toPhone(tester, _Auth(needsStepUp: true));
+      await tester.tap(find.bySemanticsLabel('Back').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsNothing);
+      expect(find.byType(ChangePhoneScreen), findsOneWidget);
+      expect(auth.phones, isEmpty);
+      // The button is ready again, not stuck loading.
+      await tester.tap(find.text('Send code'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsOneWidget);
+    });
+
+    testWidgets('a proof that ran out while they waited is asked for again, '
+        'then the same code finishes the change', (tester) async {
+      final auth = _Auth();
+      await _open(tester, auth: auth, realVerify: true);
+      await tester.tap(find.text('Phone number'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), '8123 4567');
+      await tester.tap(find.text('Send code'));
+      await tester.pumpAndSettle();
+      expect(find.byType(VerifyPhoneChangeScreen), findsOneWidget);
+
+      // Five minutes pass.
+      auth.needsStepUp = true;
+      await tester.enterText(find.byType(EditableText).last, '654321');
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsOneWidget);
+      expect(auth.verified, isEmpty);
+
+      await tester.enterText(find.byType(EditableText).last, '123456');
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.byType(ConfirmItsYouScreen), findsNothing);
+      expect(auth.verified, ['+6581234567']);
+      expect(find.byType(AccountInfoScreen), findsOneWidget);
+    });
+
+    testWidgets('changing the email sends the code to the mobile, shown '
+        'with most digits hidden', (tester) async {
+      final auth = _Auth(needsStepUp: true);
+      await _open(tester, auth: auth);
+      await tester.tap(find.text('Email'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), 'new@example.com');
+      await tester.tap(find.text('Send code'));
+      await tester.pumpAndSettle();
+      expect(auth.stepUps, [LoginContact.email]);
+      expect(
+        find.textContaining('+65 \u2022\u2022\u2022\u2022 4567'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('9123'), findsNothing);
     });
   });
 

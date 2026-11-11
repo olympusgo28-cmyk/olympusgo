@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/country.dart';
+import '../../../core/widgets/face_id_lock.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_layout.dart';
@@ -17,6 +18,7 @@ import '../../../core/widgets/settings_list.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/settings_providers.dart';
 import '../domain/account_info.dart';
+import 'confirm_its_you_screen.dart';
 
 /// Account information: phone number, email, date of birth and account
 /// region, then the Face ID switch (Q249, Q258). Only the owner sees these.
@@ -139,15 +141,28 @@ class AccountInfoScreen extends ConsumerWidget {
 }
 
 /// Change or add the mobile. The number keeps its own dialling code, which
-/// cannot be changed here (Q254). A code goes to the new number first.
-class ChangePhoneScreen extends ConsumerStatefulWidget {
+/// cannot be changed here (Q254). Face ID, then a code to the other contact,
+/// then a code to the new number (R-ACC-9).
+class ChangePhoneScreen extends StatelessWidget {
   const ChangePhoneScreen({super.key});
 
+  // R-ACC-9: Face ID first, then a code to the other contact, then the new one.
   @override
-  ConsumerState<ChangePhoneScreen> createState() => _ChangePhoneScreenState();
+  Widget build(BuildContext context) => const FaceIdLock(
+    title: 'Phone number',
+    reason: 'Change your mobile number',
+    child: _ChangePhone(),
+  );
 }
 
-class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
+class _ChangePhone extends ConsumerStatefulWidget {
+  const _ChangePhone();
+
+  @override
+  ConsumerState<_ChangePhone> createState() => _ChangePhoneState();
+}
+
+class _ChangePhoneState extends ConsumerState<_ChangePhone> {
   final _mobile = TextEditingController();
   AccountInfo? _info;
 
@@ -196,8 +211,17 @@ class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).startPhoneChange(phone);
+      final sent = await withConfirmItsYou(
+        context,
+        LoginContact.mobile,
+        () => ref.read(authRepositoryProvider).startPhoneChange(phone),
+      );
+      if (!sent) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
     } on AuthFailure catch (e) {
+      if (!mounted) return;
       return setState(() {
         _error = e.message;
         _busy = false;
@@ -238,15 +262,27 @@ class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
   }
 }
 
-/// Change or add the email. A code goes to the new address first.
-class ChangeEmailScreen extends ConsumerStatefulWidget {
+/// Change or add the email. Face ID, then a code to the other contact, then
+/// a code to the new address (R-ACC-9).
+class ChangeEmailScreen extends StatelessWidget {
   const ChangeEmailScreen({super.key});
 
   @override
-  ConsumerState<ChangeEmailScreen> createState() => _ChangeEmailScreenState();
+  Widget build(BuildContext context) => const FaceIdLock(
+    title: 'Email',
+    reason: 'Change your email',
+    child: _ChangeEmail(),
+  );
 }
 
-class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
+class _ChangeEmail extends ConsumerStatefulWidget {
+  const _ChangeEmail();
+
+  @override
+  ConsumerState<_ChangeEmail> createState() => _ChangeEmailState();
+}
+
+class _ChangeEmailState extends ConsumerState<_ChangeEmail> {
   final _email = TextEditingController();
   AccountInfo? _info;
   bool _busy = false;
@@ -280,8 +316,17 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).startEmailChange(email);
+      final sent = await withConfirmItsYou(
+        context,
+        LoginContact.email,
+        () => ref.read(authRepositoryProvider).startEmailChange(email),
+      );
+      if (!sent) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
     } on AuthFailure catch (e) {
+      if (!mounted) return;
       return setState(() {
         _error = e.message;
         _busy = false;

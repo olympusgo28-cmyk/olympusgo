@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/avatar_address.dart';
 import '../../../core/domain/country.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../profile/data/profile_repository.dart';
@@ -120,27 +121,30 @@ class SupabaseSettingsRepository implements SettingsRepository {
   );
 
   @override
-  Future<String> uploadAvatar(
-    Uint8List bytes,
-    String extension,
-  ) => _guard(() async {
-    final path = '$_me/avatar.$extension';
-    await _client.storage
-        .from('avatars')
-        .uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: 'image/$extension',
-          ),
-        );
-    // Cache-bust so the new photo shows straight away.
-    final url =
-        '${_client.storage.from('avatars').getPublicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}';
-    await _client.from('profiles').update({'avatar_url': url}).eq('id', _me);
-    return url;
-  });
+  Future<String> uploadAvatar(Uint8List bytes, String extension) => _guard(
+    () async {
+      final path = '$_me/avatar.$extension';
+      await _client.storage
+          .from('avatars')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: 'image/$extension',
+            ),
+          );
+      // A path with no host; the database accepts nothing else (Q267). The
+      // number makes the new photo show straight away.
+      final url = storedAvatarPath(
+        _me,
+        extension,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+      await _client.from('profiles').update({'avatar_url': url}).eq('id', _me);
+      return url;
+    },
+  );
 
   @override
   Future<void> removeAvatar() async {

@@ -42,7 +42,7 @@ void main() {
 
     final skipping = BiometricVault(skip: true);
     expect(skipping.skipped, isTrue);
-    expect(await skipping.authenticate('Open your Account Centre'), isTrue);
+    expect(await skipping.authenticate('Open your payment methods'), isTrue);
     expect(await skipping.isEnabledFor('u1'), isFalse);
     expect(await skipping.accounts(), isEmpty);
     expect(await skipping.unlockToken('u1', 'Unlock OlympusGO'), isNull);

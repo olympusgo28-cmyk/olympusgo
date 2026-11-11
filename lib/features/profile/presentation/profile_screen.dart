@@ -112,6 +112,16 @@ class ProfileScreen extends ConsumerWidget {
                         onPressed: () => context.push(Routes.shareProfile),
                       ),
                       const SizedBox(width: OgSpace.s2),
+                      KitIconButton(
+                        icon: OgIcons.idCard,
+                        label: 'Sport Passport',
+                        size: 20,
+                        strokeWidth: 1.9,
+                        background: c.bg,
+                        border: true,
+                        onPressed: () => context.push(Routes.sportPassport),
+                      ),
+                      const SizedBox(width: OgSpace.s2),
                       // Everything that was the Account list lives in
                       // Settings and activity now.
                       KitIconButton(

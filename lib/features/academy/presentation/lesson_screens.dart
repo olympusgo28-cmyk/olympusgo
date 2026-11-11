@@ -246,31 +246,73 @@ class _LessonRow extends StatelessWidget {
   );
 }
 
-class MyLessonsScreen extends ConsumerWidget {
+class MyLessonsScreen extends StatelessWidget {
   const MyLessonsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) => KitScaffold(
+    header: const KitHeader(title: 'My lessons'),
+    children: const [MyLessonsList()],
+  );
+}
+
+/// The player's lesson bookings: on My lessons and in the schedule's Lessons
+/// tab (owner, 9 Nov 2026). With [day], only that day's.
+class MyLessonsList extends ConsumerWidget {
+  const MyLessonsList({super.key, this.day, this.upcomingOnly = false});
+
+  final DateTime? day;
+
+  /// Only lessons still to come, as the schedule shows.
+  final bool upcomingOnly;
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lessons = ref.watch(myLessonsProvider);
-    final blocked = _waiting(
-      lessons,
-      'My lessons',
-      () => ref.invalidate(myLessonsProvider),
-    );
-    if (blocked != null) return blocked;
-    final list = lessons.requireValue;
-    return KitScaffold(
-      header: const KitHeader(title: 'My lessons'),
-      children: [
-        if (list.isEmpty)
-          _nothing(
-            context,
-            'Nothing booked yet. Trials and one-to-ones you book show up here.',
-          )
-        else
-          KitCard(children: [for (final b in list) _LessonRow(b)]),
-      ],
-    );
+    if (!lessons.hasValue) {
+      if (!lessons.hasError) {
+        return const Padding(
+          padding: EdgeInsets.all(32),
+          child: CupertinoActivityIndicator(),
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KitNote(_problem(lessons.error), tone: KitTone.warn),
+          const SizedBox(height: 12),
+          KitButton(
+            label: 'Try again',
+            onPressed: () => ref.invalidate(myLessonsProvider),
+          ),
+        ],
+      );
+    }
+    final now = DateTime.now();
+    final all = [
+      for (final b in lessons.requireValue)
+        if (!upcomingOnly || b.upcomingAt(now)) b,
+    ];
+    if (all.isEmpty) {
+      return _nothing(
+        context,
+        upcomingOnly && lessons.requireValue.isNotEmpty
+            ? 'No lessons coming up.'
+            : 'Nothing booked yet. Trials and one-to-ones you book show up '
+                  'here.',
+      );
+    }
+    final d = day;
+    final list = d == null
+        ? all
+        : all.where((b) => _sameDay(b.startsAt, d)).toList();
+    if (list.isEmpty) {
+      return Text('Nothing on ${Fmt.day(d!)}.', style: context.type.secondary);
+    }
+    return KitCard(children: [for (final b in list) _LessonRow(b)]);
   }
 }
 

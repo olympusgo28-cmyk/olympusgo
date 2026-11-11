@@ -7,6 +7,8 @@ export interface Delivery {
   codeFor(contact: string): string;
   sms(mobile: string, code: string): Promise<boolean>;
   email(address: string, code: string): Promise<boolean>;
+  /** Tells a contact something with no code in it, such as "this was changed". */
+  alert(contact: string, text: string): Promise<boolean>;
 }
 
 const TEST_CODE = "123456";
@@ -22,18 +24,21 @@ export const localDelivery: Delivery = {
   codeFor: () => TEST_CODE,
   sms: () => Promise.resolve(true),
   email: () => Promise.resolve(true),
+  alert: () => Promise.resolve(true),
 };
 
 /** Real senders. Not yet run against the real services. */
-export function liveDelivery(env: (key: string) => string | undefined): Delivery {
-  return {
-    codeFor: randomCode,
-    async sms(mobile, code) {
-      const sid = env("TWILIO_ACCOUNT_SID");
-      const token = env("TWILIO_AUTH_TOKEN");
-      const from = env("TWILIO_MESSAGING_SERVICE_SID");
-      if (!sid || !token || !from) return false;
-      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+export function liveDelivery(
+  env: (key: string) => string | undefined,
+): Delivery {
+  async function text(mobile: string, body: string): Promise<boolean> {
+    const sid = env("TWILIO_ACCOUNT_SID");
+    const token = env("TWILIO_AUTH_TOKEN");
+    const from = env("TWILIO_MESSAGING_SERVICE_SID");
+    if (!sid || !token || !from) return false;
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+      {
         method: "POST",
         headers: {
           Authorization: `Basic ${btoa(`${sid}:${token}`)}`,
@@ -42,28 +47,46 @@ export function liveDelivery(env: (key: string) => string | undefined): Delivery
         body: new URLSearchParams({
           To: mobile,
           MessagingServiceSid: from,
-          Body: `Your OlympusGO code is ${code}`,
+          Body: body,
         }),
-      });
-      await res.body?.cancel();
-      return res.ok;
-    },
-    async email(address, code) {
-      const key = env("RESEND_API_KEY");
-      const from = env("LOGIN_EMAIL_FROM");
-      if (!key || !from) return false;
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from,
-          to: address,
-          subject: "Your OlympusGO code",
-          text: `Your OlympusGO code is ${code}. It works for 3 minutes.`,
-        }),
-      });
-      await res.body?.cancel();
-      return res.ok;
-    },
+      },
+    );
+    await res.body?.cancel();
+    return res.ok;
+  }
+
+  async function mail(
+    address: string,
+    subject: string,
+    body: string,
+  ): Promise<boolean> {
+    const key = env("RESEND_API_KEY");
+    const from = env("LOGIN_EMAIL_FROM");
+    if (!key || !from) return false;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: address, subject, text: body }),
+    });
+    await res.body?.cancel();
+    return res.ok;
+  }
+
+  return {
+    codeFor: randomCode,
+    sms: (mobile, code) => text(mobile, `Your OlympusGO code is ${code}`),
+    email: (address, code) =>
+      mail(
+        address,
+        "Your OlympusGO code",
+        `Your OlympusGO code is ${code}. It works for 3 minutes.`,
+      ),
+    alert: (contact, body) =>
+      contact.startsWith("+")
+        ? text(contact, body)
+        : mail(contact, "Your OlympusGO sign-in details changed", body),
   };
 }

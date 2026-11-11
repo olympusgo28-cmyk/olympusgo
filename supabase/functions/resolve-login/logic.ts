@@ -52,6 +52,44 @@ export function clientIp(headers: Headers): string {
   return headers.get("cf-connecting-ip") ?? hops.at(-1) ?? "unknown";
 }
 
+/** The session a signed token belongs to. Only call this on a token Supabase
+ * Auth has already checked: nothing here verifies the signature. */
+export function sessionIdOf(token: string): string | null {
+  try {
+    const part = token.split(".")[1] ?? "";
+    const text = atob(
+      part.replace(/-/g, "+").replace(/_/g, "/").padEnd(
+        Math.ceil(part.length / 4) * 4,
+        "=",
+      ),
+    );
+    const id = JSON.parse(text).session_id;
+    return typeof id === "string" && /^[0-9a-f-]{36}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/** What the limits and codes for "confirm it's you" hang on: this player in
+ * this session, and the kind of contact the code went to. So one session's
+ * wrong tries never lock another's, and a code sent to the mobile can only
+ * ever prove the mobile. */
+export function stepUpKey(userId: string, sessionId: string, kind: "mobile" | "email"): string {
+  return `step_up:${userId}:${sessionId}:${kind}`;
+}
+
+/** What a contact is told when a login contact changes or one is added
+ * (R-ACC-9). No code and no contact in it. */
+export function alertText(changed: "mobile" | "email", first = false): string {
+  const what = changed === "mobile" ? "mobile number" : "email";
+  return (first
+    ? `${changed === "mobile" ? "A" : "An"} ${what} was added to your OlympusGO login. `
+    : `Your OlympusGO login ${what} was changed. `) +
+    "If this wasn't you, open Help in the app straight away.";
+}
+
 export const BAD_CODE = "That code didn't work. Check it and try again.";
+/** Not a sentence: the app shows its "Confirm it's you" step on this. */
+export const STEP_UP = "step_up";
 export const TOO_MANY = "Too many tries. Wait a while, then try again.";
 export const BAD_INPUT = "Check what you entered and try again.";

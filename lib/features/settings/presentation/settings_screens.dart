@@ -24,6 +24,7 @@ import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
 import '../application/settings_providers.dart';
 import '../domain/settings_models.dart';
+import 'confirm_its_you_screen.dart';
 
 enum ImageSourceChoice { camera, library }
 
@@ -155,19 +156,10 @@ class PrivacyScreen extends ConsumerWidget {
               value: prefs.showLevel,
               onChanged: (v) => change((p) => p.copyWith(showLevel: v)),
             ),
-            SwitchRow(
-              title: 'Find me by mobile number',
-              subtitle: 'Friends can look you up',
-              value: prefs.findableByPhone,
-              onChanged: (v) => change((p) => p.copyWith(findableByPhone: v)),
-            ),
-            SwitchRow(
-              title: 'Share my location at Meets',
-              subtitle: 'Only while you are checked in',
-              value: prefs.shareLocationAtMeets,
-              onChanged: (v) =>
-                  change((p) => p.copyWith(shareLocationAtMeets: v)),
-            ),
+            // "Find me by mobile number" and "Share my location at Meets"
+            // are not shown: no lookup by mobile and no location sharing
+            // exist, so the switches changed nothing. They come back with
+            // the features (Q266).
             // Stays while they've agreed, so withdrawing is always possible.
             if ((ai?.open ?? false) || (ai?.agreed ?? false))
               SwitchRow(
@@ -599,18 +591,22 @@ class _VerifyPhoneChangeScreenState
   }
 
   CodeTarget get _target => _isEmail ? CodeTarget.email : CodeTarget.mobile;
+  LoginContact get _changing =>
+      _isEmail ? LoginContact.email : LoginContact.mobile;
 
   Future<bool> _resend() async {
     try {
       final auth = ref.read(authRepositoryProvider);
-      if (_isEmail) {
-        await auth.startEmailChange(widget.phone);
-      } else {
-        await auth.startPhoneChange(widget.phone);
-      }
-      return true;
+      // If the proof ran out while they waited, confirm it's them again.
+      return await withConfirmItsYou(
+        context,
+        _changing,
+        () => _isEmail
+            ? auth.startEmailChange(widget.phone)
+            : auth.startPhoneChange(widget.phone),
+      );
     } on AuthFailure catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
       return false;
     }
   }
@@ -626,10 +622,17 @@ class _VerifyPhoneChangeScreenState
     });
     try {
       final auth = ref.read(authRepositoryProvider);
-      if (_isEmail) {
-        await auth.verifyEmailChange(widget.phone, _code.text);
-      } else {
-        await auth.verifyPhoneChange(widget.phone, _code.text);
+      final code = _code.text;
+      final done = await withConfirmItsYou(
+        context,
+        _changing,
+        () => _isEmail
+            ? auth.verifyEmailChange(widget.phone, code)
+            : auth.verifyPhoneChange(widget.phone, code),
+      );
+      if (!done) {
+        if (mounted) setState(() => _busy = false);
+        return;
       }
       ref
         ..invalidate(privateInfoProvider)

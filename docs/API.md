@@ -38,6 +38,8 @@ Raise errors with a stable code in `detail` so apps can show the right sentence.
 | `send_mobile_code` | Edge | `mobile_e164`, `channel` (`sms`, `whatsapp`) | `{sent: true, resend_after_seconds: 30}` | R-ACC-3, R-ACC-5 |
 | `verify_mobile_code` | Edge → RPC `identity.confirm_mobile` | code | `{verified: true}` or `{duplicate: true}` with the two options | R-ACC-5, R-ACC-6 |
 | `claim_mobile` | Edge → RPC | code, `idempotency_key` | `{claimed: true}`; old account emailed | R-ACC-6 |
+| `resolve-login` `step_up_send` / `step_up_verify` (built) | Edge, signed in | `changing` (`mobile` or `email`); then `code` | `{sent: true, via}` naming the kind of contact the code went to, never the contact; then `{confirmed: true}`, which records a proof for this session for `auth.step_up_minutes` | R-ACC-9, Q268 |
+| `resolve-login` `contact_send` / `contact_verify` (built) | Edge, signed in | `identifier` (new mobile or email); then `code` | 403 `{error: "step_up"}` until the session holds a proof; then `{sent: true}` and `{saved: true}`. The proof is used once and the old contact is alerted | R-ACC-9, Q268 |
 | `identity.complete_signup` | RPC | display name, username, country, date of birth | Profile with `audience_class` set by the server | R-ACC-1, R-AGE-1, R-AGE-2 |
 | `identity.request_guardian_approval` | RPC | guardian email or mobile | `{requested: true}` | R-AGE-1 (Q2) |
 | `identity.approve_child` | RPC (guardian) | child id, scopes | Guardian link active | SAF-7 |

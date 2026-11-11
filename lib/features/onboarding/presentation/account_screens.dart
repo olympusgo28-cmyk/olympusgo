@@ -18,6 +18,7 @@ import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/code_copy.dart';
 import '../../auth/presentation/validators.dart';
+import '../../settings/presentation/confirm_its_you_screen.dart';
 import '../application/onboarding_controller.dart';
 
 enum _Availability { idle, checking, available, taken }
@@ -200,8 +201,14 @@ class _AddEmailScreenState extends ConsumerState<AddEmailScreen> {
       _busy = true;
     });
     try {
-      await ref.read(authRepositoryProvider).startEmailChange(email);
-      if (mounted) context.push(Routes.addEmailVerify);
+      // A player who took a while since logging in confirms it's them first
+      // (R-ACC-9, Q268).
+      final sent = await withConfirmItsYou(
+        context,
+        LoginContact.email,
+        () => ref.read(authRepositoryProvider).startEmailChange(email),
+      );
+      if (sent && mounted) context.push(Routes.addEmailVerify);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
     } finally {
@@ -277,9 +284,14 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     });
     try {
       final email = ref.read(onboardingControllerProvider).email;
-      await ref
-          .read(authRepositoryProvider)
-          .verifyEmailChange(email, _code.text);
+      final code = _code.text;
+      // If the proof ran out while they waited, confirm it's them again.
+      final done = await withConfirmItsYou(
+        context,
+        LoginContact.email,
+        () => ref.read(authRepositoryProvider).verifyEmailChange(email, code),
+      );
+      if (!done) return;
       HapticFeedback.mediumImpact();
       if (mounted) context.go(Routes.ready);
     } on AuthFailure catch (e) {
@@ -312,10 +324,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         ResendTimer(
           onResend: () async {
             try {
-              await ref
-                  .read(authRepositoryProvider)
-                  .startEmailChange(draft.email);
-              return true;
+              return await withConfirmItsYou(
+                context,
+                LoginContact.email,
+                () => ref
+                    .read(authRepositoryProvider)
+                    .startEmailChange(draft.email),
+              );
             } on AuthFailure catch (e) {
               setState(() => _error = e.message);
               return false;

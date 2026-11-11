@@ -28,7 +28,7 @@ Decisions: Q247 to Q254 in `docs/OPEN_QUESTIONS.md`. Rules changed: R-ACC-1, R-A
 ### Profile and account
 - **Edit profile** (rebuilt 9 Nov 2026, see `docs/features/settings-and-profile.md`): photo, Change photo, name and @username; outlined cards for Name, Username, Profile link, and About you (Bio, Sports, Level, Gender). Each edit saves on its own screen.
 - **Account information** (was Personal information; rebuilt 9 Nov 2026 with `InfoRow` and `InfoCard`): a card of rows, Phone number (masked "+65 •••• 1234", or "Add"), Email (masked "n***8@gmail.com", or "Add"), Date of birth and Account region (both read only, Q254), with the region note under it; then a Sign-in card with Enable Face ID (off by default, Q249, Q258). Phone number and Email open their own screens (Mobile field or Email field, Send code, then the code screen); a verified code returns to Account information, or to its onboarding step, instead of Settings. Turning Face ID on asks for Face ID once and saves this session for a tile at once. Loading shows grey rows at full height; a failed load shows the error and Try again, without retrying on its own. Data comes from `accountInfoProvider` (`AccountInfo`, freezed).
-- Settings rows renamed to Edit profile and Account information (Settings was rebuilt on 9 Nov 2026); the Account Centre hub's Face ID row shows On or Off.
+- Settings rows renamed to Edit profile and Account information (Settings was rebuilt on 9 Nov 2026); the Account Centre hub, which had a Face ID row, was removed on 9 Nov 2026 (Q265).
 
 ### Look
 - Text fields use the outlined style with a floating label (Q251).

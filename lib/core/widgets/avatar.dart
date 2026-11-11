@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../avatar_address.dart';
 import '../config/env.dart';
 
 import 'package:flutter/material.dart';
@@ -32,24 +33,12 @@ enum AvatarTone {
   }
 }
 
+/// What a photo request is made with: the project address and the viewer's
+/// session.
+typedef AvatarSession = ({String baseUrl, String? token, String anonKey});
+
 /// Round (or, for groups, rounded-square) avatar: the photo when there is
 /// one, otherwise initials on a pastel.
-const _publicPath = '/storage/v1/object/public/avatars/';
-const _signedInPath = '/storage/v1/object/authenticated/avatars/';
-
-/// Photos are private, and the database checks each read against who may see
-/// that player. Stored addresses still use the public path, so they are
-/// pointed at the signed-in one here.
-String _authorised(String url) => url.replaceFirst(_publicPath, _signedInPath);
-
-Map<String, String>? get _headers {
-  if (!Env.hasSupabase) return null;
-  final token = Supabase.instance.client.auth.currentSession?.accessToken;
-  return token == null
-      ? null
-      : {'Authorization': 'Bearer $token', 'apikey': Env.supabaseAnonKey};
-}
-
 class Avatar extends StatelessWidget {
   const Avatar({
     super.key,
@@ -59,6 +48,18 @@ class Avatar extends StatelessWidget {
     this.size = 48,
     this.square = false,
   });
+
+  /// Tests stand in for the signed-in session here; always null in the app.
+  @visibleForTesting
+  static AvatarSession Function()? debugSession;
+
+  static AvatarSession _session() => (
+    baseUrl: Env.supabaseUrl,
+    token: Env.hasSupabase
+        ? Supabase.instance.client.auth.currentSession?.accessToken
+        : null,
+    anonKey: Env.supabaseAnonKey,
+  );
 
   final String initials;
   final AvatarTone tone;
@@ -79,13 +80,20 @@ class Avatar extends StatelessWidget {
         style: context.type.initials(size).copyWith(color: tone.ink),
       ),
     );
-    if (imageUrl == null) return ExcludeSemantics(child: fallback);
+    final session = debugSession ?? _session;
+    final request = avatarRequest(
+      imageUrl,
+      baseUrl: session().baseUrl,
+      token: session().token,
+      anonKey: session().anonKey,
+    );
+    if (request == null) return ExcludeSemantics(child: fallback);
     return ExcludeSemantics(
       child: ClipRRect(
         borderRadius: radius,
         child: Image.network(
-          _authorised(imageUrl!),
-          headers: _headers,
+          request.url.toString(),
+          headers: request.headers,
           width: size,
           height: size,
           fit: BoxFit.cover,

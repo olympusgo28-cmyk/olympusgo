@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -171,8 +172,19 @@ UpdatesRepository updatesRepository(Ref ref) => Env.hasSupabase
 @Riverpod(keepAlive: true)
 Stream<String?> currentUserId(Ref ref) async* {
   final auth = ref.watch(authRepositoryProvider);
-  yield auth.currentUserId;
-  yield* auth.userIdChanges;
+  var last = auth.currentUserId;
+  yield last;
+  await for (final id in auth.userIdChanges) {
+    // Photos are private to who may see them, but the image cache is keyed
+    // by address alone. A different viewer on this phone starts clean.
+    if (id != last) {
+      PaintingBinding.instance.imageCache
+        ..clear()
+        ..clearLiveImages();
+    }
+    last = id;
+    yield id;
+  }
 }
 
 /// The signed-in player's profile; null when signed out.

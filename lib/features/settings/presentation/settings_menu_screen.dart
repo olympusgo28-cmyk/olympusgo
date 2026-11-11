@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_layout.dart';
@@ -10,20 +9,18 @@ import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/settings_list.dart';
-import '../../clubs/application/club_providers.dart';
-import '../../clubs/data/club_repository.dart';
-import '../../clubs/domain/club_sport.dart';
 import '../../guardian/application/guardian_providers.dart';
+import '../../guardian/application/route_access.dart';
 import '../../guardian/domain/guardian_models.dart';
-import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../shop/application/shop_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../application/settings_providers.dart';
 
 /// Settings and activity, opened from the menu button on Profile: every
-/// account, activity, family, privacy and support page in one searchable
-/// list (owner, 9 Nov 2026). It also holds what was Profile's Account list.
+/// account, payment, family, privacy and support page in one searchable
+/// list (owner, 9 Nov 2026). It holds what was Profile's Account list and
+/// what was in the Account Centre (Q265).
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -36,34 +33,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final summary = ref.watch(mySummaryProvider).value;
-    final sports = ref.watch(mySportsProvider).value ?? const [];
     final social = ref.watch(mySocialProvider).value;
     final upcoming = ref.watch(myScheduleProvider).value?.length ?? 0;
-    final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
-    final teams = ref.watch(teamListProvider(ClubTab.mine)).value ?? const [];
     final shop = ref.watch(myShopProvider).value;
+    final info = ref.watch(privateInfoProvider).value;
     final children = (ref.watch(myChildrenProvider).value ?? const [])
         .where((l) => l.status == LinkStatus.approved)
         .length;
     final visibility = ref.watch(privacySettingsProvider).value?.visibility;
-    // A player waiting on a parent can only open some screens (R-AGE); the
-    // router would send every other row straight back.
-    final restricted =
-        ref.watch(restrictionsProvider).value?.restricted ?? false;
-    bool can(String route) =>
-        !restricted || Routes.restrictedPrefixes.any(route.startsWith);
+    final can = routeAccess(ref);
 
     String? count(int n) => n == 0 ? null : '$n';
-    final levels = sports
-        .map(
-          (s) =>
-              '${Sport.fromId(s.sport).label} '
-              '${SkillBand.forLevel(s.level).code}',
-        )
-        .join(' · ');
     void open(String route) => context.push(route);
 
+    // What the Account Centre held that nothing here did has moved in; its
+    // duplicates went with it (owner, 9 Nov 2026, Q265). Sport rows live on
+    // the Sport Passport, lessons in the schedule, clubs on Home. Rows for
+    // screens behind Face ID show nothing of what those screens hold.
     final sections = [
       SettingsSection(
         label: 'Your account',
@@ -71,13 +57,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         helperLink: 'Learn more',
         onHelperLink: () => open(Routes.help),
         rows: [
-          if (can(Routes.accountHub))
-            SettingsRow(
-              icon: OgIcons.shieldTick,
-              label: 'Account Centre',
-              subtitle: 'Sign-in, security, personal details',
-              onTap: () => open(Routes.accountHub),
-            ),
           if (can(Routes.editProfile))
             SettingsRow(
               icon: OgIcons.person,
@@ -89,6 +68,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: OgIcons.idCard,
               label: 'Account information',
               onTap: () => open(Routes.accountInfo),
+            ),
+          if (can(Routes.connections(followers: true)))
+            SettingsRow(
+              icon: OgIcons.people,
+              label: 'Followers and following',
+              value: social == null
+                  ? null
+                  : '${social.followers} · ${social.following}',
+              semanticValue: social == null
+                  ? null
+                  : '${social.followers} followers, '
+                        '${social.following} following',
+              onTap: () => open(Routes.connections(followers: true)),
+            ),
+          if (can(Routes.identityCheck))
+            SettingsRow(
+              icon: OgIcons.shieldTick,
+              label: 'Identity check',
+              subtitle: 'Needed to run tournaments and receive payouts',
+              onTap: () => open(Routes.identityCheck),
             ),
         ],
       ),
@@ -120,75 +119,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               label: 'Time management',
               onTap: () => open(Routes.timeManagement),
             ),
-        ],
-      ),
-      SettingsSection(
-        label: 'Your activity',
-        rows: [
-          if (can(Routes.passport))
+          if (can(Routes.language))
             SettingsRow(
-              icon: OgIcons.trophy,
-              label: 'Sessions and rating',
-              value: count(summary?.sessions ?? 0),
-              onTap: () => open(Routes.passport),
+              icon: OgIcons.chatLines,
+              label: 'Language',
+              value: 'English',
+              onTap: () => open(Routes.language),
             ),
-          if (can(Routes.profileSports))
+          if (can(Routes.country))
             SettingsRow(
-              icon: OgIcons.racquet,
-              label: 'Sports and levels',
-              value: levels.isEmpty ? null : levels,
-              emptyText: 'Add',
-              onTap: () => open(Routes.profileSports),
-            ),
-          if (can(Routes.lessons))
-            SettingsRow(
-              icon: OgIcons.mortarboard,
-              label: 'My lessons',
-              onTap: () => open(Routes.lessons),
-            ),
-          if (can(Routes.clubs))
-            SettingsRow(
-              icon: OgIcons.group,
-              label: 'My clubs and teams',
-              value: count(clubs.length + teams.length),
-              onTap: () => open(Routes.clubs),
-            ),
-          if (can(Routes.creatorChallenges))
-            SettingsRow(
-              icon: OgIcons.trophyCup,
-              label: 'Challenges',
-              onTap: () => open(Routes.creatorChallenges),
-            ),
-          if (can(Routes.gear))
-            SettingsRow(
-              icon: OgIcons.racquetStrings,
-              label: 'My gear',
-              onTap: () => open(Routes.gear),
-            ),
-          if (can(Routes.connections(followers: true)))
-            SettingsRow(
-              icon: OgIcons.people,
-              label: 'Followers and following',
-              value: social == null
-                  ? null
-                  : '${social.followers} · ${social.following}',
-              semanticValue: social == null
-                  ? null
-                  : '${social.followers} followers, '
-                        '${social.following} following',
-              onTap: () => open(Routes.connections(followers: true)),
-            ),
-          if (can(Routes.shareProfile))
-            SettingsRow(
-              icon: OgIcons.shareUp,
-              label: 'Share profile',
-              onTap: () => open(Routes.shareProfile),
+              icon: OgIcons.location,
+              label: 'Country',
+              value: info?.country.name,
+              onTap: () => open(Routes.country),
             ),
         ],
       ),
       SettingsSection(
         label: 'Payments and orders',
         rows: [
+          if (can(Routes.paymentMethods))
+            SettingsRow(
+              icon: OgIcons.walletCard,
+              label: 'Payment methods',
+              onTap: () => open(Routes.paymentMethods),
+            ),
           if (can(Routes.earnings))
             SettingsRow(
               icon: OgIcons.wallet,
@@ -220,6 +175,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: children == 0 ? null : '$children linked',
             onTap: () => open(Routes.children),
           ),
+          if (can(Routes.under18))
+            SettingsRow(
+              icon: OgIcons.shield,
+              label: 'Under-18 protection',
+              subtitle: 'Settings that stay on for children',
+              onTap: () => open(Routes.under18),
+            ),
         ],
       ),
       SettingsSection(
@@ -249,6 +211,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               label: 'Help',
               onTap: () => open(Routes.help),
             ),
+          if (can(Routes.myReports))
+            SettingsRow(
+              icon: OgIcons.flag,
+              label: 'My reports',
+              subtitle: 'Status and result of what you reported',
+              onTap: () => open(Routes.myReports),
+            ),
           if (can(Routes.legal))
             SettingsRow(
               icon: OgIcons.info,
@@ -265,6 +234,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: OgIcons.logOut,
               label: 'Log out',
               onTap: () => open(Routes.logOut),
+            ),
+          if (can(Routes.deleteAccount))
+            SettingsRow(
+              icon: OgIcons.trash,
+              label: 'Delete account',
+              onTap: () => open(Routes.deleteAccount),
             ),
         ],
       ),

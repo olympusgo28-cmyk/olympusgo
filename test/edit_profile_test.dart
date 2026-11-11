@@ -469,7 +469,9 @@ void main() {
       await tester.pumpAndSettle();
 
       final settings = _Settings([
-        _details.copyWith(avatarUrl: 'https://example.com/a.png'),
+        _details.copyWith(
+          avatarUrl: '/storage/v1/object/public/avatars/e6000000-0000-0000-0000-000000000001/avatar.png',
+        ),
       ]);
       await _open(tester, settings: settings);
       await tester.tap(find.text('Change photo'));
@@ -488,7 +490,11 @@ void main() {
       tester,
     ) async {
       final settings =
-          _Settings([_details.copyWith(avatarUrl: 'https://example.com/a.png')])
+          _Settings([
+              _details.copyWith(
+                avatarUrl: '/storage/v1/object/public/avatars/e6000000-0000-0000-0000-000000000001/avatar.png',
+              ),
+            ])
             ..refuseRemove = const AuthFailure(
               "Your photo wasn't removed. Try again.",
             );

@@ -153,6 +153,13 @@ class LessonBooking {
   final DateTime startsAt;
   final DateTime endsAt;
   final LessonStep step;
+
+  /// Booked or waiting on payment, and not over yet: what the schedule's
+  /// Lessons tab shows, like Joined and Hosting.
+  bool upcomingAt(DateTime now) =>
+      (step == LessonStep.pending || step == LessonStep.paid) &&
+      endsAt.isAfter(now);
+
   final int totalCents;
   final int priceCents;
   final int feeCents;

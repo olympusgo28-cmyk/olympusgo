@@ -12,6 +12,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
+import '../../../core/widgets/face_id_lock.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -325,15 +326,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
             const SizedBox(height: 8),
             KitNote(r.refund!, tone: KitTone.info),
           ],
-          const SizedBox(height: 16),
-          KitButton(
-            label: 'Email me a copy',
-            style: KitButtonStyle.outline,
-            onPressed: () {
-              Navigator.of(sheet).pop();
-              showOgToast(context, 'Sent to your email');
-            },
-          ),
+          // No "Email me a copy": nothing sends receipts yet (Q266).
         ],
       ),
     ),
@@ -666,7 +659,8 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final a = ref.watch(payoutAccountProvider).value;
+    // Nothing loads until Face ID passes.
+    final a = _unlocked == true ? ref.watch(payoutAccountProvider).value : null;
     if (_unlocked != true || a == null) {
       return KitScaffold(
         header: const KitHeader(title: 'Payout account'),
@@ -731,15 +725,26 @@ class _PayoutAccountScreenState extends ConsumerState<PayoutAccountScreen> {
 }
 
 /// The card organizer-pays Meets charge. Cards are never stored by Olympus.
-class PaymentMethodsScreen extends ConsumerStatefulWidget {
+/// Opens after Face ID (R-ACC-8, Q265).
+class PaymentMethodsScreen extends StatelessWidget {
   const PaymentMethodsScreen({super.key});
 
   @override
-  ConsumerState<PaymentMethodsScreen> createState() =>
-      _PaymentMethodsScreenState();
+  Widget build(BuildContext context) => const FaceIdLock(
+    title: 'Payment methods',
+    reason: 'Open your payment methods',
+    child: _PaymentMethods(),
+  );
 }
 
-class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
+class _PaymentMethods extends ConsumerStatefulWidget {
+  const _PaymentMethods();
+
+  @override
+  ConsumerState<_PaymentMethods> createState() => _PaymentMethodsState();
+}
+
+class _PaymentMethodsState extends ConsumerState<_PaymentMethods> {
   bool _busy = false;
 
   Future<void> _save() async {

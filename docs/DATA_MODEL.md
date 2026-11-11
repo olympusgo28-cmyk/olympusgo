@@ -139,7 +139,7 @@ create table identity.profiles (
   user_id             uuid primary key references auth.users on delete cascade,
   username            citext unique,                    -- P0 (P1 for minors)
   display_name        text not null,                    -- P0
-  avatar_path         text,                             -- P0
+  avatar_path         text,                             -- P0. Built as public.profiles.avatar_url: a path with no host, checked to be the owner's own file in the avatars bucket (Q267)
   home_area           text,                             -- P1, declared area, never exact location
   audience_class      identity.audience_class not null default 'adult',   -- server-written
   moderation_status   identity.moderation_status not null default 'active', -- server-written

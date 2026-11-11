@@ -16,6 +16,15 @@ class AuthFailure implements Exception {
   String toString() => message;
 }
 
+/// The server wants proof it is really them before a login contact changes
+/// (R-ACC-9, Q268). The screen shows "Confirm it's you", then tries again.
+class StepUpNeeded extends AuthFailure {
+  const StepUpNeeded() : super("Confirm it's you first, then try again.");
+}
+
+/// A login contact: what is being changed, or where a code was sent.
+enum LoginContact { mobile, email }
+
 /// Passwordless sign-in: 6-digit codes through the resolve-login function,
 /// plus saved-account tiles unlocked with Face ID.
 abstract interface class AuthRepository {
@@ -28,11 +37,19 @@ abstract interface class AuthRepository {
   Future<void> sendCode(String identifier, {bool signUp = false});
   Future<void> verifyCode(String identifier, String code);
 
-  /// Adds a mobile number to the signed-in account.
+  /// Sends the "Confirm it's you" code to the contact already on the
+  /// account: the email when the mobile is [changing], the mobile when the
+  /// email is. Returns which kind it went to, never the contact itself.
+  Future<LoginContact> startStepUp(LoginContact changing);
+  Future<void> verifyStepUp(LoginContact changing, String code);
+
+  /// Changes the signed-in account's mobile. Throws [StepUpNeeded] until this
+  /// session has confirmed it's them.
   Future<void> startPhoneChange(String phone);
   Future<void> verifyPhoneChange(String phone, String code);
 
-  /// Adds the optional email to the signed-in account.
+  /// Adds or changes the signed-in account's email. Throws [StepUpNeeded]
+  /// until this session has confirmed it's them.
   Future<void> startEmailChange(String email);
   Future<void> verifyEmailChange(String email, String code);
 
@@ -115,6 +132,7 @@ class SupabaseAuthRepository implements AuthRepository {
     } on FunctionException catch (e) {
       final details = e.details;
       final message = details is Map ? details['error'] as String? : null;
+      if (message == 'step_up') throw const StepUpNeeded();
       throw AuthFailure(message ?? 'Something went wrong. Try again.');
     } on PostgrestException catch (e) {
       debugPrint('Database error: ${e.code} ${e.message}');
@@ -162,6 +180,30 @@ class SupabaseAuthRepository implements AuthRepository {
       body: {'action': 'contact_verify', 'identifier': contact, 'code': code},
     );
   });
+
+  @override
+  Future<LoginContact> startStepUp(LoginContact changing) => _guard(() async {
+    final res = await _client.functions.invoke(
+      'resolve-login',
+      body: {'action': 'step_up_send', 'changing': changing.name},
+    );
+    return (res.data as Map)['via'] == 'email'
+        ? LoginContact.email
+        : LoginContact.mobile;
+  });
+
+  @override
+  Future<void> verifyStepUp(LoginContact changing, String code) =>
+      _guard(() async {
+        await _client.functions.invoke(
+          'resolve-login',
+          body: {
+            'action': 'step_up_verify',
+            'changing': changing.name,
+            'code': code,
+          },
+        );
+      });
 
   @override
   Future<void> startPhoneChange(String phone) => _contactSend(phone);
@@ -299,6 +341,17 @@ class DemoAuthRepository implements AuthRepository {
     await _check(code);
     _signIn();
   }
+
+  @override
+  Future<LoginContact> startStepUp(LoginContact changing) async {
+    await _delay();
+    return changing == LoginContact.mobile
+        ? LoginContact.email
+        : LoginContact.mobile;
+  }
+
+  @override
+  Future<void> verifyStepUp(LoginContact changing, String code) => _check(code);
 
   @override
   Future<void> startPhoneChange(String phone) => _delay();

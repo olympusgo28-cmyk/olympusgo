@@ -41,7 +41,7 @@ final auditRoutes = <(String, String)>[
   ('accountInfo', Routes.accountInfo),
   ('changePhone', Routes.changePhone),
   ('changeEmail', Routes.changeEmail),
-  ('accountHub', Routes.accountHub),
+  ('sportPassport', Routes.sportPassport),
   ('profileSports', Routes.profileSports),
   ('language', Routes.language),
   ('deleteAccount', Routes.deleteAccount),

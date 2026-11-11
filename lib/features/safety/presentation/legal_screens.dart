@@ -89,7 +89,7 @@ class TermsPrivacyScreen extends StatelessWidget {
             'One account per person, in your real name',
             'Own account from age 13. From 13 to 17 a parent or guardian approves it and can see sessions and payments',
             'Under 13: a child profile inside a parent’s account',
-            'You can delete your account any time in Account Centre',
+            'You can delete your account any time in Settings and activity',
           ]),
         ),
         KitBlock(

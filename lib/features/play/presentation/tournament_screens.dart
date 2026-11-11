@@ -1560,7 +1560,7 @@ class _TournamentRegisterScreenState
               'Verified account',
               _mobileVerified
                   ? 'Mobile verified'
-                  : 'Add your mobile in Account Centre',
+                  : 'Add your mobile in Account information',
             ),
             KitKeyValue(
               'Level in range',

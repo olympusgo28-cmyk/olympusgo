@@ -14,6 +14,9 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../academy/application/academy_providers.dart';
+import '../../academy/domain/lesson_models.dart';
+import '../../academy/presentation/lesson_screens.dart' show MyLessonsList;
 import '../../auth/data/auth_repository.dart';
 import '../../guardian/application/guardian_providers.dart';
 import '../../guardian/domain/guardian_models.dart';
@@ -306,18 +309,22 @@ final _payMethodsProvider = FutureProvider.autoDispose<List<PayMethod>>(
   (ref) => ref.watch(paymentGatewayProvider).methods(),
 );
 
-/// My schedule: the week at a glance, then what I joined and what I host.
+/// My schedule: the week at a glance, then what I joined, what I host and
+/// my lessons (owner, 9 Nov 2026).
 class ScheduleScreen extends ConsumerStatefulWidget {
-  const ScheduleScreen({super.key, this.hosting = false});
+  const ScheduleScreen({super.key, this.hosting = false, this.lessons = false});
 
   final bool hosting;
+
+  /// Opens on the Lessons tab.
+  final bool lessons;
 
   @override
   ConsumerState<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
-  late int _tab = widget.hosting ? 1 : 0;
+  late int _tab = widget.hosting ? 1 : (widget.lessons ? 2 : 0);
 
   /// A day picked on the week strip, to show that day only.
   DateTime? _day;
@@ -333,6 +340,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         .where((a) => !a.iAmHost)
         .toList();
     final hostList = hosting.value ?? const <Activity>[];
+    final soon = DateTime.now();
+    final lessonList = [
+      for (final b in ref.watch(myLessonsProvider).value ?? <LessonBooking>[])
+        if (b.upcomingAt(soon)) b,
+    ];
     final list = _tab == 0 ? joinList : hostList;
 
     final now = DateTime.now();
@@ -340,9 +352,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final week = [for (var i = 0; i < 7; i++) monday.add(Duration(days: i))];
     final weekEnd = monday.add(const Duration(days: 7));
     final busy = {
-      for (final a in [...joinList, ...hostList])
+      for (final at in [
+        for (final a in [...joinList, ...hostList]) a.startsAt,
+        for (final b in lessonList) b.startsAt,
+      ])
         for (final d in week)
-          if (_sameDay(a.startsAt, d)) d,
+          if (_sameDay(at, d)) d,
     };
 
     final shown = _day == null
@@ -397,13 +412,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           labels: [
             'Joined · ${joinList.length}',
             'Hosting · ${hostList.length}',
+            'Lessons · ${lessonList.length}',
           ],
           selected: _tab,
           spread: true,
           padding: EdgeInsets.zero,
           onSelect: (i) => setState(() => _tab = i),
         ),
-        if (loading)
+        if (_tab == 2)
+          MyLessonsList(day: _day, upcomingOnly: true)
+        else if (loading)
           const Padding(
             padding: EdgeInsets.all(32),
             child: CupertinoActivityIndicator(),

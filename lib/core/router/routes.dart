@@ -81,7 +81,6 @@ abstract final class Routes {
   static const settings = '/settings';
   static const editProfile = '/settings/profile';
   static const accountInfo = '/settings/account-info';
-  static const accountHub = '/settings/account-centre';
   static const profileSports = '/settings/sports';
   static const language = '/settings/language';
   static const deleteAccount = '/settings/delete';
@@ -113,6 +112,9 @@ abstract final class Routes {
 
   // Profile and social.
   static const passport = '/profile/passport';
+  static String passportFor(String sport) =>
+      '/profile/passport?sport=${Uri.encodeQueryComponent(sport)}';
+  static const sportPassport = '/profile/sport-passport';
   static String passportHistory(String sport) =>
       '/profile/passport/history/$sport';
   static const shareProfile = '/profile/share';
@@ -169,8 +171,8 @@ abstract final class Routes {
       : '/events/$id/scan?code=${Uri.encodeQueryComponent(code)}';
   static const myTickets = '/scan/tickets';
   static const checkTickets = '/scan/doors';
-  static String schedule({bool hosting = false}) =>
-      '/profile/schedule${hosting ? '?tab=hosting' : ''}';
+  static String schedule({bool hosting = false, bool lessons = false}) =>
+      '/profile/schedule${hosting ? '?tab=hosting' : (lessons ? '?tab=lessons' : '')}';
   static String checkIn(String id) => '/scan/meet/$id';
 
   // Create.

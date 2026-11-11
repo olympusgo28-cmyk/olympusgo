@@ -1,7 +1,7 @@
 -- Q41: Supabase Auth holds no real contact details, and codes stay server-side.
 begin;
 \ir helpers/setup.psql
-select plan(12);
+select plan(13);
 
 select t.player('b0000000-0000-0000-0000-000000000001');
 
@@ -26,7 +26,13 @@ select public.login_code_issue('target2', 'late', 'login');
 update public.login_codes set expires_at = now() - interval '1 second' where target_hash = 'target2';
 select is(public.login_code_check('target2', 'late'), null, 'R-ACC-2 an expired code is refused');
 
-select is(public.login_contact_set('b0000000-0000-0000-0000-000000000001', 'email', 'Mei@Example.com'), true, 'a contact is saved in lower case');
+-- Q268: a contact only changes for a session that has just proved itself.
+select public.login_step_up_grant('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-0000000000a1', 'mobile');
+select is(public.login_contact_change('b0000000-0000-0000-0000-000000000001',
+    'b0000000-0000-0000-0000-0000000000a1', 'email', 'Mei@Example.com') ->> 'status',
+  'ok', 'a contact is saved for a session with a live proof');
+select is((select email from public.account_private where id = 'b0000000-0000-0000-0000-000000000001'),
+  'mei@example.com', 'in lower case');
 
 select t.as_user('b0000000-0000-0000-0000-000000000001');
 select throws_ok($$select * from public.login_codes$$, '42501', null, 'players cannot read codes');

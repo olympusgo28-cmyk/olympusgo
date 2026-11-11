@@ -76,6 +76,7 @@ import '../../features/play/presentation/score_screens.dart';
 import '../../features/play/presentation/meet_detail_screen.dart';
 import '../../features/play/presentation/play_screen.dart';
 import '../../features/profile/presentation/passport_screen.dart';
+import '../../features/profile/presentation/sport_passport_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/scan/scan_player_screen.dart';
 import '../../features/scan/scan_screen.dart';
@@ -196,7 +197,6 @@ GoRouter appRouter(Ref ref) {
     redirect: redirect,
     routes: [
       page(Routes.splash, (_) => const SplashScreen()),
-      page(Routes.accountHub, (_) => const AccountHubScreen()),
       page(Routes.profileSports, (_) => const ProfileSportsScreen()),
       page(Routes.language, (_) => const LanguageScreen()),
       page(Routes.deleteAccount, (_) => const DeleteAccountScreen()),
@@ -928,25 +928,44 @@ GoRouter appRouter(Ref ref) {
                 pageBuilder: (_, _) =>
                     const NoTransitionPage(child: ProfileScreen()),
                 routes: [
+                  // On the root navigator, like the rest of Profile's pages:
+                  // Settings (outside the tabs) opens these, and a tab page
+                  // pushed from outside the tabs builds the shell twice
+                  // (duplicate page key).
                   GoRoute(
                     path: 'schedule',
+                    parentNavigatorKey: rootKey,
                     pageBuilder: (_, s) => cupertinoPage(
                       s,
                       ScheduleScreen(
                         hosting: s.uri.queryParameters['tab'] == 'hosting',
+                        lessons: s.uri.queryParameters['tab'] == 'lessons',
                       ),
                     ),
                   ),
                   GoRoute(
                     path: 'saved',
+                    parentNavigatorKey: rootKey,
                     pageBuilder: (_, s) =>
                         cupertinoPage(s, const SavedScreen()),
                   ),
                   GoRoute(
                     path: 'passport',
                     parentNavigatorKey: rootKey,
-                    pageBuilder: (_, s) =>
-                        cupertinoPage(s, const PassportScreen()),
+                    pageBuilder: (_, s) => cupertinoPage(
+                      s,
+                      PassportScreen(
+                        initialSport: s.uri.queryParameters['sport'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'sport-passport',
+                    parentNavigatorKey: rootKey,
+                    pageBuilder: (_, s) => MotionPage<void>(
+                      key: s.pageKey,
+                      child: const SportPassportScreen(),
+                    ),
                   ),
                   GoRoute(
                     path: 'share',

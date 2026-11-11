@@ -1,6 +1,15 @@
 import { assertEquals, assertNotEquals } from "jsr:@std/assert@1";
 import { isLocalStack, liveDelivery, localDelivery, randomCode } from "./delivery.ts";
-import { canonical, clientIp, paddingMs, parseIdentifier, sha256 } from "./logic.ts";
+import {
+  alertText,
+  canonical,
+  clientIp,
+  paddingMs,
+  parseIdentifier,
+  sessionIdOf,
+  sha256,
+  stepUpKey,
+} from "./logic.ts";
 
 Deno.test("reads a mobile number and drops spaces", () => {
   assertEquals(parseIdentifier("+65 9123 4567"), { kind: "mobile", phone: "+6591234567" });
@@ -68,4 +77,49 @@ Deno.test("live delivery reports failure when its keys are missing", async () =>
   const live = liveDelivery(() => undefined);
   assertEquals(await live.sms("+6591234567", "123456"), false);
   assertEquals(await live.email("a@example.com", "123456"), false);
+});
+
+// R-ACC-9, Q268: "confirm it's you" before a login contact changes.
+
+function token(payload: unknown): string {
+  const part = btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `header.${part}.signature`;
+}
+
+Deno.test("reads the session a token belongs to", () => {
+  const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+  assertEquals(sessionIdOf(token({ sub: "u1", session_id: id })), id);
+});
+
+Deno.test("a token with no session, or that is not a token, gives none", () => {
+  assertEquals(sessionIdOf(token({ sub: "u1" })), null);
+  assertEquals(sessionIdOf(token({ session_id: 42 })), null);
+  assertEquals(sessionIdOf(token({ session_id: "not-a-session" })), null);
+  assertEquals(sessionIdOf("not.a.token"), null);
+  assertEquals(sessionIdOf(""), null);
+});
+
+Deno.test("each session and each kind of contact has its own confirm-it's-you code and limits", () => {
+  assertNotEquals(stepUpKey("u1", "s1", "mobile"), stepUpKey("u1", "s2", "mobile"));
+  assertNotEquals(stepUpKey("u1", "s1", "mobile"), stepUpKey("u2", "s1", "mobile"));
+  // A code sent to the mobile can never be entered as proof from the email.
+  assertNotEquals(stepUpKey("u1", "s1", "mobile"), stepUpKey("u1", "s1", "email"));
+  // Never the same key as a real mobile, email or username.
+  assertNotEquals(stepUpKey("u1", "s1", "mobile"), canonical(parseIdentifier("step_up")!));
+});
+
+Deno.test("a contact is told what changed or was added, with no code or contact in it", () => {
+  assertEquals(alertText("mobile").includes("mobile number was changed"), true);
+  assertEquals(alertText("email").includes("email was changed"), true);
+  assertEquals(alertText("email", true).includes("An email was added"), true);
+  assertEquals(alertText("mobile", true).includes("A mobile number was added"), true);
+  const all = alertText("mobile") + alertText("email") + alertText("mobile", true) + alertText("email", true);
+  assertEquals(/\d{6}|@|\+\d/.test(all), false);
+});
+
+Deno.test("a local stack sends no alert, and a hosted one with no sender says it failed", async () => {
+  assertEquals(await localDelivery.alert("+6591234567", "text"), true);
+  const hosted = liveDelivery(() => undefined);
+  assertEquals(await hosted.alert("+6591234567", "text"), false);
+  assertEquals(await hosted.alert("mei@example.com", "text"), false);
 });

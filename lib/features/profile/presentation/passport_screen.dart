@@ -28,7 +28,11 @@ import 'passport_history_screen.dart';
 
 /// The player's Passport: hero card, sport switcher and four tabs.
 class PassportScreen extends ConsumerStatefulWidget {
-  const PassportScreen({super.key});
+  const PassportScreen({super.key, this.initialSport});
+
+  /// Opens on this sport (a sport id) when the player has it, from a sport
+  /// row on the Sport Passport.
+  final String? initialSport;
 
   @override
   ConsumerState<PassportScreen> createState() => _PassportScreenState();
@@ -36,6 +40,7 @@ class PassportScreen extends ConsumerStatefulWidget {
 
 class _PassportScreenState extends ConsumerState<PassportScreen> {
   int _sport = 0;
+  bool _startedOnSport = false;
   int _tab = 0;
 
   @override
@@ -44,6 +49,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     final mq = MediaQuery.of(context);
     final profile = ref.watch(sessionProfileProvider).value;
     final sports = ref.watch(mySportsProvider).value ?? const <PlayerSport>[];
+    // Once the sports arrive, start on the one the player tapped.
+    if (!_startedOnSport && sports.isNotEmpty) {
+      _startedOnSport = true;
+      final i = sports.indexWhere((s) => s.sport == widget.initialSport);
+      if (i >= 0) _sport = i;
+    }
     final info = ref.watch(privateInfoProvider).value;
     final social = ref.watch(mySocialProvider).value;
     final current = sports.isEmpty

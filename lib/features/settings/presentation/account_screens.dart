@@ -6,14 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:og_money/og_money.dart' show pointsText;
 
-import '../../../core/config/env.dart';
 import '../../../core/format.dart';
-import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
 import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
+import '../../../core/widgets/face_id_lock.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
@@ -26,213 +25,7 @@ import '../../play/domain/activity.dart';
 import '../../profile/domain/profile.dart';
 import '../../earnings/application/earnings_providers.dart';
 import '../../guardian/application/guardian_providers.dart';
-import '../../safety/presentation/legal_screens.dart' show CountryRules;
 import '../application/settings_providers.dart';
-
-/// Account Centre: sign-in, payments, family and account, behind Face ID.
-class AccountHubScreen extends ConsumerStatefulWidget {
-  const AccountHubScreen({super.key});
-
-  @override
-  ConsumerState<AccountHubScreen> createState() => _AccountHubScreenState();
-}
-
-class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
-  bool? _open;
-
-  @override
-  void initState() {
-    super.initState();
-    _unlock();
-  }
-
-  Future<void> _unlock() async {
-    // Demo mode skips the device check, so a simulator never asks for its
-    // passcode.
-    final ok =
-        !Env.hasSupabase ||
-        await ref
-            .read(biometricVaultProvider)
-            .authenticate('Open your Account Centre');
-    if (mounted) setState(() => _open = ok);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final t = context.tones;
-    if (_open != true) {
-      return KitScaffold(
-        header: const KitHeader(title: 'Account Centre'),
-        children: [
-          if (_open == false) ...[
-            const KitNote(
-              'Face ID didn’t match, so the Account Centre stays locked.',
-              tone: KitTone.warn,
-            ),
-            KitButton(label: 'Try again', onPressed: _unlock),
-          ] else
-            const CupertinoActivityIndicator(),
-        ],
-      );
-    }
-    final info = ref.watch(privateInfoProvider).value;
-    final children = ref.watch(myStudentsProvider).value ?? const [];
-    // The address goes under the label, where a long one can wrap; on the
-    // right it squeezed the label to a letter per line.
-    String? value(String? v) => v == null || v.isEmpty ? null : v;
-    Widget? verified(String? v) => value(v) == null
-        ? null
-        : KitTag(
-            'Verified',
-            height: 22,
-            background: t.successFill,
-            foreground: t.onSuccessFill,
-          );
-    Widget section(String title, List<Widget> rows) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(title, style: context.type.section),
-        const SizedBox(height: 8),
-        KitCard(children: rows),
-      ],
-    );
-    return KitScaffold(
-      header: const KitHeader(title: 'Account Centre'),
-      children: [
-        Text(
-          'Opened with Face ID. You are asked again before any change to '
-          'sign-in or payment details.',
-          style: context.type.secondary.copyWith(height: 1.4),
-        ),
-        section('Sign-in', [
-          KitNavTile(
-            icon: OgIcons.mail,
-            title: 'Email',
-            subtitle: value(info?.email),
-            trailing: verified(info?.email),
-            onTap: () => context.push(Routes.accountInfo),
-          ),
-          KitNavTile(
-            icon: OgIcons.phone,
-            title: 'Mobile',
-            subtitle: value(info?.phone),
-            trailing: verified(info?.phone),
-            onTap: () => context.push(Routes.accountInfo),
-          ),
-          if (!ref.watch(biometricVaultProvider).skipped)
-            KitNavTile(
-              icon: OgIcons.faceId,
-              title: 'Face ID',
-              subtitle: ref.watch(faceIdEnabledProvider).value ?? false
-                  ? 'On. It replaces the text code on this phone'
-                  : 'Off. Switch it on in Account information',
-              onTap: () => context.push(Routes.accountInfo),
-            ),
-        ]),
-        section('Payments', [
-          KitNavTile(
-            icon: OgIcons.walletCard,
-            title: 'Payment methods',
-            subtitle: ref.watch(savedCardProvider).value ?? 'No card saved',
-            onTap: () => context.push(Routes.paymentMethods),
-          ),
-          KitNavTile(
-            icon: OgIcons.clipboardList,
-            title: 'Receipts',
-            subtitle: 'Every Meet, entry, ticket, class and order',
-            onTap: () => context.push(Routes.receipts),
-          ),
-          KitNavTile(
-            icon: OgIcons.wallet,
-            title: 'Payout account',
-            subtitle: 'Where your earnings are paid',
-            onTap: () => context.push(Routes.payoutAccount),
-          ),
-        ]),
-        if (children.isNotEmpty)
-          section('Family', [
-            KitNavTile(
-              icon: OgIcons.people,
-              title: 'Linked children',
-              subtitle: children.map((s) => s.name).join(', '),
-              onTap: () => context.push(Routes.studentHome(children.first.id)),
-            ),
-            KitNavTile(
-              icon: OgIcons.shieldTick,
-              title: 'Under-18 protection',
-              subtitle: 'Settings that stay on for children',
-              onTap: () => context.push(Routes.under18),
-            ),
-          ]),
-        section('Account', [
-          KitNavTile(
-            icon: OgIcons.idCard,
-            title: 'Identity check',
-            subtitle: 'Needed to run tournaments and receive payouts',
-            trailing: (info?.identityVerified ?? false)
-                ? KitTag(
-                    'Done',
-                    background: t.successFill,
-                    foreground: t.onSuccessFill,
-                  )
-                : KitTag('Not yet', background: t.soft, foreground: c.text),
-            onTap: () => context.push(Routes.identityCheck),
-          ),
-          KitNavTile(
-            icon: OgIcons.trash,
-            title: 'Delete account',
-            subtitle: 'Removes your profile. Ratings history is anonymised.',
-            danger: true,
-            onTap: () => context.push(Routes.deleteAccount),
-          ),
-        ]),
-        section('More', [
-          KitNavTile(
-            icon: OgIcons.help,
-            title: 'Help and terms',
-            subtitle: 'Common questions, chat with support, terms',
-            onTap: () => context.push(Routes.help),
-          ),
-          KitNavTile(
-            icon: OgIcons.shield,
-            title: 'My reports',
-            subtitle: 'Status and result of what you reported',
-            onTap: () => context.push(Routes.myReports),
-          ),
-          KitNavTile(
-            icon: OgIcons.block,
-            title: 'Blocked players',
-            subtitle: 'People you have blocked',
-            onTap: () => context.push(Routes.blocked),
-          ),
-          KitNavTile(
-            icon: OgIcons.location,
-            title: 'Country',
-            subtitle: () {
-              final country = info?.country ?? Country.singapore;
-              final rules = CountryRules.of(country);
-              return '${country.name} · ${rules.currency.split(' ').first} · '
-                  'emergency ${rules.emergency.split(' ').first}';
-            }(),
-            onTap: () => context.push(Routes.country),
-          ),
-          KitNavTile(
-            icon: OgIcons.chatLines,
-            title: 'Language',
-            subtitle: 'English',
-            onTap: () => context.push(Routes.language),
-          ),
-          KitNavTile(
-            icon: OgIcons.logOut,
-            title: 'Log out',
-            onTap: () => context.push(Routes.logOut),
-          ),
-        ]),
-      ],
-    );
-  }
-}
 
 /// Passport sports and the level the player sets for each.
 class ProfileSportsScreen extends ConsumerStatefulWidget {
@@ -384,15 +177,10 @@ class _ProfileSportsScreenState extends ConsumerState<ProfileSportsScreen> {
 }
 
 /// The app language.
-class LanguageScreen extends StatefulWidget {
+/// The app is in English only. The other languages are listed as not ready;
+/// there is no Save, because nothing can be chosen yet (Q266).
+class LanguageScreen extends StatelessWidget {
   const LanguageScreen({super.key});
-
-  @override
-  State<LanguageScreen> createState() => _LanguageScreenState();
-}
-
-class _LanguageScreenState extends State<LanguageScreen> {
-  String _picked = 'English';
 
   @override
   Widget build(BuildContext context) {
@@ -404,19 +192,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
     ];
     return KitScaffold(
       header: const KitHeader(title: 'Language'),
-      bottom: [
-        KitButton(
-          label: 'Save',
-          onPressed: () {
-            showOgToast(context, 'Language saved');
-            context.pop();
-          },
-        ),
-      ],
       children: [
         const KitTitle(
           'App language',
-          lead: 'Menus and messages use this language. Names of Meets and clubs stay as written.',
+          lead: 'OlympusGO is in English for now.',
         ),
         Column(
           children: [
@@ -425,15 +204,15 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 title: name,
                 subtitle: sub,
                 tag: ready ? null : 'Coming soon',
-                selected: _picked == name,
+                selected: ready,
                 onTap: ready
-                    ? () => setState(() => _picked = name)
+                    ? () {}
                     : () => showOgToast(context, '$sub is coming soon.'),
               ),
           ],
         ),
         Text(
-          'More languages are being translated.',
+          'You can switch here once another language is ready.',
           style: context.type.caption,
         ),
       ],
@@ -443,15 +222,27 @@ class _LanguageScreenState extends State<LanguageScreen> {
 
 /// Delete the account: what we sort out first, then a 30-day grace period in
 /// which logging in again keeps the account (R-ACC-11, R-REF-18).
-class DeleteAccountScreen extends ConsumerStatefulWidget {
+/// Opens after Face ID, since it lists children, sessions and points
+/// (R-ACC-8, Q265); deleting asks again.
+class DeleteAccountScreen extends StatelessWidget {
   const DeleteAccountScreen({super.key});
 
   @override
-  ConsumerState<DeleteAccountScreen> createState() =>
-      _DeleteAccountScreenState();
+  Widget build(BuildContext context) => const FaceIdLock(
+    title: 'Delete account',
+    reason: 'Open delete account',
+    child: _DeleteAccount(),
+  );
 }
 
-class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
+class _DeleteAccount extends ConsumerStatefulWidget {
+  const _DeleteAccount();
+
+  @override
+  ConsumerState<_DeleteAccount> createState() => _DeleteAccountState();
+}
+
+class _DeleteAccountState extends ConsumerState<_DeleteAccount> {
   String? _why;
   DateTime? _closingUntil;
   bool _sending = false;
@@ -714,8 +505,20 @@ class _AccountClosingScreenState extends ConsumerState<AccountClosingScreen> {
 }
 
 /// Where the player's identity check stands, and why it is needed.
-class IdentityCheckScreen extends ConsumerWidget {
+/// Opens after Face ID (R-ACC-8, Q265).
+class IdentityCheckScreen extends StatelessWidget {
   const IdentityCheckScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) => const FaceIdLock(
+    title: 'Identity check',
+    reason: 'Open your identity check',
+    child: _IdentityCheck(),
+  );
+}
+
+class _IdentityCheck extends ConsumerWidget {
+  const _IdentityCheck();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

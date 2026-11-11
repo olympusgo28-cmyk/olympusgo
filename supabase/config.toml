@@ -5,6 +5,13 @@
 [auth]
 enable_signup = false
 
+# Supabase Auth sends no mail of its own: every code is sent and checked by
+# resolve-login. This hook refuses each send, so Auth can issue no email code
+# or link, and a session cannot use Auth's own codes to get back in (Q268).
+[auth.hook.send_email]
+enabled = true
+uri = "pg-functions://postgres/private/auth_email_refused"
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true

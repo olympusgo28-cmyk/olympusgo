@@ -10,8 +10,19 @@ Owner's request of 9 Nov 2026: an Instagram-style Settings screen opened from a 
 
 ## Profile
 
-- A menu button beside the QR button opens Settings and activity.
+- The header reads QR, Sport Passport (a namecard button), menu (owner, 9 Nov 2026). The menu opens Settings and activity.
 - The Account list is gone from Profile; every row moved into Settings (Q261).
+
+## Sport Passport (`lib/features/profile/presentation/sport_passport_screen.dart`)
+
+Opened from the namecard button; the same grey page and white groups as Settings (owner, 9 Nov 2026, Q265):
+
+| Group | Rows (opens) |
+| --- | --- |
+| Your sports | One row per selected sport with its icon and band code (a screen reader hears the band's name), opening the Passport on that sport (`/profile/passport?sport=…`); then Sports and levels ("Add" with no sports) |
+| Sport profile | Sessions and rating (Passport, with the session count), Challenges, My gear, Share profile |
+
+My lessons moved to the schedule's Lessons tab (lessons still to come, booked or awaiting payment, like Joined and Hosting); My clubs and teams lives on Home's Group; Followers and following moved to Settings, Your account. While the sports load, their row shows a grey bar; a failed load says so with Try again.
 
 ## Settings and activity (`settings_menu_screen.dart`)
 
@@ -19,14 +30,17 @@ A light grey page (`groupedBg`, header included) with a white search bar, then w
 
 | Group | Rows (opens) |
 | --- | --- |
-| Your account | Account Centre (Account Centre), Edit profile, Account information. Helper "Manage your account settings. Learn more" (Help) |
-| How you use OlympusGO | Saved, Bookings (My schedule, with the count), Notifications, Time management (placeholder) |
-| Your activity | Sessions and rating, Sports and levels, My lessons, My clubs and teams, Challenges, My gear, Followers and following, Share profile |
-| Payments and orders | Earnings and receipts, My orders, My shop (shop owners) |
-| Family | Guardian controls (Children, with "N linked") |
+| Your account | Edit profile, Account information, Followers and following ("3 · 5"), Identity check (Face ID first). Helper "Manage your account settings. Learn more" (Help) |
+| How you use OlympusGO | Saved, Bookings (My schedule, with the count), Notifications, Time management (placeholder), Language (English), Country (the account's country) |
+| Payments and orders | Payment methods (Face ID first), Earnings and receipts (which holds Receipts and Payout account), My orders, My shop (shop owners) |
+| Family | Guardian controls (Children, with "N linked"), Under-18 protection |
 | Who can see your content | Account privacy (Privacy and safety, with the visibility), Blocked accounts |
-| Support | Help, About (Terms and privacy) |
-| (last) | Log out |
+| Support | Help, My reports, About (Terms and privacy) |
+| (last) | Log out, Delete account |
+
+The Account Centre is gone (owner, 9 Nov 2026, Q265). What only it held moved in above; its duplicates went: Email, Mobile and Face ID (Account information), Receipts and Payout account (inside Earnings and receipts), Linked children (Guardian controls and the academy pages), Help and terms (Help, About), Blocked players (Blocked accounts), Log out. Its Face ID step-up is now on each private screen (`FaceIdLock`, R-ACC-8): Payment methods, Identity check and Delete account ask on open (Delete account asks again to delete), and Payout account has its own check and loads nothing before it. Rows for those screens show nothing of what the screens hold, so the card and identity status stay behind Face ID.
+
+Saved and My schedule open on the root navigator, like Profile's other pages: a page inside a tab pushed from Settings (outside the tabs) built the tab shell twice and crashed with Flutter's duplicate page key assertion (`test/router_shell_test.dart`).
 
 A player waiting on a parent link sees only the rows they can open (the `/settings`, `/legal` and `/parent-link` screens); the others, and groups left empty, are hidden. Rows can be reached by keyboard and Switch Control and show the 3 px focus outline.
 
@@ -49,4 +63,4 @@ Every screen here opens with `MotionPage`: the iOS slide, or a 200 ms fade in pl
 
 ## Tests
 
-`test/settings_screens_test.dart`, `test/edit_profile_test.dart`, `test/account_info_test.dart`; goldens for all three screens at phone and tablet, light and dark.
+`test/settings_screens_test.dart`, `test/edit_profile_test.dart`, `test/account_info_test.dart`, `test/sport_passport_test.dart`, `test/face_id_lock_test.dart`, `test/schedule_lessons_test.dart`; goldens for Settings, Edit profile, Account information and the Sport Passport at phone and tablet, light and dark.
