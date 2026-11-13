@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: riverpod-freezed-feature-slice
+expected_outcome: |
+  Dart files laid out by feature (data, domain, application). A Freezed model declared
+  as an abstract or sealed class with its mixin. A repository interface with a Supabase
+  implementation that is the only code importing supabase_flutter. Generated @riverpod
+  providers that take Ref, a notifier or functions for save and unsave that refresh the
+  list afterwards, and no legacy StateNotifierProvider or StateProvider. The repository
+  does not send the user id as a value for the server to trust beyond what RLS checks,
+  and maps SDK exceptions to a failure the screen can show. Tests use a ProviderContainer
+  or ProviderScope with the repository overridden by a hand-written fake. The report says
+  whether the generator, analyzer and tests were actually run.

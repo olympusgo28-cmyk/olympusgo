@@ -1,0 +1,1 @@
+The folder under `files/` is a deliberately unsafe example skill used to test vetting. It carries no label inside, on purpose. Its remote addresses use the reserved `.invalid` domain, which never resolves, so its scripts cannot send anything. Do not install it or run its scripts.
