@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
@@ -10,45 +13,48 @@ import '../../core/theme/og_layout.dart';
 import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
+import '../../core/widgets/og_toast.dart';
 import '../../core/widgets/pressable.dart';
+import '../earnings/application/earnings_providers.dart';
 import '../game/application/game_providers.dart';
 import '../game/domain/game_models.dart';
 import 'application/home_categories.dart';
 import 'home_rows.dart';
-import 'home_screen.dart' show HomeHeading;
 
 // ─── Hero and search ───────────────────────────────────────────────────────
 
 /// The deep orange block from the top of the screen, with the greeting and
 /// the Schedule and Saved buttons, and the search bar over its bottom edge.
 class HomeHero extends ConsumerWidget {
-  const HomeHero({super.key, required this.top});
+  const HomeHero({super.key, required this.top, this.orangeKey});
 
   /// The status bar's height; the hero runs up under it.
   final double top;
+
+  /// On the orange block, so Home can tell when it has scrolled away.
+  final Key? orangeKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final h = context.home;
     final first = ref.watch(sessionProfileProvider).value?.firstName ?? '';
     final name = first.isEmpty ? 'to OlympusGO' : first;
-    return SizedBox(
-      height: top + OgHomeSize.hero + OgHomeSize.searchOverlap,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            height: top + OgHomeSize.hero,
-            child: ColoredBox(
+    // Only as tall as the greeting needs, plus the half of the search bar
+    // that sits over its bottom edge.
+    return Stack(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ColoredBox(
+              key: orangeKey,
               color: h.hero,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   OgHomeSize.side,
-                  top + OgSpace.s4,
+                  top + OgHomeSize.heroPad,
                   OgHomeSize.side,
-                  OgSpace.s4,
+                  OgHomeSize.heroPad + OgHomeSize.searchOverlap,
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,14 +74,12 @@ class HomeHero extends ConsumerWidget {
                                   color: h.onHero,
                                 ),
                               ),
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.type.display.copyWith(
-                                    color: h.onHero,
-                                  ),
+                              Text(
+                                name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.type.display.copyWith(
+                                  color: h.onHero,
                                 ),
                               ),
                             ],
@@ -105,15 +109,16 @@ class HomeHero extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
-          const Positioned(
-            left: OgHomeSize.side,
-            right: OgHomeSize.side,
-            bottom: 0,
-            child: HomeSearch(),
-          ),
-        ],
-      ),
+            const SizedBox(height: OgHomeSize.searchOverlap),
+          ],
+        ),
+        const Positioned(
+          left: OgHomeSize.side,
+          right: OgHomeSize.side,
+          bottom: 0,
+          child: HomeSearch(),
+        ),
+      ],
     );
   }
 }
@@ -161,11 +166,15 @@ class HomeSearch extends StatelessWidget {
   }
 }
 
-// ─── Your favourites ───────────────────────────────────────────────────────
+// ─── Shortcuts ─────────────────────────────────────────────────────────────
 
-/// The player's chosen shortcuts, two to a row.
-class HomeFavourites extends ConsumerWidget {
-  const HomeFavourites({super.key});
+/// Two rows of four round shortcuts (owner, 14 Nov 2026): the player's chosen
+/// services, up to seven, then More, which lists them all and is where they
+/// are picked and ordered.
+class HomeShortcuts extends ConsumerWidget {
+  const HomeShortcuts({super.key});
+
+  static const perRow = 4;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -173,41 +182,461 @@ class HomeFavourites extends ConsumerWidget {
     final items = [
       for (final i in prefs.order)
         if (prefs.shown.contains(i)) i,
+    ].take(maxHomeCategories).toList();
+    final cells = <Widget>[
+      for (final c in items)
+        _ServiceItem(
+          label: c.label,
+          icon: c.icon,
+          onPressed: () => context.push(c.route),
+        ),
+      _ServiceItem(
+        label: 'More',
+        icon: OgIcons.more,
+        onPressed: () => showAllServices(context),
+      ),
     ];
-    if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: OgSpace.s6),
+      padding: const EdgeInsets.fromLTRB(
+        OgHomeSize.side,
+        OgHomeSize.block,
+        OgHomeSize.side,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          HomeHeading(
-            'Your favourites',
-            link: 'Edit',
-            onLink: () => context.push(Routes.editCategories),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: OgHomeSize.side),
-            child: Column(
+          for (var i = 0; i < cells.length; i += perRow) ...[
+            if (i > 0) const SizedBox(height: OgSpace.s4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (var i = 0; i < items.length; i += 2) ...[
-                  if (i > 0) const SizedBox(height: OgSpace.s3),
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: _FavouriteCard(items[i])),
-                        const SizedBox(width: OgSpace.s3),
-                        Expanded(
-                          child: i + 1 < items.length
-                              ? _FavouriteCard(items[i + 1])
-                              : const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
+                for (var j = i; j < i + perRow; j++)
+                  Expanded(
+                    child: j < cells.length
+                        ? cells[j]
+                        : const SizedBox.shrink(),
                   ),
-                ],
               ],
             ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Every service, in a sheet from More, with Done at the bottom. Edit switches
+/// the sheet to the shortcut list, with a live picture of Home's two rows
+/// above it: switch one on for Home, drag to reorder, and Done saves and
+/// switches back (owner, 14 Nov 2026).
+Future<void> showAllServices(BuildContext context) {
+  return showKitSheet<void>(
+    context,
+    builder: (sheet) => _AllServices(
+      onOpen: (route) {
+        Navigator.of(sheet).pop();
+        context.push(route);
+      },
+      onClose: () => Navigator.of(sheet).pop(),
+    ),
+  );
+}
+
+class _AllServices extends ConsumerStatefulWidget {
+  const _AllServices({required this.onOpen, required this.onClose});
+
+  final void Function(String route) onOpen;
+  final VoidCallback onClose;
+
+  @override
+  ConsumerState<_AllServices> createState() => _AllServicesState();
+}
+
+class _AllServicesState extends ConsumerState<_AllServices> {
+  bool _editing = false;
+  late List<HomeCategory> _order;
+  late Set<HomeCategory> _shown;
+
+  /// What Home will show, in order: at most seven.
+  List<HomeCategory> get _onHome =>
+      _order.where(_shown.contains).take(maxHomeCategories).toList();
+
+  void _edit() {
+    final prefs = ref.read(homeCategoriesControllerProvider);
+    setState(() {
+      _order = [...prefs.order];
+      _shown = {...prefs.shown};
+      _editing = true;
+    });
+  }
+
+  Future<void> _done() async {
+    if (!_editing) return widget.onClose();
+    await ref.read(homeCategoriesControllerProvider.notifier).save((
+      order: _order,
+      shown: _shown,
+    ));
+    if (mounted) setState(() => _editing = false);
+  }
+
+  void _toggle(HomeCategory c, bool on) {
+    final message = !on && _shown.length <= minHomeCategories
+        ? 'At least $minHomeCategories stay on.'
+        : on && _shown.length >= maxHomeCategories
+        ? 'Up to $maxHomeCategories on Home. Turn one off first.'
+        : null;
+    if (message != null) {
+      showOgToast(context, message, error: true);
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => on ? _shown.add(c) : _shown.remove(c));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = context.home;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Text(
+                  _editing ? 'Edit shortcuts' : 'All services',
+                  style: context.type.title,
+                ),
+              ),
+            ),
+            if (!_editing)
+              KitLink(
+                'Edit',
+                onPressed: _edit,
+                color: h.link,
+                size: 15,
+                minHeight: OgSize.tapTarget,
+              ),
+          ],
+        ),
+        const SizedBox(height: OgSpace.s2),
+        if (_editing) ..._editParts(context) else ..._gridParts(),
+        const SizedBox(height: OgSpace.s4),
+        KitButton(label: 'Done', onPressed: _done),
+      ],
+    );
+  }
+
+  List<Widget> _gridParts() {
+    const all = HomeCategory.values;
+    return [
+      Flexible(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(top: OgSpace.s2),
+          child: Column(
+            children: [
+              for (var i = 0; i < all.length; i += HomeShortcuts.perRow) ...[
+                if (i > 0) const SizedBox(height: OgSpace.s4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var j = i; j < i + HomeShortcuts.perRow; j++)
+                      Expanded(
+                        child: j < all.length
+                            ? _ServiceItem(
+                                label: all[j].label,
+                                icon: all[j].icon,
+                                onPressed: () => widget.onOpen(all[j].route),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _editParts(BuildContext context) {
+    final c = context.og;
+    final h = context.home;
+    final onHome = _onHome;
+    return [
+      Text(
+        'Switch on up to $maxHomeCategories and drag to change the order. '
+        'Home shows them like this:',
+        style: context.type.secondary,
+      ),
+      const SizedBox(height: OgSpace.s3),
+      _HomePreview(onHome),
+      const SizedBox(height: OgSpace.s3),
+      Flexible(
+        child: ReorderableListView(
+          shrinkWrap: true,
+          buildDefaultDragHandles: false,
+          proxyDecorator: (child, _, _) => Material(
+            type: MaterialType.transparency,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: h.surface,
+                borderRadius: BorderRadius.circular(OgRadius.md),
+                boxShadow: [
+                  BoxShadow(
+                    color: h.shadow,
+                    blurRadius: OgSpace.s4,
+                    offset: const Offset(0, OgSpace.s1),
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          ),
+          onReorderItem: (from, to) => setState(() {
+            final next = [..._order];
+            next.insert(to, next.removeAt(from));
+            _order = next;
+          }),
+          children: [
+            for (final (i, item) in _order.indexed)
+              Container(
+                key: ValueKey(item),
+                constraints: const BoxConstraints(minHeight: 56),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: c.border)),
+                ),
+                child: Row(
+                  children: [
+                    ReorderableDragStartListener(
+                      index: i,
+                      child: Semantics(
+                        label: 'Reorder ${item.label}',
+                        child: SizedBox(
+                          width: OgSize.tapTarget,
+                          height: OgSize.tapTarget,
+                          child: Center(
+                            child: OgIcon(
+                              OgIcons.reorder,
+                              size: OgSize.icon,
+                              color: c.textMuted,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _Position(
+                      onHome.contains(item) ? onHome.indexOf(item) + 1 : null,
+                    ),
+                    const SizedBox(width: OgSpace.s3),
+                    Expanded(child: Text(item.label, style: context.type.body)),
+                    Semantics(
+                      label: onHome.contains(item)
+                          ? '${item.label}, number ${onHome.indexOf(item) + 1} on Home'
+                          : '${item.label}, not on Home',
+                      child: CupertinoSwitch(
+                        value: _shown.contains(item),
+                        activeTrackColor: c.primary,
+                        inactiveTrackColor: c.borderControl,
+                        onChanged: (on) => _toggle(item, on),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
+  }
+}
+
+/// A small picture of Home's two rows while editing: the chosen services in
+/// order, then More. It changes as switches flip and rows move.
+class _HomePreview extends StatelessWidget {
+  const _HomePreview(this.onHome);
+
+  final List<HomeCategory> onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = context.home;
+    final cells = [
+      for (final (i, c) in onHome.indexed) (c.label, c.icon, i + 1),
+      ('More', OgIcons.more, null),
+    ];
+    return Semantics(
+      label:
+          'On Home, in order: ${[for (final c in onHome) c.label, 'More'].join(', ')}',
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.all(OgSpace.s3),
+          decoration: BoxDecoration(
+            color: h.page,
+            borderRadius: BorderRadius.circular(OgRadius.lg),
+            border: Border.all(color: h.cardBorder, width: OgSize.hairline),
+          ),
+          child: Column(
+            children: [
+              for (
+                var i = 0;
+                i < 2 * HomeShortcuts.perRow;
+                i += HomeShortcuts.perRow
+              ) ...[
+                if (i > 0) const SizedBox(height: OgSpace.s2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var j = i; j < i + HomeShortcuts.perRow; j++)
+                      Expanded(
+                        child: j < cells.length
+                            ? _PreviewCell(
+                                label: cells[j].$1,
+                                icon: cells[j].$2,
+                                position: cells[j].$3,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewCell extends StatelessWidget {
+  const _PreviewCell({
+    required this.label,
+    required this.icon,
+    required this.position,
+  });
+
+  final String label;
+  final String icon;
+  final int? position;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = context.home;
+    return Column(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: OgHomeSize.previewCircle,
+              height: OgHomeSize.previewCircle,
+              decoration: BoxDecoration(
+                color: h.iconTint,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: OgIcon(
+                icon,
+                size: OgSize.iconSmall,
+                strokeWidth: 1.8,
+                color: h.iconInk,
+              ),
+            ),
+            if (position != null)
+              Positioned(
+                right: -OgSpace.s1,
+                top: -OgSpace.s1,
+                child: _Position(position, small: true),
+              ),
+          ],
+        ),
+        const SizedBox(height: OgSpace.s1),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.type.caption.copyWith(color: h.heading),
+        ),
+      ],
+    );
+  }
+}
+
+/// A shortcut's place on Home, as a small numbered dot; empty when it is off.
+class _Position extends StatelessWidget {
+  const _Position(this.n, {this.small = false});
+
+  final int? n;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = context.home;
+    final size = small ? OgHomeSize.positionSmall : OgHomeSize.position;
+    if (n == null) return SizedBox(width: size, height: size);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: h.iconInk, shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: Text(
+        '$n',
+        style: context.type.caption.copyWith(
+          color: h.surface,
+          fontSize: small ? 10 : null,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+/// A tinted round icon with its name under it.
+class _ServiceItem extends StatelessWidget {
+  const _ServiceItem({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String label;
+  final String icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = context.home;
+    return Pressable(
+      semanticLabel: label,
+      onPressed: onPressed,
+      child: Column(
+        children: [
+          Container(
+            width: OgHomeSize.service,
+            height: OgHomeSize.service,
+            decoration: BoxDecoration(
+              color: h.iconTint,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: OgIcon(
+              icon,
+              size: OgSize.icon,
+              strokeWidth: 1.8,
+              color: h.iconInk,
+            ),
+          ),
+          const SizedBox(height: OgSpace.s2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.type.caption.copyWith(color: h.heading),
           ),
         ],
       ),
@@ -215,53 +644,49 @@ class HomeFavourites extends ConsumerWidget {
   }
 }
 
-class _FavouriteCard extends StatelessWidget {
-  const _FavouriteCard(this.item);
+// ─── Wallet and points ─────────────────────────────────────────────────────
 
-  final HomeCategory item;
+/// Two outlined cards side by side: vouchers ready to use, and points. Both
+/// come from the server; nothing is worked out here.
+class HomeWalletPoints extends ConsumerWidget {
+  const HomeWalletPoints({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final h = context.home;
-    return Pressable(
-      semanticLabel: '${item.label}, ${item.sub}',
-      onPressed: () => context.push(item.route),
-      child: Container(
-        padding: const EdgeInsets.all(OgSpace.s4),
-        decoration: BoxDecoration(
-          color: h.surface,
-          borderRadius: BorderRadius.circular(OgRadius.lg),
-          border: Border.all(color: h.cardBorder, width: OgSize.hairline),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vouchers = ref.watch(myVouchersProvider).value;
+    final points = ref.watch(pointsSummaryProvider).value;
+    final ready = vouchers?.where((v) => v.usable).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        OgHomeSize.side,
+        OgHomeSize.block,
+        OgHomeSize.side,
+        0,
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: OgHomeSize.favouriteIcon,
-              height: OgHomeSize.favouriteIcon,
-              decoration: BoxDecoration(
-                color: h.iconTint,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: OgIcon(
-                item.icon,
-                size: OgSize.icon,
-                strokeWidth: 1.8,
-                color: h.iconInk,
+            Expanded(
+              child: _WalletCard(
+                icon: OgIcons.walletCard,
+                label: 'Wallet',
+                value: switch (ready) {
+                  null => '–',
+                  1 => '1 voucher',
+                  final n => '$n vouchers',
+                },
+                route: Routes.wallet,
               ),
             ),
-            const SizedBox(height: OgSpace.s3),
-            Text(
-              item.label,
-              style: context.type.section.copyWith(color: h.heading),
-            ),
-            const SizedBox(height: OgSpace.s1),
-            Text(
-              item.sub,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: context.type.caption,
+            const SizedBox(width: OgSpace.s3),
+            Expanded(
+              child: _WalletCard(
+                icon: OgIcons.pointsStar,
+                label: 'Points',
+                value: points == null ? '–' : pointsText(points.minor),
+                route: Routes.points,
+              ),
             ),
           ],
         ),
@@ -270,90 +695,62 @@ class _FavouriteCard extends StatelessWidget {
   }
 }
 
-// ─── More services ─────────────────────────────────────────────────────────
+class _WalletCard extends StatelessWidget {
+  const _WalletCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.route,
+  });
 
-/// Label, icon and route. Orders has a function for a route, so it is built
-/// when tapped.
-final _services = <(String, String, String Function())>[
-  ('Game', OgIcons.trophyTeam, () => Routes.game),
-  ('Shop', OgIcons.bag, () => Routes.shop),
-  ('Wallet', OgIcons.walletCard, () => Routes.wallet),
-  ('Points', OgIcons.pointsStar, () => Routes.points),
-  ('Tickets', OgIcons.ticket, () => Routes.myTickets),
-  ('Rankings', OgIcons.trophyCup, () => Routes.leaderboards),
-  ('My gear', OgIcons.racquetStrings, () => Routes.gear),
-  ('Orders', OgIcons.clipboardList, Routes.orders),
-];
-
-/// A sideways row of round shortcuts.
-class HomeServices extends StatelessWidget {
-  const HomeServices({super.key});
+  final String icon;
+  final String label;
+  final String value;
+  final String route;
 
   @override
   Widget build(BuildContext context) {
     final h = context.home;
-    return Padding(
-      padding: const EdgeInsets.only(top: OgHomeSize.block),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          HomeHeading(
-            'More services',
-            link: 'View all',
-            onLink: () => context.go(Routes.discover),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: OgHomeSize.side),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final s in _services)
-                  Padding(
-                    padding: const EdgeInsets.only(right: OgSpace.s2),
-                    child: Pressable(
-                      semanticLabel: s.$1,
-                      onPressed: () => context.push(s.$3()),
-                      child: SizedBox(
-                        width: OgHomeSize.serviceItemWidth,
-                        child: Column(
-                          children: [
-                            Container(
-                              width: OgHomeSize.service,
-                              height: OgHomeSize.service,
-                              decoration: BoxDecoration(
-                                color: h.surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: h.cardBorder,
-                                  width: OgSize.hairline,
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: OgIcon(
-                                s.$2,
-                                size: OgSize.icon,
-                                strokeWidth: 1.8,
-                                color: h.heading,
-                              ),
-                            ),
-                            const SizedBox(height: OgSpace.s2),
-                            Text(
-                              s.$1,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.type.caption,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+    return Pressable(
+      semanticLabel: value == '–' ? label : '$label, $value',
+      onPressed: () => context.push(route),
+      child: Container(
+        // Kept short (owner, 14 Nov 2026): 12 above and below.
+        padding: const EdgeInsets.symmetric(
+          horizontal: OgSpace.s4,
+          vertical: OgSpace.s3,
+        ),
+        decoration: BoxDecoration(
+          color: h.surface,
+          borderRadius: BorderRadius.circular(OgRadius.lg),
+          border: Border.all(color: h.cardBorder, width: OgSize.hairline),
+        ),
+        child: Row(
+          children: [
+            OgIcon(icon, size: OgSize.icon, strokeWidth: 1.8, color: h.iconInk),
+            const SizedBox(width: OgSpace.s3),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.caption,
                   ),
-              ],
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.section.copyWith(color: h.heading),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

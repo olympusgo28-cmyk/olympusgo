@@ -42,7 +42,7 @@ class OgHome extends ThemeExtension<OgHome> {
   /// The hero block (#FF5722, #C6FF00).
   final Color hero;
 
-  /// Greeting text on the hero: ink in both themes (#16181B).
+  /// Greeting text on the hero: white in both themes (owner, 14 Nov 2026).
   final Color onHero;
 
   /// The round Schedule and Saved buttons: white in both themes.
@@ -101,7 +101,7 @@ class OgHome extends ThemeExtension<OgHome> {
   static const light = OgHome(
     page: Color(0xFFFFFFFF),
     hero: Color(0xFFFF5722),
-    onHero: Color(0xFF16181B),
+    onHero: Color(0xFFFFFFFF),
     heroButton: Color(0xFFFFFFFF),
     onHeroButton: Color(0xFF16181B),
     surface: Color(0xFFFFFFFF),
@@ -130,7 +130,7 @@ class OgHome extends ThemeExtension<OgHome> {
   static const dark = OgHome(
     page: Color(0xFF0F1113),
     hero: Color(0xFFC6FF00),
-    onHero: Color(0xFF16181B),
+    onHero: Color(0xFFFFFFFF),
     heroButton: Color(0xFFFFFFFF),
     onHeroButton: Color(0xFF16181B),
     surface: Color(0xFF22262B),
@@ -201,8 +201,9 @@ extension OgHomeX on BuildContext {
 
 /// Sizes for Home and the floating tab bar (owner, 14 Nov 2026).
 abstract final class OgHomeSize {
-  /// Hero height below the status bar.
-  static const double hero = 232;
+  /// The hero's padding above and below the greeting; it is only as tall
+  /// as the greeting and its buttons need (owner, 14 Nov 2026).
+  static const double heroPad = 16;
 
   /// How far the search bar overlaps the hero's bottom edge.
   static const double searchOverlap = 28;
@@ -223,6 +224,14 @@ abstract final class OgHomeSize {
   /// A circle in More services.
   static const double service = 60;
 
+  /// The small circles in the edit sheet's picture of Home.
+  static const double previewCircle = 36;
+
+  /// The numbered dot showing a shortcut's place on Home, in the list and
+  /// on the picture.
+  static const double position = 22;
+  static const double positionSmall = 16;
+
   /// A More services item: the circle plus a label under it.
   static const double serviceItemWidth = 72;
 
@@ -239,7 +248,7 @@ abstract final class OgHomeSize {
   static const double navBreathing = 16;
 
   /// A tab's icon, the tint behind it, and the 90 % of the idle tabs.
-  static const double navIcon = 22;
+  static const double navIcon = 24;
   static const double navTintWidth = 48;
   static const double navTintHeight = 28;
   static const double navIdleScale = 0.9;

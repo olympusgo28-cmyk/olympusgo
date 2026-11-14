@@ -90,7 +90,6 @@ import '../../features/venues/presentation/venue_screens.dart';
 import '../../features/profile/presentation/passport_history_screen.dart';
 import '../../features/safety/presentation/legal_screens.dart';
 import '../../features/safety/presentation/safety_screens.dart';
-import '../../features/home/edit_categories_screen.dart';
 import '../navigation/breadcrumbs.dart';
 import '../providers.dart';
 import '../share.dart';
@@ -476,7 +475,6 @@ GoRouter appRouter(Ref ref) {
       page(Routes.refundRules, (_) => const RefundRulesScreen()),
       page(Routes.under18, (_) => const Under18ProtectionScreen()),
       page(Routes.legalNotice, (_) => const LegalNoticeScreen()),
-      page(Routes.editCategories, (_) => const EditCategoriesScreen()),
       page(Routes.myReports, (_) => const MyReportsScreen()),
       page(
         '/settings/reports/:id',

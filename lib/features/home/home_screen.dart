@@ -6,8 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_home.dart';
-import '../../core/theme/og_layout.dart';
-import '../../core/theme/og_type.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../clubs/application/club_providers.dart';
@@ -34,6 +32,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scroll = ScrollController();
+  final _orange = GlobalKey();
+
+  /// How far Home scrolls before the hero is gone from under the clock. The
+  /// hero is only as tall as its greeting, so this is measured.
+  double _heroAfter = 0;
+
+  void _measureHero(double top) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final height = _orange.currentContext?.size?.height;
+      if (!mounted || height == null) return;
+      final after = height - top;
+      if (after != _heroAfter) setState(() => _heroAfter = after);
+    });
+  }
 
   @override
   void dispose() {
@@ -49,6 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.invalidate(teamListProvider);
     ref.invalidate(suggestedPlayersProvider);
     ref.invalidate(pointsSummaryProvider);
+    ref.invalidate(myVouchersProvider);
     ref.invalidate(feedStatusProvider);
     ref.invalidate(campaignsProvider);
   }
@@ -57,11 +70,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final h = context.home;
     final top = MediaQuery.paddingOf(context).top;
+    _measureHero(top);
     return Scaffold(
       backgroundColor: h.page,
       body: StatusScrim(
         color: h.page,
-        after: OgHomeSize.hero,
+        after: _heroAfter,
+        // White clock over the orange, like the greeting; dark over lime.
+        darkHero: Theme.of(context).brightness == Brightness.light,
         child: Stack(
           children: [
             // Pulling down past the top shows the hero colour, not the page,
@@ -90,9 +106,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               slivers: [
                 CupertinoSliverRefreshControl(onRefresh: _refresh),
-                SliverToBoxAdapter(child: HomeHero(top: top)),
-                const SliverToBoxAdapter(child: HomeFavourites()),
-                const SliverToBoxAdapter(child: HomeServices()),
+                SliverToBoxAdapter(
+                  child: HomeHero(top: top, orangeKey: _orange),
+                ),
+                const SliverToBoxAdapter(child: HomeShortcuts()),
+                const SliverToBoxAdapter(child: HomeWalletPoints()),
                 const SliverToBoxAdapter(child: HomeAd()),
                 const SliverToBoxAdapter(child: HomeChallenges()),
                 const SliverToBoxAdapter(
@@ -127,44 +145,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// A Home heading with its link on the right ("Your favourites", "Edit").
-class HomeHeading extends StatelessWidget {
-  const HomeHeading(this.title, {super.key, this.link, this.onLink});
-
-  final String title;
-  final String? link;
-  final VoidCallback? onLink;
-
-  @override
-  Widget build(BuildContext context) {
-    final h = context.home;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        OgHomeSize.side,
-        0,
-        OgHomeSize.side,
-        OgSpace.s2,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(
-                title,
-                style: context.type.title.copyWith(color: h.heading),
-              ),
-            ),
-          ),
-          if (link != null)
-            KitLink(link!, onPressed: onLink, color: h.link, minHeight: 44),
-        ],
       ),
     );
   }

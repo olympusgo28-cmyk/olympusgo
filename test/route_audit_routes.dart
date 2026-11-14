@@ -57,7 +57,6 @@ final auditRoutes = <(String, String)>[
   ('shareProfile', Routes.shareProfile),
   ('saved', Routes.saved),
   ('search', Routes.search),
-  ('editCategories', Routes.editCategories),
   ('play', Routes.play),
   ('playAddSport', Routes.playAddSport),
   ('myTickets', Routes.myTickets),

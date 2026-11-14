@@ -131,7 +131,6 @@ abstract final class Routes {
   static String scannedPlayer(String username) => '/scan/player/$username';
 
   // Play.
-  static const editCategories = '/home/categories';
   static const play = '/home/play';
   static String playKind(ActivityKind kind) => '$play?kind=${kind.id}';
   static const playAddSport = '/play/sports';

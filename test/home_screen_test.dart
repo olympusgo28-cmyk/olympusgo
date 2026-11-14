@@ -2,6 +2,7 @@
 
 import 'dart:ui' show Tristate;
 
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,12 +12,16 @@ import 'package:olympus_go/core/providers.dart';
 import 'package:olympus_go/core/router/routes.dart';
 import 'package:olympus_go/core/theme/og_home.dart';
 import 'package:olympus_go/core/theme/og_theme.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:olympus_go/features/earnings/application/earnings_providers.dart';
+import 'package:olympus_go/features/earnings/data/earnings_repository.dart';
 import 'package:olympus_go/features/feed/application/feed_providers.dart';
 import 'package:olympus_go/features/feed/domain/feed_models.dart';
 import 'package:olympus_go/features/game/application/game_providers.dart';
 import 'package:olympus_go/features/game/data/game_repository.dart';
 import 'package:olympus_go/features/game/domain/game_models.dart';
 import 'package:olympus_go/features/home/application/home_categories.dart';
+import 'package:olympus_go/core/widgets/pressable.dart';
 import 'package:olympus_go/features/home/home_blocks.dart';
 import 'package:olympus_go/features/home/home_screen.dart';
 import 'package:olympus_go/features/play/application/play_providers.dart';
@@ -42,9 +47,15 @@ class _Me extends SessionProfile {
 }
 
 class _Cats extends HomeCategoriesController {
+  _Cats([this.shown]);
+  final Set<HomeCategory>? shown;
+
   @override
   HomeCategories build() =>
-      (order: HomeCategory.values, shown: {...defaultHomeShown});
+      (order: HomeCategory.values, shown: shown ?? {...defaultHomeShown});
+
+  @override
+  Future<void> save(HomeCategories value) async => state = value;
 }
 
 Future<List<Activity>> _some(ActivityKind kind) =>
@@ -58,6 +69,7 @@ Future<GoRouter> _open(
   double textScale = 1,
   bool withMeets = false,
   bool withContent = true,
+  Set<HomeCategory>? shown,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -71,7 +83,7 @@ Future<GoRouter> _open(
     ProviderScope(
       overrides: [
         sessionProfileProvider.overrideWith(() => _Me(name)),
-        homeCategoriesControllerProvider.overrideWith(_Cats.new),
+        homeCategoriesControllerProvider.overrideWith(() => _Cats(shown)),
         for (final k in ActivityKind.values)
           upcomingOfKindProvider(k).overrideWith(
             (_) => withMeets && k == ActivityKind.meet
@@ -107,6 +119,37 @@ Future<GoRouter> _open(
           (_) => withContent
               ? DemoGameRepository().campaigns()
               : Future.value(const <Campaign>[]),
+        ),
+        myVouchersProvider.overrideWith(
+          (_) async => const [
+            GameVoucher(
+              id: 'v1',
+              name: 'Court hour',
+              code: 'X',
+              status: 'issued',
+              amountCents: 500,
+              where: 'Kallang',
+            ),
+            GameVoucher(
+              id: 'v2',
+              name: 'Court hour',
+              code: 'Y',
+              status: 'issued',
+              amountCents: 500,
+              where: 'Kallang',
+            ),
+            GameVoucher(
+              id: 'v3',
+              name: 'Court hour',
+              code: 'Z',
+              status: 'used',
+              amountCents: 500,
+              where: 'Kallang',
+            ),
+          ],
+        ),
+        pointsSummaryProvider.overrideWith(
+          (_) async => const PointsSummary(minor: 12340),
         ),
         feedStatusProvider.overrideWith(
           (_) async => const FeedStatus(
@@ -310,15 +353,36 @@ void main() {
       expect(find.text('to OlympusGO'), findsOneWidget);
     });
 
-    testWidgets('the hero is 232 tall and the search bar overlaps it by 28', (
-      tester,
-    ) async {
+    testWidgets('the hero wraps the greeting and the search bar overlaps it '
+        'by 28', (tester) async {
       await _open(tester);
       final search = tester.getRect(find.byType(HomeSearch));
+      final name = tester.getRect(find.text('Nicholas'));
+      final buttons = tester.getRect(find.bySemanticsLabel('Saved'));
       expect(search.height, OgHomeSize.search);
       expect(search.left, OgHomeSize.side);
-      // No status bar in a test, so the hero runs from the very top.
-      expect(search.top, OgHomeSize.hero - OgHomeSize.searchOverlap);
+      // No status bar in a test. The orange ends 16 below the taller of the
+      // greeting and the buttons, and the search bar sits half over it.
+      final orangeBottom = search.top + OgHomeSize.searchOverlap;
+      final content = name.bottom > buttons.bottom
+          ? name.bottom
+          : buttons.bottom;
+      expect(
+        orangeBottom,
+        content + OgHomeSize.heroPad + OgHomeSize.searchOverlap,
+      );
+    });
+
+    testWidgets('the greeting is white', (tester) async {
+      await _open(tester);
+      for (final t in ['Welcome,', 'Nicholas']) {
+        expect(tester.widget<Text>(find.text(t)).style?.color, Colors.white);
+      }
+      await _open(tester, theme: OgTheme.dark());
+      expect(
+        tester.widget<Text>(find.text('Nicholas')).style?.color,
+        Colors.white,
+      );
     });
 
     testWidgets('the header buttons and search open their pages', (
@@ -330,56 +394,252 @@ void main() {
       expect(find.text('at ${Routes.saved}'), findsOneWidget);
     });
 
-    testWidgets('shows six favourites and an Edit link', (tester) async {
+    testWidgets('two rows of circles: seven services, then More', (
+      tester,
+    ) async {
       await _open(tester);
-      expect(find.text('Your favourites'), findsOneWidget);
-      expect(find.text('Edit'), findsOneWidget);
-      for (final l in [
+      final grid = find.byType(HomeShortcuts);
+      final labels = [
         'Play',
         'Group',
         'Academy',
         'Venue',
-        'Services',
-        'Fitness',
-      ]) {
-        expect(find.text(l), findsOneWidget);
-      }
-      for (final l in ['Shop', 'Game']) {
-        expect(find.text(l), findsOneWidget, reason: 'a service, not a card');
-      }
-    });
-
-    testWidgets('a heading and its link share one centre line', (tester) async {
-      await _open(tester);
-      for (final (title, link) in [
-        ('Your favourites', 'Edit'),
-        ('More services', 'View all'),
-      ]) {
-        expect(
-          (tester.getCenter(find.text(title)).dy -
-                  tester.getCenter(find.text(link)).dy)
-              .abs(),
-          lessThan(1.5),
-          reason: title,
-        );
-      }
-    });
-
-    testWidgets('lists the eight services', (tester) async {
-      await _open(tester);
-      expect(find.text('More services'), findsOneWidget);
-      expect(find.text('View all'), findsOneWidget);
-      for (final l in [
         'Game',
         'Shop',
+        'Fitness',
+        'More',
+      ];
+      final centres = [
+        for (final l in labels)
+          // The circle's tappable area, as a long label may wrap.
+          tester
+              .getRect(
+                find
+                    .ancestor(
+                      of: find.descendant(of: grid, matching: find.text(l)),
+                      matching: find.byType(Pressable),
+                    )
+                    .first,
+              )
+              .topCenter,
+      ];
+      // Four to a row, More at the far right of the second.
+      for (var i = 1; i < 4; i++) {
+        expect(centres[i].dy, centres[0].dy, reason: labels[i]);
+        expect(centres[i + 4].dy, centres[4].dy, reason: labels[i + 4]);
+        expect(centres[i].dx, greaterThan(centres[i - 1].dx));
+      }
+      expect(centres[4].dy, greaterThan(centres[0].dy));
+      expect(centres[7].dx, centres[3].dx, reason: 'More under Venue');
+      for (final gone in ['Your favourites', 'More services', 'View all']) {
+        expect(find.text(gone), findsNothing, reason: gone);
+      }
+      expect(find.text('Edit'), findsNothing, reason: 'Edit is in More');
+    });
+
+    testWidgets('never more than seven circles before More', (tester) async {
+      await _open(tester, shown: HomeCategory.values.toSet());
+      final grid = find.byType(HomeShortcuts);
+      var count = 0;
+      for (final c in HomeCategory.values) {
+        count += find
+            .descendant(of: grid, matching: find.text(c.label))
+            .evaluate()
+            .length;
+      }
+      expect(count, maxHomeCategories);
+    });
+
+    testWidgets('Edit in More switches to the list; Done saves to Home', (
+      tester,
+    ) async {
+      // A real phone's height, so the sheet and taps line up.
+      tester.view.devicePixelRatio = 3;
+      tester.view.physicalSize = _phone * 3;
+      addTearDown(tester.view.reset);
+      await _open(tester);
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit shortcuts'), findsOneWidget);
+      expect(find.text('Done'), findsOneWidget);
+      expect(find.text('Edit'), findsNothing, reason: 'Done is at the bottom');
+      // A picture of Home, in order, then More.
+      expect(
+        find.bySemanticsLabel(
+          'On Home, in order: Play, Group, Academy, Venue, Game, Shop, '
+          'Fitness, More',
+        ),
+        findsOneWidget,
+      );
+      Finder switchFor(String label) => find.descendant(
+        of: find
+            .ancestor(
+              of: find.descendant(
+                of: find.byType(ReorderableListView),
+                matching: find.text(label),
+              ),
+              matching: find.byType(Row),
+            )
+            .first,
+        matching: find.byType(CupertinoSwitch),
+      );
+      // The list scrolls inside the sheet; Record is last.
+      final list = find
+          .descendant(
+            of: find.byType(ReorderableListView),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Record'),
+        ),
+        100,
+        scrollable: list,
+      );
+      // Seven are on: an eighth is refused.
+      await tester.ensureVisible(switchFor('Record'));
+      await tester.tap(switchFor('Record'));
+      await tester.pump();
+      expect(find.text('Up to 7 on Home. Turn one off first.'), findsOneWidget);
+      // The message covers the bottom of the list until it goes.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      // Swap Shop for Record.
+      Future<void> reach(String label, double step) =>
+          tester.scrollUntilVisible(
+            find.descendant(
+              of: find.byType(ReorderableListView),
+              matching: find.text(label),
+            ),
+            step,
+            scrollable: list,
+          );
+      await reach('Shop', -100);
+      await tester.ensureVisible(switchFor('Shop'));
+      await tester.tap(switchFor('Shop'));
+      await tester.pump();
+      await reach('Record', 100);
+      await tester.ensureVisible(switchFor('Record'));
+      await tester.tap(switchFor('Record'));
+      await tester.pump();
+      expect(
+        find.bySemanticsLabel(
+          'On Home, in order: Play, Group, Academy, Venue, Game, Fitness, '
+          'Record, More',
+        ),
+        findsOneWidget,
+        reason: 'the picture follows the switches',
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('Record, number 7 on Home')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('Shop, not on Home')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.text('All services'), findsOneWidget);
+      final grid = find.byType(HomeShortcuts);
+      // Done again closes the sheet.
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(
+        find.descendant(of: grid, matching: find.text('Record')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: grid, matching: find.text('Shop')),
+        findsNothing,
+      );
+      // Let the message run its course.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+    });
+
+    testWidgets('More lists the nine services, and Record opens the log', (
+      tester,
+    ) async {
+      await _open(tester);
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('All services'), findsOneWidget);
+      final sheet = find.byType(BottomSheet);
+      for (final c in HomeCategory.values) {
+        expect(
+          find.descendant(of: sheet, matching: find.text(c.label)),
+          findsOneWidget,
+          reason: c.label,
+        );
+      }
+      expect(HomeCategory.values.map((c) => c.label), [
+        'Play',
+        'Group',
+        'Academy',
+        'Venue',
+        'Game',
+        'Shop',
+        'Fitness',
+        'Services',
+        'Record',
+      ]);
+      for (final gone in [
         'Wallet',
         'Points',
         'Tickets',
         'Rankings',
         'My gear',
+        'Orders',
       ]) {
-        expect(find.text(l, skipOffstage: false), findsOneWidget, reason: l);
+        expect(
+          find.descendant(of: sheet, matching: find.text(gone)),
+          findsNothing,
+          reason: gone,
+        );
       }
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Record')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.text('at ${Routes.fitnessLog}'), findsOneWidget);
+    });
+
+    testWidgets('wallet and points are two cards, vouchers ready and points', (
+      tester,
+    ) async {
+      await _open(tester);
+      expect(
+        find.text('2 vouchers'),
+        findsOneWidget,
+        reason: 'used one left out',
+      );
+      expect(find.text('1234'), findsOneWidget);
+      final wallet = tester.getRect(
+        find
+            .ancestor(
+              of: find.text('2 vouchers'),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final points = tester.getRect(
+        find
+            .ancestor(of: find.text('1234'), matching: find.byType(Container))
+            .first,
+      );
+      expect(points.left - wallet.right, 12, reason: 'a gap between the cards');
+      await tester.tap(find.text('2 vouchers'));
+      await tester.pumpAndSettle();
+      expect(find.text('at ${Routes.wallet}'), findsOneWidget);
     });
 
     testWidgets('the ad opens the Shop', (tester) async {
@@ -465,7 +725,6 @@ void main() {
     for (final (name, h) in [('light', OgHome.light), ('dark', OgHome.dark)]) {
       test('text passes 4.5:1 in $name', () {
         final pairs = {
-          'greeting on hero': (h.onHero, h.hero),
           'hero buttons': (h.onHeroButton, h.heroButton),
           'heading on page': (h.heading, h.page),
           'heading on card': (h.heading, h.surface),
@@ -485,6 +744,19 @@ void main() {
         });
       });
     }
+
+    // The owner chose a white greeting in both themes (Q270 h). On the orange
+    // the 28 pt name passes the 3:1 rule for large text; the smaller
+    // "Welcome," and the greeting on dark mode's lime do not, which Q270 (h)
+    // records for the owner.
+    test('greeting is white; its name passes 3:1 on the orange', () {
+      expect(OgHome.light.onHero, const Color(0xFFFFFFFF));
+      expect(OgHome.dark.onHero, const Color(0xFFFFFFFF));
+      expect(
+        contrast(OgHome.light.onHero, OgHome.light.hero),
+        greaterThanOrEqualTo(3),
+      );
+    });
   });
 
   group('goldens', () {
@@ -511,5 +783,49 @@ void main() {
         });
       }
     }
+  });
+
+  group('saved favourites', () {
+    test('a saved choice keeps at most its first seven', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'og_home_categories':
+            'venue,play,group,academy,game,shop,services,fitness',
+      });
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      c.read(homeCategoriesControllerProvider);
+      await Future<void>.delayed(Duration.zero);
+      final s = c.read(homeCategoriesControllerProvider);
+      expect(s.shown, {
+        HomeCategory.venue,
+        HomeCategory.play,
+        HomeCategory.group,
+        HomeCategory.academy,
+        HomeCategory.game,
+        HomeCategory.shop,
+        HomeCategory.services,
+      });
+      expect(
+        s.order.last,
+        HomeCategory.record,
+        reason: 'new, added at the end',
+      );
+      expect(s.shown, isNot(contains(HomeCategory.record)));
+    });
+
+    test('a new install shows the first seven, Record and Services off', () {
+      FlutterSecureStorage.setMockInitialValues({});
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      expect(c.read(homeCategoriesControllerProvider).shown, {
+        HomeCategory.play,
+        HomeCategory.group,
+        HomeCategory.academy,
+        HomeCategory.venue,
+        HomeCategory.game,
+        HomeCategory.shop,
+        HomeCategory.fitness,
+      });
+    });
   });
 }
