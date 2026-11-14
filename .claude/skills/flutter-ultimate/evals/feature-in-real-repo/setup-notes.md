@@ -1,0 +1,1 @@
+Run this case inside a throwaway copy of the app repository (a clone with its remote removed), after fetching packages. The case has no input files of its own. Grade checks 1, 2, 3 and 5 by running the analyzer, the test suite and the code generator in that copy afterwards.

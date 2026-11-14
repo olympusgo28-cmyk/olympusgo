@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: rls-policy-for-new-table
+expected_outcome: |
+  A migration file that creates the table and switches row-level security on in the
+  same file, with policies taken from a stated access matrix. Policies name the
+  authenticated role, compare against (select auth.uid()), and any update policy has
+  both using and with check (or writes go through a database function that checks
+  the caller, fixes its search path and has execute revoked from public and anon).
+  Columns used by the policies are indexed. There is a test, SQL or Dart, that acts
+  as a second user and expects to read and change nothing. Nothing is applied to a
+  hosted project. The closing report separates what was run from what was only written.
