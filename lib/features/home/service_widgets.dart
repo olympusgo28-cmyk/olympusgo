@@ -10,9 +10,12 @@ import 'application/home_services.dart';
 
 /// One of Your favourites: a card with a line icon, name and what it's for.
 class FavouriteCard extends StatelessWidget {
-  const FavouriteCard({super.key, required this.service});
+  const FavouriteCard({super.key, required this.service, this.fill});
 
   final HomeService service;
+
+  /// The card's colour; the soft grey unless given.
+  final Color? fill;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,7 @@ class FavouriteCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         decoration: BoxDecoration(
-          color: t.soft,
+          color: fill ?? t.soft,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -64,9 +67,10 @@ class FavouriteCard extends StatelessWidget {
 
 /// Your favourites as a 2 × 2 grid.
 class FavouriteGrid extends StatelessWidget {
-  const FavouriteGrid({super.key, required this.services});
+  const FavouriteGrid({super.key, required this.services, this.fill});
 
   final List<HomeService> services;
+  final Color? fill;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +86,7 @@ class FavouriteGrid extends StatelessWidget {
                   if (i > row) const SizedBox(width: 12),
                   Expanded(
                     child: i < services.length
-                        ? FavouriteCard(service: services[i])
+                        ? FavouriteCard(service: services[i], fill: fill)
                         : const SizedBox.shrink(),
                   ),
                 ],
@@ -97,9 +101,12 @@ class FavouriteGrid extends StatelessWidget {
 
 /// A service in More services: a line icon on a circle, its name below.
 class ServiceCircle extends StatelessWidget {
-  const ServiceCircle({super.key, required this.service});
+  const ServiceCircle({super.key, required this.service, this.fill});
 
   final HomeService service;
+
+  /// The circle's colour; the soft grey unless given.
+  final Color? fill;
 
   static const width = 72.0;
 
@@ -118,7 +125,10 @@ class ServiceCircle extends StatelessWidget {
             Container(
               width: 60,
               height: 60,
-              decoration: BoxDecoration(color: t.soft, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: fill ?? t.soft,
+                shape: BoxShape.circle,
+              ),
               alignment: Alignment.center,
               child: OgIcon(s.icon, size: 24, strokeWidth: 1.7, color: c.text),
             ),

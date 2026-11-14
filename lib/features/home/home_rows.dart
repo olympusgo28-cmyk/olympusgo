@@ -58,10 +58,14 @@ class StatusScrim extends StatefulWidget {
     required this.after,
     required this.child,
     this.darkHero = false,
+    this.color,
   });
 
   final double after;
   final Widget child;
+
+  /// The band's colour; the page colour unless given.
+  final Color? color;
 
   /// Light status bar text while the hero is dark.
   final bool darkHero;
@@ -106,7 +110,7 @@ class _StatusScrimState extends State<StatusScrim> {
               child: AnimatedOpacity(
                 opacity: _shown ? 1 : 0,
                 duration: const Duration(milliseconds: 150),
-                child: ColoredBox(color: c.bg),
+                child: ColoredBox(color: widget.color ?? c.bg),
               ),
             ),
           ),
@@ -523,10 +527,14 @@ class PlayerShelf extends ConsumerWidget {
     this.title = 'Players',
     this.linkLabel = 'See all',
     this.linkRoute,
+    this.tileColor,
   });
 
   final String title;
   final String linkLabel;
+
+  /// The tiles' fill; the soft grey unless given.
+  final Color? tileColor;
 
   /// Pushed from the link; without one the link opens Discover.
   final String? linkRoute;
@@ -545,7 +553,11 @@ class PlayerShelf extends ConsumerWidget {
       child: Shelf(
         children: [
           for (final p in players)
-            _PlayerTile(p: p, following: following.contains(p.player.id)),
+            _PlayerTile(
+              p: p,
+              following: following.contains(p.player.id),
+              fill: tileColor ?? context.tones.soft,
+            ),
         ],
       ),
     );
@@ -553,15 +565,19 @@ class PlayerShelf extends ConsumerWidget {
 }
 
 class _PlayerTile extends ConsumerWidget {
-  const _PlayerTile({required this.p, required this.following});
+  const _PlayerTile({
+    required this.p,
+    required this.following,
+    required this.fill,
+  });
 
   final SuggestedPlayer p;
   final bool following;
+  final Color fill;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
-    final t = context.tones;
     return Pressable(
       semanticLabel: '${p.player.displayName}, ${p.note}',
       onPressed: () => context.push(Routes.player(p.player.id)),
@@ -569,7 +585,7 @@ class _PlayerTile extends ConsumerWidget {
         width: 132,
         padding: const EdgeInsets.fromLTRB(10, 16, 10, 14),
         decoration: BoxDecoration(
-          color: t.soft,
+          color: fill,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -593,7 +609,7 @@ class _PlayerTile extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: c.inverseCard,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: t.soft, width: 2),
+                        border: Border.all(color: fill, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -745,7 +761,10 @@ class MallShelf extends ConsumerWidget {
 }
 
 class ProductShelf extends ConsumerWidget {
-  const ProductShelf({super.key});
+  const ProductShelf({super.key, this.tileColor});
+
+  /// The picture tiles' fill; the soft grey unless given.
+  final Color? tileColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -772,7 +791,7 @@ class ProductShelf extends ConsumerWidget {
                       Container(
                         height: 156,
                         decoration: BoxDecoration(
-                          color: t.soft,
+                          color: tileColor ?? t.soft,
                           borderRadius: BorderRadius.circular(22),
                         ),
                         alignment: Alignment.center,

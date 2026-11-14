@@ -7,7 +7,6 @@ import '../../core/providers.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
 import '../../core/theme/og_text.dart';
-import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/pressable.dart';
@@ -21,9 +20,10 @@ import 'application/home_services.dart';
 import 'home_rows.dart';
 import 'service_widgets.dart';
 
-/// Home: greeting, hero and search, Your favourites, More services, an ad,
-/// then rows of challenges, Meets, events, tournaments, players and popular
-/// items. Rows with nothing in them don't show.
+/// Home: a full-width hero with the greeting and search, Your favourites,
+/// More services, an ad, then rows of challenges, Meets, events, tournaments,
+/// players and popular items. Rows with nothing in them don't show. In light
+/// the page is grey with white cards.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -39,18 +39,17 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: c.canvas,
       body: StatusScrim(
-        after: 0,
-        darkHero: Theme.of(context).brightness == Brightness.dark,
+        after: _HeroWithHeader.height,
+        color: c.canvas,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
             CupertinoSliverRefreshControl(onRefresh: () => _refresh(ref)),
-            const SliverToBoxAdapter(child: _Header()),
-            const SliverToBoxAdapter(child: _HeroWithSearch()),
+            const SliverToBoxAdapter(child: _HeroWithHeader()),
             const SliverToBoxAdapter(child: _Favourites()),
             const SliverToBoxAdapter(child: _MoreServices()),
             const SliverToBoxAdapter(child: _AdBanner()),
@@ -67,8 +66,8 @@ class HomeScreen extends ConsumerWidget {
                 title: 'Tournaments',
               ),
             ),
-            const SliverToBoxAdapter(child: PlayerShelf()),
-            const SliverToBoxAdapter(child: ProductShelf()),
+            SliverToBoxAdapter(child: PlayerShelf(tileColor: c.canvasCard)),
+            SliverToBoxAdapter(child: ProductShelf(tileColor: c.canvasCard)),
             SliverToBoxAdapter(
               child: SizedBox(height: MainTabBar.reservedHeight(context)),
             ),
@@ -79,103 +78,102 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ─── Header ────────────────────────────────────────────────────────────────
+// ─── Hero ──────────────────────────────────────────────────────────────────
 
-/// "Welcome," and my first name, with My schedule and Saved on the right.
-class _Header extends ConsumerWidget {
-  const _Header();
+/// A plain deep orange hero across the full width, from under the status
+/// bar. The header sits on it, and the search bar floats over its bottom
+/// edge.
+class _HeroWithHeader extends StatelessWidget {
+  const _HeroWithHeader();
+
+  /// The hero's height below the status bar.
+  static const height = 232.0;
+  static const _overlap = 28.0;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final t = context.tones;
+  Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    final first = ref.watch(sessionProfileProvider).value?.firstName ?? '';
-    final name = first.isEmpty ? 'to OlympusGO' : first;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, top + 10, 16, 0),
-      child: Row(
+    return SizedBox(
+      height: top + height + _overlap,
+      child: Stack(
         children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              label: 'Welcome, $name',
-              child: ExcludeSemantics(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome,',
-                      style: OgText.body(
-                        15,
-                        weight: FontWeight.w600,
-                        color: c.textMuted,
-                      ),
-                    ),
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: OgText.heading(30, color: c.text),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: top + height,
+            child: const ColoredBox(color: OgColors.deepOrange),
           ),
-          const SizedBox(width: 12),
-          KitIconButton(
-            icon: OgIcons.calendarBox,
-            label: 'My schedule',
-            strokeWidth: 1.8,
-            background: t.soft,
-            onPressed: () => context.push(Routes.schedule()),
+          Positioned(
+            left: 20,
+            right: 16,
+            top: top + 10,
+            child: const _Header(),
           ),
-          const SizedBox(width: 8),
-          KitIconButton(
-            icon: OgIcons.bookmark,
-            label: 'Saved',
-            strokeWidth: 1.8,
-            background: t.soft,
-            onPressed: () => context.push(Routes.saved),
-          ),
+          const Positioned(left: 20, right: 20, bottom: 0, child: SearchPill()),
         ],
       ),
     );
   }
 }
 
-// ─── Hero and search ───────────────────────────────────────────────────────
-
-/// A plain deep orange banner, with the search bar floating over its
-/// bottom edge.
-class _HeroWithSearch extends StatelessWidget {
-  const _HeroWithSearch();
-
-  static const _heroHeight = 168.0;
-  static const _overlap = 28.0;
+/// "Welcome," and my first name, with My schedule and Saved on the right.
+/// Dark ink on the orange in both themes, for contrast.
+class _Header extends ConsumerWidget {
+  const _Header();
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 16 + _heroHeight + _overlap,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 20,
-            right: 20,
-            top: 16,
-            height: _heroHeight,
-            child: Container(
-              decoration: BoxDecoration(
-                color: OgColors.deepOrange,
-                borderRadius: BorderRadius.circular(24),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final first = ref.watch(sessionProfileProvider).value?.firstName ?? '';
+    final name = first.isEmpty ? 'to OlympusGO' : first;
+    return Row(
+      children: [
+        Expanded(
+          child: Semantics(
+            header: true,
+            label: 'Welcome, $name',
+            child: ExcludeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome,',
+                    style: OgText.body(
+                      15,
+                      weight: FontWeight.w600,
+                      color: OgColors.ink,
+                    ),
+                  ),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: OgText.heading(30, color: OgColors.ink),
+                  ),
+                ],
               ),
             ),
           ),
-          const Positioned(left: 32, right: 32, bottom: 0, child: SearchPill()),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        KitIconButton(
+          icon: OgIcons.calendarBox,
+          label: 'My schedule',
+          strokeWidth: 1.8,
+          background: OgColors.white,
+          color: OgColors.ink,
+          onPressed: () => context.push(Routes.schedule()),
+        ),
+        const SizedBox(width: 8),
+        KitIconButton(
+          icon: OgIcons.bookmark,
+          label: 'Saved',
+          strokeWidth: 1.8,
+          background: OgColors.white,
+          color: OgColors.ink,
+          onPressed: () => context.push(Routes.saved),
+        ),
+      ],
     );
   }
 }
@@ -194,7 +192,10 @@ class _Favourites extends ConsumerWidget {
       onSeeAll: () => context.push(Routes.editFavourites),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: FavouriteGrid(services: services.favouriteList),
+        child: FavouriteGrid(
+          services: services.favouriteList,
+          fill: context.og.canvasCard,
+        ),
       ),
     );
   }
@@ -219,7 +220,10 @@ class _MoreServices extends ConsumerWidget {
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [for (final s in more) ServiceCircle(service: s)],
+          children: [
+            for (final s in more)
+              ServiceCircle(service: s, fill: context.og.canvasCard),
+          ],
         ),
       ),
     );
