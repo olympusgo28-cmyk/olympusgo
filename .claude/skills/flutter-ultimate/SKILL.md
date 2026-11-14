@@ -1,5 +1,5 @@
 ---
-name: flutter-supabase-ultimate
+name: flutter-ultimate
 description: >
   One complete working method for building, reviewing and securing a Flutter app on
   Supabase with Riverpod, go_router and Freezed. Covers intake and planning, vertical
