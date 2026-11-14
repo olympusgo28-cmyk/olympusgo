@@ -16,6 +16,9 @@ import '../auth/data/auth_repository.dart';
 import '../clubs/application/club_providers.dart';
 import '../clubs/data/club_repository.dart';
 import '../clubs/domain/club_models.dart';
+import '../game/application/game_providers.dart';
+import '../game/domain/game_models.dart';
+import '../game/presentation/game_screens.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../play/presentation/play_card.dart';
@@ -272,6 +275,28 @@ class Shelf extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: stretch ? IntrinsicHeight(child: row) : row,
+    );
+  }
+}
+
+/// Live campaigns and creator challenges.
+class ChallengeShelf extends ConsumerWidget {
+  const ChallengeShelf({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final live = (ref.watch(campaignsProvider).value ?? const <Campaign>[])
+        .where((x) => x.state == CampaignState.live)
+        .toList();
+    if (live.isEmpty) return const SizedBox.shrink();
+    return HomeSection(
+      title: 'Challenges',
+      onSeeAll: () => context.push(Routes.game),
+      child: Shelf(
+        children: [
+          for (final x in live) SizedBox(width: 300, child: CampaignCard(c: x)),
+        ],
+      ),
     );
   }
 }

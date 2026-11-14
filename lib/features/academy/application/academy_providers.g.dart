@@ -203,6 +203,53 @@ final class MyStudentsProvider
 
 String _$myStudentsHash() => r'96c973747f4894c66bcc0bf3a6b6a97e771cc907';
 
+/// Classes for the students I enrolled (me or my children) over the next
+/// two weeks, soonest first. Shown in My schedule.
+
+@ProviderFor(myLessons)
+final myLessonsProvider = MyLessonsProvider._();
+
+/// Classes for the students I enrolled (me or my children) over the next
+/// two weeks, soonest first. Shown in My schedule.
+
+final class MyLessonsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<LessonSlot>>,
+          List<LessonSlot>,
+          FutureOr<List<LessonSlot>>
+        >
+    with $FutureModifier<List<LessonSlot>>, $FutureProvider<List<LessonSlot>> {
+  /// Classes for the students I enrolled (me or my children) over the next
+  /// two weeks, soonest first. Shown in My schedule.
+  MyLessonsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myLessonsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myLessonsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<LessonSlot>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<LessonSlot>> create(Ref ref) {
+    return myLessons(ref);
+  }
+}
+
+String _$myLessonsHash() => r'56c221b10eaa80149cfc8e8e61f5fa149d627af5';
+
 @ProviderFor(student)
 final studentProvider = StudentFamily._();
 

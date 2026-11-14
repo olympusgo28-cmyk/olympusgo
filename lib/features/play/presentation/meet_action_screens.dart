@@ -14,6 +14,7 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../academy/application/academy_providers.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/play_providers.dart';
 import '../data/payment_gateway.dart';
@@ -330,30 +331,45 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final c = context.og;
     final joined = ref.watch(myScheduleProvider);
     final hosting = ref.watch(hostingProvider);
+    final lessons = ref.watch(myLessonsProvider);
     final joinList = (joined.value ?? const <Activity>[])
         .where((a) => !a.iAmHost)
         .toList();
     final hostList = hosting.value ?? const <Activity>[];
-    final list = _tab == 0 ? joinList : hostList;
+    final lessonList = lessons.value ?? const <LessonSlot>[];
+
+    // Each tab as dated rows: Joined, Hosting, Lessons.
+    final tabs = <List<(DateTime, Widget)>>[
+      [
+        for (final a in joinList)
+          (a.startsAt, _ScheduleRow(activity: a, hosting: false)),
+      ],
+      [
+        for (final a in hostList)
+          (a.startsAt, _ScheduleRow(activity: a, hosting: true)),
+      ],
+      [for (final l in lessonList) (l.at, _LessonRow(slot: l))],
+    ];
+    final list = tabs[_tab];
 
     final now = DateTime.now();
     final monday = DateTime(now.year, now.month, now.day - (now.weekday - 1));
     final week = [for (var i = 0; i < 7; i++) monday.add(Duration(days: i))];
     final weekEnd = monday.add(const Duration(days: 7));
     final busy = {
-      for (final a in [...joinList, ...hostList])
+      for (final (at, _) in tabs.expand((t) => t))
         for (final d in week)
-          if (_sameDay(a.startsAt, d)) d,
+          if (_sameDay(at, d)) d,
     };
 
     final shown = _day == null
         ? list
-        : list.where((a) => _sameDay(a.startsAt, _day!)).toList();
-    final thisWeek = shown.where((a) => a.startsAt.isBefore(weekEnd)).toList();
-    final later = shown.where((a) => !a.startsAt.isBefore(weekEnd)).toList();
-    final loading = (_tab == 0 ? joined : hosting).isLoading;
+        : list.where((e) => _sameDay(e.$1, _day!)).toList();
+    final thisWeek = shown.where((e) => e.$1.isBefore(weekEnd)).toList();
+    final later = shown.where((e) => !e.$1.isBefore(weekEnd)).toList();
+    final loading = [joined, hosting, lessons][_tab].isLoading;
 
-    Widget section(String title, List<Activity> items) => Column(
+    Widget section(String title, List<(DateTime, Widget)> items) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
@@ -366,12 +382,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        KitCard(
-          children: [
-            for (final a in items)
-              _ScheduleRow(activity: a, hosting: _tab == 1),
-          ],
-        ),
+        KitCard(children: [for (final (_, row) in items) row]),
       ],
     );
 
@@ -398,6 +409,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           labels: [
             'Joined · ${joinList.length}',
             'Hosting · ${hostList.length}',
+            'Lessons · ${lessonList.length}',
           ],
           selected: _tab,
           spread: true,
@@ -410,7 +422,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             child: CupertinoActivityIndicator(),
           )
         else if (list.isEmpty)
-          _Empty(hosting: _tab == 1)
+          _Empty(tab: _tab)
         else if (shown.isEmpty)
           Text(
             'Nothing on ${Fmt.day(_day!)}.',
@@ -582,40 +594,128 @@ class _ScheduleRow extends StatelessWidget {
   }
 }
 
-class _Empty extends StatelessWidget {
-  const _Empty({required this.hosting});
+/// A class on the date tile, like a Meet: class, time, who and where.
+class _LessonRow extends StatelessWidget {
+  const _LessonRow({required this.slot});
 
-  final bool hosting;
+  final LessonSlot slot;
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
+    final t = context.tones;
+    final l = slot;
+    const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final line =
+        '${Fmt.time(l.at)} · ${l.student.firstName}, ${l.academy.name}';
+    return Pressable(
+      semanticLabel: '${l.cls.name}, ${Fmt.day(l.at)}, $line, lesson',
+      onPressed: () => context.push(Routes.studentClass(l.student.id)),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 52,
+              decoration: BoxDecoration(
+                color: t.tag,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    days[l.at.weekday - 1],
+                    style: OgText.body(
+                      11,
+                      weight: FontWeight.w800,
+                      color: t.onTag,
+                    ),
+                  ),
+                  Text('${l.at.day}', style: OgText.heading(18)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.cls.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: OgText.body(15, weight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    line,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: OgText.body(13, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const KitTag('Lesson'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Empty extends StatelessWidget {
+  const _Empty({required this.tab});
+
+  /// 0 joined, 1 hosting, 2 lessons.
+  final int tab;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.og;
+    final (title, text, action) = switch (tab) {
+      0 => (
+        'Nothing joined yet',
+        'Meets, tournaments and events you join show up here.',
+        'Find a Meet',
+      ),
+      1 => (
+        'Nothing hosted yet',
+        'Meets, tournaments and events you run show up here, '
+            'with their organizer tools.',
+        'Create a Meet, tournament or event',
+      ),
+      _ => (
+        'No lessons yet',
+        'Academy classes you or your children are enrolled in show up here.',
+        'Find an academy',
+      ),
+    };
     return DashedBox(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              hosting ? 'Nothing hosted yet' : 'Nothing joined yet',
-              style: OgText.heading(20),
-            ),
+            Text(title, style: OgText.heading(20)),
             const SizedBox(height: 6),
             Text(
-              hosting
-                  ? 'Meets, tournaments and events you run show up here, '
-                        'with their organizer tools.'
-                  : 'Meets, tournaments and events you join show up here.',
+              text,
               style: OgText.body(14, height: 1.45, color: c.textMuted),
             ),
             const SizedBox(height: 14),
             KitButton(
-              label: hosting
-                  ? 'Create a Meet, tournament or event'
-                  : 'Find a Meet',
+              label: action,
               style: KitButtonStyle.outline,
-              onPressed: () =>
-                  hosting ? showCreateMenu(context) : context.push(Routes.play),
+              onPressed: () => switch (tab) {
+                0 => context.push(Routes.play),
+                1 => showCreateMenu(context),
+                _ => context.push(Routes.academies),
+              },
             ),
           ],
         ),

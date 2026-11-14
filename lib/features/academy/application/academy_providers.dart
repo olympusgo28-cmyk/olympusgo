@@ -30,6 +30,41 @@ Future<List<Student>> myStudents(Ref ref) async {
   return ref.watch(academyRepositoryProvider).myStudents();
 }
 
+/// One class a student I enrolled has on one day.
+typedef LessonSlot = ({
+  Student student,
+  Academy academy,
+  AcademyClass cls,
+  DateTime at,
+});
+
+/// Classes for the students I enrolled (me or my children) over the next
+/// two weeks, soonest first. Shown in My schedule.
+@riverpod
+Future<List<LessonSlot>> myLessons(Ref ref) async {
+  final students = await ref.watch(myStudentsProvider.future);
+  final now = DateTime.now();
+  final slots = <LessonSlot>[];
+  for (final s in students) {
+    final a = await ref.watch(academyProvider(s.academyId).future);
+    final cls = a.classes.where((x) => x.id == s.classId).firstOrNull;
+    if (cls == null) continue;
+    for (var i = 0; i < 14; i++) {
+      final at = DateTime(
+        now.year,
+        now.month,
+        now.day + i,
+        cls.hour,
+        cls.minute,
+      );
+      if (cls.weekdays.contains(at.weekday) && at.isAfter(now)) {
+        slots.add((student: s, academy: a, cls: cls, at: at));
+      }
+    }
+  }
+  return slots..sort((x, y) => x.at.compareTo(y.at));
+}
+
 @riverpod
 Future<Student> student(Ref ref, String id) =>
     ref.watch(academyRepositoryProvider).student(id);

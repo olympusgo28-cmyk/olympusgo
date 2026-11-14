@@ -71,6 +71,9 @@ class OgColors extends ThemeExtension<OgColors> {
   static const offWhite = Color(0xFFF2F3F0);
   static const grey400 = Color(0xFFA3A9B0);
 
+  /// Home's hero banner, in both themes.
+  static const deepOrange = Color(0xFFFF5722);
+
   // Kept for the few places that name them directly.
   static const charcoal900 = ink;
   static const orange300 = lime;

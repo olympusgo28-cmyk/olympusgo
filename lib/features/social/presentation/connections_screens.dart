@@ -15,6 +15,9 @@ import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/share.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../play/application/play_providers.dart';
+import '../../play/domain/activity.dart';
+import '../../play/presentation/play_card.dart';
 import '../../shell/tab_page.dart';
 import '../application/social_providers.dart';
 import '../domain/social_models.dart';
@@ -237,8 +240,8 @@ class ShareProfileScreen extends ConsumerWidget {
   }
 }
 
-/// Saved Meets, players and clubs. Players are live; Meets and clubs fill in
-/// as those features ship.
+/// Saved plays (Meets, events and tournaments), players and clubs. Clubs
+/// fill in when clubs can be saved.
 class SavedScreen extends ConsumerStatefulWidget {
   const SavedScreen({super.key});
 
@@ -247,7 +250,7 @@ class SavedScreen extends ConsumerStatefulWidget {
 }
 
 class _SavedScreenState extends ConsumerState<SavedScreen> {
-  int _tab = 1;
+  int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -259,18 +262,20 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
         const OgHeading(
           title: 'Saved',
           topGap: 8,
-          lead: 'Meets, players and clubs you bookmarked.',
+          lead: 'Meets, events, tournaments, players and clubs you saved.',
         ),
         const SizedBox(height: 16),
         PillTabs(
-          labels: const ['Meets', 'Players', 'Clubs'],
+          labels: const ['Plays', 'Players', 'Clubs'],
           index: _tab,
           height: 40,
           fontSize: 16,
           onChanged: (i) => setState(() => _tab = i),
         ),
         const SizedBox(height: 8),
-        if (_tab == 1)
+        if (_tab == 0)
+          ..._plays(c)
+        else if (_tab == 1)
           ...switch (players) {
             AsyncData(:final value) when value.isEmpty => [
               _empty(c, 'Players you save show up here.'),
@@ -315,14 +320,43 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             ],
           }
         else
-          _empty(
-            c,
-            _tab == 0
-                ? 'Meets you save show up here.'
-                : 'Clubs you save show up here.',
-          ),
+          _empty(c, 'Clubs you save show up here.'),
       ],
     );
+  }
+
+  /// Saved Meets, events and tournaments, soonest first. Ones that were
+  /// deleted since are left out.
+  List<Widget> _plays(OgColors c) {
+    const loading = Padding(
+      padding: EdgeInsets.all(24),
+      child: CupertinoActivityIndicator(),
+    );
+    final ids = ref.watch(savedIdsProvider(SavedKind.meet));
+    if (ids.hasError) {
+      return [const OgErrorText("Can't load saved plays. Try again.")];
+    }
+    if (!ids.hasValue) return [loading];
+    final found = [
+      for (final id in ids.value!) ref.watch(activityDetailProvider(id)),
+    ];
+    if (found.any((a) => !a.hasValue && !a.hasError)) return [loading];
+    final plays = [
+      for (final a in found)
+        if (a.value case final Activity play) play,
+    ]..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+    if (plays.isEmpty) {
+      return [
+        _empty(c, 'Meets, events and tournaments you save show up here.'),
+      ];
+    }
+    return [
+      for (final a in plays)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: PlayCard(activity: a),
+        ),
+    ];
   }
 
   Widget _empty(OgColors c, String text) => Padding(
