@@ -43,10 +43,8 @@ class _Me extends SessionProfile {
 
 class _Cats extends HomeCategoriesController {
   @override
-  HomeCategories build() => (
-    order: HomeCategory.values,
-    shown: HomeCategory.values.take(defaultHomeCategories).toSet(),
-  );
+  HomeCategories build() =>
+      (order: HomeCategory.values, shown: {...defaultHomeShown});
 }
 
 Future<List<Activity>> _some(ActivityKind kind) =>
@@ -332,18 +330,23 @@ void main() {
       expect(find.text('at ${Routes.saved}'), findsOneWidget);
     });
 
-    testWidgets('shows four favourites and an Edit link', (tester) async {
+    testWidgets('shows six favourites and an Edit link', (tester) async {
       await _open(tester);
       expect(find.text('Your favourites'), findsOneWidget);
       expect(find.text('Edit'), findsOneWidget);
-      for (final l in ['Play', 'Group', 'Academy', 'Venue']) {
+      for (final l in [
+        'Play',
+        'Group',
+        'Academy',
+        'Venue',
+        'Services',
+        'Fitness',
+      ]) {
         expect(find.text(l), findsOneWidget);
       }
-      expect(
-        find.text('Shop'),
-        findsOneWidget,
-        reason: 'a service, not a card',
-      );
+      for (final l in ['Shop', 'Game']) {
+        expect(find.text(l), findsOneWidget, reason: 'a service, not a card');
+      }
     });
 
     testWidgets('a heading and its link share one centre line', (tester) async {

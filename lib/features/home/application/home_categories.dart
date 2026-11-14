@@ -6,8 +6,8 @@ import '../../../core/widgets/og_icon.dart';
 
 part 'home_categories.g.dart';
 
-/// A favourite on Home. The first four are on until the player edits them
-/// (Play, Group, Academy, Venue).
+/// A favourite on Home. Those in [defaultHomeShown] are on until the player
+/// edits them.
 enum HomeCategory {
   play('Play', 'Meets, tournaments, events', OgIcons.racquet, Routes.play),
   group('Group', 'Clubs and teams', OgIcons.group, Routes.clubs),
@@ -36,8 +36,16 @@ typedef HomeCategories = ({List<HomeCategory> order, Set<HomeCategory> shown});
 /// At least this many stay on.
 const minHomeCategories = 3;
 
-/// What a new install shows.
-const defaultHomeCategories = 4;
+/// What a new install shows. Game and Shop are left off as they are already
+/// under More services; Services and Fitness have no other way in (Q270 b).
+const defaultHomeShown = {
+  HomeCategory.play,
+  HomeCategory.group,
+  HomeCategory.academy,
+  HomeCategory.venue,
+  HomeCategory.services,
+  HomeCategory.fitness,
+};
 
 /// Saved on the device, like other display choices.
 @Riverpod(keepAlive: true)
@@ -48,10 +56,7 @@ class HomeCategoriesController extends _$HomeCategoriesController {
   @override
   HomeCategories build() {
     _load();
-    return (
-      order: HomeCategory.values,
-      shown: HomeCategory.values.take(defaultHomeCategories).toSet(),
-    );
+    return (order: HomeCategory.values, shown: {...defaultHomeShown});
   }
 
   /// "play,group,-academy,…": the order, with hidden ones marked "-".
