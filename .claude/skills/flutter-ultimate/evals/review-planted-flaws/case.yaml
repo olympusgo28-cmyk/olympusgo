@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: review-planted-flaws
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  A review that reads every file in tipping-pr/ and reports findings by severity with file and
+  line, without changing the files. Twenty flaws are planted, from obvious to subtle, across the
+  migration, the Dart code and the webhook. A good review finds most of them, separates what blocks
+  the merge from polish, and does not accept the description's claim that tests pass, since the
+  change contains no tests.

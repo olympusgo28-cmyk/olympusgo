@@ -1,0 +1,13 @@
+schema_version: "1.1"
+name: feature-in-real-repo
+expected_outcome: |
+  Run inside an isolated copy of the app repository with packages fetched. The project already
+  has a bookmarks table (saved_items) with an owner-only policy, so the smallest complete change
+  reuses it for venues; a new table with its own policies and functions is also acceptable if
+  it follows the house style. Either way: the stored data sits behind row-level security, the
+  repository changes exist in both the Supabase and the demo implementation, generated Riverpod
+  code is up to date, and there are unit tests plus a local-stack access test in the project's
+  style. The analyzer is clean and the whole test suite passes when run afterwards. No lint is
+  silenced, no existing test is removed or skipped, nothing is committed or pushed, the reply's
+  claims match what a re-run shows, and where the code and the written rules disagree the reply
+  says which it followed.
