@@ -58,8 +58,9 @@ const _tabs = [
   ),
 ];
 
-/// The white tab bar from the design: four labelled tabs with a pill behind
-/// the selected one, and a raised round Scan button in the middle.
+/// A floating pill tab bar: four labelled tabs with a tint behind the
+/// selected one, and a raised round Scan button in the middle. Tabs that
+/// aren't selected sit slightly smaller.
 class MainTabBar extends StatelessWidget {
   const MainTabBar({
     super.key,
@@ -74,12 +75,15 @@ class MainTabBar extends StatelessWidget {
   /// New conversations, shown on the Inbox tab.
   final int unread;
 
+  /// The pill's gap from the bottom edge, just above the home indicator.
   static double _bottom(BuildContext context) =>
-      math.max(20.0, MediaQuery.of(context).padding.bottom);
+      math.max(12.0, MediaQuery.of(context).padding.bottom - 10);
+
+  static const _height = 64.0;
 
   /// Height of the bar, for padding scrolling content above it.
   static double reservedHeight(BuildContext context) =>
-      8 + 62 + _bottom(context) + 16;
+      _height + _bottom(context) + 16;
 
   @override
   Widget build(BuildContext context) {
@@ -87,31 +91,61 @@ class MainTabBar extends StatelessWidget {
     return Semantics(
       container: true,
       label: 'Main',
-      child: Container(
-        padding: EdgeInsets.fromLTRB(8, 8, 8, _bottom(context)),
-        decoration: BoxDecoration(
-          color: c.bg,
-          border: Border(top: BorderSide(color: c.border)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var i = 0; i < _tabs.length; i++)
-              i == 2
-                  ? _ScanButton(onTap: () => onTap(i), selected: index == i)
-                  : _TabButton(
-                      icon: _tabs[i].$1,
-                      label: _tabs[i].$2,
-                      selected: i == index,
-                      badge: i == 3 ? unread : 0,
-                      onTap: () => onTap(i),
-                    ),
-          ],
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, _bottom(context)),
+        child: Container(
+          height: _height,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: c.bg,
+            borderRadius: BorderRadius.circular(_height / 2),
+            border: Border.all(color: c.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1F16181B),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              for (var i = 0; i < _tabs.length; i++)
+                i == 2
+                    ? _ScanButton(onTap: () => onTap(i), selected: index == i)
+                    : _TabButton(
+                        icon: _tabs[i].$1,
+                        label: _tabs[i].$2,
+                        selected: i == index,
+                        badge: i == 3 ? unread : 0,
+                        onTap: () => onTap(i),
+                      ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Tabs that aren't selected show at this size.
+const _unselectedScale = 0.9;
+
+/// Grows a tab to full size when it is selected.
+class _TabScale extends StatelessWidget {
+  const _TabScale({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: selected ? 1 : _unselectedScale,
+    duration: const Duration(milliseconds: 200),
+    curve: Curves.easeOut,
+    child: child,
+  );
 }
 
 class _TabButton extends StatelessWidget {
@@ -141,66 +175,69 @@ class _TabButton extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: ExcludeSemantics(
-          child: SizedBox(
-            width: 64,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    width: 52,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: selected ? c.primaryTint : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        OgIcon(icon, size: 22, color: fg, strokeWidth: 1.8),
-                        if (badge > 0)
-                          Positioned(
-                            top: -2,
-                            right: 6,
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 18),
-                              height: 18,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.tones.badge,
-                                borderRadius: BorderRadius.circular(9),
-                                border: Border.all(color: c.bg, width: 2),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                badge > 9 ? '9+' : '$badge',
-                                style: OgText.body(
-                                  10,
-                                  weight: FontWeight.w700,
-                                  color: Colors.white,
+          child: _TabScale(
+            selected: selected,
+            child: SizedBox(
+              width: 64,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                      width: 52,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: selected ? c.primaryTint : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          OgIcon(icon, size: 22, color: fg, strokeWidth: 1.8),
+                          if (badge > 0)
+                            Positioned(
+                              top: -2,
+                              right: 6,
+                              child: Container(
+                                constraints: const BoxConstraints(minWidth: 18),
+                                height: 18,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context.tones.badge,
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(color: c.bg, width: 2),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  badge > 9 ? '9+' : '$badge',
+                                  style: OgText.body(
+                                    10,
+                                    weight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    label,
-                    style: OgText.body(
-                      12,
-                      weight: selected ? FontWeight.w700 : FontWeight.w600,
-                      color: fg,
+                    const SizedBox(height: 3),
+                    Text(
+                      label,
+                      style: OgText.body(
+                        12,
+                        weight: selected ? FontWeight.w700 : FontWeight.w600,
+                        color: fg,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -227,47 +264,50 @@ class _ScanButton extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: ExcludeSemantics(
-          child: SizedBox(
-            width: 64,
-            height: 59,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
-                // The button rises 22pt above the bar, as in the design.
-                Positioned(
-                  top: -22,
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: c.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: c.bg, width: 4),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x2E16181B),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: OgIcon(_tabs[2].$1, size: 26, color: c.onPrimary),
-                  ),
-                ),
-                Positioned(
-                  bottom: 6,
-                  child: Text(
-                    'Scan',
-                    style: OgText.body(
-                      12,
-                      weight: FontWeight.w700,
-                      color: selected ? c.link : c.textMuted,
+          child: _TabScale(
+            selected: selected,
+            child: SizedBox(
+              width: 64,
+              height: 59,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: [
+                  // The button rises 22pt above the bar, as in the design.
+                  Positioned(
+                    top: -22,
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: c.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: c.bg, width: 4),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x2E16181B),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: OgIcon(_tabs[2].$1, size: 26, color: c.onPrimary),
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    bottom: 6,
+                    child: Text(
+                      'Scan',
+                      style: OgText.body(
+                        12,
+                        weight: FontWeight.w700,
+                        color: selected ? c.link : c.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
