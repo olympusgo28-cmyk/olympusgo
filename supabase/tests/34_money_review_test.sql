@@ -284,7 +284,9 @@ select t.event('setup_intent.succeeded', jsonb_build_object('id', 'seti_rev', 'c
   'card_brand', 'visa', 'card_last4', '4242', 'metadata', jsonb_build_object('user_id', 'a5000000-0000-0000-0000-000000000002')), 'evt_rev_card');
 select ok((select payload -> 'object' ->> 'card_last4' from public.stripe_events where id = 'evt_rev_card') is null, 'the last four digits aren''t logged');
 
--- A stopped worker raises an alert.
+-- A stopped worker raises an alert. The local daily reconcile job may have
+-- run in the last day, so age its runs here (rolled back with the test).
+update public.reconciliation_runs set ran_at = ran_at - interval '3 days';
 select private.money_sweep();
 select ok(exists (select 1 from public.money_alerts where kind = 'reconcile_missing'), 'no reconciliation in a day raises an alert');
 

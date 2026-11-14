@@ -260,6 +260,162 @@ select is(private.report_counts('e5800000-0000-0000-0000-000000000020', 'player'
 select is(private.case_owner('team', 'e5800000-0000-0000-0000-0000000000d1'), 'e5800000-0000-0000-0000-000000000001'::uuid,
   'a team has an owner, so their blocks count');
 
+-- ─── 7. Rechecked when counted, with real staff decisions ─────────────────
+-- Reviews of 14 Nov (Q269). Two reports racing a decision in separate sessions
+-- can't be shown in one pgTAP transaction; QA checks that by hand.
+
+select t.player(('e5800000-0000-0000-0000-0000000000' || i)::uuid) from generate_series(21, 60) i;
+update auth.users set created_at = now() - interval '30 days'
+  where id::text between 'e5800000-0000-0000-0000-000000000021' and 'e5800000-0000-0000-0000-000000000060';
+insert into public.staff (user_id, role) values ('e5800000-0000-0000-0000-000000000050', 'moderator');
+update public.app_settings set value = '6' where key = 'moderation.child_deadline_hours';
+insert into ids select 'meet' || i, t.meet('e5800000-0000-0000-0000-000000000001')::text from generate_series(3, 8) i;
+
+-- Takes a decision through the staff function, as the moderator.
+create function t.decide(p_name text, p_outcome text) returns void language plpgsql as $$
+declare
+  v_case uuid := (select id from public.moderation_cases where target_id = t.id(p_name));
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', 'e5800000-0000-0000-0000-000000000050',
+    'role', 'authenticated', 'aal', 'aal2')::text, true);
+  perform public.staff_case_decide(v_case, p_outcome, 'Checked');
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+create function t.case_of(p_name text) returns public.moderation_cases language sql as $$
+  select * from public.moderation_cases where target_id = t.id(p_name)
+$$;
+create function t.hidden(p_name text) returns boolean language sql as $$
+  select hidden_at is not null from public.activities where id::text = t.id(p_name)
+$$;
+create function t.report_player(p_who uuid, p_target uuid) returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', p_who, 'role', 'authenticated')::text, true);
+  insert into public.player_reports (reporter_id, reported_id, reason) values (p_who, p_target, 'harassment');
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+
+-- (a) After a real keep, earlier reporters don't count again and three new
+-- ones hide it again, timed after the decision even inside one transaction.
+select t.report_as(('e5800000-0000-0000-0000-0000000000' || i)::uuid, t.id('meet3')) from generate_series(21, 23) i;
+select ok(t.hidden('meet3'), 'three reports hide it');
+select t.decide('meet3', 'kept');
+select ok(not t.hidden('meet3') and (t.case_of('meet3')).status = 'kept', 'staff keep it, and it shows again');
+select ok((t.case_of('meet3')).decided_at > now(), 'S3 the decision is timed by the clock, after the lock');
+update public.moderation_cases set deadline_at = now() - interval '2 days' where target_id = t.id('meet3');
+select t.report_as('e5800000-0000-0000-0000-000000000021', t.id('meet3'));
+select is((t.case_of('meet3')).status, 'open', 'a new report puts it back in front of staff');
+select is((t.case_of('meet3')).deadline_at, now() + interval '24 hours', 'with a fresh 24-hour deadline');
+select t.report_as(('e5800000-0000-0000-0000-0000000000' || i)::uuid, t.id('meet3')) from generate_series(24, 25) i;
+select ok(not t.hidden('meet3'), 'S3 an earlier reporter and two new ones aren''t three');
+select t.report_as('e5800000-0000-0000-0000-000000000026', t.id('meet3'));
+select ok(t.hidden('meet3'), 'S3 three new reporters after the keep hide it again');
+select ok((select bool_and(r.created_at > c.decided_at) from public.case_reports r
+  join public.moderation_cases c on c.id = r.case_id
+  where c.target_id = t.id('meet3') and r.reporter_id::text >= 'e5800000-0000-0000-0000-000000000024'),
+  'S3 a report filed after a decision is timed after it');
+
+-- (b) An open case's deadline doesn't move.
+select t.report_as('e5800000-0000-0000-0000-000000000027', t.id('meet4'));
+update public.moderation_cases set deadline_at = now() + interval '5 hours' where target_id = t.id('meet4');
+select t.report_as('e5800000-0000-0000-0000-000000000028', t.id('meet4'));
+select is((t.case_of('meet4')).deadline_at, now() + interval '5 hours', 'more reports don''t push an open deadline back');
+select t.report_as('e5800000-0000-0000-0000-000000000029', t.id('meet4'));
+select ok(t.hidden('meet4'), 'three reports hide it');
+select is((t.case_of('meet4')).deadline_at, now() + interval '5 hours', 'and hiding it doesn''t move the deadline either');
+
+-- (c) A case with a child in it uses the child deadline when it comes back.
+select t.report_as('e5800000-0000-0000-0000-000000000020', t.id('meet8'));
+select is((t.case_of('meet8')).deadline_at, now() + interval '6 hours', 'a teen''s report sets the child deadline');
+select t.decide('meet8', 'kept');
+update public.moderation_cases set deadline_at = now() - interval '2 days' where target_id = t.id('meet8');
+select t.report_as('e5800000-0000-0000-0000-000000000030', t.id('meet8'));
+select is((t.case_of('meet8')).deadline_at, now() + interval '6 hours', 'and it comes back with a fresh child deadline');
+
+-- (d) A removed item stays removed.
+select t.report_as(('e5800000-0000-0000-0000-0000000000' || i)::uuid, t.id('meet5')) from generate_series(31, 33) i;
+select t.decide('meet5', 'removed');
+select throws_ok($$select t.report_as('e5800000-0000-0000-0000-000000000034', t.id('meet5'))$$,
+  'P0001', 'This can''t be reported.', 'a removed Meet can''t be reported again');
+select ok(t.hidden('meet5'), 'and it stays hidden');
+-- A player can always be reported, so their removed case meets new reports.
+select t.report_player('e5800000-0000-0000-0000-000000000046', 'e5800000-0000-0000-0000-000000000049');
+insert into ids values ('p49', 'e5800000-0000-0000-0000-000000000049');
+select t.decide('p49', 'removed');
+select t.report_player('e5800000-0000-0000-0000-000000000047', 'e5800000-0000-0000-0000-000000000049');
+select is((t.case_of('p49')).status, 'removed', 'a report after removal doesn''t reopen it');
+
+-- (e) A suspension after reporting stops the report counting; a block after
+-- reporting doesn't, or an owner could silence everyone who reported them.
+select t.report_as('e5800000-0000-0000-0000-000000000039', t.id('meet7'));
+insert into public.account_moderation (user_id, suspended_until)
+  values ('e5800000-0000-0000-0000-000000000039', now() + interval '7 days');
+select t.report_as(('e5800000-0000-0000-0000-0000000000' || i)::uuid, t.id('meet7')) from generate_series(40, 41) i;
+select ok(not t.hidden('meet7'), 'S3 a reporter suspended afterwards no longer counts');
+
+select t.report_as('e5800000-0000-0000-0000-000000000035', t.id('meet6'));
+insert into public.blocks (blocker_id, blocked_id)
+  values ('e5800000-0000-0000-0000-000000000001', 'e5800000-0000-0000-0000-000000000035');
+select t.report_as(('e5800000-0000-0000-0000-0000000000' || i)::uuid, t.id('meet6')) from generate_series(36, 37) i;
+select ok(t.hidden('meet6'), 'S3 the host blocking a reporter afterwards doesn''t silence them');
+
+-- A victim who reports a player and then blocks them still counts.
+select t.report_player(('e5800000-0000-0000-0000-0000000000' || i)::uuid, 'e5800000-0000-0000-0000-000000000052')
+  from generate_series(53, 54) i;
+insert into public.blocks (blocker_id, blocked_id) values
+  ('e5800000-0000-0000-0000-000000000053', 'e5800000-0000-0000-0000-000000000052'),
+  ('e5800000-0000-0000-0000-000000000054', 'e5800000-0000-0000-0000-000000000052');
+select t.report_player('e5800000-0000-0000-0000-000000000055', 'e5800000-0000-0000-0000-000000000052');
+select isnt((select hidden_at from public.moderation_cases where target_id = 'e5800000-0000-0000-0000-000000000052'), null,
+  'S3 victims who report and then block still hide the player');
+
+-- A club handed to someone else: the case keeps its owner, and a moderator
+-- who owns the club now still can't decide it.
+insert into public.clubs (id, owner_id, name, area, sports, visibility) values
+  ('e5800000-0000-0000-0000-0000000000c2', 'e5800000-0000-0000-0000-000000000002', 'Open club', 'Bishan', '["badminton"]', 'public');
+insert into ids values ('c2', 'e5800000-0000-0000-0000-0000000000c2');
+select t.as_user('e5800000-0000-0000-0000-000000000042');
+select t.report('club', 'e5800000-0000-0000-0000-0000000000c2');
+select t.reset();
+update public.clubs set owner_id = 'e5800000-0000-0000-0000-000000000050' where id = 'e5800000-0000-0000-0000-0000000000c2';
+select t.as_user('e5800000-0000-0000-0000-000000000043');
+select t.report('club', 'e5800000-0000-0000-0000-0000000000c2');
+select t.reset();
+select is((select owner_id from public.moderation_cases where target_id = 'e5800000-0000-0000-0000-0000000000c2'),
+  'e5800000-0000-0000-0000-000000000002'::uuid, 'S3 handing a club over doesn''t move the case onto someone else');
+select throws_ok($$select t.decide('c2', 'kept')$$, 'P0001', 'Someone else has to decide your own case.',
+  'S3 a moderator who owns it now can''t decide it');
+-- Nor can a moderator who owned it when it was reported and has since handed it on.
+insert into public.clubs (id, owner_id, name, area, sports, visibility) values
+  ('e5800000-0000-0000-0000-0000000000c3', 'e5800000-0000-0000-0000-000000000050', 'Mod club', 'Bishan', '["badminton"]', 'public');
+insert into ids values ('c3', 'e5800000-0000-0000-0000-0000000000c3');
+select t.as_user('e5800000-0000-0000-0000-000000000056');
+select t.report('club', 'e5800000-0000-0000-0000-0000000000c3');
+select t.reset();
+update public.clubs set owner_id = 'e5800000-0000-0000-0000-000000000002' where id = 'e5800000-0000-0000-0000-0000000000c3';
+select throws_ok($$select t.decide('c3', 'kept')$$, 'P0001', 'Someone else has to decide your own case.',
+  'S3 nor one who owned it when it was reported');
+-- A case with no owner gets one on the next report.
+insert into ids values ('meet9', t.meet('e5800000-0000-0000-0000-000000000001')::text);
+insert into public.moderation_cases (target_kind, target_id, owner_id, involves_child, deadline_at)
+  values ('activity', t.id('meet9'), null, false, now() + interval '24 hours');
+select t.report_as('e5800000-0000-0000-0000-000000000057', t.id('meet9'));
+select is((t.case_of('meet9')).owner_id, 'e5800000-0000-0000-0000-000000000001'::uuid,
+  'a case missing its owner gets one on the next report');
+
+-- (f) A team owner's block, end to end.
+insert into public.blocks (blocker_id, blocked_id)
+  values ('e5800000-0000-0000-0000-000000000001', 'e5800000-0000-0000-0000-000000000051');
+insert into public.team_members (team_id, user_id)
+  values ('e5800000-0000-0000-0000-0000000000d1', 'e5800000-0000-0000-0000-000000000051');
+select t.as_user('e5800000-0000-0000-0000-000000000051');
+select t.report('team', 'e5800000-0000-0000-0000-0000000000d1');
+select t.reset();
+select is((select r.counts from public.case_reports r join public.moderation_cases c on c.id = r.case_id
+  where c.target_id = 'e5800000-0000-0000-0000-0000000000d1' and r.reporter_id = 'e5800000-0000-0000-0000-000000000051'),
+  false, 'S3 a team member the team owner blocked doesn''t count');
+
 -- ─── 6. Nobody calls the helpers ───────────────────────────────────────────
 
 select ok(not has_function_privilege(r, f, 'execute'), format('%s can''t run %s', r, f))
