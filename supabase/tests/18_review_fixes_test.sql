@@ -6,6 +6,8 @@ select t.player('c1000000-0000-0000-0000-000000000001');      -- adult
 select t.player('c1000000-0000-0000-0000-000000000002', 15);  -- linked teen
 select t.player('c1000000-0000-0000-0000-000000000003');      -- parent
 select t.player(('c1000000-0000-0000-0000-00000000000' || i)::uuid) from generate_series(4, 8) i;
+-- Only established accounts count towards the automatic hide (S3, Q269).
+update auth.users set created_at = now() - interval '30 days' where id::text like 'c1000000-%';
 insert into public.guardian_links (child_id, parent_id, status) values
   ('c1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003', 'approved');
 update public.profiles set full_name = 'Real Child Name' where id = 'c1000000-0000-0000-0000-000000000002';

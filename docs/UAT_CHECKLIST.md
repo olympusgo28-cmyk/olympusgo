@@ -182,6 +182,7 @@ Set up: Hannah hosts, Aaron and a third account join. For a paid Meet turn `paym
 - [ ] **9.5 Custom role.** Hannah creates a role, sets permissions, assigns members, deletes the role. Expect: each step reflected; deleting moves members back to member.
 - [ ] **9.6 Ban and unban.** Hannah bans the third account. Expect: they lose access and cannot rejoin; Bans lists them; unban restores.
 - [ ] **9.7 Announcements and chat.** Hannah posts an announcement; Aaron replies in club chat. Expect: both appear; a member can report a message; the owner can delete one.
+- [ ] **9.7a Report only what you can see (S3).** Aaron reports a message in Hannah's club chat. Expect: it's accepted. Then Aaron reports ten things in a row. Expect: the eleventh says "You've sent a lot of reports. Try again in an hour." One new account's report never hides anything on its own.
 - [ ] **9.8 Moderation hide survives the owner.** A reported club message is hidden by staff. Expect: the owner cannot un-hide it (a review fix).
 - [ ] **9.9 Leave, transfer, delete.** Aaron leaves; Hannah transfers ownership to Aaron and back; Hannah deletes a test club. Expect: each refuses or succeeds with a plain message; a club with members needs a transfer first if the rule says so.
 - [ ] **9.10 Teen in a club.** The linked teen requests to join. Expect: the parent must approve group membership (P2-03).

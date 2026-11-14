@@ -15,6 +15,8 @@ select t.player('e4000000-0000-0000-0000-000000000008');  -- suspended adult
 select t.player('e4000000-0000-0000-0000-000000000009');  -- staff
 select t.player('e4000000-0000-0000-0000-000000000010');  -- adult in another country
 select t.player('e4000000-0000-0000-0000-000000000011');  -- a second author, on their first posts
+-- Only established accounts count towards the automatic hide (S3, Q269).
+update auth.users set created_at = now() - interval '30 days' where id::text like 'e4000000-%';
 update public.profiles set country_code = 'MY' where id = 'e4000000-0000-0000-0000-000000000010';
 insert into public.guardian_links (parent_id, child_id, status)
 values ('e4000000-0000-0000-0000-000000000006', 'e4000000-0000-0000-0000-000000000005', 'approved');
@@ -412,7 +414,7 @@ delete from public.account_moderation where user_id = t.u(1);
 select t.upload(t.p(16), t.u(11));
 select t.who(t.u(11));
 select throws_ok(format($$ insert into public.content_reports (reporter_id, target_kind, target_id, reason)
-  values (auth.uid(), 'video', %L, 'Harmful') $$, t.p(16)), '42501', null, 'an unchecked post can''t be reported into a person''s view');
+  values (auth.uid(), 'video', %L, 'Harmful') $$, t.p(16)), 'P0001', 'This can''t be reported.', 'an unchecked post can''t be reported into a person''s view');
 select t.back();
 insert into public.moderation_cases (target_kind, target_id, deadline_at) values ('video', t.p(16)::text, now() + interval '1 day');
 select t.as_staff(t.u(9));
@@ -443,7 +445,7 @@ select is((select pronargs::int from pg_proc where proname = 'feed_discover'), 0
 
 select t.who(t.u(2));
 select throws_ok($$ insert into public.content_reports (reporter_id, target_kind, target_id, reason)
-  values (auth.uid(), 'video', gen_random_uuid()::text, 'Harmful') $$, '42501', null, 'a report needs a real post');
+  values (auth.uid(), 'video', gen_random_uuid()::text, 'Harmful') $$, 'P0001', 'This can''t be reported.', 'a report needs a real post');
 select lives_ok(format($$ insert into public.content_reports (reporter_id, target_kind, target_id, reason)
   values (auth.uid(), 'video', %L, 'Harmful') $$, t.p(10)), 'a real post can be reported');
 select t.back();

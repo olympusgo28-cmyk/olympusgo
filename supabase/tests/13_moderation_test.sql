@@ -7,6 +7,8 @@ select t.player(('d0000000-0000-0000-0000-00000000000' || i)::uuid) from generat
 select t.player('d0000000-0000-0000-0000-000000000006', 15);  -- teen
 select t.player('d0000000-0000-0000-0000-000000000007');      -- moderator 1
 select t.player('d0000000-0000-0000-0000-000000000008');      -- moderator 2
+-- Only established accounts count towards the automatic hide (S3, Q269).
+update auth.users set created_at = now() - interval '30 days' where id::text like 'd0000000-%';
 insert into public.guardian_links (child_id, parent_id, status) values
   ('d0000000-0000-0000-0000-000000000006', 'd0000000-0000-0000-0000-000000000005', 'approved');
 insert into public.staff (user_id, role) values

@@ -315,6 +315,7 @@ Every rule a developer needs as a number or a condition, in one place, with an i
 | R-MOD-3 | Staff decisions are kept 3 years with who decided, when, the rule and who was told. | Decided | Architecture 18 |
 | R-MOD-4 | Bans need a second staff approver. Payout runs need one above a threshold (R-PAY-2). | Decided | ADM-5, Architecture 13.5, 18 |
 | R-MOD-5 | A suspension takes effect at once (RLS checks moderation status), not when the session token expires. | Decided | Architecture 8 |
+| R-MOD-6 | Three distinct reporters auto-hide an item (P2-07), with four limits so that a few accounts can't hide what they like (audit S3): a player reports only what they can see (a chat they're in, a club, Meet, post or listing they can open), and anything else, missing or hidden, gets the same "This can't be reported."; a player can always be reported, but it counts only from someone who can see their profile or has had a message from them; `moderation.reports_per_hour` (10) per account, over every kind, timed by the server; only accounts older than `moderation.reporter_min_days` (7), not restricted, and not blocked by whoever owns the item count towards the hide; each item has one spelling of its id, so retyping it makes no new case; and after a staff decision each reporter counts once, so the same people can't hide a kept item again. Any new report on a kept item puts it back in front of staff with a new deadline from now, showing the latest reason and note. | Built; the two numbers Open (Q269) | P2-07, Q269 |
 
 ## 14. Time
 

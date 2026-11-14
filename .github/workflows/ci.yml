@@ -113,7 +113,7 @@ jobs:
           flutter test test/supabase_play_local_test.dart test/supabase_safety_local_test.dart \
             test/supabase_enumeration_local_test.dart test/supabase_deletion_local_test.dart \
             test/supabase_avatar_local_test.dart test/supabase_contact_local_test.dart \
-            test/supabase_clubs_local_test.dart \
+            test/supabase_clubs_local_test.dart test/supabase_report_local_test.dart \
             test/supabase_tournament_local_test.dart test/supabase_academy_local_test.dart \
             test/supabase_fitness_local_test.dart
       - name: Money and the Shop through the real API and the Stripe stand-in

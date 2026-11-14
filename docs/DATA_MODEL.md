@@ -243,6 +243,8 @@ create table moderation.staff (                           -- staff accounts and 
 );
 ```
 
+Reports as built (audit S3, Q269): `content_reports` and `player_reports` are checked by `private.report_check()` before insert. It sets `created_at`, `status`, `result`, `decided_at` and `second_look` itself, so a client can't backdate or pre-decide a report; rewrites `target_id` to one spelling (`private.report_target_id`); and, for a signed-in caller, requires the reporter to be the caller, applies `moderation.reports_per_hour`, and requires `private.report_target_visible(kind, id)` for a content target. `case_reports.counts` (boolean) records whether a report counts towards the automatic hide (`private.report_counts`: an account older than `moderation.reporter_min_days`, not restricted, not blocked by the owner, and for a player, someone who can see their profile or has had a message from them). After a staff decision a reporter's earlier report isn't refreshed, so they count once. There is no `field_registry` yet, so `case_reports.counts` isn't registered (sensitivity P3, internal).
+
 ## Helper functions
 
 Every policy uses these, so they are written and tested once.

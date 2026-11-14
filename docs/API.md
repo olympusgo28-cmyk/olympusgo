@@ -49,6 +49,7 @@ Raise errors with a stable code in `detail` so apps can show the right sentence.
 | `identity.block_user` / `unblock_user` | RPC | user id | `{blocked: true}`; emits `user.blocked` | R-PRV-4 |
 | `moderation.create_report` | RPC | target type and id, reason, note | Report with `due_at` | SAF-1, R-MOD-1 |
 | `moderation.request_second_look` | RPC | report id | Report status `second_look` | SAF-3 |
+| Reports as built: insert into `content_reports` or `player_reports`, or `shop_report` | Table insert (RLS) or RPC | `target_kind`, `target_id`, `reason`, `note` | A before-insert check refuses with `P0001` "This can't be reported." when the reporter can't see the target (a missing or hidden one reads the same), and with `P0001` "You've sent a lot of reports. Try again in an hour." past `moderation.reports_per_hour`. Player reports are always accepted | R-MOD-6, Q269 |
 | `submit_legal_notice` | Edge (no account) | notice form | Reference number | SAF-5 |
 | `account_delete_request(p_reason)` / `account_delete_cancel()` | RPC (after Face ID) | optional reason | `{erase_after}`; refuses with a plain message while the caller owns a club, team, open academy or active shop, is staff, or has earnings owed (R-ACC-15). `my_restrictions` returns `closing_until` while closing | R-ACC-11, R-REF-18 |
 | `identity.request_recovery` | Edge | contact details, evidence upload ids | Case reference | R-ACC-13 |
