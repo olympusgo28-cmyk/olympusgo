@@ -27,6 +27,8 @@ class OgColors extends ThemeExtension<OgColors> {
     required this.onInverseCard,
     required this.onInverseCardMuted,
     required this.highlight,
+    required this.canvas,
+    required this.canvasCard,
   });
 
   final Color primary;
@@ -58,6 +60,12 @@ class OgColors extends ThemeExtension<OgColors> {
   /// Lime used for eyebrows and icons on dark cards (#C6FF00).
   final Color highlight;
 
+  /// A grey page with cards on it (Home). In dark it is the usual page.
+  final Color canvas;
+
+  /// Cards and tiles on [canvas]: white in light, the soft fill in dark.
+  final Color canvasCard;
+
   // ThemeTokens: light "Tangerine", dark "Electric lime".
   static const tangerine = Color(0xFFF28500);
   static const tangerineLine = Color(0xFFE67700);
@@ -70,6 +78,9 @@ class OgColors extends ThemeExtension<OgColors> {
   static const white = Color(0xFFFFFFFF);
   static const offWhite = Color(0xFFF2F3F0);
   static const grey400 = Color(0xFFA3A9B0);
+
+  /// Home's hero banner, in both themes.
+  static const deepOrange = Color(0xFFFF5722);
 
   // Kept for the few places that name them directly.
   static const charcoal900 = ink;
@@ -98,6 +109,8 @@ class OgColors extends ThemeExtension<OgColors> {
     onInverseCard: offWhite,
     onInverseCardMuted: grey400,
     highlight: lime,
+    canvas: Color(0xFFF5F5F7),
+    canvasCard: white,
   );
 
   static const dark = OgColors(
@@ -123,6 +136,8 @@ class OgColors extends ThemeExtension<OgColors> {
     onInverseCard: offWhite,
     onInverseCardMuted: grey400,
     highlight: lime,
+    canvas: night,
+    canvasCard: Color(0xFF22262B),
   );
 
   @override
@@ -155,6 +170,8 @@ class OgColors extends ThemeExtension<OgColors> {
       onInverseCard: l(onInverseCard, other.onInverseCard),
       onInverseCardMuted: l(onInverseCardMuted, other.onInverseCardMuted),
       highlight: l(highlight, other.highlight),
+      canvas: l(canvas, other.canvas),
+      canvasCard: l(canvasCard, other.canvasCard),
     );
   }
 }

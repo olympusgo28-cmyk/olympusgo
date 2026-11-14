@@ -14,38 +14,40 @@ import '../../core/theme/og_text.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
 import '../../core/widgets/og_toast.dart';
-import 'application/home_categories.dart';
+import 'application/home_services.dart';
 
-/// Home's shortcuts: switch them on or off, and drag to reorder.
-class EditCategoriesScreen extends ConsumerStatefulWidget {
-  const EditCategoriesScreen({super.key});
+/// Pick Home's four favourites, and drag to reorder every service.
+class EditFavouritesScreen extends ConsumerStatefulWidget {
+  const EditFavouritesScreen({super.key});
 
   @override
-  ConsumerState<EditCategoriesScreen> createState() =>
-      _EditCategoriesScreenState();
+  ConsumerState<EditFavouritesScreen> createState() =>
+      _EditFavouritesScreenState();
 }
 
-class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
-  late var _order = [...ref.read(homeCategoriesControllerProvider).order];
-  late final _shown = {...ref.read(homeCategoriesControllerProvider).shown};
+class _EditFavouritesScreenState extends ConsumerState<EditFavouritesScreen> {
+  late var _order = [...ref.read(homeServicesControllerProvider).order];
+  late final _favourites = {
+    ...ref.read(homeServicesControllerProvider).favourites,
+  };
 
-  void _toggle(HomeCategory h, bool on) {
-    if (!on && _shown.length <= minHomeCategories) {
+  void _toggle(HomeService s, bool on) {
+    if (on && _favourites.length >= homeFavouriteCount) {
       showOgToast(
         context,
-        'At least $minHomeCategories categories stay on.',
+        'You have $homeFavouriteCount favourites. Turn one off first.',
         error: true,
       );
       return;
     }
     HapticFeedback.selectionClick();
-    setState(() => on ? _shown.add(h) : _shown.remove(h));
+    setState(() => on ? _favourites.add(s) : _favourites.remove(s));
   }
 
   Future<void> _save() async {
-    await ref.read(homeCategoriesControllerProvider.notifier).save((
+    await ref.read(homeServicesControllerProvider.notifier).save((
       order: _order,
-      shown: _shown,
+      favourites: _favourites,
     ));
     if (mounted) context.pop();
   }
@@ -53,13 +55,20 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.og;
+    final missing = homeFavouriteCount - _favourites.length;
     return KitScaffold(
-      header: const KitHeader(title: 'Edit categories'),
-      bottom: [KitButton(label: 'Save', onPressed: _save)],
+      header: const KitHeader(title: 'Edit favourites'),
+      bottom: [
+        KitButton(
+          label: missing == 0 ? 'Save' : 'Pick $missing more',
+          onPressed: missing == 0 ? _save : null,
+        ),
+      ],
       children: [
         const KitTitle(
-          'Your Home shortcuts',
-          lead: 'Turn a category off to hide it from Home. You can still reach it from Discover.',
+          'Your favourites',
+          lead:
+              'Pick $homeFavouriteCount services to show as cards at the top of Home. The rest stay in More services.',
         ),
         ReorderableListView(
           shrinkWrap: true,
@@ -75,9 +84,9 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
             _order = next;
           }),
           children: [
-            for (final (i, h) in _order.indexed)
+            for (final (i, s) in _order.indexed)
               Container(
-                key: ValueKey(h),
+                key: ValueKey(s),
                 constraints: const BoxConstraints(minHeight: 64),
                 decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: c.border)),
@@ -87,7 +96,7 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
                     ReorderableDragStartListener(
                       index: i,
                       child: Semantics(
-                        label: 'Reorder ${h.label}',
+                        label: 'Reorder ${s.label}',
                         child: SizedBox(
                           width: 44,
                           height: 44,
@@ -107,21 +116,24 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            h.label,
+                            s.label,
                             style: OgText.body(15, weight: FontWeight.w700),
                           ),
                           Text(
-                            h.sub,
+                            s.sub,
                             style: OgText.body(13, color: c.textMuted),
                           ),
                         ],
                       ),
                     ),
-                    CupertinoSwitch(
-                      value: _shown.contains(h),
-                      activeTrackColor: c.primary,
-                      inactiveTrackColor: c.borderControl,
-                      onChanged: (on) => _toggle(h, on),
+                    Semantics(
+                      label: '${s.label} as a favourite',
+                      child: CupertinoSwitch(
+                        value: _favourites.contains(s),
+                        activeTrackColor: c.primary,
+                        inactiveTrackColor: c.borderControl,
+                        onChanged: (on) => _toggle(s, on),
+                      ),
                     ),
                   ],
                 ),
@@ -129,7 +141,7 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
           ],
         ),
         const KitNote(
-          'Hold and drag the handle to change the order. At least 3 categories stay on.',
+          'Hold and drag the handle to change the order of your favourites and More services.',
         ),
       ],
     );

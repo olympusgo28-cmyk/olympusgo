@@ -52,7 +52,7 @@ OlympusGO is a "Passport" for amateur players of badminton, pickleball, tennis, 
 
 Five-tab shell: **Home, Discover, Scan (centre button), Inbox, Profile**.
 
-- **Home:** greeting, a "Find your next game" hero, search (Meets, clubs, players, shops), editable category grid (Play, Group, Academy, Game, Venue, Shop), Wallet and Points cards, and "Next up". Pull to refresh.
+- **Home:** a plain deep orange hero across the full width, from under the status bar, with "Welcome," and the first name on it and My schedule (joined, hosting and lessons) and Saved (plays, players, clubs) on the right; the search bar (Meets, clubs, players, shops) floats over the hero's bottom edge. In light the page is light grey with white cards. Then Your favourites (4 services in a 2 × 2 grid, with Edit); More services (a sideways row of line icons on circles, with View all); an ad banner; then rows of live challenges, Meets, events, tournaments, players and popular items. Rows with nothing in them don't show. Services: Play, Group, Academy, Venue, Game, Shop, Wallet, Points, Tickets, Rankings, My gear, Orders. Pull to refresh.
 - **Discover:** suggested players, clubs, sessions and creators.
 - **Scan:** scan a player's QR (shows their Passport), check in to a session, or check event tickets at the door. It also shows "My tickets".
 - **Inbox:** notifications and direct messages (one-to-one chat).

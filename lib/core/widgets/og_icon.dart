@@ -143,6 +143,8 @@ abstract final class OgIcons {
       '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>';
   static const trophyCup =
       '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>';
+  static const podium =
+      '<path d="M3 20h18"/><path d="M9.5 20V8h5v12M4 20v-7h5.5M14.5 20v-5H20v5"/><path d="M12 3.5l.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2z"/>';
   static const trophyTeam =
       '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/>';
   static const dotsVertical =
