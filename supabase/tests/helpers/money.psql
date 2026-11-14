@@ -1,0 +1,181 @@
+-- Shared set-up for the money tests. Everything rolls back with the test.
+
+update public.feature_flags set enabled = true where key in ('payments.enabled', 'shop.checkout');
+
+create function t.paid_meet(p_host uuid, p_price int default 600, p_capacity int default 4, p_hours int default 48)
+returns uuid language plpgsql security definer as $$
+declare
+  v_id uuid := t.meet(p_host, p_capacity, p_hours);
+begin
+  update public.activities set fee_cents = p_price where id = v_id;
+  return v_id;
+end;
+$$;
+
+create function t.event_meet(p_host uuid, p_price int default 3000, p_capacity int default 4, p_hours int default 72)
+returns uuid language plpgsql security definer as $$
+declare
+  v_id uuid := t.meet(p_host, p_capacity, p_hours);
+begin
+  update public.activities set kind = 'event', fee_cents = p_price where id = v_id;
+  return v_id;
+end;
+$$;
+
+-- Reserves as the player, and leaves the session as it was.
+create function t.reserve(p_user uuid, p_activity uuid, p_key text default null, p_qty int default 1,
+  p_guest text default null) returns jsonb language plpgsql as $$
+declare
+  v jsonb;
+begin
+  perform t.as_user(p_user);
+  v := public.activity_reserve(p_activity, coalesce(p_key, 'key-' || gen_random_uuid()), p_qty, p_guest);
+  perform t.reset();
+  return v;
+end;
+$$;
+
+create function t.payment_id(p jsonb) returns uuid language sql as $$
+  select (p ->> 'payment_id')::uuid;
+$$;
+
+create function t.event(p_type text, p_object jsonb, p_id text default null) returns text
+language sql as $$
+  select public.money_svc_event(jsonb_build_object(
+    'id', coalesce(p_id, 'evt_' || gen_random_uuid()), 'type', p_type, 'object', p_object));
+$$;
+
+-- Stripe saying a payment succeeded, for its full amount.
+create function t.succeed(p_payment uuid, p_method text default 'card', p_event text default null)
+returns text language plpgsql as $$
+declare
+  p public.payments;
+begin
+  select * into p from public.payments where id = p_payment;
+  return t.event('payment_intent.succeeded', jsonb_build_object(
+    'id', coalesce(p.stripe_intent_id, 'pi_' || p.id), 'amount', p.amount_minor,
+    'currency', lower(p.currency), 'latest_charge', 'ch_' || p.id,
+    'payment_method_type', p_method, 'metadata', jsonb_build_object('payment_id', p.id)), p_event);
+end;
+$$;
+
+create function t.fee(p_payment uuid, p_fee bigint) returns text language sql as $$
+  select t.event('charge.updated', jsonb_build_object('id', 'ch_' || p_payment, 'fee_minor', p_fee));
+$$;
+
+-- Reserve then capture: a player who has paid.
+create function t.paid(p_user uuid, p_activity uuid, p_method text default 'card') returns uuid
+language plpgsql as $$
+declare
+  v uuid := t.payment_id(t.reserve(p_user, p_activity));
+begin
+  perform t.succeed(v, p_method);
+  return v;
+end;
+$$;
+
+create function t.status_pay(p_payment uuid) returns text language sql as $$
+  select status from public.payments where id = p_payment;
+$$;
+
+-- Stripe's answer on every refund of a payment.
+create function t.settle_refunds(p_payment uuid, p_status text default 'succeeded') returns void
+language plpgsql as $$
+declare
+  r record;
+begin
+  for r in select id from public.refunds where payment_id = p_payment and status in ('pending', 'processing') loop
+    perform t.event('refund.updated', jsonb_build_object('id', 're_' || r.id, 'status', p_status,
+      'failure_reason', case when p_status = 'failed' then 'expired_or_canceled_card' end,
+      'metadata', jsonb_build_object('refund_id', r.id)));
+  end loop;
+end;
+$$;
+
+create function t.refunded(p_payment uuid) returns bigint language sql as $$
+  select coalesce(sum(amount_minor), 0)::bigint from public.refunds
+  where payment_id = p_payment and status <> 'voided';
+$$;
+
+create function t.bal(p_kind text, p_owner uuid default null) returns bigint language sql as $$
+  select private.ledger_balance(p_kind, p_owner, 'SGD');
+$$;
+
+-- Lets the deferred balance triggers run before the test rolls back.
+create function t.all_balanced() returns boolean language plpgsql as $$
+begin
+  set constraints all immediate;
+  set constraints all deferred;
+  return true;
+end;
+$$;
+
+grant execute on all functions in schema t to anon, authenticated, service_role;
+
+-- A partner shop with its owner linked, open for business.
+create function t.shop(p_owner uuid, p_on_top boolean default false) returns uuid
+language plpgsql security definer as $$
+declare
+  v uuid;
+begin
+  insert into public.malls (owner_id, name, initials, collect_address, active, commission_on_top)
+  values (p_owner, 'Shop ' || left(gen_random_uuid()::text, 8), 'SH', '1 Test Road', true, p_on_top)
+  returning id into v;
+  return v;
+end;
+$$;
+
+create function t.product(p_mall uuid, p_price int default 10000, p_stock int default 5, p_service boolean default false)
+returns uuid language plpgsql security definer as $$
+declare
+  v uuid;
+begin
+  insert into public.products (mall_id, name, price_cents, stock, published, service)
+  values (p_mall, 'Test item', p_price, p_stock, true, p_service) returning id into v;
+  return v;
+end;
+$$;
+
+-- Buys one line as the player, and says what came back.
+create function t.buy(p_user uuid, p_mall uuid, p_product uuid, p_qty int default 1, p_points bigint default 0,
+  p_slot timestamptz default null, p_key text default null) returns jsonb language plpgsql as $$
+declare
+  v_only jsonb := jsonb_build_object('product', p_product, 'qty', p_qty);
+  q jsonb;
+  v jsonb;
+begin
+  perform t.as_user(p_user);
+  q := public.shop_quote(p_mall, v_only, p_points);
+  v := public.shop_reserve(p_mall, coalesce(p_key, 'key-' || gen_random_uuid()),
+    (q ->> 'total_minor')::bigint, p_points, v_only, p_slot);
+  perform t.reset();
+  return v;
+end;
+$$;
+
+create function t.order_of(p jsonb) returns uuid language sql as $$
+  select (p ->> 'order_id')::uuid;
+$$;
+
+create function t.step(p_order uuid) returns text language sql security definer as $$
+  select step from public.orders where id = p_order;
+$$;
+
+create function t.stock(p_product uuid) returns int language sql security definer as $$
+  select stock from public.products where id = p_product;
+$$;
+
+create function t.give_points(p_user uuid, p_minor bigint, p_months int default 12) returns bigint
+language plpgsql security definer as $$
+declare
+  v bigint := nextval(pg_get_serial_sequence('public.points_entries', 'id'));
+begin
+  -- Auth stamps this on a real account. Test players skip Auth.
+  update auth.users set created_at = coalesce(created_at, now()) where id = p_user;
+  insert into public.points_entries (id, user_id, kind, amount_minor, lot_id, expires_at, source_kind, source_id, idempotency_key)
+  values (v, p_user, 'earn', p_minor, v, now() + make_interval(months => p_months), 'test', v::text, 'test:' || v);
+  return v;
+end;
+$$;
+
+grant execute on all functions in schema t to anon, authenticated, service_role;

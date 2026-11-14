@@ -1,6 +1,11 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../avatar_address.dart';
+import '../config/env.dart';
+
 import 'package:flutter/material.dart';
 
-import '../theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 
 /// The pastel avatar colours used across the design.
 enum AvatarTone {
@@ -28,6 +33,10 @@ enum AvatarTone {
   }
 }
 
+/// What a photo request is made with: the project address and the viewer's
+/// session.
+typedef AvatarSession = ({String baseUrl, String? token, String anonKey});
+
 /// Round (or, for groups, rounded-square) avatar: the photo when there is
 /// one, otherwise initials on a pastel.
 class Avatar extends StatelessWidget {
@@ -38,15 +47,25 @@ class Avatar extends StatelessWidget {
     this.imageUrl,
     this.size = 48,
     this.square = false,
-    this.fontSize,
   });
+
+  /// Tests stand in for the signed-in session here; always null in the app.
+  @visibleForTesting
+  static AvatarSession Function()? debugSession;
+
+  static AvatarSession _session() => (
+    baseUrl: Env.supabaseUrl,
+    token: Env.hasSupabase
+        ? Supabase.instance.client.auth.currentSession?.accessToken
+        : null,
+    anonKey: Env.supabaseAnonKey,
+  );
 
   final String initials;
   final AvatarTone tone;
   final String? imageUrl;
   final double size;
   final bool square;
-  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +77,23 @@ class Avatar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: OgText.display(fontSize ?? size * 0.375, color: tone.ink),
+        style: context.type.initials(size).copyWith(color: tone.ink),
       ),
     );
-    if (imageUrl == null) return ExcludeSemantics(child: fallback);
+    final session = debugSession ?? _session;
+    final request = avatarRequest(
+      imageUrl,
+      baseUrl: session().baseUrl,
+      token: session().token,
+      anonKey: session().anonKey,
+    );
+    if (request == null) return ExcludeSemantics(child: fallback);
     return ExcludeSemantics(
       child: ClipRRect(
         borderRadius: radius,
         child: Image.network(
-          imageUrl!,
+          request.url.toString(),
+          headers: request.headers,
           width: size,
           height: size,
           fit: BoxFit.cover,

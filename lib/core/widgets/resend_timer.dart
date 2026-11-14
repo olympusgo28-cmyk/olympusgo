@@ -2,15 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
+import '../domain/code_rules.dart';
 import 'og_buttons.dart';
+import '../../core/theme/og_type.dart';
 
-/// "Send a new code in 0:30", which turns into a link when it reaches zero.
+/// "Send a new code in 2:59", which turns into a link when it reaches zero.
+/// It waits as long as a code works (Q248).
 class ResendTimer extends StatefulWidget {
-  const ResendTimer({super.key, required this.onResend, this.seconds = 30});
+  const ResendTimer({
+    super.key,
+    required this.onResend,
+    this.seconds = CodeRules.resendSeconds,
+  });
 
-  final Future<void> Function() onResend;
+  /// Resolves true once a new code was sent. On false (the screen showed
+  /// why) the link stays, rather than making the player wait again.
+  final Future<bool> Function() onResend;
   final int seconds;
 
   @override
@@ -46,12 +53,11 @@ class _ResendTimerState extends State<ResendTimer> {
   @override
   Widget build(BuildContext context) {
     if (_left > 0) {
-      final s = _left.toString().padLeft(2, '0');
       return Padding(
         padding: const EdgeInsets.only(top: 16),
         child: Text(
-          'Send a new code in 0:$s',
-          style: OgText.body(15, color: context.og.textMuted),
+          'Send a new code in ${resendClock(_left)}',
+          style: context.type.secondary,
         ),
       );
     }
@@ -65,8 +71,7 @@ class _ResendTimerState extends State<ResendTimer> {
             : () async {
                 setState(() => _sending = true);
                 try {
-                  await widget.onResend();
-                  _start();
+                  if (await widget.onResend()) _start();
                 } finally {
                   if (mounted) setState(() => _sending = false);
                 }
@@ -75,3 +80,7 @@ class _ResendTimerState extends State<ResendTimer> {
     );
   }
 }
+
+/// 180 → "3:00", 59 → "0:59".
+String resendClock(int seconds) =>
+    '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:og_money/og_money.dart';
 
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
@@ -60,7 +61,7 @@ enum ActivityFormat {
 }
 
 /// Where the viewer stands with an activity.
-enum MyStatus { none, joined, waitlist, requested }
+enum MyStatus { none, joined, waitlist, requested, offered, reserved }
 
 @freezed
 abstract class Venue with _$Venue {
@@ -106,6 +107,16 @@ abstract class Activity with _$Activity {
     required int capacity,
     @Default(0) int spotsTaken,
     @Default(0) int waitlistCount,
+
+    /// The minimum has been reached.
+    @Default(false) bool gameIsOn,
+
+    /// Who the Meet is for: any, men, women or mixed.
+    @Default('any') String genderMix,
+
+    /// Seats kept for the host's own invites.
+    @Default(0) int reservedSlots,
+    @Default(false) bool courtBooked,
     @Default(0) int feeCents,
     @Default(false) bool allowGuests,
     @Default(false) bool approvalRequired,
@@ -136,7 +147,7 @@ abstract class Activity with _$Activity {
 
     /// Tournaments and events carry a cover: a colour and a title on it.
     String? coverTitle,
-    @Default(0xFF16181B) int coverColor,
+    @Default(0xFF1C1F23) int coverColor,
     @Default(0xFFFFFFFF) int coverInk,
 
     /// "Regional" on tournament cards.
@@ -174,10 +185,11 @@ abstract class Activity with _$Activity {
 
   bool get isFree => totalCents == 0;
 
-  /// The organizer's own spot: no session fee, just the platform fee.
-  int get hostSpotCents => feeCents > 0 ? platformFee(feeCents) : 200;
-  bool get isFull => spotsTaken >= capacity;
-  int get spotsLeft => (capacity - spotsTaken).clamp(0, capacity);
+  /// The organizer's own spot: no session fee, just S\$2.00 (R-FEE-5).
+  int get hostSpotCents => 200;
+  int get openSeats => capacity - reservedSlots;
+  bool get isFull => spotsTaken >= openSeats;
+  int get spotsLeft => (openSeats - spotsTaken).clamp(0, capacity);
 
   /// "Badminton · Doubles", "Festival", "Tournament".
   String get eyebrow => switch (kind) {
@@ -228,18 +240,15 @@ abstract class Activity with _$Activity {
 
 /// "8", "8.00", "86.40".
 String money(int cents, {bool decimals = true}) =>
-    decimals ? (cents / 100).toStringAsFixed(2) : (cents ~/ 100).toString();
+    decimals ? Money(cents).decimal : (cents ~/ 100).toString();
 
-/// The platform fee on anything paid: 10%, minimum S\$2.
-int platformFee(int cents) {
-  if (cents <= 0) return 0;
-  final tenth = (cents * 0.1).round();
-  return tenth < 200 ? 200 : tenth;
-}
+/// The platform fee on anything paid, for lists. The server's quote decides
+/// what's charged.
+int platformFee(int cents) => estimatedFeeMinor(cents);
 
 /// Banner colours to pick from, with the ink each one uses.
 const bannerColors = [
-  (0xFF16181B, 0xFFF2C14E),
+  (0xFF1C1F23, 0xFFF2C14E),
   (0xFF2F3A5F, 0xFFFFFFFF),
   (0xFF0E6B4E, 0xFFFFFFFF),
   (0xFFE8590C, 0xFFFFFFFF),
@@ -332,7 +341,7 @@ abstract class ActivityDraft with _$ActivityDraft {
 
     /// The banner: a short title on a colour. Tournaments must have one.
     String? coverTitle,
-    @Default(0xFF16181B) int coverColor,
+    @Default(0xFF1C1F23) int coverColor,
 
     // Meets.
 
@@ -345,6 +354,13 @@ abstract class ActivityDraft with _$ActivityDraft {
 
     /// Below this many sign-ups a day before, the host decides to cancel.
     @Default(4) int minPlayers,
+
+    /// Who the Meet is for: any, men, women or mixed.
+    @Default('any') String genderMix,
+
+    /// Seats kept for the host's own invites.
+    @Default(0) int reservedSlots,
+    @Default(false) bool courtBooked,
 
     /// Off: every level can join.
     @Default(true) bool restrictLevel,

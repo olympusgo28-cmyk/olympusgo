@@ -5,14 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/presentation/earnings_screens.dart' show cash;
 import '../application/game_providers.dart';
 import '../domain/game_models.dart';
 
@@ -30,7 +29,6 @@ class MyGearScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final gear = ref.watch(myGearProvider).value;
     return KitScaffold(
       header: const KitHeader(title: 'My gear'),
@@ -44,7 +42,7 @@ class MyGearScreen extends ConsumerWidget {
       children: [
         Text(
           'Others can see it on your player profile.',
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
         if (gear == null)
           const CupertinoActivityIndicator()
@@ -54,7 +52,7 @@ class MyGearScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Add your racquet, shoes and strings to track restrings and wear.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
@@ -132,12 +130,12 @@ class GearItemScreen extends ConsumerWidget {
           ),
           child: OgIcon(_icon(g.type), size: 72, color: t.onTag),
         ),
-        Text(g.name, style: OgText.heading(26)),
+        Text(g.name, style: context.type.title),
         if (g.priceCents != null)
-          Text(cash(g.priceCents!), style: OgText.heading(20)),
+          Text(cash(g.priceCents!), style: context.type.section),
         Column(children: [for (final (k, v) in rest) KitKeyValue(k, v)]),
         if (strings.isNotEmpty) ...[
-          Text('String setup', style: OgText.heading(20)),
+          Text('String setup', style: context.type.section),
           Column(children: [for (final (k, v) in strings) KitKeyValue(k, v)]),
         ],
       ],
@@ -270,9 +268,9 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
       children: [
         Text(
           'Add what you play with. Others can see it on your player profile.',
-          style: OgText.body(14, color: context.og.textMuted),
+          style: context.type.secondary,
         ),
-        Text('Gear type', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Gear type', style: context.type.body),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -288,10 +286,10 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
         KitInput(label: 'Brand', controller: _brand, hint: 'Yonex'),
         KitInput(label: 'Model', controller: _model, hint: 'Astrox 99 Pro'),
         if (_type.strung) ...[
-          Text('String setup', style: OgText.heading(20)),
+          Text('String setup', style: context.type.section),
           Text(
             'Strings and tension for your racquet.',
-            style: OgText.body(13, color: context.og.textMuted),
+            style: context.type.caption,
           ),
           KitInput(
             label: 'String',
@@ -325,7 +323,7 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
           ),
         ],
         if (_type == GearType.shoes) ...[
-          Text('Size', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Size', style: context.type.body),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -338,7 +336,7 @@ class _GearEditScreenState extends ConsumerState<GearEditScreen> {
                 ),
             ],
           ),
-          Text('Fit', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Fit', style: context.type.body),
           KitSegments(
             labels: const ['Narrow', 'Regular', 'Wide'],
             selected: const ['Narrow', 'Regular', 'Wide'].indexOf(_fit),

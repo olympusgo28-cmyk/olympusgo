@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -33,14 +33,12 @@ class ClubMark extends StatelessWidget {
     super.key,
     this.size = 56,
     this.radius = 18,
-    this.fontSize,
     this.border,
   });
 
   final Club club;
   final double size;
   final double radius;
-  final double? fontSize;
   final Color? border;
 
   @override
@@ -50,25 +48,17 @@ class ClubMark extends StatelessWidget {
     ink: Color(club.logoInk),
     size: size,
     radius: radius,
-    fontSize: fontSize,
     border: border,
   );
 }
 
 /// A team's logo tile ("A").
 class TeamMark extends StatelessWidget {
-  const TeamMark(
-    this.team, {
-    super.key,
-    this.size = 56,
-    this.radius = 18,
-    this.fontSize,
-  });
+  const TeamMark(this.team, {super.key, this.size = 56, this.radius = 18});
 
   final Team team;
   final double size;
   final double radius;
-  final double? fontSize;
 
   @override
   Widget build(BuildContext context) => ClubLogo(
@@ -77,7 +67,6 @@ class TeamMark extends StatelessWidget {
     ink: Color(team.logoInk),
     size: size,
     radius: radius,
-    fontSize: fontSize,
   );
 }
 
@@ -113,11 +102,7 @@ class BandTag extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: OgText.body(
-        fontSize,
-        weight: FontWeight.w600,
-        color: context.tones.onTag,
-      ),
+      style: context.type.body.copyWith(color: context.tones.onTag),
     ),
   );
 }
@@ -170,12 +155,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
           child: Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Filters',
-                  style: OgText.heading(26, color: c.text),
-                ),
-              ),
+              Expanded(child: Text('Filters', style: context.type.title)),
               KitIconButton(
                 icon: OgIcons.close,
                 label: 'Close',
@@ -196,10 +176,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        g.title,
-                        style: OgText.body(15, weight: FontWeight.w600),
-                      ),
+                      Text(g.title, style: context.type.body),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,

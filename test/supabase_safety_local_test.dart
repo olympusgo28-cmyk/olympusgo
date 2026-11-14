@@ -4,6 +4,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/core/domain/country.dart';
 import 'package:olympus_go/features/clubs/data/club_repository.dart';
 import 'package:olympus_go/features/clubs/data/supabase_club_repository.dart';
@@ -50,9 +53,14 @@ void main() {
       // A signed-in player reports a club and sees it in My reports.
       final c = client();
       final stamp = DateTime.now().microsecondsSinceEpoch;
-      await c.auth.signUp(
+      await signUpLocal(
+        c,
         email: 'reporter.$stamp@test.local',
         password: 'test-password-123',
+      );
+      await c.rpc(
+        'set_birthday',
+        params: {'p_birthday': '1990-01-01', 'p_country': 'SG'},
       );
       final clubs = SupabaseClubRepository(c, SupabasePlayRepository(c));
       final club = await clubs.createClub(

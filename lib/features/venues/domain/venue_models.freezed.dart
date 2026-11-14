@@ -503,7 +503,7 @@ return $default(_that.id,_that.name,_that.address,_that.distance,_that.opensHour
 
 
 class _VenueDetail extends VenueDetail {
-  const _VenueDetail({required this.id, required this.name, required this.address, this.distance = '', this.opensHour = 7, this.closesHour = 23,  List<CourtType> courts = const [],  List<String> amenities = const [], this.verified = false, this.rating, this.ratingCount = 0, this.autoCheckIn = false, this.color = 0xFF16181B, this.ink = 0xFFC6FF00}): _courts = courts,_amenities = amenities,super._();
+  const _VenueDetail({required this.id, required this.name, required this.address, this.distance = '', this.opensHour = 7, this.closesHour = 23,  List<CourtType> courts = const [],  List<String> amenities = const [], this.verified = false, this.rating, this.ratingCount = 0, this.autoCheckIn = false, this.color = 0xFF1C1F23, this.ink = 0xFFFF7A1A}): _courts = courts,_amenities = amenities,super._();
   
 
 @override final  String id;

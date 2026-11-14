@@ -224,7 +224,7 @@ return $default(_that.id,_that.title,_that.body,_that.mark,_that.color,_that.ink
 
 
 class _InboxUpdate implements InboxUpdate {
-  const _InboxUpdate({required this.id, required this.title, this.body = '', required this.mark, this.color = 0xFF16181B, this.ink = 0xFFC6FF00, this.square = false, this.link, required this.at, this.read = false});
+  const _InboxUpdate({required this.id, required this.title, this.body = '', required this.mark, this.color = 0xFF1C1F23, this.ink = 0xFFFF7A1A, this.square = false, this.link, required this.at, this.read = false});
   
 
 @override final  String id;

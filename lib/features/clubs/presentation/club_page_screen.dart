@@ -11,7 +11,7 @@ import '../../../core/router/routes.dart';
 import '../../play/presentation/create_screens.dart' show showCreateMenu;
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -248,13 +248,13 @@ class _MemberClubPageState extends ConsumerState<_MemberClubPage> {
                               Expanded(
                                 child: Text(
                                   'Play sessions',
-                                  style: OgText.heading(26, color: c.text),
+                                  style: context.type.title,
                                 ),
                               ),
                               if (shown != null)
                                 Text(
                                   '${shown.length} in ${_sport?.label ?? 'all sports'}',
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                             ],
                           ),
@@ -344,7 +344,6 @@ class _MemberClubPageState extends ConsumerState<_MemberClubPage> {
 
   Widget _tabsRow(BuildContext context) {
     final club = widget.club;
-    final c = context.og;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -359,33 +358,12 @@ class _MemberClubPageState extends ConsumerState<_MemberClubPage> {
                 _ => null,
               },
               children: [
-                Text(
-                  'Play',
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w600,
-                    color: c.text,
-                  ),
-                ),
-                Text(
-                  'Ranks',
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w600,
-                    color: c.textMuted,
-                  ),
-                ),
+                Text('Play', style: context.type.body),
+                Text('Ranks', style: context.type.secondary),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Chat',
-                      style: OgText.body(
-                        15,
-                        weight: FontWeight.w600,
-                        color: c.textMuted,
-                      ),
-                    ),
+                    Text('Chat', style: context.type.secondary),
                     if (club.unreadChat > 0) ...[
                       const SizedBox(width: 6),
                       KitCountBadge(club.unreadChat, size: 20),
@@ -401,7 +379,6 @@ class _MemberClubPageState extends ConsumerState<_MemberClubPage> {
               label: 'Create',
               icon: OgIcons.plus,
               height: 52,
-              fontSize: 15,
               expand: false,
               padding: 16,
               onPressed: () => showCreateMenu(context, clubId: club.id),
@@ -465,11 +442,7 @@ class _MemberClubPageState extends ConsumerState<_MemberClubPage> {
                     const SizedBox(width: 8),
                     Text(
                       s.range.label,
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
-                        color: c.bg,
-                      ),
+                      style: context.type.body.copyWith(color: c.bg),
                     ),
                     KitIconButton(
                       icon: OgIcons.close,
@@ -553,11 +526,7 @@ class _ClubCard extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: OgText.body(
-                  15,
-                  weight: FontWeight.w600,
-                  color: color ?? c.text,
-                ),
+                style: context.type.body.copyWith(color: color ?? c.text),
               ),
             ),
             if (trailing != null) ...[trailing, const SizedBox(width: 12)],
@@ -589,23 +558,20 @@ class _ClubCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Row(
                 children: [
-                  ClubMark(club, size: 76, radius: 20, fontSize: 32),
+                  ClubMark(club, size: 76, radius: 20),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          club.name,
-                          style: OgText.heading(28, color: c.text),
-                        ),
+                        Text(club.name, style: context.type.title),
                         const SizedBox(height: 3),
                         Text(
                           [
                             club.primarySport?.label,
                             club.area,
                           ].whereType<String>().join(', '),
-                          style: OgText.body(13, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                         const SizedBox(height: 3),
                         Row(
@@ -613,11 +579,7 @@ class _ClubCard extends StatelessWidget {
                             if (club.rating != null) ...[
                               Text(
                                 '${club.rating!.toStringAsFixed(1)} (${club.ratingCount})',
-                                style: OgText.body(
-                                  13,
-                                  weight: FontWeight.w600,
-                                  color: c.text,
-                                ),
+                                style: context.type.caption,
                               ),
                               const SizedBox(width: 8),
                             ],
@@ -756,7 +718,9 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                   child: Text(
                     club.initials,
-                    style: OgText.heading(52, color: Color(club.logoInk)),
+                    style: context.type.score.copyWith(
+                      color: Color(club.logoInk),
+                    ),
                   ),
                 ),
               ),
@@ -766,11 +730,11 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(club.name, style: OgText.heading(32, color: c.text)),
+            Text(club.name, style: context.type.title),
             const SizedBox(height: 4),
             Text(
               '${club.sportLabels} · ${club.area} · ${club.memberCount} members',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -792,7 +756,10 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
           ],
         ),
         if (club.description.isNotEmpty)
-          Text(club.description, style: OgText.body(15, height: 1.5)),
+          Text(
+            club.description,
+            style: context.type.body.copyWith(height: 1.5),
+          ),
         if (sessions.isNotEmpty)
           KitBlock(
             title: 'Next Meets anyone can join',
@@ -813,24 +780,18 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  s.title,
-                                  style: OgText.body(
-                                    15,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
+                                Text(s.title, style: context.type.body),
                                 const SizedBox(height: 2),
                                 Text(
                                   '${Fmt.dayTimeComma(s.startsAt)} · ${bandRange(s)}',
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                               ],
                             ),
                           ),
                           Text(
                             s.isFree ? 'Free' : 'S\$${money(s.feeCents)}',
-                            style: OgText.body(15, weight: FontWeight.w600),
+                            style: context.type.body,
                           ),
                         ],
                       ),
@@ -844,7 +805,6 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
           child: KitCheckList([
             'Member-only Meets and the club ladder',
             'Club chat and announcements',
-            'A share of the club reward voucher',
           ]),
         ),
         if (leaders.isNotEmpty)
@@ -871,10 +831,7 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
                               children: [
                                 Text(
                                   m.player.displayName,
-                                  style: OgText.body(
-                                    15,
-                                    weight: FontWeight.w600,
-                                  ),
+                                  style: context.type.body,
                                 ),
                                 Text(
                                   [
@@ -882,7 +839,7 @@ class _PublicClubPageState extends ConsumerState<_PublicClubPage> {
                                     if (m.band != null)
                                       '${m.band!.code} ${m.rating!.toStringAsFixed(1)}',
                                   ].join(' · '),
-                                  style: OgText.body(13, color: c.textMuted),
+                                  style: context.type.caption,
                                 ),
                               ],
                             ),
@@ -998,13 +955,13 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
           Text(
             sent ? 'Request sent' : 'This club is private',
             textAlign: TextAlign.center,
-            style: OgText.display(19, height: 1.2, color: c.text),
+            style: context.type.section.copyWith(height: 1.2),
           ),
           const SizedBox(height: 10),
           Text(
             sent ? "You'll get a notification when an admin responds." : 'Meets, members and the leaderboard are visible only to members.',
             textAlign: TextAlign.center,
-            style: OgText.body(15, height: 1.5, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.5),
           ),
           const SizedBox(height: 10),
           if (!sent) ...[
@@ -1028,7 +985,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
             Text(
               'An owner or admin reviews each request.',
               textAlign: TextAlign.center,
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ] else ...[
             const SizedBox(height: 4),
@@ -1042,10 +999,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
                   border: Border.all(color: c.text, width: 1.5),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  'Cancel request',
-                  style: OgText.body(16, weight: FontWeight.w600),
-                ),
+                child: Text('Cancel request', style: context.type.body),
               ),
             ),
           ],
@@ -1135,7 +1089,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                ClubMark(club, size: 84, radius: 18, fontSize: 30),
+                ClubMark(club, size: 84, radius: 18),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -1143,11 +1097,10 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
                     children: [
                       Text(
                         club.name,
-                        style: OgText.display(
-                          22,
+                        style: context.type.title.copyWith(
                           height: 1.15,
-                          color: c.text,
-                        ).copyWith(letterSpacing: -0.3),
+                          letterSpacing: -0.3,
+                        ),
                       ),
                       const SizedBox(height: 5),
                       Row(
@@ -1161,7 +1114,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
                           const SizedBox(width: 4),
                           Text(
                             '${club.primarySport?.label ?? 'Club'} · ${club.area}',
-                            style: OgText.body(14, color: c.textMuted),
+                            style: context.type.secondary,
                           ),
                         ],
                       ),
@@ -1187,9 +1140,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
                             const SizedBox(width: 4),
                             Text(
                               club.visibility.label,
-                              style: OgText.body(
-                                12,
-                                weight: FontWeight.w600,
+                              style: context.type.caption.copyWith(
                                 color: Colors.white,
                               ),
                             ),
@@ -1215,10 +1166,7 @@ class _PrivateClubPageState extends ConsumerState<_PrivateClubPage> {
                 children: [
                   OgIcon(OgIcons.group, size: 22, strokeWidth: 1.8),
                   const SizedBox(width: 12),
-                  Text(
-                    '${club.memberCount} members',
-                    style: OgText.body(15, weight: FontWeight.w600),
-                  ),
+                  Text('${club.memberCount} members', style: context.type.body),
                 ],
               ),
             ),

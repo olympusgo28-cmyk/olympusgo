@@ -6,13 +6,18 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../clubs/domain/club_sport.dart';
 import '../../onboarding/domain/sport.dart';
 import '../domain/profile.dart';
+
+final ratingCardProvider = FutureProvider.autoDispose
+    .family<RatingCard?, String>(
+      (ref, sport) => ref.watch(profileRepositoryProvider).rating(sport),
+    );
 
 final _historyProvider = FutureProvider.autoDispose
     .family<PassportHistory, String>(
@@ -45,12 +50,15 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     final sport = Sport.fromId(widget.sport);
-    final level = ref
-        .watch(mySportsProvider)
-        .value
-        ?.where((s) => s.sport == widget.sport)
-        .firstOrNull
-        ?.level;
+    final rating = ref.watch(ratingCardProvider(widget.sport)).value;
+    final level =
+        rating?.level ??
+        ref
+            .watch(mySportsProvider)
+            .value
+            ?.where((s) => s.sport == widget.sport)
+            .firstOrNull
+            ?.level;
     final h = ref.watch(_historyProvider(widget.sport)).value;
     return KitScaffold(
       header: const KitHeader(title: 'Sessions and rating'),
@@ -66,11 +74,9 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
             children: [
               Text(
                 '${sport.label} rating'.toUpperCase(),
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w700,
-                  letterSpacing: 0.6,
+                style: context.type.caption.copyWith(
                   color: c.highlight,
+                  letterSpacing: 0.6,
                 ),
               ),
               const SizedBox(height: 6),
@@ -78,8 +84,13 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    level?.toStringAsFixed(1) ?? '—',
-                    style: OgText.display(48, color: c.onInverseCard),
+                    level == null
+                        ? '—'
+                        : '${SkillBand.forLevel(level).code} '
+                              '${level.toStringAsFixed(1)}',
+                    style: context.type.display.copyWith(
+                      color: c.onInverseCard,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   if (level != null)
@@ -87,15 +98,36 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
                         SkillBand.forLevel(level).label,
-                        style: OgText.body(
-                          16,
-                          weight: FontWeight.w700,
+                        style: context.type.body.copyWith(
                           color: c.onInverseCard,
                         ),
                       ),
                     ),
                 ],
               ),
+              if (rating != null && rating.provisional) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Your level settles after 5 confirmed matches. You have '
+                  'played ${rating.matches}.',
+                  style: context.type.caption.copyWith(color: c.onInverseCard),
+                ),
+              ],
+              if (rating != null && rating.history.length > 1) ...[
+                const SizedBox(height: 14),
+                Semantics(
+                  label:
+                      'Rating over your last ${rating.history.length} '
+                      'results',
+                  child: SizedBox(
+                    height: 72,
+                    width: double.infinity,
+                    child: CustomPaint(
+                      painter: _RatingLine(rating.history, c.highlight),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -107,7 +139,17 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
               for (final (i, (value, label)) in [
                 ('${h.sessions}', 'sessions'),
                 ('${h.rankedGames}', 'ranked games'),
-                (h.winRate == null ? '—' : '${h.winRate}%', 'games won'),
+                // R-STA-2: a percentage waits for 5 matches.
+                (
+                  h.winRate == null
+                      ? '—'
+                      : rating != null && rating.matches < 5
+                      ? '${rating.matches} of 5'
+                      : '${h.winRate}%',
+                  rating != null && rating.matches < 5
+                      ? 'matches'
+                      : 'games won',
+                ),
               ].indexed) ...[
                 if (i > 0) const SizedBox(width: 10),
                 Expanded(
@@ -119,8 +161,8 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                     ),
                     child: Column(
                       children: [
-                        Text(value, style: OgText.heading(22)),
-                        Text(label, style: OgText.body(13, color: c.textMuted)),
+                        Text(value, style: context.type.score),
+                        Text(label, style: context.type.caption),
                       ],
                     ),
                   ),
@@ -131,7 +173,6 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
           KitSegments(
             labels: _filters,
             selected: _filter,
-            fontSize: 13,
             onSelect: (i) => setState(() => _filter = i),
           ),
           if (h.items.where(_shown).isEmpty)
@@ -142,7 +183,7 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
                   h.items.isEmpty
                       ? 'No ${sport.label.toLowerCase()} sessions yet. Join a Meet and it shows here.'
                       : 'Nothing here yet.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             )
@@ -187,4 +228,34 @@ class _PassportHistoryScreenState extends ConsumerState<PassportHistoryScreen> {
     return '$kind, won ${i.won} of ${i.played} '
         '${i.played == 1 ? 'game' : 'games'}';
   }
+}
+
+class _RatingLine extends CustomPainter {
+  const _RatingLine(this.points, this.color);
+
+  final List<double> points;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final lo = points.reduce((a, b) => a < b ? a : b);
+    final hi = points.reduce((a, b) => a > b ? a : b);
+    final span = hi - lo == 0 ? 1 : hi - lo;
+    final line = Path();
+    for (final (i, p) in points.indexed) {
+      final x = size.width * i / (points.length - 1);
+      final y = size.height * (1 - (p - lo) / span);
+      i == 0 ? line.moveTo(x, y) : line.lineTo(x, y);
+    }
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RatingLine old) => old.points != points;
 }

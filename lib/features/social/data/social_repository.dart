@@ -48,6 +48,9 @@ class SupabaseSocialRepository implements SocialRepository {
     try {
       return await run();
     } on PostgrestException catch (e) {
+      // Social functions raise readable messages, such as the report limit;
+      // pass those through.
+      if (e.code == 'P0001') throw AuthFailure(e.message);
       if (e.code == '42501') {
         throw const AuthFailure("You can't do that with this player.");
       }
@@ -186,7 +189,7 @@ class SupabaseSocialRepository implements SocialRepository {
         SuggestedPlayer(
           player: PlayerSummary.fromRow(r),
           level: (r['level'] as num?)?.toDouble(),
-          note: '${r['sessions']} sessions',
+          note: r['sessions'] == 1 ? '1 session' : '${r['sessions']} sessions',
         ),
     ];
   });

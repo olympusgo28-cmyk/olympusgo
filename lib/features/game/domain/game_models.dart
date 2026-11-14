@@ -85,7 +85,15 @@ class Campaign {
     this.standings = const [],
     this.sponsor,
     this.result,
+    this.done = false,
+    this.organizing = false,
   });
+
+  /// Every quest is finished.
+  final bool done;
+
+  /// The next quest is to organize, not to play.
+  final bool organizing;
 
   final String id;
   final CampaignKind kind;
@@ -314,4 +322,104 @@ class Gear {
   final int? priceCents;
 
   String get name => '$brand $model';
+}
+
+/// A voucher in someone's wallet. Only its owner ever sees the code.
+class GameVoucher {
+  const GameVoucher({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.status,
+    required this.amountCents,
+    required this.where,
+    this.expiresAt,
+    this.product,
+  });
+
+  /// The one item it's for, if it isn't for anything at the shop.
+  final String? product;
+
+  final String id;
+  final String name;
+  final String code;
+
+  /// issued, held, used or expired.
+  final String status;
+  final int amountCents;
+
+  /// The shop or venue that funds it.
+  final String where;
+  final DateTime? expiresAt;
+
+  bool get usable => status == 'issued';
+}
+
+/// Earned from a campaign.
+class GameBadge {
+  const GameBadge({required this.name, this.blurb = ''});
+
+  final String name;
+  final String blurb;
+}
+
+/// A Meet the organizer ran: whether it counted, and why not if it didn't.
+class OrganizerGame {
+  const OrganizerGame({
+    required this.title,
+    required this.at,
+    required this.counted,
+    required this.reason,
+    this.gameNo,
+  });
+
+  final String title;
+  final DateTime at;
+  final bool counted;
+  final String reason;
+  final int? gameNo;
+
+  String get why => switch (reason) {
+    'counted' => 'Counted',
+    'under_six' => 'Not enough players were Present',
+    'unpaid' => 'Not everyone paid the platform fee',
+    'not_scanned' => 'Not everyone was scanned in by QR',
+    'cancelled' => 'This Meet was cancelled',
+    'organizer_minor' => 'Organizers earn rewards from 18',
+    'before_payments' => 'Played before payments opened, so it earns nothing',
+    _ => 'Our team is looking at this',
+  };
+}
+
+/// Where an organizer stands on the reward ladder.
+class OrganizerRewards {
+  const OrganizerRewards({
+    required this.counted,
+    this.nextGame,
+    this.nextA = 0,
+    this.nextB = 0,
+    this.open = false,
+    this.waiting = 0,
+    this.games = const [],
+    this.minPresent = 6,
+    this.feeCents = 200,
+  });
+
+  /// Present players a game needs, from the server's settings.
+  final int minPresent;
+
+  /// What an organizer pays to take a spot of their own.
+  final int feeCents;
+
+  final int counted;
+  final int? nextGame;
+  final int nextA;
+  final int nextB;
+
+  /// Vouchers are being issued.
+  final bool open;
+
+  /// Earned, and not issued yet.
+  final int waiting;
+  final List<OrganizerGame> games;
 }

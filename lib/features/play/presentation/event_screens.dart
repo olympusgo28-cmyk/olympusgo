@@ -6,18 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/application/social_providers.dart';
@@ -26,6 +26,7 @@ import '../application/competition_providers.dart';
 import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import '../domain/event_models.dart';
+import 'pay_flow.dart';
 import 'meet_detail_screen.dart' show showDoneSheet;
 import 'create_meet_screens.dart' show editActivity;
 import 'tournament_screens.dart'
@@ -190,11 +191,14 @@ class _EventPageScreenState extends ConsumerState<EventPageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('About this event', style: OgText.display(17, color: c.text)),
+            Text('About this event', style: context.type.section),
             const SizedBox(height: 8),
             Text(
               e.about,
-              style: OgText.body(15, height: 1.5, color: tones.onTag),
+              style: context.type.body.copyWith(
+                color: tones.onTag,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -205,10 +209,10 @@ class _EventPageScreenState extends ConsumerState<EventPageScreen> {
             Expanded(
               child: Text(
                 e.linked ? 'Up next' : 'Schedule',
-                style: OgText.heading(20),
+                style: context.type.section,
               ),
             ),
-            Text(e.programmeDay, style: OgText.body(13, color: c.textMuted)),
+            Text(e.programmeDay, style: context.type.caption),
           ],
         ),
         KitCard(
@@ -222,7 +226,10 @@ class _EventPageScreenState extends ConsumerState<EventPageScreen> {
         Row(
           children: [
             Expanded(
-              child: Text('What the finalists use', style: OgText.heading(20)),
+              child: Text(
+                'What the finalists use',
+                style: context.type.section,
+              ),
             ),
             KitLink('Shop', onPressed: () => context.push(Routes.shop)),
           ],
@@ -237,13 +244,13 @@ class _EventPageScreenState extends ConsumerState<EventPageScreen> {
         ),
         Text(
           'Players and creators earn a share when you buy through their gear.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
       if (e.clubs.isNotEmpty) ...[
         Text(
           e.linked ? 'Host' : 'Clubs taking part',
-          style: OgText.heading(20),
+          style: context.type.section,
         ),
         Wrap(
           spacing: 8,
@@ -264,13 +271,9 @@ class _EventPageScreenState extends ConsumerState<EventPageScreen> {
                       color: Color(cl.color),
                       ink: Color(cl.ink),
                       size: 32,
-                      fontSize: 11,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      cl.name,
-                      style: OgText.body(14, weight: FontWeight.w600),
-                    ),
+                    Text(cl.name, style: context.type.body),
                   ],
                 ),
               ),
@@ -323,10 +326,10 @@ class _IdentityCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(main, style: OgText.body(15, weight: FontWeight.w700)),
+                    Text(main, style: context.type.body),
                     Text(
                       sub,
-                      style: OgText.body(13, height: 1.4, color: c.textMuted),
+                      style: context.type.caption.copyWith(height: 1.4),
                     ),
                   ],
                 ),
@@ -373,26 +376,24 @@ class _IdentityCard extends StatelessWidget {
           const SizedBox(height: 10),
           Semantics(
             header: true,
-            child: Text(a.title, style: OgText.heading(24, height: 1.15)),
+            child: Text(
+              a.title,
+              style: context.type.title.copyWith(height: 1.15),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             info.clubs.length > 1
                 ? '${info.clubs.first.name} · with ${info.clubs.length - 1} clubs'
                 : (info.clubs.firstOrNull?.name ?? a.host.displayName),
-            style: OgText.body(14, weight: FontWeight.w600, color: t.onTag),
+            style: context.type.body.copyWith(color: t.onTag),
           ),
           if (faces.isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
               children: [
                 for (final p in faces) ...[
-                  SolidAvatar.forId(
-                    p.id,
-                    initials: p.initials,
-                    size: 40,
-                    fontSize: 13,
-                  ),
+                  SolidAvatar.forId(p.id, initials: p.initials, size: 40),
                   const SizedBox(width: 6),
                 ],
                 if (rest > 0)
@@ -408,11 +409,7 @@ class _IdentityCard extends StatelessWidget {
                       rest >= 1000
                           ? '${(rest / 1000).toStringAsFixed(1)}k'
                           : '+$rest',
-                      style: OgText.body(
-                        12,
-                        weight: FontWeight.w800,
-                        color: t.onTag,
-                      ),
+                      style: context.type.caption.copyWith(color: t.onTag),
                     ),
                   ),
               ],
@@ -423,7 +420,7 @@ class _IdentityCard extends StatelessWidget {
             info.live != null
                 ? '${_thousands(a.watching)} watching · ${a.isFree ? 'free' : 'S\$${money(a.totalCents)} / person'}'
                 : '${_thousands(a.spotsTaken)} going · ${a.audience ?? 'all ages'} · ${a.isFree ? 'free entry' : 'S\$${money(a.totalCents)} / person'}',
-            style: OgText.body(14, weight: FontWeight.w600, color: t.onTag),
+            style: context.type.body.copyWith(color: t.onTag),
           ),
           Container(
             height: 1,
@@ -474,7 +471,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
   Widget build(BuildContext context) {
     final l = widget.live;
     const muted = Color(0xFFC9C6BC);
-    const colA = Color(0xFFF28500);
+    const colA = Color(0xFFE8590C);
     const colB = Color(0xFFC8553D);
     final pctA = (_a + _b) == 0 ? 0.5 : _a / (_a + _b);
     Widget side(String names, List<int> games, Color dot) => Padding(
@@ -492,11 +489,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
               names,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(
-                15,
-                weight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              style: context.type.body.copyWith(color: Colors.white),
             ),
           ),
           for (final g in games)
@@ -505,7 +498,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
               child: Text(
                 '$g',
                 textAlign: TextAlign.end,
-                style: OgText.heading(20, color: Colors.white),
+                style: context.type.section.copyWith(color: Colors.white),
               ),
             ),
         ],
@@ -524,11 +517,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
           ),
           child: Text(
             'Cheer · ${_thousands(n)}',
-            style: OgText.body(
-              14,
-              weight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            style: context.type.body.copyWith(color: Colors.white),
           ),
         ),
       ),
@@ -555,9 +544,7 @@ class _LiveCardState extends ConsumerState<_LiveCard> {
               const SizedBox(width: 8),
               Text(
                 'LIVE · ${l.label}',
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w800,
+                style: context.type.caption.copyWith(
                   color: muted,
                   letterSpacing: 0.6,
                 ),
@@ -619,7 +606,6 @@ class _ProgrammeRowState extends ConsumerState<_ProgrammeRow> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final it = widget.item;
     final follow = widget.follow && !it.plain;
     return Padding(
@@ -628,17 +614,14 @@ class _ProgrammeRowState extends ConsumerState<_ProgrammeRow> {
         children: [
           SizedBox(
             width: 70,
-            child: Text(
-              it.time,
-              style: OgText.body(13, weight: FontWeight.w800),
-            ),
+            child: Text(it.time, style: context.type.caption),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(it.title, style: OgText.body(15, weight: FontWeight.w700)),
-                Text(it.sub, style: OgText.body(13, color: c.textMuted)),
+                Text(it.title, style: context.type.body),
+                Text(it.sub, style: context.type.caption),
               ],
             ),
           ),
@@ -648,7 +631,6 @@ class _ProgrammeRowState extends ConsumerState<_ProgrammeRow> {
                 : (_on ? 'On' : 'Remind'),
             selected: _on,
             height: 36,
-            fontSize: 12,
             onTap: () {
               HapticFeedback.selectionClick();
               setState(() => _on = !_on);
@@ -707,17 +689,17 @@ class _GearCard extends StatelessWidget {
               'Used by ${g.player}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(11, weight: FontWeight.w700, color: t.onTag),
+              style: context.type.caption.copyWith(color: t.onTag),
             ),
             Text(
               g.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(14, weight: FontWeight.w700),
+              style: context.type.body,
             ),
             Text(
               'S\$${money(g.priceCents, decimals: false)}',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ],
         ),
@@ -757,13 +739,13 @@ class _BottomBar extends ConsumerWidget {
             children: [
               Text(
                 'Your ticket · ${info.tickets} ${info.tickets == 1 ? 'person' : 'people'}',
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: context.type.body,
               ),
               Text(
                 a.isFree
                     ? 'Free entry · release it if you can’t come'
                     : 'Cancel by ${info.refundBy == null ? 'the day before' : Fmt.dayTimeComma(info.refundBy!)} for a refund',
-                style: OgText.body(12, color: c.textMuted),
+                style: context.type.caption,
               ),
             ],
           ),
@@ -783,13 +765,13 @@ class _BottomBar extends ConsumerWidget {
             children: [
               Text(
                 a.isFree ? 'Free' : 'S\$${money(a.totalCents)}',
-                style: OgText.heading(20),
+                style: context.type.section,
               ),
               Text(
                 a.isFree
                     ? 'per person · nothing to pay'
                     : 'per person · incl. S\$${money(a.platformCents)} fee',
-                style: OgText.body(12, color: c.textMuted),
+                style: context.type.caption,
               ),
             ],
           ),
@@ -839,46 +821,49 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
     final nav = Navigator.of(context);
     final outer = Navigator.of(context, rootNavigator: true).context;
     if (!a.isFree) {
-      nav.pop();
-      final method = await showPaySheet(
-        outer,
+      // This sheet stays open underneath: payForSpot uses its ref.
+      final paid = await payForSpot(
+        context,
+        ref,
+        a,
         kicker: 'Tickets',
-        title: a.title,
         subtitle: '${Fmt.dayTimeComma(a.startsAt)} · ${a.venue.name}',
-        lines: [
-          (
-            'Ticket · S\$${money(a.feeCents)} × $_qty',
-            'S\$${money(a.feeCents * _qty)}',
-          ),
-          (
-            'Platform fee · S\$${money(a.platformCents)} × $_qty',
-            'S\$${money(a.platformCents * _qty)}',
-          ),
-        ],
-        totalCents: a.totalCents * _qty,
+        priceLine: 'Ticket · S\$${money(a.feeCents)} × $_qty',
         payee: a.host.displayName,
-        notes: [
-          'Cancel by the day before: all of it back to your Wallet, or the '
-              'ticket price to your card. The platform fee is not returned to '
-              'a card.',
-          'You earn ${4 * _qty} points after your ticket is scanned.',
-        ],
+        qty: _qty,
       );
-      if (method == null || !outer.mounted) return;
-      await _buy(outer);
+      if (!mounted) return;
+      refreshCompetition(ref.invalidate);
+      refreshPlay(ref.invalidate);
+      if (paid == null) return;
+      HapticFeedback.mediumImpact();
+      final qty = _qty;
+      nav.pop();
+      if (!outer.mounted) return;
+      await showDoneSheet(
+        outer,
+        title: qty == 1 ? 'You have a ticket' : 'You have $qty tickets',
+        body: '${a.title}. Show the code at the door.',
+        rows: [
+          ('Paid', 'S\$${money(paid.totalCents)}'),
+          ('Receipt', paid.receiptNo),
+        ],
+        next: 'Show my ticket',
+        onNext: () => outer.push(Routes.eventTicket(a.id)),
+      );
       return;
     }
     setState(() => _busy = true);
-    nav.pop();
-    await _buy(outer);
+    await _buy(nav, outer);
   }
 
-  Future<void> _buy(BuildContext outer) async {
+  Future<void> _buy(NavigatorState nav, BuildContext outer) async {
     try {
       final t = await ref.read(eventRepositoryProvider).buy(a.id, qty: _qty);
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       refreshPlay(ref.invalidate);
+      nav.pop();
       if (!outer.mounted) return;
       await showDoneSheet(
         outer,
@@ -886,10 +871,7 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
         body: '${a.title}. Show the code at the door.',
         rows: [
           if (a.isFree) ('Tickets', '$_qty · free entry'),
-          (
-            'Paid',
-            a.isFree ? 'Nothing to pay' : 'S\$${money(a.totalCents * _qty)}',
-          ),
+          if (a.isFree) ('Paid', 'Nothing to pay'),
         ],
         next: 'Show my ticket',
         onNext: () => outer.push(Routes.eventTicket(a.id)),
@@ -901,7 +883,6 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     return SingleChildScrollView(
       child: Column(
@@ -909,18 +890,13 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
         children: [
           Text(
             a.isFree ? 'NOTHING TO PAY' : 'TICKETS',
-            style: OgText.body(
-              12,
-              weight: FontWeight.w800,
-              color: c.textMuted,
-              letterSpacing: 0.8,
-            ),
+            style: context.type.caption.copyWith(letterSpacing: 0.8),
           ),
           const SizedBox(height: 4),
-          Text(a.title, style: OgText.heading(24)),
+          Text(a.title, style: context.type.title),
           Text(
             '${Fmt.dayTimeComma(a.startsAt)} · ${a.venue.name}',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
           const SizedBox(height: 16),
           Container(
@@ -935,14 +911,8 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'People',
-                        style: OgText.body(15, weight: FontWeight.w700),
-                      ),
-                      Text(
-                        'Up to 6 per order',
-                        style: OgText.body(12, color: c.textMuted),
-                      ),
+                      Text('People', style: context.type.body),
+                      Text('Up to 6 per order', style: context.type.caption),
                     ],
                   ),
                 ),
@@ -975,7 +945,7 @@ class _TicketSheetState extends ConsumerState<_TicketSheet> {
                 ? 'Entry is free. The organizer covers the platform fee. Can’t '
                       'come? Release your ticket so someone else can have it.'
                 : 'Nothing is charged until you confirm on the next step.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
           const SizedBox(height: 16),
           KitButton(
@@ -999,7 +969,6 @@ class EventTicketScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final ticket = ref.watch(eventTicketProvider(activityId));
     final tk = ticket.value;
@@ -1046,12 +1015,14 @@ class EventTicketScreen extends ConsumerWidget {
               Text(
                 tk.title,
                 textAlign: TextAlign.center,
-                style: OgText.heading(22, color: Colors.white),
+                style: context.type.section.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 4),
               Text(
                 Fmt.dayTimeRange(tk.startsAt, tk.endsAt),
-                style: OgText.body(14, color: const Color(0xFFC9C6BC)),
+                style: context.type.body.copyWith(
+                  color: const Color(0xFFC9C6BC),
+                ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -1072,9 +1043,7 @@ class EventTicketScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               Text(
                 tk.code,
-                style: OgText.body(
-                  15,
-                  weight: FontWeight.w800,
+                style: context.type.body.copyWith(
                   color: Colors.white,
                   letterSpacing: 1.5,
                 ),
@@ -1093,13 +1062,11 @@ class EventTicketScreen extends ConsumerWidget {
                   : 'S\$${money(tk.paidCents)}, fee included',
             ),
             KitKeyValue('Booking', tk.code),
-            KitKeyValue('Points', '${tk.points} after you are scanned in'),
+            if (!Env.hasSupabase)
+              KitKeyValue('Points', '${tk.points} after you are scanned in'),
           ],
         ),
-        Text(
-          'Show this code at the entrance.',
-          style: OgText.body(13, color: c.textMuted),
-        ),
+        Text('Show this code at the entrance.', style: context.type.caption),
         Align(
           alignment: Alignment.centerLeft,
           child: KitLink(
@@ -1147,7 +1114,6 @@ class _EventReleaseScreenState extends ConsumerState<EventReleaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     if (_done case (final n, final back)) {
       return KitScaffold(
         header: const KitHeader(title: 'Release tickets'),
@@ -1165,7 +1131,7 @@ class _EventReleaseScreenState extends ConsumerState<EventReleaseScreen> {
             child: Text(
               '$n ${n == 1 ? 'ticket' : 'tickets'} released. '
               '${back > 0 ? 'S\$${money(back)} is on its way back to how you paid.' : 'There is nothing to refund.'}',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1227,7 +1193,7 @@ class _EventReleaseScreenState extends ConsumerState<EventReleaseScreen> {
         Text(
           'Released tickets go to the next person waiting. For a free event '
           'there is nothing to refund, and the organizer gets the fee back.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1259,12 +1225,12 @@ class EventManageScreen extends ConsumerWidget {
           children: [
             KitTag('Organizer', background: t.gold, foreground: t.onGold),
             const SizedBox(height: 8),
-            Text(a.title, style: OgText.heading(26)),
+            Text(a.title, style: context.type.title),
             const SizedBox(height: 4),
             Text(
               '${Fmt.day(a.startsAt)} · ${a.online ? 'Offline and online' : 'Offline'} · '
               '${_thousands(a.spotsTaken)} ${a.isFree ? 'free ' : ''}tickets taken',
-              style: OgText.body(14, color: context.og.textMuted),
+              style: context.type.secondary,
             ),
           ],
         ),
@@ -1380,7 +1346,7 @@ class _EventCancelScreenState extends ConsumerState<EventCancelScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('What happens', style: OgText.heading(20)),
+            Text('What happens', style: context.type.section),
             const SizedBox(height: 4),
             KitKeyValue(
               'Tickets cancelled',
@@ -1471,7 +1437,6 @@ class _ScanTicketScreenState extends ConsumerState<ScanTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final r = _result;
     if (r != null) {
@@ -1510,15 +1475,13 @@ class _ScanTicketScreenState extends ConsumerState<ScanTicketScreen> {
                 const SizedBox(height: 8),
                 Text(
                   r.valid ? 'Valid ticket' : 'Already used',
-                  style: OgText.heading(
-                    28,
+                  style: context.type.title.copyWith(
                     color: r.valid ? t.onSuccessFill : t.onDangerFill,
                   ),
                 ),
                 Text(
                   '${r.qty} ${r.qty == 1 ? 'adult' : 'adults'}',
-                  style: OgText.heading(
-                    20,
+                  style: context.type.section.copyWith(
                     color: r.valid ? t.onSuccessFill : t.onDangerFill,
                   ),
                 ),
@@ -1537,7 +1500,7 @@ class _ScanTicketScreenState extends ConsumerState<ScanTicketScreen> {
           Text(
             'A ticket works once. If it is scanned again you see who used it '
             'and when.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       );
@@ -1566,7 +1529,6 @@ class MyTicketsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final events = ref
         .watch(myScheduleProvider)
         .value
@@ -1583,7 +1545,7 @@ class MyTicketsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'No tickets yet. Events you get tickets for show up here.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
@@ -1611,7 +1573,6 @@ class CheckTicketsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final events = ref
         .watch(hostingProvider)
         .value
@@ -1632,7 +1593,7 @@ class CheckTicketsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'You are not running any events. Tickets are checked by the event’s organizers.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )

@@ -1,0 +1,13 @@
+name: og_design
+description: OlympusGO design tokens, shared by the app and the admin app.
+publish_to: 'none'
+version: 1.0.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^9.0.0

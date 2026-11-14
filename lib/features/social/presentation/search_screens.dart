@@ -9,7 +9,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -113,7 +113,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           autofocus: true,
         ),
         if (recent.isNotEmpty) ...[
-          const SectionLabel('Recent', top: 22, size: 13),
+          const SectionLabel('Recent', top: 22),
           for (final r in recent)
             ListRow(
               minHeight: 52,
@@ -122,7 +122,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               title: r,
             ),
         ],
-        const SectionLabel('Browse by sport', top: 22, size: 13),
+        const SectionLabel('Browse by sport', top: 22),
         const SizedBox(height: 12),
         Wrap(
           spacing: 10,
@@ -139,7 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               OgChip(label: s, onTap: () => _go(s)),
           ],
         ),
-        const SectionLabel('Trending near you', top: 22, size: 13),
+        const SectionLabel('Trending near you', top: 22),
         for (final m
             in ref.watch(upcomingMeetsProvider).value ?? const <Activity>[])
           ListRow(
@@ -188,7 +188,6 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final players = ref.watch(playerSearchProvider(_query));
     final mine = ref.watch(myFollowingProvider).value ?? const {};
     final showPlayers = _filter == _Filter.all || _filter == _Filter.players;
@@ -228,14 +227,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           ),
         ),
         if (showPlayers) ...[
-          const SectionLabel('Players', top: 22, size: 13),
+          const SectionLabel('Players', top: 22),
           ...switch (players) {
             AsyncData(:final value) when value.isEmpty => [
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   'No players match "$_query".',
-                  style: OgText.body(15, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             ],
@@ -279,14 +278,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           },
         ],
         if (showMeets) ...[
-          const SectionLabel('Meets', top: 22, size: 13),
+          const SectionLabel('Meets', top: 22),
           ...switch (ref.watch(activitySearchProvider(_query))) {
             AsyncData(:final value) when value.isEmpty => [
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   'No Meets match "$_query".',
-                  style: OgText.body(15, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             ],
@@ -319,7 +318,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               _filter == _Filter.clubs
                   ? 'Club search arrives with Clubs.'
                   : 'Venue search arrives with court booking.',
-              style: OgText.body(15, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ),
       ],
@@ -375,7 +374,7 @@ class _OpenChatScreenState extends ConsumerState<OpenChatScreen> {
                     : Text(
                         _error!,
                         textAlign: TextAlign.center,
-                        style: OgText.lead(context.og.textMuted),
+                        style: context.type.secondary,
                       ),
               ),
               const Spacer(),

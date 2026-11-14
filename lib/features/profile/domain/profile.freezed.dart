@@ -779,7 +779,7 @@ return $default(_that.mark,_that.name,_that.color,_that.ink);case _:
 
 
 class _ProfileBadge implements ProfileBadge {
-  const _ProfileBadge({required this.mark, required this.name, this.color = 0xFFFFE8CC, this.ink = 0xFF7A3B00});
+  const _ProfileBadge({required this.mark, required this.name, this.color = 0xFFFFE6D6, this.ink = 0xFF7A3B00});
   
 
 @override final  String mark;

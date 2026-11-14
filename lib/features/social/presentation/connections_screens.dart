@@ -7,7 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_rows.dart';
@@ -35,7 +35,6 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final me = ref.watch(currentUserIdProvider).value ?? '';
     final social = ref.watch(mySocialProvider).value ?? const PlayerSocial();
     final mine = ref.watch(myFollowingProvider).value ?? const {};
@@ -103,7 +102,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen> {
                   _tab == 0
                       ? 'Follow players to see their games and Passports here.'
                       : 'No followers yet. Share your profile so players can find you.',
-                  style: OgText.body(16, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ),
           ],
@@ -156,15 +155,11 @@ class ShareProfileScreen extends ConsumerWidget {
                 tone: AvatarTone.brand,
                 imageUrl: profile?.avatarUrl,
                 size: 96,
-                fontSize: 36,
               ),
               const SizedBox(height: 14),
-              Text(
-                profile?.fullName ?? '',
-                style: OgText.display(26, color: c.text),
-              ),
+              Text(profile?.fullName ?? '', style: context.type.title),
               const SizedBox(height: 6),
-              Text('@$username', style: OgText.body(15, color: c.textMuted)),
+              Text('@$username', style: context.type.secondary),
               const SizedBox(height: 16),
               // Players scan this from their Scan tab to open your profile.
               Semantics(
@@ -187,7 +182,7 @@ class ShareProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Text('Profile link', style: OgText.label),
+        Text('Profile link', style: context.type.caption),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -210,7 +205,7 @@ class ShareProfileScreen extends ConsumerWidget {
                       link,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(16, color: c.text),
+                      style: context.type.body,
                     ),
                   ),
                 ),
@@ -222,7 +217,6 @@ class ShareProfileScreen extends ConsumerWidget {
               child: OgButton.outline(
                 label: 'Copy',
                 height: 56,
-                fontSize: 17,
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: 'https://$link'));
                   showOgToast(context, 'Link copied');
@@ -266,7 +260,6 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           labels: const ['Meets', 'Players', 'Clubs'],
           index: _tab,
           height: 40,
-          fontSize: 16,
           onChanged: (i) => setState(() => _tab = i),
         ),
         const SizedBox(height: 8),
@@ -327,6 +320,6 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
 
   Widget _empty(OgColors c, String text) => Padding(
     padding: const EdgeInsets.only(top: 16),
-    child: Text(text, style: OgText.body(16, height: 1.45, color: c.textMuted)),
+    child: Text(text, style: context.type.secondary.copyWith(height: 1.45)),
   );
 }

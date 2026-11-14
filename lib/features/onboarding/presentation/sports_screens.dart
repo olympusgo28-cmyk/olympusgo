@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
@@ -118,14 +118,7 @@ class _SportTile extends StatelessWidget {
                         color: selected ? c.link : c.text,
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        sport.label,
-                        style: OgText.body(
-                          16,
-                          weight: FontWeight.w600,
-                          color: c.text,
-                        ),
-                      ),
+                      Text(sport.label, style: context.type.body),
                     ],
                   ),
                 ),
@@ -158,34 +151,29 @@ class _SportTile extends StatelessWidget {
   }
 }
 
-/// Orange circle holding a white sport icon.
-class SportBadge extends StatelessWidget {
-  const SportBadge(this.sport, {super.key, this.size = 52});
+/// The sport's icon alone, in orange (owner, 8 Nov 2026: no circle).
+class SportIcon extends StatelessWidget {
+  const SportIcon(this.sport, {super.key, this.size = 36});
 
   final Sport sport;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: OgColors.tangerine,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
+    return ExcludeSemantics(
       child: OgIcon(
         sport.icon,
-        size: size * 0.54,
-        color: OgColors.white,
+        size: size,
+        color: context.og.primary,
         strokeWidth: 1.8,
       ),
     );
   }
 }
 
-/// Step 4: one row per chosen sport; tap to set level and play range.
+/// Step 4: one row per chosen sport; tap to set level and play range. A
+/// sport shows its summary only once a level is picked, and Continue waits
+/// until every sport has one (Q253).
 class SkillLevelScreen extends ConsumerWidget {
   const SkillLevelScreen({super.key});
 
@@ -193,11 +181,12 @@ class SkillLevelScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final draft = ref.watch(onboardingControllerProvider);
+    final allSet = draft.sports.every(draft.skills.containsKey);
     return OgFlowScreen(
       children: [
         const OgBackButton(),
         const OgHeading(
-          title: 'Set your skill levels',
+          title: 'Set your skill',
           step: 4,
           topGap: 16,
           lead: 'Tap a sport to set your level and who you like to play with.',
@@ -206,9 +195,11 @@ class SkillLevelScreen extends ConsumerWidget {
         for (final sport in draft.sports) ...[
           Pressable(
             onPressed: () => context.push(Routes.skill(sport.id)),
-            semanticLabel:
-                '${sport.label}, ${draft.skillFor(sport).summary}. Edit',
+            semanticLabel: draft.skills.containsKey(sport)
+                ? '${sport.label}, ${draft.skillFor(sport).summary}. Edit'
+                : '${sport.label}, no level yet. Set your level',
             child: Container(
+              constraints: const BoxConstraints(minHeight: 76),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: c.surfaceRaised,
@@ -217,24 +208,22 @@ class SkillLevelScreen extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  SportBadge(sport),
+                  SportIcon(sport),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           sport.label,
-                          style: OgText.display(20, height: 1.2, color: c.text),
+                          style: context.type.section.copyWith(height: 1.2),
                         ),
-                        Text(
-                          draft.skillFor(sport).summary,
-                          style: OgText.body(
-                            15,
-                            height: 1.4,
-                            color: c.textMuted,
+                        if (draft.skills.containsKey(sport))
+                          Text(
+                            draft.skillFor(sport).summary,
+                            style: context.type.secondary.copyWith(height: 1.4),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -252,16 +241,25 @@ class SkillLevelScreen extends ConsumerWidget {
         ],
       ],
       bottom: [
+        if (!allSet) ...[
+          Text(
+            'Set a level for each sport to continue.',
+            textAlign: TextAlign.center,
+            style: context.type.secondary,
+          ),
+          const SizedBox(height: 12),
+        ],
         OgButton(
           label: 'Continue',
-          onPressed: () => context.push(Routes.username),
+          onPressed: allSet ? () => context.push(Routes.username) : null,
         ),
       ],
     );
   }
 }
 
-/// Level and "play with" range for one sport.
+/// Level and "play with" range for one sport. The level starts empty, and
+/// Done waits for one (Q253).
 class SportSkillScreen extends ConsumerStatefulWidget {
   const SportSkillScreen({super.key, required this.sport});
 
@@ -272,9 +270,11 @@ class SportSkillScreen extends ConsumerStatefulWidget {
 }
 
 class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
-  late SportSkill _skill = ref
+  late final SportSkill? _saved = ref
       .read(onboardingControllerProvider)
-      .skillFor(widget.sport);
+      .skills[widget.sport];
+  late SportSkill _skill = _saved ?? SportSkill(sport: widget.sport);
+  late bool _levelSet = _saved != null;
 
   Future<void> _pickLevel() async {
     final picked = await showOgListPicker<double>(
@@ -284,10 +284,15 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
       selected: _skill.level,
       label: SkillScale.describe,
     );
-    if (picked != null) setState(() => _skill = _skill.copyWith(level: picked));
+    if (picked != null) {
+      setState(() {
+        _skill = _skill.copyWith(level: picked);
+        _levelSet = true;
+      });
+    }
   }
 
-  void _save() {
+  void _done() {
     ref.read(onboardingControllerProvider.notifier).setSkill(_skill);
     context.pop();
   }
@@ -298,39 +303,45 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
     Widget end(String label, double value, CrossAxisAlignment align) => Column(
       crossAxisAlignment: align,
       children: [
-        Text(label, style: OgText.body(14, color: c.textMuted)),
+        Text(label, style: context.type.secondary),
         Text(
           value.toStringAsFixed(1),
-          style: OgText.display(24, height: 1.1, color: c.text),
+          style: context.type.score.copyWith(height: 1.1),
         ),
       ],
     );
+    final helper = context.type.secondary.copyWith(height: 1.4);
     return OgFlowScreen(
       children: [
         const OgBackButton(),
         OgHeading(
           title: widget.sport.label,
           topGap: 16,
-          leading: SportBadge(widget.sport),
+          leading: SportIcon(widget.sport, size: 40),
         ),
-        const SizedBox(height: 12),
-        const StepProgress(step: 4),
         const SizedBox(height: 28),
-        Text('Your skill level', style: OgText.label),
-        const SizedBox(height: 8),
         OgSelectField(
-          value: SkillScale.describe(_skill.level),
-          semanticLabel: 'Your skill level',
+          label: 'Your skill level',
+          value: _levelSet ? SkillScale.describe(_skill.level) : '',
+          placeholder: !_levelSet,
           onTap: _pickLevel,
         ),
         const SizedBox(height: 8),
         Text(
           'A starting point. It adjusts after your first few ranked matches.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+          style: helper,
         ),
         const SizedBox(height: 28),
-        Text('Play with levels', style: OgText.label),
-        const SizedBox(height: 14),
+        Text('Play with levels', style: context.type.caption),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            end('Min', _skill.playMin, CrossAxisAlignment.start),
+            end('Max', _skill.playMax, CrossAxisAlignment.end),
+          ],
+        ),
+        const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
             trackHeight: 8,
@@ -351,7 +362,8 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
               max: SkillScale.max,
               divisions: 7,
               values: RangeValues(_skill.playMin, _skill.playMax),
-              semanticFormatterCallback: (v) => v.toStringAsFixed(1),
+              semanticFormatterCallback: (v) =>
+                  '${v.toStringAsFixed(1)}, ${SkillScale.nameWithShort(v)}',
               onChanged: (v) {
                 if (v.start != _skill.playMin || v.end != _skill.playMax) {
                   HapticFeedback.selectionClick();
@@ -366,21 +378,34 @@ class _SportSkillScreenState extends ConsumerState<SportSkillScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
+        // Each end's name in full with its short form: "Mid Beginner (MB)".
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            end('Min', _skill.playMin, CrossAxisAlignment.start),
-            end('Max', _skill.playMax, CrossAxisAlignment.end),
+            Expanded(
+              child: Text(
+                SkillScale.nameWithShort(_skill.playMin),
+                style: context.type.body,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                SkillScale.nameWithShort(_skill.playMax),
+                textAlign: TextAlign.end,
+                style: context.type.body,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          'We suggest Meets and partners inside this range.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+          'We recommend Meets and partners inside this range.',
+          style: helper,
         ),
       ],
-      bottom: [OgButton(label: 'Save', onPressed: _save)],
+      bottom: [OgButton(label: 'Done', onPressed: _levelSet ? _done : null)],
     );
   }
 }

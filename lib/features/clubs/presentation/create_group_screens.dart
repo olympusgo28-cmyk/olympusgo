@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -46,7 +46,6 @@ class _StepHeader extends StatelessWidget {
             title: title,
             subtitle: 'Step $step of $of',
             lead: close ? KitLead.close : KitLead.back,
-            titleSize: 19,
             border: false,
           ),
           Padding(
@@ -85,7 +84,7 @@ class _Group extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: kitSpaced([
-      Text(title, style: OgText.body(15, weight: FontWeight.w700)),
+      Text(title, style: context.type.body),
       ...children,
     ], 12),
   );
@@ -99,7 +98,7 @@ List<Widget> _next(String label, VoidCallback? onNext, {String? missing}) => [
       builder: (context) => Text(
         missing,
         textAlign: TextAlign.center,
-        style: OgText.body(13, color: context.og.textMuted),
+        style: context.type.caption,
       ),
     ),
 ];
@@ -153,8 +152,8 @@ class CreateGroupTypeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: OgText.heading(28)),
-                      Text(sub, style: OgText.body(14, color: c.textMuted)),
+                      Text(title, style: context.type.title),
+                      Text(sub, style: context.type.secondary),
                     ],
                   ),
                 ),
@@ -174,7 +173,7 @@ class CreateGroupTypeScreen extends ConsumerWidget {
                       color: c.link,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(p, style: OgText.body(14))),
+                    Expanded(child: Text(p, style: context.type.body)),
                   ],
                 ),
               ),
@@ -186,7 +185,7 @@ class CreateGroupTypeScreen extends ConsumerWidget {
       header: const KitHeader(title: 'Create', lead: KitLead.close),
       gap: 14,
       children: [
-        Text('What are you starting?', style: OgText.heading(30)),
+        Text('What are you starting?', style: context.type.title),
         card(
           title: 'Club',
           sub: 'Open community for regular play',
@@ -220,7 +219,7 @@ class CreateGroupTypeScreen extends ConsumerWidget {
         Text(
           'You can run both. Meets, tournaments and events are hosted by a '
           'club. A team can pick its players from your clubs.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -286,7 +285,7 @@ class NewClubScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: OgColors.tangerineLine, width: 2),
+                  border: Border.all(color: OgColors.orange700, width: 2),
                 ),
                 child: Row(
                   children: [
@@ -296,14 +295,8 @@ class NewClubScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            d.venueName ?? '',
-                            style: OgText.body(15, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            'Area: ${d.area}',
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(d.venueName ?? '', style: context.type.body),
+                          Text('Area: ${d.area}', style: context.type.caption),
                         ],
                       ),
                     ),
@@ -317,7 +310,7 @@ class NewClubScreen extends ConsumerWidget {
             Text(
               "Players nearby find your club by area, and it sets your club's "
               'Local leaderboard.',
-              style: OgText.body(13, height: 1.45, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.45),
             ),
           ],
         ),
@@ -377,7 +370,10 @@ class NewClubScreen extends ConsumerWidget {
                   d.visibility == ClubVisibility.private
                       ? 'Request to join. Private clubs always need an admin to approve new members.'
                       : 'Invite only. Hidden clubs can only be joined with an invite link.',
-                  style: OgText.body(14, height: 1.45, color: t.onTag),
+                  style: context.type.body.copyWith(
+                    color: t.onTag,
+                    height: 1.45,
+                  ),
                 ),
               ),
           ],
@@ -394,7 +390,6 @@ class NewClubSportsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final d = ref.watch(clubDraftControllerProvider);
     final draft = ref.read(clubDraftControllerProvider.notifier);
     final full = d.sports.length >= 3;
@@ -416,7 +411,7 @@ class NewClubSportsScreen extends ConsumerWidget {
           alignment: Alignment.centerRight,
           child: Text(
             '${d.sports.length}/3 selected',
-            style: OgText.body(13, weight: FontWeight.w600, color: c.textMuted),
+            style: context.type.caption,
           ),
         ),
         GridView.count(
@@ -449,7 +444,7 @@ class NewClubSportsScreen extends ConsumerWidget {
         Text(
           'Each sport gets its own ratings and leaderboard. Tap a picked '
           'sport to remove it; the next one becomes primary.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -487,7 +482,7 @@ class _SportCard extends StatelessWidget {
             color: off ? t.soft : c.bg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: on ? OgColors.tangerineLine : c.borderControl,
+              color: on ? OgColors.orange700 : c.borderControl,
               width: on ? 2 : 1,
             ),
           ),
@@ -501,7 +496,7 @@ class _SportCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: on ? c.primary : t.soft,
+                      color: on ? c.primarySmall : t.soft,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -517,7 +512,6 @@ class _SportCard extends StatelessWidget {
                     KitTag(
                       'Primary',
                       height: 20,
-                      fontSize: 11,
                       background: t.gold,
                       foreground: t.onGold,
                     ),
@@ -528,7 +522,7 @@ class _SportCard extends StatelessWidget {
                 sport.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: OgText.body(16, weight: FontWeight.w700),
+                style: context.type.body,
               ),
             ],
           ),
@@ -580,10 +574,7 @@ class NewClubLevelsScreen extends ConsumerWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            s.label,
-                            style: OgText.body(17, weight: FontWeight.w700),
-                          ),
+                          child: Text(s.label, style: context.type.section),
                         ),
                         if (s == d.sports.first) ...[
                           KitTag(
@@ -632,7 +623,7 @@ class NewClubLevelsScreen extends ConsumerWidget {
         Text(
           'New Meets start with this range. Organizers can narrow it for a '
           'single Meet.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -672,7 +663,6 @@ class _NewClubInviteScreenState extends ConsumerState<NewClubInviteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final d = ref.watch(clubDraftControllerProvider);
     final draft = ref.read(clubDraftControllerProvider.notifier);
     final people = ref.watch(inviteCandidatesProvider).value ?? const [];
@@ -706,10 +696,10 @@ class _NewClubInviteScreenState extends ConsumerState<NewClubInviteScreen> {
             Expanded(
               child: Text(
                 "Players you've played with",
-                style: OgText.body(15, weight: FontWeight.w700),
+                style: context.type.body,
               ),
             ),
-            Text('$n selected', style: OgText.body(13, color: c.textMuted)),
+            Text('$n selected', style: context.type.caption),
           ],
         ),
         KitSearchField(
@@ -722,7 +712,7 @@ class _NewClubInviteScreenState extends ConsumerState<NewClubInviteScreen> {
             people.isEmpty
                 ? 'No one yet. Share your invite link from the club page after you create it.'
                 : 'Nobody matches. Check the spelling or clear the search.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
         for (final p in shown)
           _PersonRow(
@@ -744,7 +734,7 @@ class _NewClubInviteScreenState extends ConsumerState<NewClubInviteScreen> {
         Text(
           'After you create the club, share its invite link or QR code from '
           'the club page.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -781,22 +771,14 @@ class _PersonRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SolidAvatar.forId(
-              p.id,
-              initials: p.initials,
-              size: 42,
-              fontSize: 14,
-            ),
+            SolidAvatar.forId(p.id, initials: p.initials, size: 42),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    p.displayName,
-                    style: OgText.body(15, weight: FontWeight.w700),
-                  ),
-                  Text(meta, style: OgText.body(13, color: c.textMuted)),
+                  Text(p.displayName, style: context.type.body),
+                  Text(meta, style: context.type.caption),
                 ],
               ),
             ),
@@ -822,7 +804,6 @@ class NewTeamScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final d = ref.watch(teamDraftControllerProvider);
     final draft = ref.read(teamDraftControllerProvider.notifier);
     return KitScaffold(
@@ -856,7 +837,7 @@ class NewTeamScreen extends ConsumerWidget {
             Text(
               'Optional. Split the team by age group. Each sub-team gets its '
               'own roster, lineup and fixtures.',
-              style: OgText.body(13, height: 1.45, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.45),
             ),
             for (final (name, rule) in _subTeams)
               Row(
@@ -865,11 +846,8 @@ class NewTeamScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name,
-                          style: OgText.body(15, weight: FontWeight.w700),
-                        ),
-                        Text(rule, style: OgText.body(13, color: c.textMuted)),
+                        Text(name, style: context.type.body),
+                        Text(rule, style: context.type.caption),
                       ],
                     ),
                   ),
@@ -974,7 +952,6 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final d = ref.watch(teamDraftControllerProvider);
     final draft = ref.read(teamDraftControllerProvider.notifier);
     final people = ref.watch(inviteCandidatesProvider).value ?? const [];
@@ -997,21 +974,16 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
       ],
       gap: 14,
       children: [
-        Text('Staff', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Staff', style: context.type.body),
         Text(
           'You: head coach · team owner. Add coaches and managers later from '
           'the team settings.',
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
         Row(
           children: [
-            Expanded(
-              child: Text(
-                'Players',
-                style: OgText.body(15, weight: FontWeight.w700),
-              ),
-            ),
-            Text('$n selected', style: OgText.body(13, color: c.textMuted)),
+            Expanded(child: Text('Players', style: context.type.body)),
+            Text('$n selected', style: context.type.caption),
           ],
         ),
         KitSearchField(
@@ -1022,7 +994,7 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
         if (shown.isEmpty)
           Text(
             'Nobody matches. Check the spelling or clear the search.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           ),
         for (final p in shown)
           _PersonRow(
@@ -1043,7 +1015,7 @@ class _NewTeamMembersScreenState extends ConsumerState<NewTeamMembersScreen> {
         Text(
           'Players get an invite and join once they accept. For U-age teams, '
           'a parent confirms too. Set captain and lineup positions later.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );

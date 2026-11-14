@@ -146,7 +146,7 @@ class DemoWorld {
 
   /// Solid avatar colours (background, ink) from the canvas.
   static const _faces = <String, (int, int)>{
-    'cp-hannah': (0xFF101010, 0xFFC6FF00),
+    'cp-hannah': (0xFF101010, 0xFFFF7A1A),
     'cp-priyar': (0xFF3E6B8A, 0xFFFFFFFF),
     'cp-sitil': (0xFFC8553D, 0xFFFFFFFF),
     'cp-meiling': (0xFF7B5EA7, 0xFFFFFFFF),

@@ -1,25 +1,24 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/mascot.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_screen.dart';
-import '../../../core/widgets/phone_field.dart';
 import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../auth/presentation/code_copy.dart';
 import '../../auth/presentation/validators.dart';
+import '../../settings/presentation/confirm_its_you_screen.dart';
 import '../application/onboarding_controller.dart';
 
 enum _Availability { idle, checking, available, taken }
@@ -85,7 +84,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
       final notifier = ref.read(onboardingControllerProvider.notifier)
         ..setUsername(_name.text);
       await notifier.save(complete: false);
-      if (mounted) context.push(Routes.mobile);
+      if (mounted) context.push(Routes.addEmail);
     } on AuthFailure catch (e) {
       setState(() {
         _error = e.message;
@@ -129,11 +128,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
           child: switch (_status) {
             _Availability.checking => Text(
               'Checking…',
-              style: OgText.body(
-                14,
-                weight: FontWeight.w600,
-                color: c.textMuted,
-              ),
+              style: context.type.secondary,
             ),
             _Availability.available => Row(
               children: [
@@ -153,14 +148,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '$name is available',
-                  style: OgText.body(
-                    14,
-                    weight: FontWeight.w600,
-                    color: c.text,
-                  ),
-                ),
+                Text('$name is available', style: context.type.body),
               ],
             ),
             _Availability.taken => const OgErrorText(
@@ -182,44 +170,45 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   }
 }
 
-/// Step 6: mobile number for sign-in codes and match alerts.
-class MobileNumberScreen extends ConsumerStatefulWidget {
-  const MobileNumberScreen({super.key});
+/// Step 6: an optional email, for getting back in if the mobile is lost.
+class AddEmailScreen extends ConsumerStatefulWidget {
+  const AddEmailScreen({super.key});
 
   @override
-  ConsumerState<MobileNumberScreen> createState() => _MobileNumberScreenState();
+  ConsumerState<AddEmailScreen> createState() => _AddEmailScreenState();
 }
 
-class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
-  late final _number = TextEditingController(
-    text: ref.read(onboardingControllerProvider).phoneNumber,
+class _AddEmailScreenState extends ConsumerState<AddEmailScreen> {
+  late final _email = TextEditingController(
+    text: ref.read(onboardingControllerProvider).email,
   );
-  late Country _country = ref.read(onboardingControllerProvider).phoneCountry;
   String? _error;
   bool _busy = false;
 
   @override
   void dispose() {
-    _number.dispose();
+    _email.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    final digits = _number.text.replaceAll(RegExp(r'\D'), '');
-    final invalid = Validators.mobile(digits);
+    final email = _email.text.trim();
+    final invalid = Validators.email(email);
     if (invalid != null) return setState(() => _error = invalid);
-    ref
-        .read(onboardingControllerProvider.notifier)
-        .setPhone(_country, _number.text.trim());
+    ref.read(onboardingControllerProvider.notifier).setEmail(email);
     setState(() {
       _error = null;
       _busy = true;
     });
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .startPhoneChange(ref.read(onboardingControllerProvider).fullPhone);
-      if (mounted) context.push(Routes.mobileVerify);
+      // A player who took a while since logging in confirms it's them first
+      // (R-ACC-9, Q268).
+      final sent = await withConfirmItsYou(
+        context,
+        LoginContact.email,
+        () => ref.read(authRepositoryProvider).startEmailChange(email),
+      );
+      if (sent && mounted) context.push(Routes.addEmailVerify);
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
     } finally {
@@ -233,42 +222,47 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
       children: [
         const OgBackButton(),
         const OgHeading(
-          title: 'Your mobile number',
+          title: 'Add an email',
           step: 6,
           topGap: 16,
-          lead: 'We use it for sign-in codes by SMS and match alerts. Other players never see it.',
+          lead:
+              'Optional. It helps you get back in if you lose your mobile. '
+              'Other players never see it.',
         ),
         const SizedBox(height: 28),
         AutofillGroup(
-          child: PhoneField(
-            country: _country,
-            onCountryChanged: (v) => setState(() => _country = v),
-            controller: _number,
+          child: OgTextField(
+            label: 'Email',
+            controller: _email,
+            hint: 'you@example.com',
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            autocorrect: false,
+            textInputAction: TextInputAction.send,
             onSubmitted: (_) => _send(),
+            error: _error,
           ),
         ),
-        if (_error != null) OgErrorText(_error!),
-        if (_error != null && kDebugMode)
-          OgTextLink(
-            'Skip for now (debug build only)',
-            align: Alignment.centerLeft,
-            onPressed: () => context.push(Routes.ready),
-          ),
       ],
-      bottom: [OgButton(label: 'Send code', loading: _busy, onPressed: _send)],
+      bottom: [
+        OgButton(label: 'Send code', loading: _busy, onPressed: _send),
+        const SizedBox(height: 16),
+        OgTextLink('Skip for now', onPressed: () => context.go(Routes.ready)),
+      ],
     );
   }
 }
 
-/// Step 7: confirm the SMS code.
-class VerifyMobileScreen extends ConsumerStatefulWidget {
-  const VerifyMobileScreen({super.key});
+/// Confirms the optional email with its code. No progress bar: it is a
+/// check, not a step (owner, 8 Nov 2026).
+class VerifyEmailScreen extends ConsumerStatefulWidget {
+  const VerifyEmailScreen({super.key});
 
   @override
-  ConsumerState<VerifyMobileScreen> createState() => _VerifyMobileScreenState();
+  ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
+class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final _code = TextEditingController();
   String? _error;
   bool _busy = false;
@@ -289,10 +283,15 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
       _busy = true;
     });
     try {
-      final phone = ref.read(onboardingControllerProvider).fullPhone;
-      await ref
-          .read(authRepositoryProvider)
-          .verifyPhoneChange(phone, _code.text);
+      final email = ref.read(onboardingControllerProvider).email;
+      final code = _code.text;
+      // If the proof ran out while they waited, confirm it's them again.
+      final done = await withConfirmItsYou(
+        context,
+        LoginContact.email,
+        () => ref.read(authRepositoryProvider).verifyEmailChange(email, code),
+      );
+      if (!done) return;
       HapticFeedback.mediumImpact();
       if (mounted) context.go(Routes.ready);
     } on AuthFailure catch (e) {
@@ -311,15 +310,12 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
       children: [
         const OgBackButton(),
         OgHeading(
-          title: 'Verify your number',
-          step: 7,
+          title: codeTitle(CodeTarget.email),
           topGap: 16,
-          lead:
-              'We texted a 6-digit code to ${draft.phoneCountry.dialCode} '
-              '${draft.phoneNumber}. It works for 10 minutes.',
+          lead: codeLead(CodeTarget.email, draft.email),
         ),
         const SizedBox(height: 32),
-        OgCodeInput(
+        OgCodeField(
           controller: _code,
           hasError: _error != null,
           onCompleted: (_) => _verify(),
@@ -328,11 +324,16 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
         ResendTimer(
           onResend: () async {
             try {
-              await ref
-                  .read(authRepositoryProvider)
-                  .startPhoneChange(draft.fullPhone);
+              return await withConfirmItsYou(
+                context,
+                LoginContact.email,
+                () => ref
+                    .read(authRepositoryProvider)
+                    .startEmailChange(draft.email),
+              );
             } on AuthFailure catch (e) {
               setState(() => _error = e.message);
+              return false;
             }
           },
         ),
@@ -340,7 +341,7 @@ class _VerifyMobileScreenState extends ConsumerState<VerifyMobileScreen> {
       bottom: [
         OgButton(label: 'Verify', loading: _busy, onPressed: _verify),
         const SizedBox(height: 16),
-        OgTextLink('Wrong number? Change it', onPressed: () => context.pop()),
+        OgTextLink('Skip for now', onPressed: () => context.go(Routes.ready)),
       ],
     );
   }
@@ -412,7 +413,9 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                     header: true,
                     child: Text(
                       "You're in.",
-                      style: OgText.display(38, color: OgColors.offWhite),
+                      style: context.type.display.copyWith(
+                        color: OgColors.offWhite,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -421,10 +424,9 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                     child: Text(
                       'Your Passport is ready. Next, check your account details.',
                       textAlign: TextAlign.center,
-                      style: OgText.body(
-                        17,
-                        height: 1.45,
+                      style: context.type.body.copyWith(
                         color: OgColors.grey400,
+                        height: 1.45,
                       ),
                     ),
                   ),
@@ -452,8 +454,7 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                             alignment: Alignment.center,
                             child: Text(
                               initials,
-                              style: OgText.display(
-                                18,
+                              style: context.type.section.copyWith(
                                 color: OgColors.charcoal900,
                               ),
                             ),
@@ -465,16 +466,14 @@ class _ReadyScreenState extends ConsumerState<ReadyScreen> {
                               children: [
                                 Text(
                                   '${first.sport.label} · ${first.level.toStringAsFixed(1)}',
-                                  style: OgText.display(
-                                    19,
-                                    height: 1.2,
+                                  style: context.type.section.copyWith(
                                     color: OgColors.offWhite,
+                                    height: 1.2,
                                   ),
                                 ),
                                 Text(
                                   'Starting level. Adjusts after a few matches.',
-                                  style: OgText.body(
-                                    14,
+                                  style: context.type.body.copyWith(
                                     color: OgColors.grey400,
                                   ),
                                 ),

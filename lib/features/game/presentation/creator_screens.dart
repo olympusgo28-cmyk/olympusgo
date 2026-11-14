@@ -8,15 +8,14 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../shop/presentation/shop_screens.dart' show compact;
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/game_providers.dart';
 import 'game_screens.dart' show CampaignCard;
 
@@ -40,8 +39,8 @@ class CreatorProfileScreen extends ConsumerWidget {
     Widget stat(String big, String small) => Expanded(
       child: Column(
         children: [
-          Text(big, style: OgText.heading(20)),
-          Text(small, style: OgText.body(12, color: c.textMuted)),
+          Text(big, style: context.type.section),
+          Text(small, style: context.type.caption),
         ],
       ),
     );
@@ -51,21 +50,16 @@ class CreatorProfileScreen extends ConsumerWidget {
       children: [
         Row(
           children: [
-            SolidAvatar.forId(
-              cr.id,
-              initials: initials,
-              size: 72,
-              fontSize: 24,
-            ),
+            SolidAvatar.forId(cr.id, initials: initials, size: 72),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cr.name, style: OgText.heading(24)),
+                  Text(cr.name, style: context.type.title),
                   Text(
                     '${cr.handle} · ${cr.line}',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -129,10 +123,10 @@ class CreatorProfileScreen extends ConsumerWidget {
           ],
         ),
         if (cr.running != null) ...[
-          Text('Running now', style: OgText.heading(20)),
+          Text('Running now', style: context.type.section),
           CampaignCard(c: cr.running!),
         ],
-        Text('Videos', style: OgText.heading(20)),
+        Text('Videos', style: context.type.section),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
@@ -142,9 +136,8 @@ class CreatorProfileScreen extends ConsumerWidget {
           childAspectRatio: 0.75,
           children: [
             for (final v in cr.videoViews)
-              Pressable(
-                semanticLabel: 'Video, ${compact(v)} views',
-                onPressed: () => context.push(Routes.shopVideo('v1')),
+              Semantics(
+                label: 'Video, ${compact(v)} views',
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.bottomLeft,
@@ -162,9 +155,7 @@ class CreatorProfileScreen extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         compact(v),
-                        style: OgText.body(
-                          12,
-                          weight: FontWeight.w700,
+                        style: context.type.caption.copyWith(
                           color: const Color(0xFFFFFFFF),
                         ),
                       ),
@@ -175,7 +166,7 @@ class CreatorProfileScreen extends ConsumerWidget {
           ],
         ),
         if (cr.gear.isNotEmpty) ...[
-          Text('Gear he uses', style: OgText.heading(20)),
+          Text('Gear he uses', style: context.type.section),
           KitCard(
             children: [
               for (final (name, sub, price) in cr.gear)
@@ -189,7 +180,7 @@ class CreatorProfileScreen extends ConsumerWidget {
           ),
         ],
         if (cr.academy != null) ...[
-          Text('Train with him', style: OgText.heading(20)),
+          Text('Train with him', style: context.type.section),
           KitCard(
             children: [
               KitNavTile(
@@ -206,8 +197,7 @@ class CreatorProfileScreen extends ConsumerWidget {
             KitLink(
               'Report or block',
               color: c.textMuted,
-              onPressed: () =>
-                  context.push(Routes.reportListing('Creator: ${cr.name}')),
+              onPressed: () => context.push(Routes.help),
             ),
             const Spacer(),
             KitLink(
@@ -228,7 +218,6 @@ class CreatorEarningsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final e = ref.watch(creatorEarningsProvider).value;
     if (e == null) {
@@ -246,11 +235,11 @@ class CreatorEarningsScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Text(big, style: OgText.heading(20)),
+            Text(big, style: context.type.section),
             Text(
               small,
               textAlign: TextAlign.center,
-              style: OgText.body(12, color: t.onTag),
+              style: context.type.caption.copyWith(color: t.onTag),
             ),
           ],
         ),
@@ -260,8 +249,8 @@ class CreatorEarningsScreen extends ConsumerWidget {
       header: const KitHeader(title: 'Creator earnings'),
       bottom: [
         KitButton(
-          label: 'Pay out now',
-          onPressed: () => context.push(Routes.payout),
+          label: 'See my earnings',
+          onPressed: () => context.push(Routes.earnings),
         ),
         KitButton(
           label: 'Start a challenge',
@@ -281,20 +270,22 @@ class CreatorEarningsScreen extends ConsumerWidget {
             children: [
               Text(
                 'READY TO PAY OUT',
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w800,
+                style: context.type.caption.copyWith(
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
               ),
               Text(
                 cash(e.readyCents),
-                style: OgText.heading(44, color: const Color(0xFFFFFFFF)),
+                style: context.type.score.copyWith(
+                  color: const Color(0xFFFFFFFF),
+                ),
               ),
               Text(
                 'From gear you tagged, challenges and your academy link.',
-                style: OgText.body(14, color: const Color(0xFFC9C6BC)),
+                style: context.type.body.copyWith(
+                  color: const Color(0xFFC9C6BC),
+                ),
               ),
             ],
           ),
@@ -308,14 +299,14 @@ class CreatorEarningsScreen extends ConsumerWidget {
             tile('${e.students}', 'new students'),
           ],
         ),
-        Text('Where it came from', style: OgText.heading(20)),
+        Text('Where it came from', style: context.type.section),
         KitCard(
           children: [
             for (final (title, sub, cents) in e.sources)
               MoneyRow(title: title, sub: sub, amount: cash(cents), good: true),
           ],
         ),
-        Text('Best videos', style: OgText.heading(20)),
+        Text('Best videos', style: context.type.section),
         KitCard(
           children: [
             for (final (title, sub, cents) in e.videos)
@@ -324,7 +315,7 @@ class CreatorEarningsScreen extends ConsumerWidget {
         ),
         Text(
           'You earn 5% when someone buys an item within 7 days of watching your video. Rates are set by each shop.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -337,7 +328,6 @@ class CreatorChallengesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final s = ref.watch(creatorStatusProvider).value;
     if (s == null) {
@@ -378,27 +368,22 @@ class CreatorChallengesScreen extends ConsumerWidget {
                   s.graceEnds == null
                       ? 'Challenges unlock at ${s.threshold} followers'
                       : 'Creator access ends ${Fmt.day(s.graceEnds!)}',
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w800,
-                    color: t.onWarnFill,
-                  ),
+                  style: context.type.body.copyWith(color: t.onWarnFill),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   s.graceEnds == null
                       ? 'Keep posting clips and playing. Followers who join your Meets count.'
                       : 'You are below ${s.threshold} followers. Challenges stay on for 30 days. Get back to ${s.threshold} to keep them.',
-                  style: OgText.body(13, height: 1.4, color: t.onWarnFill),
+                  style: context.type.caption.copyWith(
+                    color: t.onWarnFill,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   '${s.followers} of ${s.threshold} followers · ${s.threshold - s.followers} to go',
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w700,
-                    color: t.onWarnFill,
-                  ),
+                  style: context.type.caption.copyWith(color: t.onWarnFill),
                 ),
                 const SizedBox(height: 6),
                 ClipRRect(
@@ -414,20 +399,20 @@ class CreatorChallengesScreen extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Text(
                     '${s.graceEnds!.difference(DateTime.now()).inDays} days left',
-                    style: OgText.body(12, color: t.onWarnFill),
+                    style: context.type.caption.copyWith(color: t.onWarnFill),
                   ),
                 ],
               ],
             ),
           ),
-        Text('Your challenges', style: OgText.heading(20)),
+        Text('Your challenges', style: context.type.section),
         if (s.mine.isEmpty)
           DashedBox(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
                 'No challenges yet. Set a goal for your followers: they join, play and post their results.',
-                style: OgText.body(14, height: 1.4, color: c.textMuted),
+                style: context.type.secondary.copyWith(height: 1.4),
               ),
             ),
           )
@@ -524,14 +509,14 @@ class _NewChallengeScreenState extends ConsumerState<NewChallengeScreen> {
           hint: 'Win 5 doubles matches in 14 days',
           maxLength: 60,
         ),
-        Text('Sport', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Sport', style: context.type.body),
         KitSegments(
           labels: const ['Badminton', 'Pickleball'],
           selected: _sport == 'Badminton' ? 0 : 1,
           onSelect: (i) =>
               setState(() => _sport = i == 0 ? 'Badminton' : 'Pickleball'),
         ),
-        Text('Duration', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Duration', style: context.type.body),
         KitSegments(
           labels: const ['7 days', '14 days', '30 days'],
           selected: [7, 14, 30].indexOf(_days),

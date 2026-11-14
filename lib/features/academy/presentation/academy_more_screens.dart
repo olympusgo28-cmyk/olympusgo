@@ -9,7 +9,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -17,7 +17,7 @@ import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash, MoneyRow;
+import '../../earnings/presentation/earnings_screens.dart' show cash, MoneyRow;
 import '../application/academy_providers.dart';
 import '../domain/academy_models.dart';
 import '../domain/academy_more.dart';
@@ -79,7 +79,6 @@ class AcademySettingsScreen extends ConsumerWidget {
     id: id,
     title: 'Academy settings',
     body: (a) {
-      final c = context.og;
       final t = context.tones;
       final head = a.myRole == AcademyRole.headCoach;
       return KitScaffold(
@@ -101,14 +100,13 @@ class AcademySettingsScreen extends ConsumerWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(a.name, style: OgText.heading(22)),
+                          child: Text(a.name, style: context.type.section),
                         ),
                         if (a.verified) ...[
                           const SizedBox(width: 6),
                           KitTag(
                             'Verified',
                             height: 22,
-                            fontSize: 11,
                             background: t.successFill,
                             foreground: t.onSuccessFill,
                           ),
@@ -117,7 +115,7 @@ class AcademySettingsScreen extends ConsumerWidget {
                     ),
                     Text(
                       '${plural(a.coaches.length, 'coach', 'coaches')} · ${plural(a.students, 'student')} · ${plural(a.classes.length, 'class', 'classes')}',
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                   ],
                 ),
@@ -153,13 +151,33 @@ class AcademySettingsScreen extends ConsumerWidget {
                 subtitle: switch (a.verification) {
                   'verified' => 'Business licence checked',
                   'submitted' => 'Sent for review',
+                  'rejected' => 'Needs another look',
                   _ => 'Not verified yet',
                 },
                 chevron: head,
                 onTap: head
-                    ? () => showAcademyVerification(context, ref, a)
+                    ? () => context.push(Routes.academyVerify(a.id))
                     : () {},
               ),
+              KitNavTile(
+                icon: OgIcons.shieldTick,
+                title: 'My coaching licence',
+                subtitle: 'Your NROC licence and coach page',
+                onTap: () => context.push(Routes.coachMe),
+              ),
+              KitNavTile(
+                icon: OgIcons.calendar,
+                title: 'Lessons',
+                subtitle: 'Paid lessons and one-to-one times',
+                onTap: () => context.push(Routes.academyLessons(a.id)),
+              ),
+              if (head)
+                KitNavTile(
+                  icon: OgIcons.clipboardList,
+                  title: 'Assessment templates',
+                  subtitle: 'What your coaches score',
+                  onTap: () => context.push(Routes.assessmentTemplates(a.id)),
+                ),
               KitNavTile(
                 icon: OgIcons.people,
                 title: 'Coaches',
@@ -200,7 +218,7 @@ class AcademySettingsScreen extends ConsumerWidget {
                 KitNavTile(
                   icon: OgIcons.trash,
                   title: 'Close academy',
-                  subtitle: 'Stop classes and refund unused lessons',
+                  subtitle: 'Stop classes and refund lessons still to come',
                   danger: true,
                   onTap: () => context.push(Routes.academyClose(a.id)),
                 ),
@@ -229,7 +247,6 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final all = ref.watch(academyMessagesProvider(widget.id)).value;
     final q = _q.trim().toLowerCase();
     final shown = (all ?? const <MessageThread>[])
@@ -277,7 +294,7 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
         else if (shown.isEmpty)
           Text(
             'Nothing matches. Check the spelling or clear the search.',
-            style: OgText.body(14, color: c.textMuted),
+            style: context.type.secondary,
           )
         else
           KitCard(
@@ -293,12 +310,7 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
-                        SolidAvatar.forId(
-                          m.id,
-                          initials: m.initials,
-                          size: 44,
-                          fontSize: 15,
-                        ),
+                        SolidAvatar.forId(m.id, initials: m.initials, size: 44),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -309,25 +321,17 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
                                   Expanded(
                                     child: Text(
                                       m.name,
-                                      style: OgText.body(
-                                        15,
-                                        weight: m.unread > 0
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                      ),
+                                      style: context.type.body,
                                     ),
                                   ),
-                                  Text(
-                                    when(m.at),
-                                    style: OgText.body(12, color: c.textMuted),
-                                  ),
+                                  Text(when(m.at), style: context.type.caption),
                                 ],
                               ),
                               Text(
                                 m.last,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
@@ -344,7 +348,7 @@ class _AcademyMessagesScreenState extends ConsumerState<AcademyMessagesScreen> {
           ),
         Text(
           'To message a whole class at once, open the class and choose Message parents.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -422,7 +426,7 @@ class _AcademyCloseScreenState extends ConsumerState<AcademyCloseScreen> {
             'Close ${a.name}?',
             lead: 'This ends every class and cannot be undone.',
           ),
-          Text('What happens', style: OgText.heading(20)),
+          Text('What happens', style: context.type.section),
           KitCheckList([
             '${plural(a.classes.length, 'class', 'classes')} stop after today',
             '${plural(a.students, 'student')} and their parents are told',
@@ -514,7 +518,6 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
     id: widget.id,
     title: 'Change a class',
     body: (a) {
-      final c = context.og;
       final t = context.tones;
       if (a.classes.isEmpty) return const _NoClasses('Change a class');
       final x =
@@ -539,7 +542,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
               child: Text(
                 'Sent to $n parents as an app notification. Parents who haven’t opened it after 2 hours get an SMS.'
                 '${_mode == 'cancel' ? ' Every student has a make-up credit, valid for 30 days.' : ''}',
-                style: OgText.body(15, height: 1.45, color: c.textMuted),
+                style: context.type.secondary.copyWith(height: 1.45),
               ),
             ),
           ],
@@ -577,13 +580,9 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                         'SAT',
                         'SUN',
                       ][at.weekday - 1],
-                      style: OgText.body(
-                        11,
-                        weight: FontWeight.w800,
-                        color: t.onTag,
-                      ),
+                      style: context.type.caption.copyWith(color: t.onTag),
                     ),
-                    Text('${at.day}', style: OgText.heading(20)),
+                    Text('${at.day}', style: context.type.section),
                   ],
                 ),
               ),
@@ -592,17 +591,17 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(x.name, style: OgText.heading(18)),
+                    Text(x.name, style: context.type.section),
                     Text(
                       '${Fmt.timeRange(at, x.endOf(at))}${x.court.isEmpty ? '' : ' · ${x.court}'} · ${plural(x.enrolled, 'student')}',
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          Text('What changes?', style: OgText.heading(20)),
+          Text('What changes?', style: context.type.section),
           KitSegments(
             labels: const ['New coach', 'New time', 'Cancel'],
             selected: const ['coach', 'time', 'cancel'].indexOf(_mode),
@@ -622,7 +621,6 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
                         k.name,
                         initials: k.initials,
                         size: 40,
-                        fontSize: 14,
                       ),
                       title: k.name,
                       subtitle: k.free,
@@ -639,10 +637,10 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
             ),
             Text(
               'Same time and court. The cover coach gets this week’s lesson plan, the roster and each student’s skills.',
-              style: OgText.body(13, height: 1.4, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.4),
             ),
           ] else if (_mode == 'time') ...[
-            Text('New date', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('New date', style: context.type.body),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -671,7 +669,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
             ),
             Text(
               'Parents confirm if their child can come. Anyone who can’t gets a make-up credit automatically.',
-              style: OgText.body(13, height: 1.4, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.4),
             ),
           ] else
             KitNote(
@@ -680,7 +678,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
             ),
           Text(
             'Notice to parents · ${x.enrolled} parents',
-            style: OgText.heading(20),
+            style: context.type.section,
           ),
           KitTextArea(
             label: 'Message',
@@ -690,7 +688,7 @@ class _ChangeClassScreenState extends ConsumerState<ChangeClassScreen> {
           ),
           Text(
             'Sent as an app notification. Parents who haven’t opened it after 2 hours get an SMS.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
       );
@@ -704,7 +702,6 @@ class CoachPayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final pay = ref.watch(coachPayProvider);
     final p = pay.value;
@@ -728,8 +725,8 @@ class CoachPayScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Text(big, style: OgText.heading(20)),
-            Text(small, style: OgText.body(12, color: t.onTag)),
+            Text(big, style: context.type.section),
+            Text(small, style: context.type.caption.copyWith(color: t.onTag)),
           ],
         ),
       ),
@@ -748,20 +745,22 @@ class CoachPayScreen extends ConsumerWidget {
             children: [
               Text(
                 '${p.month.toUpperCase()} PAY',
-                style: OgText.body(
-                  12,
-                  weight: FontWeight.w800,
+                style: context.type.caption.copyWith(
                   color: t.gold,
                   letterSpacing: 0.8,
                 ),
               ),
               Text(
                 cash(p.totalCents),
-                style: OgText.heading(44, color: const Color(0xFFFFFFFF)),
+                style: context.type.score.copyWith(
+                  color: const Color(0xFFFFFFFF),
+                ),
               ),
               Text(
                 'Paid on ${Fmt.day(p.paidOn)} to your payout account.',
-                style: OgText.body(14, color: const Color(0xFFC9C6BC)),
+                style: context.type.body.copyWith(
+                  color: const Color(0xFFC9C6BC),
+                ),
               ),
             ],
           ),
@@ -775,7 +774,7 @@ class CoachPayScreen extends ConsumerWidget {
             tile('${p.covers}', 'covers'),
           ],
         ),
-        Text('This month', style: OgText.heading(20)),
+        Text('This month', style: context.type.section),
         KitCard(
           children: [
             for (final (title, sub, cents) in p.lines)
@@ -784,7 +783,7 @@ class CoachPayScreen extends ConsumerWidget {
         ),
         Text(
           'Your rate is set by the academy owner. Trial classes and make-up classes count as normal classes.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
         KitCard(
           children: [
@@ -796,7 +795,7 @@ class CoachPayScreen extends ConsumerWidget {
           ],
         ),
         if (p.past.isNotEmpty) ...[
-          Text('Past months', style: OgText.heading(20)),
+          Text('Past months', style: context.type.section),
           KitCard(
             children: [
               for (final (m, cents) in p.past)
@@ -839,10 +838,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
     return KitScaffold(
       header: const KitHeader(title: 'Curriculum'),
       children: [
-        Text(
-          'Shared by all coaches',
-          style: OgText.body(14, color: c.textMuted),
-        ),
+        Text('Shared by all coaches', style: context.type.secondary),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -858,7 +854,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
             ],
           ),
         ),
-        Text('Where each class is', style: OgText.heading(20)),
+        Text('Where each class is', style: context.type.section),
         KitCard(
           children: [
             for (final p in classes)
@@ -866,32 +862,20 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    SolidAvatar.forId(
-                      p.name,
-                      initials: p.initials,
-                      size: 36,
-                      fontSize: 12,
-                    ),
+                    SolidAvatar.forId(p.name, initials: p.initials, size: 36),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            p.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            p.sub,
-                            style: OgText.body(12, color: c.textMuted),
-                          ),
+                          Text(p.name, style: context.type.body),
+                          Text(p.sub, style: context.type.caption),
                         ],
                       ),
                     ),
                     KitTag(
                       p.behind ? '1 WEEK BEHIND' : 'ON TRACK',
                       height: 22,
-                      fontSize: 10,
                       background: p.behind ? t.warnFill : t.successFill,
                       foreground: p.behind ? t.onWarnFill : t.onSuccessFill,
                     ),
@@ -902,7 +886,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
         ),
         Text(
           'Level $_level · ${weeks?.length ?? 10} weeks',
-          style: OgText.heading(20),
+          style: context.type.section,
         ),
         if (weeks == null)
           const CupertinoActivityIndicator()
@@ -931,9 +915,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                               ),
                               child: Text(
                                 '${w.week}',
-                                style: OgText.body(
-                                  13,
-                                  weight: FontWeight.w800,
+                                style: context.type.caption.copyWith(
                                   color: w.week == 5 ? c.onPrimary : t.onTag,
                                 ),
                               ),
@@ -943,17 +925,8 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    w.topic,
-                                    style: OgText.body(
-                                      14,
-                                      weight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  Text(
-                                    w.skills,
-                                    style: OgText.body(12, color: c.textMuted),
-                                  ),
+                                  Text(w.topic, style: context.type.body),
+                                  Text(w.skills, style: context.type.caption),
                                 ],
                               ),
                             ),
@@ -961,7 +934,6 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                               KitTag(
                                 'This week',
                                 height: 22,
-                                fontSize: 11,
                                 background: t.gold,
                                 foreground: t.onGold,
                               ),
@@ -978,7 +950,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                             if (w.drills.isEmpty)
                               Text(
                                 'No drills planned yet.',
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               )
                             else
                               for (final d in w.drills)
@@ -991,24 +963,18 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
                                       Expanded(
                                         child: Text(
                                           d.name,
-                                          style: OgText.body(13),
+                                          style: context.type.caption,
                                         ),
                                       ),
                                       Text(
                                         '${d.minutes} min',
-                                        style: OgText.body(
-                                          13,
-                                          weight: FontWeight.w700,
-                                        ),
+                                        style: context.type.caption,
                                       ),
                                     ],
                                   ),
                                 ),
                             if (w.version.isNotEmpty)
-                              Text(
-                                w.version,
-                                style: OgText.body(12, color: c.textMuted),
-                              ),
+                              Text(w.version, style: context.type.caption),
                             const SizedBox(height: 6),
                             Align(
                               alignment: Alignment.centerLeft,
@@ -1029,7 +995,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> {
           ),
         Text(
           'When you edit a week, every coach teaching Level $_level sees the new plan in their class and gets a short “what changed” note.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1116,17 +1082,15 @@ class _LessonPlanEditScreenState extends ConsumerState<LessonPlanEditScreen> {
       children: [
         Text(
           'Level ${widget.level}, Week ${w.week} · ${w.topic}',
-          style: OgText.heading(20),
+          style: context.type.section,
         ),
         KitKeyValue('Skills this week', w.skills),
         Row(
           children: [
-            Expanded(child: Text('Drills', style: OgText.heading(20))),
+            Expanded(child: Text('Drills', style: context.type.section)),
             Text(
               '$total min',
-              style: OgText.body(
-                14,
-                weight: FontWeight.w700,
+              style: context.type.body.copyWith(
                 color: total > 90 ? context.tones.onDangerFill : c.textMuted,
               ),
             ),
@@ -1142,12 +1106,7 @@ class _LessonPlanEditScreenState extends ConsumerState<LessonPlanEditScreen> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        d.name,
-                        style: OgText.body(14, weight: FontWeight.w600),
-                      ),
-                    ),
+                    Expanded(child: Text(d.name, style: context.type.body)),
                     KitQty(
                       value: d.minutes,
                       label: 'minutes',
@@ -1190,7 +1149,9 @@ class _LessonPlanEditScreenState extends ConsumerState<LessonPlanEditScreen> {
         if (total > 90)
           Text(
             'The plan is longer than the 90-minute class.',
-            style: OgText.body(13, color: context.tones.onDangerFill),
+            style: context.type.caption.copyWith(
+              color: context.tones.onDangerFill,
+            ),
           ),
         KitTextArea(
           label: 'Note for the other coaches',
@@ -1222,7 +1183,7 @@ class _DrillPickerState extends ConsumerState<_DrillPicker> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Drill videos', style: OgText.heading(22)),
+          Text('Drill videos', style: context.type.section),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -1255,9 +1216,7 @@ class _DrillPickerState extends ConsumerState<_DrillPicker> {
                 ),
                 child: Text(
                   d.video,
-                  style: OgText.body(
-                    11,
-                    weight: FontWeight.w700,
+                  style: context.type.caption.copyWith(
                     color: const Color(0xFFFFFFFF),
                   ),
                 ),
@@ -1334,7 +1293,6 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
     id: widget.id,
     title: 'Invite students',
     body: (a) {
-      final c = context.og;
       if (a.classes.isEmpty) return const _NoClasses('Invite students');
       final cls =
           a.classes.where((x) => x.id == _class).firstOrNull ?? a.classes.first;
@@ -1349,7 +1307,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
             'Add students to a class',
             lead: 'Parents get a link. The student joins once the parent accepts and pays the first month.',
           ),
-          Text('Class', style: OgText.heading(20)),
+          Text('Class', style: context.type.section),
           Column(
             children: [
               for (final x in a.classes)
@@ -1370,13 +1328,10 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Invite link for ${cls.name}',
-                    style: OgText.body(15, weight: FontWeight.w700),
-                  ),
+                  Text('Invite link for ${cls.name}', style: context.type.body),
                   Text(
                     '${link.replaceFirst('https://', '')} · valid 7 days',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -1412,7 +1367,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
               ),
             ],
           ),
-          Text('Or send to a parent’s mobile', style: OgText.heading(20)),
+          Text('Or send to a parent’s mobile', style: context.type.section),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1437,7 +1392,7 @@ class _InviteStudentsScreenState extends ConsumerState<InviteStudentsScreen> {
             ],
           ),
           if (pending.isNotEmpty) ...[
-            Text('Waiting for an answer', style: OgText.heading(20)),
+            Text('Waiting for an answer', style: context.type.section),
             KitCard(
               children: [
                 for (final (who, sent) in pending)
@@ -1459,7 +1414,6 @@ class AttendanceHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final s = ref.watch(studentProvider(studentId)).value;
     final lines = ref.watch(attendanceProvider(studentId)).value;
@@ -1479,8 +1433,8 @@ class AttendanceHistoryScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Text('$n', style: OgText.heading(22)),
-            Text(label, style: OgText.body(12, color: t.onTag)),
+            Text('$n', style: context.type.score),
+            Text(label, style: context.type.caption.copyWith(color: t.onTag)),
           ],
         ),
       ),
@@ -1509,7 +1463,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
             tile(count('Make-up'), 'make-up used'),
           ],
         ),
-        Text('This term', style: OgText.heading(20)),
+        Text('This term', style: context.type.section),
         KitCard(
           children: [
             for (final l in lines)
@@ -1521,14 +1475,8 @@ class AttendanceHistoryScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            Fmt.day(l.at),
-                            style: OgText.body(15, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            l.lesson,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(Fmt.day(l.at), style: context.type.body),
+                          Text(l.lesson, style: context.type.caption),
                         ],
                       ),
                     ),
@@ -1552,7 +1500,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
         ),
         Text(
           'Miss a class with 24 hours’ notice and you get 1 make-up credit. Credits last 30 days.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -1599,7 +1547,6 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final s = ref.watch(studentProvider(widget.studentId)).value;
     if (s == null) {
       return const KitScaffold(
@@ -1623,22 +1570,17 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
       children: [
         Row(
           children: [
-            SolidAvatar.forId(
-              s.id,
-              initials: s.initials,
-              size: 48,
-              fontSize: 16,
-            ),
+            SolidAvatar.forId(s.id, initials: s.initials, size: 48),
             const SizedBox(width: 12),
-            Expanded(child: Text(s.name, style: OgText.heading(20))),
+            Expanded(child: Text(s.name, style: context.type.section)),
           ],
         ),
-        Text('Today’s skills', style: OgText.heading(20)),
+        Text('Today’s skills', style: context.type.section),
         for (final k in skills)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(k.name, style: OgText.body(15, weight: FontWeight.w700)),
+              Text(k.name, style: context.type.body),
               const SizedBox(height: 6),
               KitSegments(
                 labels: [
@@ -1647,14 +1589,13 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
                 selected: SkillStatus.values.reversed.toList().indexOf(
                   _marks[k.id] ?? k.status,
                 ),
-                fontSize: 13,
                 onSelect: (i) => setState(
                   () => _marks[k.id] = SkillStatus.values.reversed.toList()[i],
                 ),
               ),
             ],
           ),
-        Text('Add a line', style: OgText.body(15, weight: FontWeight.w700)),
+        Text('Add a line', style: context.type.body),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1682,7 +1623,7 @@ class _ParentNoteScreenState extends ConsumerState<ParentNoteScreen> {
         ),
         Text(
           '${s.firstName}’s parent sees this in the app right after you send it. Other parents do not.',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
       ],
     );
@@ -1702,13 +1643,12 @@ class FilmingConsentScreen extends ConsumerStatefulWidget {
 
 class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
   bool? _own;
-  bool _train = false;
   bool _busy = false;
   DateTime? _signed;
 
   Future<void> _save(Student s) async {
     final own = _own ?? s.filmingConsent;
-    if (own || _train) {
+    if (own) {
       final ok =
           !Env.hasSupabase ||
           await ref
@@ -1720,7 +1660,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
     try {
       await ref
           .read(academyRepositoryProvider)
-          .setFilmingConsent(s.id, own: own, train: _train);
+          .setFilmingConsent(s.id, own: own);
       HapticFeedback.mediumImpact();
       ref.invalidate(studentProvider(s.id));
       if (mounted) setState(() => _signed = DateTime.now());
@@ -1751,7 +1691,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'What it is used for',
-        'Counting rallies and showing $name’s movement so the coach can explain what to work on.',
+        'Showing $name’s movement so the coach can explain what to work on.',
       ),
       (
         'Who can see it',
@@ -1759,11 +1699,11 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       ),
       (
         'How long it is kept',
-        'Clips are deleted after 90 days. The numbers in the progress report stay.',
+        'Clips are kept for 90 days, or longer if you extend them once. The numbers in the progress report stay.',
       ),
     ];
     final outcome = own
-        ? '$name’s classes will be filmed for the progress report${_train ? ', and blurred clips may help improve the camera system.' : '. Clips will not be used for model training.'}'
+        ? '$name’s classes will be filmed for the progress report.'
         : '$name still joins every class. Clips are not analysed or kept, and progress is tracked by the coach only.';
     return KitScaffold(
       header: const KitHeader(title: 'Filming consent'),
@@ -1771,9 +1711,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
         KitButton(
           label: _signed != null
               ? 'Saved'
-              : (own || _train
-                    ? 'Confirm with Face ID'
-                    : 'Save without filming'),
+              : (own ? 'Confirm with Face ID' : 'Save without filming'),
           loading: _busy,
           onPressed: _signed != null ? () => context.pop() : () => _save(s),
         ),
@@ -1781,17 +1719,12 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
       children: [
         Row(
           children: [
-            SolidAvatar.forId(
-              s.id,
-              initials: s.initials,
-              size: 48,
-              fontSize: 16,
-            ),
+            SolidAvatar.forId(s.id, initials: s.initials, size: 48),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 '${s.name}${s.age == null ? '' : ', age ${s.age}'}',
-                style: OgText.heading(20),
+                style: context.type.section,
               ),
             ),
             KitTag('Phase 2', background: t.tag, foreground: t.onTag),
@@ -1801,7 +1734,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
           'Camera filming starts with Phase 2. Your choice is saved now and applies when filming begins.',
           tone: KitTone.info,
         ),
-        Text('What you are agreeing to', style: OgText.heading(20)),
+        Text('What you are agreeing to', style: context.type.section),
         for (final (i, (title, text)) in facts.indexed)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1816,11 +1749,7 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                 ),
                 child: Text(
                   '${i + 1}',
-                  style: OgText.body(
-                    12,
-                    weight: FontWeight.w800,
-                    color: c.onPrimary,
-                  ),
+                  style: context.type.caption.copyWith(color: c.onPrimary),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1828,24 +1757,17 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: OgText.body(15, weight: FontWeight.w700),
-                    ),
+                    Text(title, style: context.type.body),
                     Text(
                       text,
-                      style: OgText.body(13, height: 1.4, color: c.textMuted),
+                      style: context.type.caption.copyWith(height: 1.4),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        Text('Your choices', style: OgText.heading(20)),
-        Text(
-          'Two separate choices. You can say yes to one and no to the other.',
-          style: OgText.body(13, color: c.textMuted),
-        ),
+        Text('Your choice', style: context.type.section),
         SwitchRow(
           compact: true,
           title: 'Film $name for their own progress',
@@ -1856,29 +1778,15 @@ class _FilmingConsentScreenState extends ConsumerState<FilmingConsentScreen> {
             _signed = null;
           }),
         ),
-        SwitchRow(
-          compact: true,
-          title: 'Use $name’s clips to improve the camera system',
-          subtitle: 'Faces are blurred first. Saying no changes nothing about classes or reports. Optional.',
-          value: _train,
-          onChanged: (v) => setState(() {
-            _train = v;
-            _signed = null;
-          }),
-        ),
         KitNote(outcome, tone: own ? KitTone.info : KitTone.soft),
         Text(
           'Change or withdraw any time in Settings > Privacy. Withdrawing deletes stored clips within 7 days.',
-          style: OgText.body(13, height: 1.4, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.4),
         ),
         if (_signed != null)
           Text(
             'Signed by you, parent · ${Fmt.dayTimeComma(_signed!)}',
-            style: OgText.body(
-              13,
-              weight: FontWeight.w700,
-              color: t.successInk,
-            ),
+            style: context.type.caption.copyWith(color: t.successInk),
           ),
       ],
     );

@@ -2,22 +2,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
-import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_toast.dart';
+import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../wallet/application/wallet_providers.dart';
-import '../../wallet/presentation/wallet_screens.dart' show cash;
+import '../../earnings/application/earnings_providers.dart';
+import '../../earnings/presentation/earnings_screens.dart' show cash;
+import '../../play/data/payment_gateway.dart' show PaymentHold;
+import '../../play/domain/meet_ops.dart' show newClientKey;
+import '../../play/presentation/pay_flow.dart' show PayingFor, finishPayment;
 import '../application/shop_providers.dart';
 import '../domain/commerce_models.dart';
 import '../domain/shop_models.dart';
@@ -29,54 +33,27 @@ class CartScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final lines = ref.watch(cartProvider).value;
-    if (lines == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Cart'),
-        children: [CupertinoActivityIndicator()],
-      );
+    final cart = ref.watch(cartProvider);
+    if (shopWaiting(cart, 'Cart', () => ref.invalidate(cartProvider))
+        case final waiting?) {
+      return waiting;
     }
+    final lines = cart.requireValue;
     final byMall = <String, List<CartLine>>{};
     for (final l in lines) {
-      byMall.putIfAbsent(l.product.mallName, () => []).add(l);
+      byMall.putIfAbsent(l.product.mallId, () => []).add(l);
     }
-    final count = lines.fold(0, (a, l) => a + l.qty);
-    final total = lines.fold(0, (a, l) => a + l.totalCents);
     Future<void> setQty(CartLine l, int q) async {
-      await ref.read(shopRepositoryProvider).setQty(l.id, q);
-      ref.invalidate(cartProvider);
+      try {
+        await ref.read(shopRepositoryProvider).setQty(l.id, q);
+        ref.invalidate(cartProvider);
+      } on AuthFailure catch (e) {
+        if (context.mounted) showOgToast(context, e.message, error: true);
+      }
     }
 
     return KitScaffold(
       header: const KitHeader(title: 'Cart'),
-      bottom: lines.isEmpty
-          ? null
-          : [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(cash(total), style: OgText.heading(22)),
-                        Text(
-                          '$count ${count == 1 ? 'item' : 'items'}',
-                          style: OgText.body(12, color: c.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  KitButton(
-                    label: 'Check out',
-                    expand: false,
-                    padding: 32,
-                    onPressed: () => context.push(Routes.checkout),
-                  ),
-                ],
-              ),
-            ],
       children: [
         if (lines.isEmpty) ...[
           DashedBox(
@@ -85,11 +62,11 @@ class CartScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Your cart is empty', style: OgText.heading(20)),
+                  Text('Your cart is empty', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
-                    'Items you add from a video, a live or a product page wait here.',
-                    style: OgText.body(14, color: c.textMuted),
+                    'Items you add from a product page wait here.',
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -106,8 +83,8 @@ class CartScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
                   child: Text(
-                    e.key,
-                    style: OgText.body(15, weight: FontWeight.w800),
+                    e.value.first.product.mallName,
+                    style: context.type.body,
                   ),
                 ),
                 for (final l in e.value)
@@ -127,18 +104,12 @@ class CartScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                l.product.name,
-                                style: OgText.body(14, weight: FontWeight.w700),
-                              ),
+                              Text(l.product.name, style: context.type.body),
                               if (l.variant.isNotEmpty)
-                                Text(
-                                  l.variant,
-                                  style: OgText.body(12, color: c.textMuted),
-                                ),
+                                Text(l.variant, style: context.type.caption),
                               Text(
                                 cash(l.product.priceCents),
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: context.type.body,
                               ),
                             ],
                           ),
@@ -151,11 +122,20 @@ class CartScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+                  child: KitButton(
+                    label:
+                        'Check out · ${cash(e.value.fold(0, (a, l) => a + l.totalCents))}',
+                    onPressed: () => context.push(Routes.checkout(e.key)),
+                  ),
+                ),
               ],
             ),
           Text(
-            'Set an item to 0 to remove it. Points and delivery are chosen at checkout.',
-            style: OgText.body(13, color: c.textMuted),
+            'Set an item to 0 to remove it. Each shop is paid separately. '
+            'Points are chosen at checkout.',
+            style: context.type.caption,
           ),
         ],
       ],
@@ -163,11 +143,14 @@ class CartScreen extends ConsumerWidget {
   }
 }
 
-/// Delivery, address and the summary; points and payment on the next step.
+/// One shop's order: where to collect, the final price, points and paying.
+/// Each shop is paid separately.
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key, this.only});
+  const CheckoutScreen({super.key, required this.mallId, this.only});
 
-  /// Buy now: just this, not the cart.
+  final String mallId;
+
+  /// Buy now, or a booked service: just this, not the cart.
   final CartLine? only;
 
   @override
@@ -175,63 +158,179 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  int _delivery = 0;
-  Address? _address;
+  ShopQuote? _quote;
+  String? _error;
+  bool _usePoints = false;
+  String? _voucherId;
   bool _busy = false;
-  List<Order>? _placed;
+  bool _pricing = true;
+  int _ask = 0;
+  String _key = newClientKey();
+  Order? _placed;
 
-  Future<void> _pay(List<CartLine> lines, Address address) async {
-    final delivery = Delivery.options[_delivery];
-    final items = lines.fold(0, (a, l) => a + l.totalCents);
-    final cap = lines.fold(0, (a, l) => a + l.product.maxPoints * 100 * l.qty);
-    final points = ref.read(walletSummaryProvider).value;
-    final have = ((points?.points ?? 0) * 100).floor();
-    final usable = [have, cap, items].reduce((a, b) => a < b ? a : b);
-    final result = await showKitSheet<(int, String)>(
-      context,
-      builder: (_) => _PaySheet(
-        items: items,
-        delivery: delivery.cents,
-        usablePoints: usable,
-        walletCents: points?.balanceCents ?? 0,
-      ),
-    );
-    if (result == null || !mounted) return;
-    setState(() => _busy = true);
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// Asks the server for the price, with as many points as fit. Only the
+  /// newest answer counts, so a quick toggle can't leave an old price showing.
+  Future<void> _load() async {
+    final ask = ++_ask;
+    setState(() => _pricing = true);
+    final repo = ref.read(shopRepositoryProvider);
     try {
-      final placed = await ref
-          .read(shopRepositoryProvider)
-          .checkout(
-            address: address,
-            delivery: delivery,
-            pointsCents: result.$1,
-            paidWith: result.$2,
+      var q = await repo.quote(
+        widget.mallId,
+        only: widget.only,
+        voucherId: _voucherId,
+      );
+      if (_usePoints && q.canRedeem) {
+        var points = q.pointsBalanceCents < q.pointsCapCents
+            ? q.pointsBalanceCents
+            : q.pointsCapCents;
+        q = await repo.quote(
+          widget.mallId,
+          only: widget.only,
+          pointsCents: points,
+          voucherId: _voucherId,
+        );
+        // Points come off whole units, so a little may not fit.
+        while (q.pointsLeftCents > 0) {
+          points -= q.pointsLeftCents;
+          q = await repo.quote(
+            widget.mallId,
             only: widget.only,
+            pointsCents: points,
+            voucherId: _voucherId,
           );
-      HapticFeedback.mediumImpact();
-      refreshShop(ref.invalidate);
-      refreshWallet(ref.invalidate);
-      if (mounted) setState(() => _placed = placed);
+        }
+      }
+      if (mounted && ask == _ask) {
+        setState(() {
+          _quote = q;
+          _error = null;
+          _pricing = false;
+        });
+      }
     } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      if (!mounted || ask != _ask) return;
+      // A voucher that can't be used any more would fail every price after
+      // this one, so it comes off and the cart is priced without it. Anything
+      // else, like a dropped connection, says nothing about the voucher.
+      if (_voucherId != null && e.message.contains('voucher')) {
+        showOgToast(context, e.message, error: true);
+        _voucherId = null;
+        _load();
+        return;
+      }
+      setState(() {
+        _pricing = false;
+        // A failed toggle keeps the price that's on screen.
+        if (_quote == null) {
+          _error = e.message;
+        } else {
+          _usePoints = _quote!.pointsCents > 0;
+          _voucherId = _quote!.voucherId;
+        }
+      });
+      if (_quote != null) showOgToast(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _pay(ShopQuote q, String mallName) async {
+    final gateway = ref.read(paymentGatewayProvider);
+    final method = await showPaySheet(
+      context,
+      kicker: 'Self-collect',
+      title: mallName,
+      subtitle: q.collectAddress,
+      lines: [
+        ('Items', cash(q.itemsCents)),
+        if (q.voucherCents > 0) ('Voucher', '−${cash(q.voucherCents)}'),
+        if (q.pointsCents > 0) ('Points used', '−${cash(q.pointsCents)}'),
+      ],
+      totalCents: q.totalCents,
+      payee: 'OlympusGO',
+      notes: [q.refundRule, 'OlympusGO holds your payment until you collect.'],
+    );
+    if (method == null || !mounted) return;
+    setState(() => _busy = true);
+    String? orderId;
+    try {
+      final (hold, id) = await ref
+          .read(shopRepositoryProvider)
+          .reserve(
+            widget.mallId,
+            key: _key,
+            expectedCents: q.totalCents,
+            pointsCents: q.pointsCents,
+            only: widget.only,
+            voucherId: q.voucherId,
+          );
+      orderId = id;
+      if (!mounted) return;
+      await finishPayment(
+        context,
+        gateway,
+        hold,
+        method,
+        paying: PayingFor.order,
+      );
+    } on AuthFailure catch (e) {
+      if (mounted) {
+        if (e.message == 'price_changed') {
+          showOgToast(context, 'The price changed. Check it and pay again.');
+          _load();
+        } else {
+          showOgToast(context, e.message, error: true);
+          if (orderId == null && e.message.contains('voucher')) _load();
+        }
+      }
+    }
+    // Pay stays off until the order has said what happened.
+    if (orderId != null && mounted) await _landed(orderId);
+    // No answer means a new try, and an order left behind stays the only one.
+    if (orderId == null) _key = newClientKey();
+    if (mounted) setState(() => _busy = false);
+  }
+
+  /// The order says what happened, whatever the waiting screen was left at. A
+  /// payment left running can still land, so Pay must not come back for it.
+  Future<void> _landed(String id) async {
+    refreshShop(ref.invalidate);
+    refreshEarnings(ref.invalidate);
+    final repo = ref.read(shopRepositoryProvider);
+    try {
+      final o = await repo.order(id);
+      if (!mounted) return;
+      switch (o.step) {
+        case OrderStep.pending:
+          showOgToast(context, 'Your order is held until you pay.');
+          context.go(Routes.order(id));
+        case OrderStep.cancelled || OrderStep.expired:
+          _key = newClientKey();
+        default:
+          HapticFeedback.mediumImpact();
+          setState(() => _placed = o);
+      }
+    } on AuthFailure {
+      if (mounted) context.go(Routes.order(id));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
-    if (_placed case final placed?) {
-      final paid = placed.fold(0, (a, o) => a + o.totalCents);
-      final pts = placed.fold(0, (a, o) => a + o.pointsCents);
+    if (_placed case final o?) {
       return KitScaffold(
         header: const KitHeader(title: 'Checkout'),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
           KitButton(
-            label: 'Track my order',
-            onPressed: () => context.go(Routes.order(placed.first.id)),
+            label: 'See my order',
+            onPressed: () => context.go(Routes.order(o.id)),
           ),
           KitButton(
             label: 'Keep shopping',
@@ -247,41 +346,54 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${Env.hasSupabase ? '${cash(paid)} to pay the shop on delivery or pickup' : '${cash(paid)} paid with ${placed.first.paidWith}'}. ${placed.length} '
-                  '${placed.length == 1 ? 'shop is' : 'shops are'} packing your order.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  '${cash(o.totalCents)} paid. ${o.mallName} will tell you '
+                  'when it’s ready. OlympusGO holds your payment until you '
+                  'collect.',
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
                 const SizedBox(height: 10),
-                for (final o in placed)
-                  KitKeyValue(
-                    o.mallName,
-                    '${o.lines.fold(0, (a, l) => a + l.qty)} ${o.lines.length == 1 && o.lines.first.qty == 1 ? 'item' : 'items'}',
-                  ),
-                if (pts > 0)
-                  KitKeyValue('Points used', (pts / 100).toStringAsFixed(1)),
+                KitKeyValue('Collect from', o.collectAddress),
+                if (o.voucherCents > 0)
+                  KitKeyValue('Voucher', '−${cash(o.voucherCents)}'),
+                if (o.pointsCents > 0)
+                  KitKeyValue('Points used', pointsText(o.pointsCents)),
               ],
             ),
           ),
         ],
       );
     }
-    final cartLines = ref.watch(cartProvider).value;
-    final lines = widget.only == null ? cartLines : [widget.only!];
-    final addresses = ref.watch(addressesProvider).value;
-    final points = ref.watch(walletSummaryProvider).value?.points ?? 0;
-    final address =
-        _address ??
-        addresses?.where((a) => a.isDefault).firstOrNull ??
-        addresses?.firstOrNull;
-    if (lines == null || addresses == null) {
+    final only = widget.only;
+    final cart = ref.watch(cartProvider);
+    if (only == null) {
+      if (shopWaiting(cart, 'Checkout', () => ref.invalidate(cartProvider))
+          case final waiting?) {
+        return waiting;
+      }
+    }
+    final lines = only != null
+        ? [only]
+        : cart.requireValue
+              .where((l) => l.product.mallId == widget.mallId)
+              .toList();
+    final q = _quote;
+    if (_error case final message?) {
+      return KitScaffold(
+        header: const KitHeader(title: 'Checkout'),
+        children: [
+          KitNote(message, tone: KitTone.warn),
+          KitButton(label: 'Try again', onPressed: _load),
+        ],
+      );
+    }
+    if (q == null) {
       return const KitScaffold(
         header: KitHeader(title: 'Checkout'),
         children: [CupertinoActivityIndicator()],
       );
     }
-    final delivery = Delivery.options[_delivery];
-    final items = lines.fold(0, (a, l) => a + l.totalCents);
-    final count = lines.fold(0, (a, l) => a + l.qty);
+    final mallName = lines.isEmpty ? 'Shop' : lines.first.product.mallName;
+    final canPay = q.canPay && ref.read(paymentGatewayProvider).canCollect;
     return KitScaffold(
       header: const KitHeader(title: 'Checkout'),
       bottom: [
@@ -292,457 +404,125 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(cash(items + delivery.cents), style: OgText.heading(22)),
-                  Text(
-                    Env.hasSupabase
-                        ? 'Pay the shop on delivery or pickup'
-                        : 'Total before points',
-                    style: OgText.body(12, color: c.textMuted),
-                  ),
+                  Text(cash(q.totalCents), style: context.type.score),
+                  Text('Final price', style: context.type.caption),
                 ],
               ),
             ),
             KitButton(
-              label: Env.hasSupabase ? 'Review order' : 'Continue to pay',
+              label: 'Pay',
               expand: false,
+              padding: 32,
               loading: _busy,
-              onPressed: lines.isEmpty || address == null
+              onPressed: q.lines.isEmpty || !canPay || _pricing
                   ? null
-                  : () => _pay(lines, address),
+                  : () => _pay(q, mallName),
             ),
           ],
         ),
       ],
       children: [
-        Pressable(
-          semanticLabel: 'Delivery address. Change',
-          onPressed: () async {
-            final picked = await context.push<Address>(Routes.addresses);
-            if (picked != null) setState(() => _address = picked);
-          },
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.borderControl, width: 1.5),
-            ),
-            child: Row(
-              children: [
-                OgIcon(OgIcons.mapPin, size: 22, color: c.text),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        address == null
-                            ? 'Add an address'
-                            : (address.pickup
-                                  ? address.label
-                                  : 'Deliver to ${address.name}'),
-                        style: OgText.body(15, weight: FontWeight.w700),
-                      ),
-                      if (address != null)
-                        Text(
-                          address.line,
-                          style: OgText.body(13, color: c.textMuted),
-                        ),
-                      if (address != null && address.phone.isNotEmpty)
-                        Text(
-                          address.phone,
-                          style: OgText.body(13, color: c.textMuted),
-                        ),
-                    ],
-                  ),
-                ),
-                Text(
-                  'Change',
-                  style: OgText.body(
-                    14,
-                    weight: FontWeight.w700,
-                    color: c.link,
-                  ),
-                ),
-              ],
-            ),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.borderControl, width: 1.5),
           ),
-        ),
-        Text('Delivery', style: OgText.heading(20)),
-        Column(
-          children: [
-            for (final (i, d) in Delivery.options.indexed)
-              KitChoiceRow(
-                title: d.name,
-                subtitle: d.sub,
-                tag: d.cents == 0 ? 'Free' : cash(d.cents),
-                selected: _delivery == i,
-                onTap: () => setState(() => _delivery = i),
-              ),
-          ],
-        ),
-        Text(
-          '$count ${count == 1 ? 'item' : 'items'}',
-          style: OgText.heading(20),
-        ),
-        KitCard(
-          children: [
-            for (final l in lines)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                child: Row(
+          child: Row(
+            children: [
+              OgIcon(OgIcons.mapPin, size: 22, color: c.text),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 48,
-                      child: ProductArtBox(product: l.product, height: 48),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l.product.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            [
-                              if (l.variant.isNotEmpty) l.variant,
-                              'qty ${l.qty}',
-                            ].join(', '),
-                            style: OgText.body(12, color: c.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      cash(l.totalCents),
-                      style: OgText.body(14, weight: FontWeight.w700),
-                    ),
+                    Text('Collect from $mallName', style: context.type.body),
+                    Text(q.collectAddress, style: context.type.caption),
                   ],
                 ),
               ),
-          ],
+            ],
+          ),
         ),
-        KitKeyValue('Items', cash(items)),
-        KitKeyValue(
-          'Delivery',
-          delivery.cents == 0 ? 'Free' : cash(delivery.cents),
-        ),
-        if (!Env.hasSupabase)
-          Text.rich(
-            TextSpan(
-              children: [
-                const TextSpan(text: 'You have '),
-                TextSpan(
-                  text: '${points.toStringAsFixed(1)} points',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const TextSpan(
-                  text:
-                      '. Choose to use them, and how to pay, on the next step.',
-                ),
-              ],
-            ),
-            style: OgText.body(14, height: 1.4, color: c.textMuted),
+        if (only?.slot case final slot?)
+          KitKeyValue('Drop off', Fmt.dayTimeComma(slot)),
+        if (q.lines.isEmpty)
+          const KitNote(
+            'Nothing here can be bought right now.',
+            tone: KitTone.warn,
           ),
-      ],
-    );
-  }
-}
-
-/// Points, how to pay, then Face ID.
-class _PaySheet extends ConsumerStatefulWidget {
-  const _PaySheet({
-    required this.items,
-    required this.delivery,
-    required this.usablePoints,
-    required this.walletCents,
-  });
-
-  final int items;
-  final int delivery;
-
-  /// In cents: 1 point is S$1.
-  final int usablePoints;
-  final int walletCents;
-
-  @override
-  ConsumerState<_PaySheet> createState() => _PaySheetState();
-}
-
-class _PaySheetState extends ConsumerState<_PaySheet> {
-  late bool _usePoints = !Env.hasSupabase && widget.usablePoints > 0;
-  String _method = Env.hasSupabase ? 'Pay the shop' : 'Card ending 4242';
-
-  int get _points => _usePoints ? widget.usablePoints : 0;
-  int get _total => widget.items + widget.delivery - _points;
-
-  Future<void> _confirm() async {
-    // Card payments are off: the order is placed and the buyer pays the
-    // shop directly.
-    if (Env.hasSupabase) {
-      Navigator.of(context).pop((0, _method));
-      return;
-    }
-    // Demo mode skips the device check, so a simulator never asks for its
-    // passcode.
-    final ok =
-        !Env.hasSupabase ||
-        await ref
-            .read(biometricVaultProvider)
-            .authenticate('Pay ${cash(_total)}');
-    if (ok && mounted) {
-      Navigator.of(context).pop((_points, _method));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final walletOk = widget.walletCents >= _total;
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'PAYMENT',
-            style: OgText.body(
-              12,
-              weight: FontWeight.w800,
-              color: c.textMuted,
-              letterSpacing: 0.8,
-            ),
-          ),
-          Text(cash(_total), style: OgText.heading(30)),
-          const SizedBox(height: 10),
-          KitKeyValue('Items', cash(widget.items)),
-          KitKeyValue(
-            'Delivery',
-            widget.delivery == 0 ? 'Free' : cash(widget.delivery),
-          ),
-          if (_points > 0) KitKeyValue('Points used', '−${cash(_points)}'),
-          if (Env.hasSupabase) ...[
-            const SizedBox(height: 8),
-            KitChoiceRow(
-              title: 'Pay the shop',
-              subtitle:
-                  'Cash or PayNow to the shop when it arrives or you '
-                  'collect it',
-              selected: true,
-              onTap: () {},
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Card, Wallet and points payments are coming. For now nothing '
-              'is charged in the app.',
-              style: OgText.body(13, color: c.textMuted),
-            ),
-            const SizedBox(height: 14),
-            KitButton(label: 'Place order', onPressed: _confirm),
-          ] else ...[
-            if (widget.usablePoints > 0)
-              SwitchRow(
-                compact: true,
-                title:
-                    'Use ${(widget.usablePoints / 100).toStringAsFixed(1)} points',
-                subtitle:
-                    'Takes ${cash(widget.usablePoints)} off. The rest stay in your wallet.',
-                value: _usePoints,
-                onChanged: (v) => setState(() => _usePoints = v),
+        KitCard(
+          children: [
+            for (final l in q.lines)
+              MoneyLine(
+                title: l.name,
+                sub: [
+                  if (l.variant.isNotEmpty) l.variant,
+                  'qty ${l.qty}',
+                  if (l.voucherCents > 0) 'voucher −${cash(l.voucherCents)}',
+                ].join(', '),
+                amount: cash(l.priceCents * l.qty),
               ),
-            const SizedBox(height: 8),
-            Text('Pay with', style: OgText.body(15, weight: FontWeight.w700)),
-            KitChoiceRow(
-              title: 'Card ending 4242',
-              subtitle: 'Default card',
-              selected: _method == 'Card ending 4242',
-              onTap: () => setState(() => _method = 'Card ending 4242'),
-            ),
-            KitChoiceRow(
-              title: 'Wallet',
-              subtitle: walletOk
-                  ? 'Balance ${cash(widget.walletCents)}'
-                  : 'Not enough in your wallet',
-              selected: _method == 'Wallet',
-              onTap: walletOk
-                  ? () => setState(() => _method = 'Wallet')
-                  : () {},
-            ),
-            KitChoiceRow(
-              title: 'PayNow',
-              subtitle: 'Opens your bank app',
-              selected: _method == 'PayNow',
-              onTap: () => setState(() => _method = 'PayNow'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Shop orders have no platform fee.',
-              style: OgText.body(13, color: c.textMuted),
-            ),
-            const SizedBox(height: 14),
-            KitButton(
-              label: 'Pay ${cash(_total)}',
-              icon: OgIcons.faceId,
-              onPressed: _confirm,
-            ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Pick a delivery address.
-class AddressesScreen extends ConsumerStatefulWidget {
-  const AddressesScreen({super.key});
-
-  @override
-  ConsumerState<AddressesScreen> createState() => _AddressesScreenState();
-}
-
-class _AddressesScreenState extends ConsumerState<AddressesScreen> {
-  String? _picked;
-
-  @override
-  Widget build(BuildContext context) {
-    final list = ref.watch(addressesProvider).value;
-    final picked = _picked ?? list?.where((a) => a.isDefault).firstOrNull?.id;
-    return KitScaffold(
-      header: const KitHeader(title: 'Addresses'),
-      bottom: [
-        KitButton(
-          label: 'Use this address',
-          onPressed: picked == null
-              ? null
-              : () => context.pop(list!.firstWhere((a) => a.id == picked)),
         ),
-        KitButton(
-          label: 'Add an address',
-          style: KitButtonStyle.outline,
-          onPressed: () => context.push(Routes.addressNew),
-        ),
-      ],
-      children: [
-        const KitTitle(
-          'Deliver to',
-          lead: 'Pick one for this order, or add a new one.',
-        ),
-        if (list == null)
-          const CupertinoActivityIndicator()
-        else
+        if (q.vouchers.isNotEmpty)
           Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final a in list)
+              Text('Use a voucher', style: context.type.body),
+              Text(
+                'One discount per item: a voucher or points.',
+                style: context.type.caption,
+              ),
+              for (final v in q.vouchers)
                 KitChoiceRow(
-                  title: a.label,
-                  subtitle: a.pickup ? a.line : '${a.name} · ${a.line}',
-                  tag: a.isDefault ? 'Default' : null,
-                  selected: picked == a.id,
-                  onTap: () => setState(() => _picked = a.id),
+                  title: v.name,
+                  tag: '−${cash(v.amountCents)}',
+                  selected: _voucherId == v.id,
+                  onTap: () {
+                    setState(
+                      () => _voucherId = _voucherId == v.id ? null : v.id,
+                    );
+                    _load();
+                  },
                 ),
             ],
           ),
+        if (q.pointsCapCents > 0 && q.canRedeem && q.pointsBalanceCents > 0)
+          SwitchRow(
+            compact: true,
+            title: 'Use points',
+            subtitle:
+                'You have ${pointsText(q.pointsBalanceCents)}. Up to '
+                '${pointsText(q.pointsCapCents)} can be used here.',
+            value: _usePoints,
+            onChanged: (v) {
+              setState(() => _usePoints = v);
+              _load();
+            },
+          ),
+        Column(
+          children: [
+            KitKeyValue('Items', cash(q.itemsCents)),
+            if (q.voucherCents > 0)
+              KitKeyValue('Voucher', '−${cash(q.voucherCents)}'),
+            if (q.pointsCents > 0)
+              KitKeyValue('Points used', '−${cash(q.pointsCents)}'),
+            KitKeyValue('Total', cash(q.totalCents)),
+          ],
+        ),
+        Text(q.refundRule, style: context.type.caption.copyWith(height: 1.45)),
+        if (!canPay)
+          const KitNote(
+            'Paying in the Shop isn’t open yet. It opens once payments are '
+            'switched on.',
+            tone: KitTone.warn,
+          ),
       ],
     );
   }
 }
 
-/// A new delivery address.
-class AddressNewScreen extends ConsumerStatefulWidget {
-  const AddressNewScreen({super.key});
-
-  @override
-  ConsumerState<AddressNewScreen> createState() => _AddressNewScreenState();
-}
-
-class _AddressNewScreenState extends ConsumerState<AddressNewScreen> {
-  final _name = TextEditingController();
-  final _phone = TextEditingController();
-  final _postal = TextEditingController();
-  final _street = TextEditingController();
-  final _unit = TextEditingController();
-  bool _default = false;
-  bool _busy = false;
-
-  @override
-  void dispose() {
-    for (final c in [_name, _phone, _postal, _street, _unit]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_name.text.trim().isEmpty ||
-        _street.text.trim().isEmpty ||
-        _postal.text.trim().length != 6) {
-      showOgToast(
-        context,
-        'Add the name, street and a 6-digit postal code.',
-        error: true,
-      );
-      return;
-    }
-    setState(() => _busy = true);
-    try {
-      await ref
-          .read(shopRepositoryProvider)
-          .saveAddress(
-            Address(
-              id: '',
-              label: _default ? 'Home' : 'Address',
-              name: _name.text.trim(),
-              line:
-                  '${_street.text.trim()}${_unit.text.trim().isEmpty ? '' : ', ${_unit.text.trim()}'}, Singapore ${_postal.text.trim()}',
-              phone: _phone.text.trim(),
-              isDefault: _default,
-            ),
-          );
-      ref.invalidate(addressesProvider);
-      if (mounted) context.pop();
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => KitScaffold(
-    header: const KitHeader(title: 'New address'),
-    bottom: [
-      KitButton(label: 'Save address', loading: _busy, onPressed: _save),
-    ],
-    children: [
-      KitInput(label: 'Name', controller: _name),
-      KitInput(
-        label: 'Mobile',
-        controller: _phone,
-        keyboardType: TextInputType.phone,
-      ),
-      KitInput(
-        label: 'Postal code',
-        controller: _postal,
-        keyboardType: TextInputType.number,
-        maxLength: 6,
-      ),
-      KitInput(label: 'Street and block', controller: _street),
-      KitInput(label: 'Unit', controller: _unit, hint: '#08-12'),
-      SwitchRow(
-        compact: true,
-        title: 'Make this my default address',
-        subtitle: 'Used first at checkout',
-        value: _default,
-        onChanged: (v) => setState(() => _default = v),
-      ),
-    ],
-  );
-}
-
-/// My orders, by step.
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key, this.tab = 'all'});
 
@@ -753,25 +533,25 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
-  static const _tabs = ['All', 'To ship', 'To receive', 'To review'];
+  static const _tabs = ['All', 'To collect', 'To review'];
   late int _tab = switch (widget.tab) {
-    'ship' => 1,
-    'receive' => 2,
-    'review' => 3,
+    'collect' => 1,
+    'review' => 2,
     _ => 0,
   };
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
-    final t = context.tones;
-    final all = ref.watch(myOrdersProvider).value;
-    final shown = (all ?? const <Order>[])
+    final orders = ref.watch(myOrdersProvider);
+    if (shopWaiting(orders, 'My orders', () => ref.invalidate(myOrdersProvider))
+        case final waiting?) {
+      return waiting;
+    }
+    final shown = orders.requireValue
         .where(
           (o) => switch (_tab) {
-            1 => o.step == OrderStep.packing,
-            2 => o.step == OrderStep.shipped,
-            3 => o.step == OrderStep.delivered && !o.reviewed,
+            1 => o.step.waiting,
+            2 => o.collectedAt != null && !o.reviewed,
             _ => true,
           },
         )
@@ -785,269 +565,319 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           padding: EdgeInsets.zero,
           onSelect: (i) => setState(() => _tab = i),
         ),
-        if (all == null)
-          const CupertinoActivityIndicator()
-        else if (shown.isEmpty)
+        if (shown.isEmpty)
           DashedBox(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Nothing here. Orders in this step show up here.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           )
         else
-          for (final o in shown)
-            Pressable(
-              semanticLabel: '${o.mallName}, ${o.summary}, ${o.step.label}',
-              onPressed: () => context.push(Routes.order(o.id)),
-              child: KitCard(
-                padding: const EdgeInsets.all(14),
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              o.mallName,
-                              style: OgText.body(15, weight: FontWeight.w800),
-                            ),
-                          ),
-                          KitTag(
-                            o.service && o.step == OrderStep.packing
-                                ? 'Booked'
-                                : o.step.label,
-                            background: o.step == OrderStep.cancelled
-                                ? t.dangerFill
-                                : t.tag,
-                            foreground: o.step == OrderStep.cancelled
-                                ? t.onDangerFill
-                                : t.onTag,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        o.summary,
-                        style: OgText.body(14, weight: FontWeight.w600),
-                      ),
-                      Text(
-                        o.booking ??
-                            (o.arrives == null ||
-                                    o.step == OrderStep.delivered ||
-                                    o.step == OrderStep.cancelled
-                                ? 'Ordered ${Fmt.day(o.placedAt)}'
-                                : 'Arrives ${Fmt.day(o.arrives!)}'),
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              cash(o.totalCents),
-                              style: OgText.heading(18),
-                            ),
-                          ),
-                          if (o.step == OrderStep.shipped)
-                            KitButton(
-                              label: 'Confirm received',
-                              expand: false,
-                              height: 38,
-                              radius: 19,
-                              fontSize: 13,
-                              onPressed: () async {
-                                await ref
-                                    .read(shopRepositoryProvider)
-                                    .confirmReceived(o.id);
-                                refreshShop(ref.invalidate);
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          for (final o in shown) OrderCard(order: o, route: Routes.order(o.id)),
       ],
     );
   }
 }
 
-/// One order: the tracking steps, items, totals and what you can do.
-class OrderDetailScreen extends ConsumerWidget {
+/// A row in a list of orders, for the buyer or the shop.
+class OrderCard extends StatelessWidget {
+  const OrderCard({
+    super.key,
+    required this.order,
+    required this.route,
+    this.line,
+    this.amount,
+  });
+
+  final Order order;
+  final String route;
+
+  /// The line under the summary, when not the collection date.
+  final String? line;
+  final int? amount;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tones;
+    final o = order;
+    final bad = o.step.ended || o.step == OrderStep.reported;
+    return Pressable(
+      semanticLabel: '${o.mallName}, ${o.summary}, ${o.step.label}',
+      onPressed: () => context.push(route),
+      child: KitCard(
+        padding: const EdgeInsets.all(14),
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(o.mallName, style: context.type.body)),
+                  KitTag(
+                    o.step.label,
+                    background: bad ? t.dangerFill : t.tag,
+                    foreground: bad ? t.onDangerFill : t.onTag,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(o.summary, style: context.type.body),
+              Text(
+                line ??
+                    (o.slotAt != null
+                        ? 'Drop off ${Fmt.dayTimeComma(o.slotAt!)}'
+                        : o.step.waiting && o.collectBy != null
+                        ? 'Collect by ${Fmt.day(o.collectBy!)}'
+                        : 'Ordered ${Fmt.day(o.placedAt)}'),
+                style: context.type.caption,
+              ),
+              const SizedBox(height: 8),
+              Text(cash(amount ?? o.totalCents), style: context.type.section),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Where an ended order's money went, without promising what isn't known.
+String shopMoneyLine(Order o) => o.disputeStatus == 'lost'
+    ? 'Your bank returned your payment.'
+    : o.refundStatus == 'failed'
+    ? 'Your refund hasn’t gone through yet. We’re on it.'
+    : o.refundedCents > 0
+    ? '${cash(o.refundedCents)} goes back to how you paid.'
+    : o.disputeStatus == 'open'
+    ? 'Your refund is on hold while your bank looks into a dispute.'
+    : o.paid
+    ? 'We’re sorting out your refund and will be in touch.'
+    : o.paymentStatus == 'cancel_requested'
+    ? 'You haven’t been charged. If a payment still lands, it all comes back.'
+    : 'You weren’t charged.';
+
+/// One order: where it is, the items, and what you can do.
+class OrderDetailScreen extends ConsumerStatefulWidget {
   const OrderDetailScreen({super.key, required this.id});
 
   final String id;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final t = context.tones;
-    final o = ref.watch(orderDetailProvider(id)).value;
-    if (o == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Order'),
-        children: [CupertinoActivityIndicator()],
-      );
+  ConsumerState<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
+  bool _busy = false;
+  bool _paying = false;
+
+  Future<void> _collected() async {
+    final yes = await showKitSheet<bool>(
+      context,
+      builder: (sheet) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Got everything?', style: context.type.title),
+          const SizedBox(height: 8),
+          Text(
+            'OlympusGO pays the shop now, and sports equipment is final once '
+            'collected. Only tap this once it’s all in your hands.',
+            style: context.type.body.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          KitButton(
+            label: 'Yes, I got it all',
+            onPressed: () => Navigator.of(sheet).pop(true),
+          ),
+          const SizedBox(height: 10),
+          KitButton(
+            label: 'Not yet',
+            style: KitButtonStyle.outline,
+            onPressed: () => Navigator.of(sheet).pop(false),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(shopRepositoryProvider).collected(widget.id);
+      HapticFeedback.mediumImpact();
+      if (mounted) refreshShop(ref.invalidate);
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    final steps = [
-      ('Order placed', Fmt.dayTimeComma(o.placedAt)),
-      (
-        'Packed by ${o.mallName}',
-        o.step.index >= OrderStep.shipped.index && o.step != OrderStep.cancelled
-            ? 'Done'
-            : 'Next',
+  }
+
+  /// Picks up a payment that hasn't finished.
+  Future<void> _finishPaying(Order o) async {
+    if (_paying) return;
+    setState(() => _paying = true);
+    final gateway = ref.read(paymentGatewayProvider);
+    final method = await showPaySheet(
+      context,
+      kicker: 'Self-collect',
+      title: o.mallName,
+      subtitle: o.collectAddress,
+      lines: [
+        ('Items', cash(o.itemsCents)),
+        if (o.voucherCents > 0) ('Voucher', '−${cash(o.voucherCents)}'),
+        if (o.pointsCents > 0) ('Points used', '−${cash(o.pointsCents)}'),
+      ],
+      totalCents: o.totalCents,
+      payee: 'OlympusGO',
+      notes: const ['OlympusGO holds your payment until you collect.'],
+    );
+    if (!mounted) return;
+    if (method == null) {
+      setState(() => _paying = false);
+      return;
+    }
+    try {
+      await finishPayment(
+        context,
+        gateway,
+        PaymentHold(
+          result: 'reserved',
+          id: o.paymentId,
+          totalCents: o.totalCents,
+          holdUntil: o.holdUntil,
+          serverNow: o.serverNow,
+          method: o.paymentMethod,
+        ),
+        method,
+        paying: PayingFor.order,
+      );
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    }
+    if (!mounted) return;
+    setState(() => _paying = false);
+    refreshShop(ref.invalidate);
+    refreshEarnings(ref.invalidate);
+  }
+
+  /// Where the money went, without promising what isn't known.
+  String _moneyLine(Order o) => shopMoneyLine(o);
+
+  @override
+  Widget build(BuildContext context) {
+    final order = ref.watch(orderDetailProvider(widget.id));
+    if (shopWaiting(
+          order,
+          'Order',
+          () => ref.invalidate(orderDetailProvider(widget.id)),
+        )
+        case final waiting?) {
+      return waiting;
+    }
+    final o = order.requireValue;
+    final (title, lead) = switch (o.step) {
+      OrderStep.pending => ('To pay', 'Your order is held until you pay.'),
+      OrderStep.paid =>
+        o.service
+            ? ('Booked', '${o.mallName} has your booking.')
+            : (
+                'Paid',
+                '${o.mallName} will tell you when it’s ready to collect.',
+              ),
+      OrderStep.started => (
+        'In progress',
+        '${o.mallName} has started work on it.',
       ),
-      (
-        'With the courier',
-        o.tracking == null
-            ? 'Tracking number comes when it ships'
-            : '${o.courier ?? 'Courier'} · ${o.tracking}',
+      OrderStep.ready => (
+        'Ready to collect',
+        'OlympusGO holds your payment until you collect.',
       ),
-      (
-        'Out for delivery',
-        o.arrives == null ? '' : 'Expected ${Fmt.day(o.arrives!)}',
+      OrderStep.collected || OrderStep.released =>
+        o.collectedAt == null
+            ? (
+                'Collection time ended',
+                'The payment went to ${o.mallName}. Ask them about your order.',
+              )
+            : ('Collected', 'This sale is final.'),
+      OrderStep.reported => (
+        'Problem reported',
+        'Your payment stays held while we look into it.',
       ),
-      ('Delivered', 'You confirm, then you can review'),
-    ];
-    final reached = switch (o.step) {
-      OrderStep.toPay => 0,
-      OrderStep.packing => 1,
-      OrderStep.shipped => 3,
-      OrderStep.delivered => 5,
-      OrderStep.cancelled => 1,
+      OrderStep.cancelled => ('Cancelled', _moneyLine(o)),
+      OrderStep.expired => ('Expired', _moneyLine(o)),
+      OrderStep.refunded => ('Refunded', _moneyLine(o)),
     };
     return KitScaffold(
       header: const KitHeader(title: 'Order'),
       bottom: [
-        if (o.step == OrderStep.packing)
+        if (o.step == OrderStep.pending && o.paymentId != null)
+          KitButton(
+            label: 'Pay ${cash(o.totalCents)}',
+            loading: _paying,
+            onPressed: () => _finishPaying(o),
+          ),
+        if (o.step.waiting) ...[
+          KitButton(
+            label: 'Yes, I got it all',
+            loading: _busy,
+            onPressed: _collected,
+          ),
+          KitButton(
+            label: 'Report a problem',
+            style: KitButtonStyle.outline,
+            onPressed: () => context.push(Routes.orderProblem(o.id)),
+          ),
+        ],
+        if (o.canCancel)
           KitButton(
             label: 'Cancel order',
             style: KitButtonStyle.dangerOutline,
             onPressed: () => context.push(Routes.orderCancel(o.id)),
-          )
-        else if (o.step == OrderStep.shipped)
-          KitButton(
-            label: 'Confirm received',
-            onPressed: () async {
-              await ref.read(shopRepositoryProvider).confirmReceived(o.id);
-              refreshShop(ref.invalidate);
-            },
-          )
-        else if (o.step == OrderStep.cancelled)
+          ),
+        if (o.refundedCents > 0)
           KitButton(
             label: 'Refund status',
             onPressed: () => context.push(Routes.refund(o.id)),
           ),
       ],
       children: [
-        KitTitle(
-          o.step == OrderStep.cancelled
-              ? 'Cancelled'
-              : o.service
-              ? 'Booked'
-              : (o.arrives != null && o.step != OrderStep.delivered
-                    ? 'Arrives ${Fmt.day(o.arrives!)}'
-                    : o.step.label),
-          lead: o.booking ?? o.step.label,
-        ),
-        if (!o.service && o.step != OrderStep.cancelled)
-          KitCard(
-            padding: const EdgeInsets.all(14),
-            children: [
-              Column(
-                children: [
-                  for (final (i, (title, sub)) in steps.indexed)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 26,
-                            height: 26,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: i < reached ? c.primary : t.tag,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${i + 1}',
-                              style: OgText.body(
-                                12,
-                                weight: FontWeight.w800,
-                                color: i < reached ? c.onPrimary : t.onTag,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  title,
-                                  style: OgText.body(
-                                    14,
-                                    weight: FontWeight.w700,
-                                    color: i < reached ? c.text : c.textMuted,
-                                  ),
-                                ),
-                                if (sub.isNotEmpty)
-                                  Text(
-                                    sub,
-                                    style: OgText.body(12, color: c.textMuted),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ],
+        KitTitle(title, lead: lead),
+        if (o.step.waiting) ...[
+          KitNote(
+            o.step == OrderStep.ready
+                ? 'Tap “Yes, I got it all” at the shop once it’s in your hands. '
+                      'That pays the shop, and the shop should wait to see it.'
+                : 'You’ll be told when it’s ready. Tap “Yes, I got it all” only '
+                      'once it’s in your hands.',
           ),
-        Text(o.mallName, style: OgText.heading(20)),
+          if (o.collectBy != null && !o.service)
+            KitKeyValue('Collect by', Fmt.day(o.collectBy!)),
+          if (o.step == OrderStep.ready && o.releaseAt != null)
+            KitKeyValue(
+              'Payment goes to the shop',
+              Fmt.dayTimeComma(o.releaseAt!),
+            ),
+        ],
+        if (o.slotAt != null)
+          KitKeyValue('Drop off', Fmt.dayTimeComma(o.slotAt!)),
+        KitKeyValue('Collect from', o.collectAddress),
+        Text(o.mallName, style: context.type.section),
         KitCard(
           children: [
             for (final l in o.lines)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l.name,
-                            style: OgText.body(14, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            [
-                              if (l.variant.isNotEmpty) l.variant,
-                              'qty ${l.qty}',
-                            ].join(', '),
-                            style: OgText.body(12, color: c.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      cash(l.priceCents * l.qty),
-                      style: OgText.body(14, weight: FontWeight.w700),
-                    ),
-                  ],
-                ),
+              MoneyLine(
+                title: l.name,
+                sub: [
+                  if (l.variant.isNotEmpty) l.variant,
+                  'qty ${l.qty}',
+                  if (l.refundedQty > 0) '${l.refundedQty} refunded',
+                ].join(', '),
+                amount: cash(l.priceCents * l.qty),
               ),
           ],
         ),
@@ -1056,26 +886,13 @@ class OrderDetailScreen extends ConsumerWidget {
             KitKeyValue('Items', cash(o.itemsCents)),
             if (o.voucherCents > 0)
               KitKeyValue('Voucher', '−${cash(o.voucherCents)}'),
-            if (!o.service)
-              KitKeyValue(
-                'Delivery',
-                o.deliveryCents == 0 ? 'Free' : cash(o.deliveryCents),
-              ),
             if (o.pointsCents > 0)
               KitKeyValue('Points used', '−${cash(o.pointsCents)}'),
             KitKeyValue(
-              o.paidWith == 'Pay the shop'
-                  ? (o.step == OrderStep.delivered
-                        ? 'Paid to the shop'
-                        : 'To pay the shop')
-                  : 'Paid with ${o.paidWith}',
+              o.paid ? 'Paid with ${o.paidWith}' : 'Total',
               cash(o.totalCents),
             ),
-            if (o.address != null)
-              KitKeyValue(
-                o.address!.pickup ? 'Pick up' : 'Deliver to ${o.address!.name}',
-                o.address!.line,
-              ),
+            if (o.receiptNo.isNotEmpty) KitKeyValue('Receipt', o.receiptNo),
           ],
         ),
         KitCard(
@@ -1084,50 +901,104 @@ class OrderDetailScreen extends ConsumerWidget {
               icon: OgIcons.chatRound,
               title: 'Chat with ${o.mallName}',
               onTap: () => o.ownerId.isEmpty
-                  ? showOgToast(context, 'Shop chat opens with the Shop.')
+                  ? showOgToast(context, 'This shop can’t be messaged yet.')
                   : context.push(Routes.messagePlayer(o.ownerId)),
             ),
-            if (o.step == OrderStep.delivered && !o.reviewed)
+            if (o.collectedAt != null && !o.reviewed)
               KitNavTile(
                 icon: OgIcons.star,
                 title: 'Write a review',
                 subtitle: 'Help other players pick the right gear',
                 onTap: () => context.push(Routes.orderReview(o.id)),
               ),
-            if (o.returnState case final state?)
-              KitNavTile(
-                icon: OgIcons.leave,
-                title: switch (state) {
-                  'accepted' => 'Return accepted',
-                  'declined' => 'Return declined',
-                  _ => 'Return requested',
-                },
-                subtitle: state == 'requested'
-                    ? '${o.returnReason ?? ''}. ${o.mallName} answers within 2 working days'
-                    : o.returnReason,
-                onTap: () {},
-              )
-            else if (o.step == OrderStep.delivered && !o.service)
-              KitNavTile(
-                icon: OgIcons.leave,
-                title: 'Return or refund',
-                subtitle: 'Within 7 days, unused',
-                onTap: () => context.push(Routes.orderReturn(o.id)),
-              ),
             KitNavTile(
               icon: OgIcons.flag,
-              title: 'Report this order',
-              onTap: () =>
-                  context.push(Routes.reportListing('Order: ${o.summary}')),
+              title: 'Get help',
+              onTap: () => context.push(Routes.help),
             ),
           ],
         ),
+        if (o.step.waiting)
+          Text(
+            o.step == OrderStep.ready
+                ? 'Your payment goes to the shop when you tap “Yes, I got it '
+                      'all”, or on the date above.'
+                : 'Your payment goes to the shop when you tap “Yes, I got it all”.',
+            style: context.type.caption.copyWith(height: 1.45),
+          ),
       ],
     );
   }
 }
 
-/// Cancel before it ships: why, and where the refund goes.
+/// What's wrong with an order. The payment stays held until staff decide.
+class OrderProblemScreen extends ConsumerStatefulWidget {
+  const OrderProblemScreen({super.key, required this.id});
+
+  final String id;
+
+  @override
+  ConsumerState<OrderProblemScreen> createState() => _OrderProblemScreenState();
+}
+
+class _OrderProblemScreenState extends ConsumerState<OrderProblemScreen> {
+  final _note = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(shopRepositoryProvider)
+          .reportProblem(widget.id, _note.text.trim());
+      HapticFeedback.mediumImpact();
+      if (mounted) {
+        refreshShop(ref.invalidate);
+        showOgToast(context, 'Reported. Your payment stays held.');
+        context.pop();
+      }
+    } on AuthFailure catch (e) {
+      if (mounted) showOgToast(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KitScaffold(
+      header: const KitHeader(title: 'Report a problem'),
+      bottom: [
+        ListenableBuilder(
+          listenable: _note,
+          builder: (_, _) => KitButton(
+            label: _note.text.trim().isEmpty ? 'Tell us what’s wrong' : 'Send',
+            loading: _busy,
+            onPressed: _note.text.trim().isEmpty ? null : _send,
+          ),
+        ),
+      ],
+      children: [
+        const KitTitle(
+          'What’s wrong?',
+          lead:
+              'Wrong item, something missing or damaged. Your payment stays '
+              'held while OlympusGO looks into it, and we’ll tell you the '
+              'outcome.',
+        ),
+        KitTextArea(label: 'What happened', controller: _note),
+      ],
+    );
+  }
+}
+
+/// Cancel before collecting: why, and where the refund goes.
 class OrderCancelScreen extends ConsumerStatefulWidget {
   const OrderCancelScreen({super.key, required this.id});
 
@@ -1139,20 +1010,24 @@ class OrderCancelScreen extends ConsumerStatefulWidget {
 
 class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
   String? _why;
-  bool _toWallet = true;
   bool _busy = false;
   int? _done;
+  Order? _was;
 
-  Future<void> _cancel() async {
-    setState(() => _busy = true);
+  Future<void> _cancel(Order o) async {
+    setState(() {
+      _busy = true;
+      _was = o;
+    });
     try {
       final back = await ref
           .read(shopRepositoryProvider)
-          .cancelOrder(widget.id, reason: _why!, toWallet: _toWallet);
+          .cancelOrder(widget.id, reason: _why!);
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       refreshShop(ref.invalidate);
-      refreshWallet(ref.invalidate);
-      if (mounted) setState(() => _done = back);
+      refreshEarnings(ref.invalidate);
+      setState(() => _done = back);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -1162,14 +1037,13 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
-    final o = ref.watch(orderDetailProvider(widget.id)).value;
+    final order = ref.watch(orderDetailProvider(widget.id));
     if (_done case final back?) {
       return KitScaffold(
         header: const KitHeader(title: 'Cancel order'),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
-          if (!Env.hasSupabase)
+          if (back > 0)
             KitButton(
               label: 'Track the refund',
               onPressed: () =>
@@ -1177,9 +1051,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
             ),
           KitButton(
             label: 'Back to my orders',
-            style: Env.hasSupabase
-                ? KitButtonStyle.primary
-                : KitButtonStyle.outline,
+            style: back > 0 ? KitButtonStyle.outline : KitButtonStyle.primary,
             onPressed: () => context.go(Routes.orders()),
           ),
         ],
@@ -1188,21 +1060,36 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              Env.hasSupabase
-                  ? 'Nothing was charged, so there is nothing to refund. The shop has been told.'
-                  : '${cash(back)} refunded. It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. Points you used are back in your wallet.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              [
+                if (back > 0)
+                  '${cash(back)} goes back to how you paid.'
+                else if (_was?.paymentMethod != null && _was?.paid != true)
+                  'You haven’t been charged. If a payment still lands, it all comes back.'
+                else if (_was?.paid == true)
+                  'We’re sorting out your refund and will be in touch.'
+                else
+                  'You weren’t charged.',
+                if ((_was?.pointsCents ?? 0) > 0)
+                  'Points you used are back with you.',
+                if ((_was?.voucherCents ?? 0) > 0)
+                  'Your voucher is back in My vouchers, with the same use-by '
+                      'date.',
+              ].join(' '),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
       );
     }
-    if (o == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Cancel order'),
-        children: [CupertinoActivityIndicator()],
-      );
+    if (shopWaiting(
+          order,
+          'Cancel order',
+          () => ref.invalidate(orderDetailProvider(widget.id)),
+        )
+        case final waiting?) {
+      return waiting;
     }
+    final o = order.requireValue;
     return KitScaffold(
       header: const KitHeader(title: 'Cancel order'),
       bottom: [
@@ -1210,7 +1097,7 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
           label: _why == null ? 'Pick a reason' : 'Cancel order',
           style: KitButtonStyle.danger,
           loading: _busy,
-          onPressed: _why == null ? null : _cancel,
+          onPressed: _why == null ? null : () => _cancel(o),
         ),
       ],
       children: [
@@ -1218,18 +1105,18 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
           children: [
             MoneyLine(
               title: o.summary,
-              sub: '${o.mallName} · being packed',
+              sub: '${o.mallName} · ${o.step.label}',
               amount: cash(o.totalCents),
             ),
           ],
         ),
-        Text('Why are you cancelling?', style: OgText.heading(20)),
+        Text('Why are you cancelling?', style: context.type.section),
         Column(
           children: [
             for (final r in const [
               'Ordered by mistake',
               'Found it cheaper',
-              'Delivery takes too long',
+              'Can’t get to the shop',
               'Changed my mind',
             ])
               KitChoiceRow(
@@ -1239,32 +1126,11 @@ class _OrderCancelScreenState extends ConsumerState<OrderCancelScreen> {
               ),
           ],
         ),
-        if (Env.hasSupabase)
-          Text(
-            'You pay the shop on delivery or pickup, so nothing has been '
-            'charged. You can cancel free until the shop ships.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
-          )
-        else ...[
-          Text('Where should the refund go?', style: OgText.heading(20)),
-          KitChoiceRow(
-            title: 'Wallet',
-            subtitle: '${cash(o.totalCents)} · instant',
-            selected: _toWallet,
-            onTap: () => setState(() => _toWallet = true),
-          ),
-          KitChoiceRow(
-            title: 'Card ending 4242',
-            subtitle: '${cash(o.totalCents)} · 3 to 5 working days',
-            selected: !_toWallet,
-            onTap: () => setState(() => _toWallet = false),
-          ),
-          Text(
-            'You can cancel free until the shop ships. Shop orders have no '
-            'platform fee, so you get all of it back either way.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
-          ),
-        ],
+        Text(
+          'You can cancel free until you collect. There is no platform fee on '
+          'Shop orders, so all of it goes back to how you paid.',
+          style: context.type.caption.copyWith(height: 1.45),
+        ),
       ],
     );
   }
@@ -1292,12 +1158,12 @@ class MoneyLine extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: OgText.body(15, weight: FontWeight.w700)),
-              Text(sub, style: OgText.body(13, color: context.og.textMuted)),
+              Text(title, style: context.type.body),
+              Text(sub, style: context.type.caption),
             ],
           ),
         ),
-        Text(amount, style: OgText.heading(18)),
+        Text(amount, style: context.type.section),
       ],
     ),
   );
@@ -1313,24 +1179,26 @@ class RefundStatusScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final t = context.tones;
-    final o = ref.watch(orderDetailProvider(id)).value;
-    if (o == null) {
-      return const KitScaffold(
-        header: KitHeader(title: 'Refund'),
-        children: [CupertinoActivityIndicator()],
-      );
+    final order = ref.watch(orderDetailProvider(id));
+    if (shopWaiting(
+          order,
+          'Refund',
+          () => ref.invalidate(orderDetailProvider(id)),
+        )
+        case final waiting?) {
+      return waiting;
     }
-    final wallet = o.refundTo == 'Wallet';
+    final o = order.requireValue;
     final steps = [
-      ('Order cancelled', 'Today'),
-      ('Refund approved', 'Automatic before shipping'),
-      ('Sent to ${wallet ? 'your Wallet' : 'your card'}', 'Today'),
-      (
-        'In your account',
-        wallet ? 'Already there' : 'Card refunds take 3 to 5 working days',
-      ),
+      ('Refund approved', ''),
+      ('Sent back to how you paid', ''),
+      ('In your account', 'Card refunds take 3 to 5 working days'),
     ];
-    final done = wallet ? 4 : 3;
+    final (title, done) = switch (o.refundStatus) {
+      'done' => ('Refunded', 3),
+      'failed' => ('Taking longer than usual', 1),
+      _ => ('On its way', 1),
+    };
     return KitScaffold(
       header: const KitHeader(title: 'Refund'),
       bottom: [
@@ -1346,8 +1214,8 @@ class RefundStatusScreen extends ConsumerWidget {
       ],
       children: [
         KitTitle(
-          wallet ? 'Refunded' : 'On its way',
-          lead: '${cash(o.refundCents)} · ${o.summary} · ${o.mallName}',
+          title,
+          lead: '${cash(o.refundedCents)} · ${o.summary} · ${o.mallName}',
         ),
         KitCard(
           padding: const EdgeInsets.all(14),
@@ -1369,9 +1237,7 @@ class RefundStatusScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             '${i + 1}',
-                            style: OgText.body(
-                              12,
-                              weight: FontWeight.w800,
+                            style: context.type.caption.copyWith(
                               color: i < done ? c.onPrimary : t.onTag,
                             ),
                           ),
@@ -1381,14 +1247,9 @@ class RefundStatusScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                title,
-                                style: OgText.body(14, weight: FontWeight.w700),
-                              ),
-                              Text(
-                                sub,
-                                style: OgText.body(12, color: c.textMuted),
-                              ),
+                              Text(title, style: context.type.body),
+                              if (sub.isNotEmpty)
+                                Text(sub, style: context.type.caption),
                             ],
                           ),
                         ),
@@ -1399,28 +1260,34 @@ class RefundStatusScreen extends ConsumerWidget {
             ),
           ],
         ),
-        KitKeyValue('To', o.refundTo ?? 'Card'),
-        if (o.pointsCents > 0)
+        KitKeyValue('To', o.paidWith),
+        if (o.pointsCents > 0 && o.step == OrderStep.cancelled)
           KitKeyValue(
             'Points returned',
-            '${(o.pointsCents / 100).toStringAsFixed(1)}, already in your wallet',
+            '${pointsText(o.pointsCents)}, already back with you',
           ),
-        KitKeyValue('Reference', 'RF-${o.id.toUpperCase()}'),
+        if (o.voucherCents > 0 && o.step == OrderStep.cancelled)
+          const KitKeyValue('Voucher returned', 'Back in My vouchers'),
+        if (o.receiptNo.isNotEmpty) KitKeyValue('Reference', o.receiptNo),
         Text(
-          'Wallet refunds are instant. Card and PayNow refunds depend on your bank.',
-          style: OgText.body(13, color: c.textMuted),
+          'Card and PayNow refunds depend on your bank.',
+          style: context.type.caption,
         ),
       ],
     );
   }
 }
 
-/// Report a listing, shop, review or order.
+/// Report a listing.
 class ReportListingScreen extends ConsumerStatefulWidget {
-  const ReportListingScreen({super.key, required this.what});
+  const ReportListingScreen({
+    super.key,
+    required this.productId,
+    required this.name,
+  });
 
-  /// "Listing: Carbon racket 4U".
-  final String what;
+  final String productId;
+  final String name;
 
   @override
   ConsumerState<ReportListingScreen> createState() =>
@@ -1447,7 +1314,6 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
   ];
 
   String? _why;
-  bool _hide = true;
   final _note = TextEditingController();
   bool _busy = false;
   bool _sent = false;
@@ -1463,7 +1329,7 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
     try {
       await ref
           .read(shopRepositoryProvider)
-          .report(widget.what, reason: _why!, note: _note.text.trim());
+          .report(widget.productId, reason: _why!, note: _note.text.trim());
       HapticFeedback.mediumImpact();
       if (mounted) setState(() => _sent = true);
     } on AuthFailure catch (e) {
@@ -1475,8 +1341,6 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
-    final parts = widget.what.split(': ');
     if (_sent) {
       return KitScaffold(
         header: const KitHeader(title: 'Report'),
@@ -1489,7 +1353,7 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
             child: Text(
               'Thank you. We review every report within 24 hours, and urgent '
               'ones first. If someone is in danger, call 999.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1506,18 +1370,12 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
       ],
       children: [
         KitCard(
-          children: [
-            MoneyLine(
-              title: parts.length > 1 ? parts[1] : widget.what,
-              sub: parts.length > 1 ? parts[0] : 'Report',
-              amount: '',
-            ),
-          ],
+          children: [MoneyLine(title: widget.name, sub: 'Listing', amount: '')],
         ),
-        Text('What is wrong with it?', style: OgText.heading(20)),
+        Text('What is wrong with it?', style: context.type.section),
         Text(
-          'Reports are private. The seller is not told who reported.',
-          style: OgText.body(13, color: c.textMuted),
+          'Reports are private. The shop is not told who reported.',
+          style: context.type.caption,
         ),
         Column(
           children: [
@@ -1532,13 +1390,6 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
           ],
         ),
         KitTextArea(label: 'Tell us more', optional: true, controller: _note),
-        SwitchRow(
-          compact: true,
-          title: 'Hide this from me now',
-          subtitle: 'You won’t see it while we review',
-          value: _hide,
-          onChanged: (v) => setState(() => _hide = v),
-        ),
         if (_why != null && _reasons.any((r) => r.$1 == _why && r.$3))
           KitNote('Urgent reports are reviewed first.', tone: KitTone.warn),
       ],
@@ -1546,7 +1397,7 @@ class _ReportListingScreenState extends ConsumerState<ReportListingScreen> {
   }
 }
 
-/// Rate a delivered order: stars, what stood out, and a few words.
+/// Rate a collected order: stars, what stood out, and a few words.
 class WriteReviewScreen extends ConsumerStatefulWidget {
   const WriteReviewScreen({super.key, required this.id});
 
@@ -1562,8 +1413,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     'True to size',
     'Comfortable',
     'Good value',
-    'Fast delivery',
-    'Well packed',
+    'Quick to get ready',
+    'Helpful shop',
   ];
   static const _words = [
     'Tap to rate',
@@ -1600,8 +1451,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             showLevel: _showLevel,
           );
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       refreshShop(ref.invalidate);
-      if (mounted) setState(() => _sent = true);
+      setState(() => _sent = true);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -1630,7 +1482,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             child: Text(
               'Thanks. Reviews from players at your level help others pick '
               'the right gear.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1669,14 +1521,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      o.summary,
-                      style: OgText.body(15, weight: FontWeight.w700),
-                    ),
-                    Text(
-                      o.mallName,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
+                    Text(o.summary, style: context.type.body),
+                    Text(o.mallName, style: context.type.caption),
                   ],
                 ),
               ),
@@ -1702,10 +1548,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(_words[_stars], style: OgText.heading(24)),
+            Text(_words[_stars], style: context.type.title),
           ],
         ),
-        Text('What stood out?', style: OgText.heading(20)),
+        Text('What stood out?', style: context.type.section),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1731,171 +1577,6 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           selected: _showLevel,
           multi: true,
           onTap: () => setState(() => _showLevel = !_showLevel),
-        ),
-      ],
-    );
-  }
-}
-
-/// Ask the shop to take a delivered item back.
-class ReturnRequestScreen extends ConsumerStatefulWidget {
-  const ReturnRequestScreen({super.key, required this.id});
-
-  final String id;
-
-  @override
-  ConsumerState<ReturnRequestScreen> createState() =>
-      _ReturnRequestScreenState();
-}
-
-class _ReturnRequestScreenState extends ConsumerState<ReturnRequestScreen> {
-  static const _reasons = [
-    ('Wrong size', 'Too small or too big'),
-    ('Damaged or faulty', 'Arrived broken or does not work'),
-    ('Not as described', 'Different from the photos or details'),
-    ('Changed my mind', 'Item is unused'),
-  ];
-  static const _wants = ['Refund', 'Exchange for another size'];
-
-  String? _why;
-  String _want = _wants.first;
-  bool _busy = false;
-  bool _sent = false;
-
-  Future<void> _send() async {
-    setState(() => _busy = true);
-    try {
-      await ref
-          .read(shopRepositoryProvider)
-          .requestReturn(widget.id, reason: _why!, want: _want);
-      HapticFeedback.mediumImpact();
-      refreshShop(ref.invalidate);
-      if (mounted) setState(() => _sent = true);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final o = ref.watch(orderDetailProvider(widget.id)).value;
-    if (_sent) {
-      return KitScaffold(
-        header: const KitHeader(title: 'Return an item'),
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-        bottom: [
-          KitButton(
-            label: 'Back to my orders',
-            onPressed: () => context.go(Routes.orders()),
-          ),
-        ],
-        children: [
-          const KitDoneBanner(title: 'Request sent'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  o == null ? _want : '$_want, ${cash(o.itemsCents)}',
-                  style: OgText.heading(26),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${o?.mallName ?? 'The shop'} answers within 2 working days '
-                  'and arranges the return with you.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-    final deadline = o == null
-        ? null
-        : (o.deliveredAt ?? o.arrives ?? o.placedAt).add(
-            const Duration(days: 7),
-          );
-    return KitScaffold(
-      header: const KitHeader(title: 'Return an item'),
-      bottom: [
-        KitButton(
-          label: _why == null ? 'Pick a reason' : 'Send return request',
-          loading: _busy,
-          onPressed: _why == null ? null : _send,
-        ),
-      ],
-      children: [
-        if (o != null)
-          Row(
-            children: [
-              SizedBox(
-                width: 56,
-                child: ProductArtBox(
-                  height: 56,
-                  product: Product(
-                    id: '',
-                    name: o.lines.first.name,
-                    mallId: o.mallId,
-                    mallName: o.mallName,
-                    priceCents: o.lines.first.priceCents,
-                    art: o.lines.first.art,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      o.summary,
-                      style: OgText.body(15, weight: FontWeight.w700),
-                    ),
-                    Text(
-                      o.mallName,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              Text(cash(o.itemsCents), style: OgText.heading(20)),
-            ],
-          ),
-        Text('Why are you returning it?', style: OgText.heading(20)),
-        Column(
-          children: [
-            for (final (title, sub) in _reasons)
-              KitChoiceRow(
-                title: title,
-                subtitle: sub,
-                selected: _why == title,
-                onTap: () => setState(() => _why = title),
-              ),
-          ],
-        ),
-        Text('What would you like?', style: OgText.heading(20)),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final w in _wants)
-              KitChip(
-                label: w,
-                selected: _want == w,
-                onTap: () => setState(() => _want = w),
-              ),
-          ],
-        ),
-        KitNote(
-          '${o?.mallName ?? 'The shop'} accepts returns within 7 days if the '
-          'item is unused${deadline == null ? '' : '. You have until ${Fmt.day(deadline)}'}. '
-          '${Env.hasSupabase ? 'You paid the shop directly, so it refunds you directly.' : 'Points you used come back to your wallet.'}',
-          tone: KitTone.warn,
         ),
       ],
     );

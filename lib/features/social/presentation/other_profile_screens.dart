@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -33,8 +33,8 @@ class OtherProfileScreen extends ConsumerWidget {
 
     Widget stat(String value, String label) => Column(
       children: [
-        Text(value, style: OgText.display(22, color: c.text)),
-        Text(label, style: OgText.body(13, color: c.textMuted)),
+        Text(value, style: context.type.score),
+        Text(label, style: context.type.caption),
       ],
     );
 
@@ -63,7 +63,7 @@ class OtherProfileScreen extends ConsumerWidget {
             Text(
               "This profile isn't available.",
               textAlign: TextAlign.center,
-              style: OgText.lead(c.textMuted),
+              style: context.type.secondary,
             ),
           ],
           _ => [
@@ -96,7 +96,6 @@ class OtherProfileScreen extends ConsumerWidget {
           tone: AvatarTone.forId(p.id),
           imageUrl: p.avatarUrl,
           size: 104,
-          fontSize: 38,
         ),
       ),
       const SizedBox(height: 12),
@@ -105,13 +104,13 @@ class OtherProfileScreen extends ConsumerWidget {
         child: Text(
           p.displayName,
           textAlign: TextAlign.center,
-          style: OgText.display(28, color: c.text),
+          style: context.type.title,
         ),
       ),
       Text(
         [if (p.username != null) p.handle, d.country.name].join(' · '),
         textAlign: TextAlign.center,
-        style: OgText.body(15, color: c.textMuted),
+        style: context.type.secondary,
       ),
       const SizedBox(height: 16),
       Row(
@@ -132,13 +131,11 @@ class OtherProfileScreen extends ConsumerWidget {
                 ? OgButton.outline(
                     label: 'Following',
                     height: 52,
-                    fontSize: 18,
                     onPressed: () => _toggle(context, ref),
                   )
                 : OgButton(
                     label: d.social.followsMe ? 'Follow back' : 'Follow',
                     height: 52,
-                    fontSize: 18,
                     onPressed: () => _toggle(context, ref),
                   ),
           ),
@@ -147,7 +144,6 @@ class OtherProfileScreen extends ConsumerWidget {
             child: OgButton.outline(
               label: 'Message',
               height: 52,
-              fontSize: 18,
               onPressed: () => context.push(Routes.messagePlayer(p.id)),
             ),
           ),
@@ -155,10 +151,10 @@ class OtherProfileScreen extends ConsumerWidget {
       ),
       if (d.bio != null && d.bio!.isNotEmpty) ...[
         const SizedBox(height: 16),
-        Text(d.bio!, style: OgText.body(15, height: 1.45, color: c.text)),
+        Text(d.bio!, style: context.type.body.copyWith(height: 1.45)),
       ],
       if (d.sports.isNotEmpty) ...[
-        const SectionLabel('Sports and levels', top: 22, size: 13),
+        const SectionLabel('Sports and levels', top: 22),
         for (final s in d.sports)
           Container(
             constraints: const BoxConstraints(minHeight: 56),
@@ -170,18 +166,14 @@ class OtherProfileScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     Sport.fromId(s.sport).label,
-                    style: OgText.body(
-                      16,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
+                    style: context.type.body,
                   ),
                 ),
                 Text(
                   d.showLevel
                       ? 'Level ${s.level.toStringAsFixed(1)}'
                       : 'Level hidden',
-                  style: OgText.body(16, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ],
             ),
@@ -287,7 +279,7 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
           topGap: 8,
           lead: '$name will not be told who reported them.',
         ),
-        const SectionLabel('Reason', top: 22, size: 13),
+        const SectionLabel('Reason', top: 22),
         for (final r in ReportReason.values)
           RadioRow(
             label: r.label,
@@ -298,12 +290,7 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
       bottom: [
         OgButton(label: 'Send report', loading: _sending, onPressed: _report),
         const SizedBox(height: 10),
-        OgButton.outline(
-          label: 'Block $name',
-          height: 52,
-          fontSize: 18,
-          onPressed: _block,
-        ),
+        OgButton.outline(label: 'Block $name', height: 52, onPressed: _block),
       ],
     );
   }

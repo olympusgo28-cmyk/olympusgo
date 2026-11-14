@@ -5,10 +5,13 @@ import '../../features/play/domain/hub.dart';
 abstract final class Routes {
   static const splash = '/';
   static const welcome = '/welcome';
-  static const signUp = '/signup';
-  static const signUpCode = '/signup/code';
+
+  /// The saved-account tiles. With none, log in by mobile opens instead.
   static const logIn = '/login';
-  static const logInPhone = '/login/phone';
+
+  /// Log in by mobile. A number with no account signs up here too (Q247).
+  static const logInMobile = '/login/mobile';
+  static const logInEmail = '/login/email';
   static const logInUsername = '/login/username';
   static const logInCode = '/login/code';
   static const recovery = '/recovery';
@@ -21,15 +24,54 @@ abstract final class Routes {
   static const skills = '/onboarding/skills';
   static String skill(String sportId) => '/onboarding/skills/$sportId';
   static const username = '/onboarding/username';
-  static const mobile = '/onboarding/mobile';
-  static const mobileVerify = '/onboarding/mobile/verify';
+  static const addEmail = '/onboarding/email';
+  static const addEmailVerify = '/onboarding/email/verify';
   static const ready = '/ready';
 
   static const home = '/home';
   static const discover = '/discover';
+  static const find = '/find';
+  static const services = '/services';
+  static const fitness = '/fitness';
+  static const fitnessExercises = '/fitness/exercises';
+  static const fitnessExercisePick = '/fitness/exercises/pick';
+  static String fitnessExercise(String id) => '/fitness/exercises/$id';
+  static const fitnessPrograms = '/fitness/programs';
+  static String fitnessProgram(String id) => '/fitness/programs/$id';
+  static const fitnessTrain = '/fitness/train';
+  static const fitnessLog = '/fitness/log';
+  static const fitnessCalculators = '/fitness/calculators';
+  static const fitnessAiPlan = '/fitness/ai-plan';
+  static const analysis = '/fitness/analysis';
+  static const analysisAdd = '/fitness/analysis/add';
+  static String analysisClip(String id) => '/fitness/analysis/$id';
+  static String childClips(String id) => '/parent-link/children/$id/clips';
+  static const videos = '/videos';
+  static const addPost = '/videos/add';
+  static const myPosts = '/videos/mine';
+  static String reportVideo(String id) => '/videos/$id/report';
   static const scan = '/scan';
   static const inbox = '/inbox';
   static const profile = '/profile';
+
+  /// A closing account stays here until the player keeps it or logs out.
+  static const closing = '/closing';
+
+  // Parent links. Restricted players stay on these until a parent approves.
+  static const parentLink = '/parent-link';
+  static const parentCode = '/parent-link/code';
+  static const enterChildCode = '/parent-link/enter';
+  static const children = '/parent-link/children';
+  static String child(String id) => '/parent-link/children/$id';
+  static const restrictedPrefixes = [
+    parentLink,
+    settings,
+    legal,
+    '/onboarding',
+    ready,
+    setupAccount,
+    setupPersonal,
+  ];
 
   // Account set-up right after onboarding.
   static const setupAccount = '/setup/account';
@@ -37,13 +79,18 @@ abstract final class Routes {
 
   // Settings.
   static const settings = '/settings';
-  static const accountCentre = '/settings/account';
-  static const personalInfo = '/settings/personal';
-  static const accountHub = '/settings/account-centre';
+  static const editProfile = '/settings/profile';
+  static const accountInfo = '/settings/account-info';
   static const profileSports = '/settings/sports';
   static const language = '/settings/language';
   static const deleteAccount = '/settings/delete';
-  static const verifyPhoneChange = '/settings/personal/verify';
+  static const verifyPhoneChange = '/settings/account-info/verify';
+  static const changePhone = '/settings/account-info/phone';
+  static const changeEmail = '/settings/account-info/email';
+  static const timeManagement = '/settings/time';
+  static const editName = '/settings/profile/name';
+  static const editUsername = '/settings/profile/username';
+  static const editBio = '/settings/profile/bio';
   static const notifications = '/settings/notifications';
   static const privacy = '/settings/privacy';
   static const blocked = '/settings/blocked';
@@ -65,6 +112,9 @@ abstract final class Routes {
 
   // Profile and social.
   static const passport = '/profile/passport';
+  static String passportFor(String sport) =>
+      '/profile/passport?sport=${Uri.encodeQueryComponent(sport)}';
+  static const sportPassport = '/profile/sport-passport';
   static String passportHistory(String sport) =>
       '/profile/passport/history/$sport';
   static const shareProfile = '/profile/share';
@@ -81,7 +131,6 @@ abstract final class Routes {
   static String scannedPlayer(String username) => '/scan/player/$username';
 
   // Play.
-  static const editCategories = '/home/categories';
   static const play = '/home/play';
   static String playKind(ActivityKind kind) => '$play?kind=${kind.id}';
   static const playAddSport = '/play/sports';
@@ -91,11 +140,11 @@ abstract final class Routes {
   static String waitlist(String id) => '/activities/$id/waitlist';
   static String meetPlayers(String id) => '/activities/$id/players';
   static String reportActivity(String id) => '/activities/$id/report';
-  static String reportVideo(String id, {bool live = false}) =>
-      live ? '/shop/live/$id/report' : '/shop/videos/$id/report';
   static String meetWalkIn(String id) => '/activities/$id/walk-in';
   static String meetAttendance(String id) => '/activities/$id/attendance';
+  static String meetScanPlayers(String id) => '/activities/$id/scan-players';
   static String meetRecap(String id) => '/activities/$id/recap';
+  static String meetRounds(String id) => '/activities/$id/rounds';
   static String meetCancel(String id) => '/activities/$id/cancel';
   static String scoreEntry(String id) => '/activities/$id/score';
   static String score(String id) => '/scores/$id';
@@ -121,8 +170,8 @@ abstract final class Routes {
       : '/events/$id/scan?code=${Uri.encodeQueryComponent(code)}';
   static const myTickets = '/scan/tickets';
   static const checkTickets = '/scan/doors';
-  static String schedule({bool hosting = false}) =>
-      '/profile/schedule${hosting ? '?tab=hosting' : ''}';
+  static String schedule({bool hosting = false, bool lessons = false}) =>
+      '/profile/schedule${hosting ? '?tab=hosting' : (lessons ? '?tab=lessons' : '')}';
   static String checkIn(String id) => '/scan/meet/$id';
 
   // Create.
@@ -141,6 +190,7 @@ abstract final class Routes {
   static String clubsTab({bool teams = false}) =>
       teams ? '/clubs?kind=teams' : clubs;
   static const createGroup = '/clubs/start';
+  static const groupRanking = '/clubs/ranking';
   static const newClub = '/clubs/start/club';
   static const newClubSports = '/clubs/start/club/sports';
   static const newClubLevels = '/clubs/start/club/levels';
@@ -171,7 +221,6 @@ abstract final class Routes {
   static String clubSettings(String id) => '/clubs/$id/settings';
   static String clubOverview(String id, {String tab = 'about'}) =>
       '/clubs/$id/overview?tab=$tab';
-  static String clubReward(String id) => '/clubs/$id/reward';
   static String clubBans(String id) => '/clubs/$id/bans';
   static String clubTransfer(String id) => '/clubs/$id/transfer';
   static String clubLeave(String id) => '/clubs/$id/leave';
@@ -191,6 +240,8 @@ abstract final class Routes {
   static String attempt(String id) => '/game/$id/attempt';
   static String attemptReview(String id) => '/game/$id/review';
   static const leaderboards = '/game/leaderboards';
+  static const wallet = '/game/wallet';
+  static const organizerRewards = '/game/organizer';
   static String creator(String id) => '/creators/$id';
   static const creatorEarnings = '/creators/me/earnings';
   static const creatorChallenges = '/creators/me/challenges';
@@ -199,42 +250,31 @@ abstract final class Routes {
   static String gearItem(String id) => '/gear/$id';
   static String gearEdit(String id) => '/gear/$id/edit';
 
-  // Wallet.
-  static const wallet = '/wallet';
-  static const walletWithdraw = '/wallet/withdraw';
-  static const points = '/wallet/points';
-  static const receipts = '/wallet/receipts';
-  static const earnings = '/wallet/earnings';
-  static String earningsDetail(String id) => '/wallet/earnings/$id';
-  static const payout = '/wallet/payout';
-  static const payoutAccount = '/wallet/payout-account';
+  // Earnings and receipts.
+  static const points = '/points';
+  static const receipts = '/receipts';
+  static const earnings = '/earnings';
+  static String earningsDetail(String id) => '/earnings/$id';
+  static const payoutAccount = '/earnings-payout-account';
+  static const paymentMethods = '/payment-methods';
 
   // Shop.
   static const shop = '/shop';
   static String mallPage(String id) => '/shop/malls/$id';
   static String product(String id) => '/shop/products/$id';
-  static String shopVideo(String id) => '/shop/videos/$id';
-  static String shopLive(String id) => '/shop/live/$id';
   static const cart = '/shop/cart';
-  static const checkout = '/shop/checkout';
-  static const addresses = '/shop/addresses';
-  static const addressNew = '/shop/addresses/new';
+  static String checkout(String mallId) => '/shop/checkout/$mallId';
   static String orders({String tab = 'all'}) => '/shop/orders?tab=$tab';
   static String order(String id) => '/shop/orders/$id';
   static String orderCancel(String id) => '/shop/orders/$id/cancel';
   static String refund(String id) => '/shop/orders/$id/refund';
   static String orderReview(String id) => '/shop/orders/$id/review';
-  static String orderReturn(String id) => '/shop/orders/$id/return';
-  static String reportListing(String what) =>
-      '/shop/report?what=${Uri.encodeQueryComponent(what)}';
+  static String orderProblem(String id) => '/shop/orders/$id/problem';
+  static String reportListing(String id, String name) =>
+      '/shop/report/$id?name=${Uri.encodeQueryComponent(name)}';
   static String serviceBook(String id) => '/shop/services/$id';
-  static const seller = '/shop/seller';
-  static const sellerOrders = '/shop/seller/orders';
-  static String sellerOrder(String id) => '/shop/seller/orders/$id';
-  static const sellerProducts = '/shop/seller/products';
-  static String sellerProduct(String id) => '/shop/seller/products/$id';
-  static const sellerLive = '/shop/seller/live';
-  static const sellerVideo = '/shop/seller/video';
+  static const ownerOrders = '/shop/owner/orders';
+  static String ownerOrder(String id) => '/shop/owner/orders/$id';
 
   // Teams.
   static const newTeam = '/teams/start';
@@ -295,6 +335,24 @@ abstract final class Routes {
   static String studentFees(String id) => '/students/$id/fees';
   static String studentMakeup(String id) => '/students/$id/makeup';
   static String studentProgress(String id) => '/students/$id/progress';
+  static const lessons = '/lessons';
+  static String lesson(String id) => '/lessons/$id';
+  static String academyLessons(String id) => '/academies/$id/lessons';
+  static String lessonSlots(String id) => '/academies/$id/lessons/times';
+  static String lessonSlotNew(String id) => '/academies/$id/lessons/times/new';
+  static String oneToOne(String id) => '/academies/$id/one-to-one';
+  static String academyDropIn(String id) => '/academies/$id/single-class';
+  static String academyVerify(String id) => '/academies/$id/verify';
+  static String coachInvite(String id) => '/academies/$id/coach-invite';
+  static String coachPage(String id) => '/coaches/$id';
+  static const coachMe = '/coach/me';
+  static String assessmentTemplates(String id) => '/academies/$id/templates';
+  static String assessmentTemplateNew(String id) =>
+      '/academies/$id/templates/new';
+  static String assess(String studentId, {String? edit}) =>
+      '/students/$studentId/assess${edit == null ? '' : '?edit=$edit'}';
+  static String assessments(String playerId, {String? student}) =>
+      '/assessments/$playerId${student == null ? '' : '?student=$student'}';
 
   // Venues.
   static const venues = '/venues';
@@ -303,5 +361,5 @@ abstract final class Routes {
   static String courtBooking(String id) => '/court-bookings/$id';
   static String cancelCourtBooking(String id) => '/court-bookings/$id/cancel';
 
-  static const publicPrefixes = [welcome, signUp, logIn, recovery];
+  static const publicPrefixes = [welcome, logIn, recovery];
 }

@@ -56,7 +56,7 @@ abstract class ProfileBadge with _$ProfileBadge {
   const factory ProfileBadge({
     required String mark,
     required String name,
-    @Default(0xFFFFE8CC) int color,
+    @Default(0xFFFFE6D6) int color,
     @Default(0xFF7A3B00) int ink,
   }) = _ProfileBadge;
 }
@@ -108,6 +108,23 @@ class HistoryItem {
 }
 
 /// Sessions and results in one sport.
+/// A player's rating in one sport, from confirmed results.
+class RatingCard {
+  const RatingCard({
+    required this.level,
+    required this.matches,
+    required this.provisional,
+    this.history = const [],
+  });
+
+  final double level;
+  final int matches;
+  final bool provisional;
+
+  /// The rating after each result, oldest first.
+  final List<double> history;
+}
+
 class PassportHistory {
   const PassportHistory({
     this.sessions = 0,

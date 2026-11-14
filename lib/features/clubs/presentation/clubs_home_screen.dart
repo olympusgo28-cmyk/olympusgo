@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/navigation/breadcrumbs.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -177,11 +177,7 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                       padding: const EdgeInsets.only(top: 14, bottom: 2),
                       child: Text(
                         'Picked for your skill level range',
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
-                          color: c.textMuted,
-                        ),
+                        style: context.type.caption,
                       ),
                     ),
                   if (_teams) ..._teamRows(context) else ..._clubRows(context),
@@ -233,7 +229,7 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                     Crumbs.name(context, 'Group');
                     return Text(
                       'Group',
-                      style: OgText.heading(30, color: Colors.white),
+                      style: context.type.title.copyWith(color: Colors.white),
                     );
                   },
                 ),
@@ -252,16 +248,12 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                 children: [
                   Text(
                     'Start a club or a team',
-                    style: OgText.heading(32, color: Colors.white),
+                    style: context.type.title.copyWith(color: Colors.white),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Bring your regulars together',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: context.type.caption.copyWith(color: Colors.white),
                   ),
                   const SizedBox(height: 12),
                   Container(
@@ -274,11 +266,7 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                     alignment: Alignment.center,
                     child: Text(
                       'Create',
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      style: context.type.body.copyWith(color: Colors.white),
                     ),
                   ),
                 ],
@@ -316,11 +304,11 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
               onChanged: (v) => setState(() => _query = v),
               onTapOutside: (_) => FocusScope.of(context).unfocus(),
               textInputAction: TextInputAction.search,
-              style: OgText.body(16, color: c.text),
+              style: context.type.body,
               cursorColor: c.primary,
               decoration: InputDecoration(
                 hintText: 'Search clubs and teams',
-                hintStyle: OgText.body(16, color: c.textMuted),
+                hintStyle: context.type.secondary,
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -406,7 +394,7 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                         ? (_teams ? 'No teams yet' : 'No clubs yet')
                         : 'Nothing here yet'),
               textAlign: TextAlign.center,
-              style: OgText.heading(24, color: c.text),
+              style: context.type.title,
             ),
             const SizedBox(height: 6),
             Text(
@@ -414,7 +402,7 @@ class _ClubsHomeScreenState extends ConsumerState<ClubsHomeScreen> {
                   ? 'Check the spelling or try an area name.'
                   : 'Start one, or look in Recommended.',
               textAlign: TextAlign.center,
-              style: OgText.body(14, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ],
         ),
@@ -446,7 +434,7 @@ class _ClubRow extends StatelessWidget {
         child: ExcludeSemantics(
           child: Row(
             children: [
-              ClubMark(club, size: 56, radius: 18, fontSize: 22),
+              ClubMark(club, size: 56, radius: 18),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -459,37 +447,25 @@ class _ClubRow extends StatelessWidget {
                             club.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: OgText.body(
-                              17,
-                              weight: FontWeight.w600,
-                              color: c.text,
-                            ),
+                            style: context.type.section,
                           ),
                         ),
                         if (club.visibility != ClubVisibility.public) ...[
                           const SizedBox(width: 6),
-                          KitTag(
-                            club.visibility.label,
-                            height: 20,
-                            fontSize: 11,
-                          ),
+                          KitTag(club.visibility.label, height: 20),
                         ],
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '${club.memberCount} members, ${club.area}',
-                      style: OgText.body(13, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                     if (item.note.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(
                         item.note,
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
-                          color: c.link,
-                        ),
+                        style: context.type.caption.copyWith(color: c.link),
                       ),
                     ],
                   ],
@@ -522,31 +498,20 @@ class _TeamRow extends StatelessWidget {
         child: ExcludeSemantics(
           child: Row(
             children: [
-              TeamMark(team, fontSize: 22),
+              TeamMark(team),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      team.name,
-                      style: OgText.body(
-                        17,
-                        weight: FontWeight.w600,
-                        color: c.text,
-                      ),
-                    ),
+                    Text(team.name, style: context.type.section),
                     const SizedBox(height: 3),
-                    Text(item.meta, style: OgText.body(13, color: c.textMuted)),
+                    Text(item.meta, style: context.type.caption),
                     if (item.note.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(
                         item.note,
-                        style: OgText.body(
-                          13,
-                          weight: FontWeight.w600,
-                          color: c.link,
-                        ),
+                        style: context.type.caption.copyWith(color: c.link),
                       ),
                     ],
                   ],

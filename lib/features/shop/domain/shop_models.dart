@@ -14,7 +14,7 @@ abstract class Mall with _$Mall {
     @Default(0xFF5A4300) int ink,
     @Default(true) bool pointsAccepted,
 
-    /// The player who runs it, for chat.
+    /// The account that runs it, for chat.
     @Default('') String ownerId,
   }) = _Mall;
 }
@@ -30,8 +30,8 @@ abstract class Product with _$Product {
     required String mallName,
     required int priceCents,
 
-    /// Points the buyer can spend on it.
-    @Default(0) int maxPoints,
+    /// The most points that can come off one, in cents.
+    @Default(0) int pointsCapCents,
     @Default(ProductArt.bag) ProductArt art,
 
     /// The price before a deal, when there is one.
@@ -39,17 +39,13 @@ abstract class Product with _$Product {
     @Default(0) double rating,
     @Default(0) int sold,
 
-    /// "Coach Ravi", the creator who plays with it.
-    String? usedBy,
-
-    /// A service is booked (restringing), not shipped.
+    /// A service is booked (restringing), not collected off the shelf.
     @Default(false) bool service,
     @Default(10) int stock,
 
-    /// For the seller: draft, live.
     @Default(true) bool published,
 
-    /// What the seller wrote about it.
+    /// What the shop wrote about it.
     @Default('') String description,
   }) = _Product;
 

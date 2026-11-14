@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/mascot.dart';
 
 /// Splash: mascot, wordmark and three pulsing dots, then on to the app.
@@ -73,17 +73,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: Text.rich(
                     TextSpan(
                       text: 'Olympus',
-                      children: const [
+                      children: [
                         TextSpan(
                           text: 'GO',
-                          style: TextStyle(color: OgColors.orange300),
+                          style: context.type.score.copyWith(
+                            color: OgColors.orange300,
+                          ),
                         ),
                       ],
                     ),
-                    style: OgText.display(
-                      48,
-                      height: 1,
+                    style: context.type.score.copyWith(
                       color: OgColors.offWhite,
+                      height: 1,
                     ),
                   ),
                 ),

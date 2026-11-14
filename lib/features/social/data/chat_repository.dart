@@ -19,7 +19,9 @@ abstract interface class ChatRepository {
   /// Opens (or creates) the conversation with [playerId].
   Future<String> openDirect(String playerId);
 
-  Future<void> send(String conversationId, String body);
+  /// [clientId] makes a retry safe: the same id can only post once.
+  Future<void> send(String conversationId, String body, String clientId);
+  Future<void> delete(String messageId);
   Future<void> markRead(String conversationId);
 }
 
@@ -148,6 +150,8 @@ class SupabaseChatRepository implements ChatRepository {
               senderId: r['sender_id'] as String,
               body: r['body'] as String,
               createdAt: DateTime.parse(r['created_at'] as String),
+              clientId: r['client_id'] as String?,
+              deleted: r['deleted_at'] != null,
             ),
         ],
       );
@@ -184,15 +188,35 @@ class SupabaseChatRepository implements ChatRepository {
   }
 
   @override
-  Future<void> send(String conversationId, String body) async {
+  Future<void> send(String conversationId, String body, String clientId) async {
     try {
       await _client.from('messages').insert({
         'conversation_id': conversationId,
         'sender_id': _me,
         'body': body,
+        'client_id': clientId,
       });
-    } on PostgrestException {
+    } on PostgrestException catch (e) {
+      // Already there: an earlier try reached the server, so this one worked.
+      if (e.code == '23505') return;
+      if (e.code == 'P0001') throw AuthFailure(e.message);
       throw const AuthFailure("Your message didn't send. Try again.");
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw const AuthFailure("Your message didn't send. Try again.");
+    }
+  }
+
+  @override
+  Future<void> delete(String messageId) async {
+    try {
+      await _client.rpc(
+        'message_delete',
+        params: {'p_message': int.parse(messageId)},
+      );
+    } on PostgrestException {
+      throw const AuthFailure("That didn't work. Try again.");
     }
   }
 
@@ -259,7 +283,7 @@ class DemoChatRepository implements ChatRepository {
   }
 
   @override
-  Future<void> send(String conversationId, String body) async {
+  Future<void> send(String conversationId, String body, String clientId) async {
     final list = _w.messages.putIfAbsent(conversationId, () => []);
     list.add(
       ChatMessage(
@@ -267,10 +291,24 @@ class DemoChatRepository implements ChatRepository {
         senderId: DemoWorld.me,
         body: body,
         createdAt: DateTime.now(),
+        clientId: clientId,
       ),
     );
     _thread(conversationId).add([...list]);
     _inbox.add(_snapshot());
+  }
+
+  @override
+  Future<void> delete(String messageId) async {
+    for (final entry in _w.messages.entries) {
+      final i = entry.value.indexWhere((m) => m.id == messageId);
+      if (i < 0) continue;
+      entry.value[i] = entry.value[i].copyWith(
+        body: 'Message deleted',
+        deleted: true,
+      );
+      _thread(entry.key).add([...entry.value]);
+    }
   }
 
   @override

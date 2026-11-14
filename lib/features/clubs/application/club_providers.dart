@@ -64,10 +64,6 @@ Future<ClubLeaderboard> clubLeaderboard(
 ) => ref.watch(clubRepositoryProvider).leaderboard(clubId, sport);
 
 @riverpod
-Future<ClubReward> clubReward(Ref ref, String clubId) =>
-    ref.watch(clubRepositoryProvider).reward(clubId);
-
-@riverpod
 Future<List<InviteCandidate>> inviteCandidates(Ref ref) =>
     ref.watch(clubRepositoryProvider).inviteCandidates();
 
@@ -155,3 +151,7 @@ class TeamDraftController extends _$TeamDraftController {
     return id;
   }
 }
+
+@riverpod
+Future<List<GroupRank>> groupRanking(Ref ref) =>
+    ref.watch(clubRepositoryProvider).groupRanking();

@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
-import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/mascot.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_screen.dart';
+import 'saved_accounts.dart';
 
-class WelcomeScreen extends StatelessWidget {
+/// The first screen when signed out. One way in: Log in shows this phone's
+/// saved accounts, or log in by mobile when there are none (Q247).
+class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
+  Future<void> _start(BuildContext context, WidgetRef ref) async {
+    final accounts = await ref
+        .read(savedAccountsProvider.future)
+        .catchError((_) => const <Never>[]);
+    if (!context.mounted) return;
+    context.push(accounts.isEmpty ? Routes.logInMobile : Routes.logIn);
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final c = context.og;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Start reading the Keychain now, so Get started does not wait for it.
+    ref.watch(savedAccountsProvider);
     return OgFlowScreen(
       fillGap: false,
       children: [
@@ -32,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                   child: Text(
                     'Find a game.\nJoin a Meet.',
                     textAlign: TextAlign.center,
-                    style: OgText.display(36, color: c.text),
+                    style: context.type.display,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -41,7 +53,7 @@ class WelcomeScreen extends StatelessWidget {
                   child: Text(
                     'Play with people near you, keep your Passport, and grow your rating.',
                     textAlign: TextAlign.center,
-                    style: OgText.lead(c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ),
               ],
@@ -50,51 +62,7 @@ class WelcomeScreen extends StatelessWidget {
         ),
       ],
       bottom: [
-        OgButton(
-          label: 'Create account',
-          onPressed: () => context.push(Routes.signUp),
-        ),
-        const SizedBox(height: 12),
-        OgButton.outline(
-          label: 'Log in',
-          onPressed: () => context.push(Routes.logIn),
-        ),
-        const SizedBox(height: 20),
-        Semantics(
-          button: true,
-          label: 'Read the Terms of use and the Privacy policy',
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => context.push(Routes.legal),
-            child: Text.rich(
-              TextSpan(
-                text: 'By continuing you agree to the ',
-                children: [
-                  TextSpan(
-                    text: 'Terms of use',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w700,
-                      color: c.link,
-                    ),
-                  ),
-                  const TextSpan(text: ' and the '),
-                  TextSpan(
-                    text: 'Privacy policy',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w700,
-                      color: c.link,
-                    ),
-                  ),
-                  const TextSpan(text: '.'),
-                ],
-              ),
-              textAlign: TextAlign.center,
-              style: OgText.body(13, height: 1.4, color: c.textMuted),
-            ),
-          ),
-        ),
+        OgButton(label: 'Get started', onPressed: () => _start(context, ref)),
       ],
     );
   }
