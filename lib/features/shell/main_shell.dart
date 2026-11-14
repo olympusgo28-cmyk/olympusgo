@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,8 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/navigation/breadcrumbs.dart';
 import '../../core/theme/og_colors.dart';
+import '../../core/theme/og_home.dart';
+import '../../core/theme/og_layout.dart';
 import '../../core/theme/og_type.dart';
-import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../inbox/application/inbox_providers.dart';
 
@@ -58,8 +57,11 @@ const _tabs = [
   ),
 ];
 
-/// The white tab bar from the design: four labelled tabs with a pill behind
-/// the selected one, and a raised round Scan button in the middle.
+/// The floating tab bar (owner, 14 Nov 2026): a rounded pill with a shadow
+/// and a thin border, clear of the screen edges so pages scroll underneath
+/// and show around it. All five tabs, Scan included, look and behave alike:
+/// the selected one is full size with a tint behind its icon, the others are
+/// 90 % with grey icons and labels.
 class MainTabBar extends StatelessWidget {
   const MainTabBar({
     super.key,
@@ -74,47 +76,85 @@ class MainTabBar extends StatelessWidget {
   /// New conversations, shown on the Inbox tab.
   final int unread;
 
-  static double _bottom(BuildContext context) =>
-      math.max(20.0, MediaQuery.of(context).padding.bottom);
+  /// The pill itself, for tests to measure.
+  @visibleForTesting
+  static const pillKey = ValueKey('main-tab-pill');
+
+  /// 24 above the bottom on phones with a home indicator, 12 on the rest.
+  static double _gap(BuildContext context) =>
+      MediaQuery.paddingOf(context).bottom > 0
+      ? OgHomeSize.navBottomIndicator
+      : OgHomeSize.navBottomPlain;
 
   /// Height of the bar, for padding scrolling content above it.
   static double reservedHeight(BuildContext context) =>
-      8 + 62 + _bottom(context) + 16;
+      OgHomeSize.nav + _gap(context) + OgHomeSize.navBreathing;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
+    final h = context.home;
     return Semantics(
       container: true,
       label: 'Main',
-      child: Container(
-        padding: EdgeInsets.fromLTRB(8, 8, 8, _bottom(context)),
-        decoration: BoxDecoration(
-          color: c.bg,
-          border: Border(top: BorderSide(color: c.border)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var i = 0; i < _tabs.length; i++)
-              i == 2
-                  ? _ScanButton(onTap: () => onTap(i), selected: index == i)
-                  : _TabButton(
-                      icon: _tabs[i].$1,
-                      label: _tabs[i].$2,
-                      selected: i == index,
-                      badge: i == 3 ? unread : 0,
-                      onTap: () => onTap(i),
+      child: Align(
+        // The bar's own background stays clear outside the pill.
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: OgSize.readableWidth),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              OgHomeSize.navSide,
+              0,
+              OgHomeSize.navSide,
+              _gap(context),
+            ),
+            // Five labels in one row: they grow with the text size, but only
+            // so far.
+            child: MediaQuery.withClampedTextScaling(
+              maxScaleFactor: OgHomeSize.navMaxTextScale,
+              child: Container(
+                key: pillKey,
+                height: OgHomeSize.nav,
+                decoration: BoxDecoration(
+                  color: h.navSurface,
+                  borderRadius: BorderRadius.circular(OgRadius.pill),
+                  border: Border.all(
+                    color: h.navBorder,
+                    width: OgSize.hairline,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: h.shadow,
+                      blurRadius: OgSpace.s6,
+                      offset: const Offset(0, OgSpace.s2),
                     ),
-          ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++)
+                      Expanded(
+                        child: _TabButton(
+                          icon: _tabs[i].$1,
+                          label: _tabs[i].$2,
+                          selected: i == index,
+                          badge: i == 3 ? unread : 0,
+                          onTap: () => onTap(i),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _TabButton extends StatelessWidget {
+class _TabButton extends StatefulWidget {
   const _TabButton({
     required this.icon,
     required this.label,
@@ -130,133 +170,122 @@ class _TabButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final fg = selected ? c.link : c.textMuted;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: badge > 0 ? '$label, $badge new' : label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: ExcludeSemantics(
-          child: SizedBox(
-            width: 64,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    width: 52,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: selected ? c.primaryTint : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        OgIcon(icon, size: 22, color: fg, strokeWidth: 1.8),
-                        if (badge > 0)
-                          Positioned(
-                            top: -2,
-                            right: 6,
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 18),
-                              height: 18,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.tones.badge,
-                                borderRadius: BorderRadius.circular(9),
-                                border: Border.all(color: c.bg, width: 2),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                badge > 9 ? '9+' : '$badge',
-                                style: context.type.caption.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(label, style: context.type.caption.copyWith(color: fg)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  State<_TabButton> createState() => _TabButtonState();
 }
 
-class _ScanButton extends StatelessWidget {
-  const _ScanButton({required this.onTap, required this.selected});
-
-  final VoidCallback onTap;
-  final bool selected;
+class _TabButtonState extends State<_TabButton> {
+  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
+    final h = context.home;
+    final selected = widget.selected;
+    final badge = widget.badge;
+    final fg = selected ? h.navSelected : h.navIdle;
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : OgMotion.fade;
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Scan',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: ExcludeSemantics(
-          child: SizedBox(
-            width: 64,
-            height: 59,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
-                // The button rises 22pt above the bar, as in the design.
-                Positioned(
-                  top: -22,
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: c.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: c.bg, width: 4),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x2E16181B),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
+      label: badge > 0 ? '${widget.label}, $badge new' : widget.label,
+      child: FocusableActionDetector(
+        onShowFocusHighlight: (v) => setState(() => _focused = v),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          child: ExcludeSemantics(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(OgRadius.pill),
+                border: _focused
+                    ? Border.all(
+                        color: context.og.focusRing,
+                        width: OgSize.focusRing,
+                      )
+                    : null,
+              ),
+              child: Center(
+                child: AnimatedScale(
+                  duration: duration,
+                  curve: OgMotion.ease,
+                  scale: selected ? 1 : OgHomeSize.navIdleScale,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedContainer(
+                        duration: duration,
+                        curve: OgMotion.ease,
+                        width: OgHomeSize.navTintWidth,
+                        height: OgHomeSize.navTintHeight,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? h.navSelectedTint
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(OgRadius.pill),
                         ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: OgIcon(_tabs[2].$1, size: 26, color: c.onPrimary),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            OgIcon(
+                              widget.icon,
+                              size: OgHomeSize.navIcon,
+                              color: fg,
+                              strokeWidth: 1.8,
+                            ),
+                            if (badge > 0)
+                              Positioned(
+                                top: -OgSpace.s1,
+                                right: 0,
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    minWidth: OgHomeSize.badge,
+                                  ),
+                                  height: OgHomeSize.badge,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: OgSpace.s1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: h.navBadge,
+                                    borderRadius: BorderRadius.circular(
+                                      OgRadius.pill,
+                                    ),
+                                    border: Border.all(
+                                      color: h.navSurface,
+                                      width: OgSize.hairline * 2,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    badge > 9 ? '9+' : '$badge',
+                                    style: context.type.caption.copyWith(
+                                      color: h.onNavBadge,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: OgSpace.s1),
+                      Text(
+                        widget.label,
+                        maxLines: 1,
+                        style: context.type.caption.copyWith(color: fg),
+                      ),
+                    ],
                   ),
                 ),
-                Positioned(
-                  bottom: 6,
-                  child: Text(
-                    'Scan',
-                    style: context.type.caption.copyWith(
-                      color: selected ? c.link : c.textMuted,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

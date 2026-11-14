@@ -6,7 +6,8 @@ import '../../../core/widgets/og_icon.dart';
 
 part 'home_categories.g.dart';
 
-/// A shortcut in Home's Categories grid.
+/// A favourite on Home. The first four are on until the player edits them
+/// (Play, Group, Academy, Venue).
 enum HomeCategory {
   play('Play', 'Meets, tournaments, events', OgIcons.racquet, Routes.play),
   group('Group', 'Clubs and teams', OgIcons.group, Routes.clubs),
@@ -16,8 +17,8 @@ enum HomeCategory {
     OgIcons.mortarboard,
     Routes.academies,
   ),
-  game('Game', 'Campaigns and challenges', OgIcons.trophyTeam, Routes.game),
   venue('Venue', 'Find and book courts', OgIcons.mapPin, Routes.venues),
+  game('Game', 'Campaigns and challenges', OgIcons.trophyTeam, Routes.game),
   shop('Shop', 'Gear, services and malls', OgIcons.bag, Routes.shop),
   services('Services', 'Physio and partners', OgIcons.heart, Routes.services),
   fitness('Fitness', 'Workouts', OgIcons.running, Routes.fitness);
@@ -35,6 +36,9 @@ typedef HomeCategories = ({List<HomeCategory> order, Set<HomeCategory> shown});
 /// At least this many stay on.
 const minHomeCategories = 3;
 
+/// What a new install shows.
+const defaultHomeCategories = 4;
+
 /// Saved on the device, like other display choices.
 @Riverpod(keepAlive: true)
 class HomeCategoriesController extends _$HomeCategoriesController {
@@ -44,7 +48,10 @@ class HomeCategoriesController extends _$HomeCategoriesController {
   @override
   HomeCategories build() {
     _load();
-    return (order: HomeCategory.values, shown: HomeCategory.values.toSet());
+    return (
+      order: HomeCategory.values,
+      shown: HomeCategory.values.take(defaultHomeCategories).toSet(),
+    );
   }
 
   /// "play,group,-academy,…": the order, with hidden ones marked "-".

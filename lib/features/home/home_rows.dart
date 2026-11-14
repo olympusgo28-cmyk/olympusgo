@@ -7,6 +7,7 @@ import 'package:og_money/og_money.dart' show pointsText;
 import '../../core/format.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
+import '../../core/theme/og_home.dart';
 import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
@@ -56,7 +57,11 @@ class StatusScrim extends StatefulWidget {
     required this.after,
     required this.child,
     this.darkHero = false,
+    this.color,
   });
+
+  /// The band under the clock; the page colour unless a screen has its own.
+  final Color? color;
 
   final double after;
   final Widget child;
@@ -104,7 +109,7 @@ class _StatusScrimState extends State<StatusScrim> {
               child: AnimatedOpacity(
                 opacity: _shown ? 1 : 0,
                 duration: const Duration(milliseconds: 150),
-                child: ColoredBox(color: c.bg),
+                child: ColoredBox(color: widget.color ?? c.bg),
               ),
             ),
           ),
@@ -204,6 +209,7 @@ class HomeSection extends StatelessWidget {
     this.onSeeAll,
     this.linkLabel = 'See all',
     this.top = 26,
+    this.home = false,
   });
 
   final String title;
@@ -211,6 +217,9 @@ class HomeSection extends StatelessWidget {
   final VoidCallback? onSeeAll;
   final String linkLabel;
   final double top;
+
+  /// Home's own colours (owner, 14 Nov 2026): heading and link.
+  final bool home;
 
   @override
   Widget build(BuildContext context) {
@@ -222,19 +231,28 @@ class HomeSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              // Heading and link share one centre line.
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Semantics(
                     header: true,
                     child: Text(
                       title,
-                      style: context.type.title.copyWith(height: 1.1),
+                      style: context.type.title.copyWith(
+                        height: 1.1,
+                        color: home ? context.home.heading : null,
+                      ),
                     ),
                   ),
                 ),
                 if (onSeeAll != null)
-                  KitLink(linkLabel, onPressed: onSeeAll, minHeight: 32),
+                  KitLink(
+                    linkLabel,
+                    onPressed: onSeeAll,
+                    minHeight: 44,
+                    color: home ? context.home.link : null,
+                  ),
               ],
             ),
           ),
@@ -282,10 +300,14 @@ class ActivityShelf extends ConsumerWidget {
     required this.kind,
     required this.title,
     this.where,
+    this.home = false,
   });
 
   final ActivityKind kind;
   final String title;
+
+  /// Dressed for Home: its heading, link and card colours.
+  final bool home;
 
   /// Narrows the row, as Discover's filters do.
   final bool Function(Activity)? where;
@@ -297,12 +319,16 @@ class ActivityShelf extends ConsumerWidget {
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     return HomeSection(
       title: title,
+      home: home,
       onSeeAll: () => context.push(Routes.playKind(kind)),
       child: Shelf(
         stretch: false,
         children: [
           for (final a in list)
-            SizedBox(width: 318, child: PlayCard(activity: a)),
+            SizedBox(
+              width: 318,
+              child: PlayCard(activity: a, onHome: home),
+            ),
         ],
       ),
     );
@@ -488,10 +514,12 @@ class PlayerShelf extends ConsumerWidget {
     this.title = 'Players',
     this.linkLabel = 'See all',
     this.linkRoute,
+    this.home = false,
   });
 
   final String title;
   final String linkLabel;
+  final bool home;
 
   /// Pushed from the link; without one the link opens Discover.
   final String? linkRoute;
@@ -503,6 +531,7 @@ class PlayerShelf extends ConsumerWidget {
     final following = ref.watch(myFollowingProvider).value ?? const {};
     return HomeSection(
       title: title,
+      home: home,
       linkLabel: linkLabel,
       onSeeAll: () => linkRoute == null
           ? context.go(Routes.discover)
@@ -510,7 +539,11 @@ class PlayerShelf extends ConsumerWidget {
       child: Shelf(
         children: [
           for (final p in players)
-            _PlayerTile(p: p, following: following.contains(p.player.id)),
+            _PlayerTile(
+              p: p,
+              following: following.contains(p.player.id),
+              home: home,
+            ),
         ],
       ),
     );
@@ -518,15 +551,25 @@ class PlayerShelf extends ConsumerWidget {
 }
 
 class _PlayerTile extends ConsumerWidget {
-  const _PlayerTile({required this.p, required this.following});
+  const _PlayerTile({
+    required this.p,
+    required this.following,
+    this.home = false,
+  });
 
   final SuggestedPlayer p;
   final bool following;
+  final bool home;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.og;
     final t = context.tones;
+    final h = context.home;
+    // On Home the tile is white (charcoal in dark) with the heading colour.
+    final tile = home ? h.surface : t.soft;
+    final strong = home ? h.heading : c.inverseCard;
+    final onStrong = home ? h.surface : c.onInverseCard;
     return Pressable(
       semanticLabel: '${p.player.displayName}, ${p.note}',
       onPressed: () => context.push(Routes.player(p.player.id)),
@@ -534,8 +577,9 @@ class _PlayerTile extends ConsumerWidget {
         width: 132,
         padding: const EdgeInsets.fromLTRB(10, 16, 10, 14),
         decoration: BoxDecoration(
-          color: t.soft,
+          color: tile,
           borderRadius: BorderRadius.circular(22),
+          border: home ? Border.all(color: h.cardBorder) : null,
         ),
         child: Column(
           children: [
@@ -555,14 +599,16 @@ class _PlayerTile extends ConsumerWidget {
                       height: 20,
                       padding: const EdgeInsets.symmetric(horizontal: 7),
                       decoration: BoxDecoration(
-                        color: c.inverseCard,
+                        color: strong,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: t.soft, width: 2),
+                        border: Border.all(color: tile, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         p.level!.toStringAsFixed(1),
-                        style: context.type.caption.copyWith(color: c.accent),
+                        style: context.type.caption.copyWith(
+                          color: home ? onStrong : c.accent,
+                        ),
                       ),
                     ),
                   ),
@@ -572,7 +618,7 @@ class _PlayerTile extends ConsumerWidget {
             Text(
               p.player.displayName,
               textAlign: TextAlign.center,
-              style: context.type.body,
+              style: context.type.body.copyWith(color: home ? h.heading : null),
             ),
             const SizedBox(height: 8),
             Text(
@@ -601,10 +647,10 @@ class _PlayerTile extends ConsumerWidget {
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: following ? c.bg : c.inverseCard,
+                  color: following ? tile : strong,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: following ? c.borderControl : c.inverseCard,
+                    color: following ? c.borderControl : strong,
                     width: 1.5,
                   ),
                 ),
@@ -612,7 +658,7 @@ class _PlayerTile extends ConsumerWidget {
                 child: Text(
                   following ? 'Following' : 'Follow',
                   style: context.type.caption.copyWith(
-                    color: following ? c.text : c.onInverseCard,
+                    color: following ? (home ? h.heading : c.text) : onStrong,
                   ),
                 ),
               ),
@@ -631,7 +677,6 @@ class MallShelf extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final malls = ref.watch(mallsProvider).value ?? [];
     if (malls.isEmpty) return const SizedBox.shrink();
-    final c = context.og;
     return HomeSection(
       title: 'Malls',
       onSeeAll: () => context.push(Routes.shop),
@@ -683,8 +728,8 @@ class MallShelf extends ConsumerWidget {
                       KitTag(
                         'Points accepted',
                         height: 20,
-                        background: c.primaryTint,
-                        foreground: const Color(0xFF7A3B00),
+                        background: context.home.pointsTag,
+                        foreground: context.home.onPointsTag,
                       ),
                     ],
                   ],
@@ -698,7 +743,10 @@ class MallShelf extends ConsumerWidget {
 }
 
 class ProductShelf extends ConsumerWidget {
-  const ProductShelf({super.key});
+  const ProductShelf({super.key, this.home = false});
+
+  /// Dressed for Home: its tiles, heading and link colours.
+  final bool home;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -706,10 +754,12 @@ class ProductShelf extends ConsumerWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     final c = context.og;
     final t = context.tones;
+    final h = context.home;
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: HomeSection(
         title: 'Popular items',
+        home: home,
         onSeeAll: () => context.push(Routes.shop),
         child: Shelf(
           children: [
@@ -725,8 +775,9 @@ class ProductShelf extends ConsumerWidget {
                       Container(
                         height: 156,
                         decoration: BoxDecoration(
-                          color: t.soft,
+                          color: home ? h.surface : t.soft,
                           borderRadius: BorderRadius.circular(22),
+                          border: home ? Border.all(color: h.cardBorder) : null,
                         ),
                         alignment: Alignment.center,
                         child: OgIcon(
@@ -735,32 +786,38 @@ class ProductShelf extends ConsumerWidget {
                               : OgIcons.bag,
                           size: 44,
                           strokeWidth: 1.2,
-                          color: const Color(0xFF9A9AA0),
+                          color: c.textMuted,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         p.name,
-                        style: context.type.body.copyWith(height: 1.25),
+                        style: context.type.body.copyWith(
+                          height: 1.25,
+                          color: home ? h.heading : null,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(p.mallName, style: context.type.caption),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'S\$${money(p.priceCents, decimals: p.priceCents % 100 != 0)}',
-                            style: context.type.body,
+                            style: context.type.body.copyWith(
+                              color: home ? h.heading : null,
+                            ),
                           ),
-                          if (p.pointsCapCents > 0) ...[
-                            const SizedBox(width: 8),
+                          if (p.pointsCapCents > 0)
                             KitTag(
                               'up to ${pointsText(p.pointsCapCents)} pts',
                               height: 20,
-                              background: c.primaryTint,
-                              foreground: const Color(0xFF7A3B00),
+                              background: h.pointsTag,
+                              foreground: h.onPointsTag,
                             ),
-                          ],
                         ],
                       ),
                     ],

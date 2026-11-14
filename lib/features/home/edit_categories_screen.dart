@@ -33,7 +33,7 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
     if (!on && _shown.length <= minHomeCategories) {
       showOgToast(
         context,
-        'At least $minHomeCategories categories stay on.',
+        'At least $minHomeCategories favourites stay on.',
         error: true,
       );
       return;
@@ -54,12 +54,12 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
   Widget build(BuildContext context) {
     final c = context.og;
     return KitScaffold(
-      header: const KitHeader(title: 'Edit categories'),
+      header: const KitHeader(title: 'Edit favourites'),
       bottom: [KitButton(label: 'Save', onPressed: _save)],
       children: [
         const KitTitle(
-          'Your Home shortcuts',
-          lead: 'Turn a category off to hide it from Home. You can still reach it from Discover.',
+          'Your favourites',
+          lead: 'Turn a favourite off to hide it from Home. Turn it back on here whenever you like.',
         ),
         ReorderableListView(
           shrinkWrap: true,
@@ -123,7 +123,7 @@ class _EditCategoriesScreenState extends ConsumerState<EditCategoriesScreen> {
           ],
         ),
         const KitNote(
-          'Hold and drag the handle to change the order. At least 3 categories stay on.',
+          'Hold and drag the handle to change the order. At least 3 favourites stay on.',
         ),
       ],
     );

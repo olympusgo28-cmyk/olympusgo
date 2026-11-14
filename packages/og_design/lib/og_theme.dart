@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'og_colors.dart';
+import 'og_home.dart';
 import 'og_tones.dart';
 import 'og_type.dart';
 
@@ -10,11 +11,16 @@ import 'og_type.dart';
 /// scroll, and Cupertino-flavoured controls.
 abstract final class OgTheme {
   static ThemeData light() =>
-      _build(OgColors.light, OgTones.light, Brightness.light);
+      _build(OgColors.light, OgTones.light, OgHome.light, Brightness.light);
   static ThemeData dark() =>
-      _build(OgColors.dark, OgTones.dark, Brightness.dark);
+      _build(OgColors.dark, OgTones.dark, OgHome.dark, Brightness.dark);
 
-  static ThemeData _build(OgColors c, OgTones tones, Brightness brightness) {
+  static ThemeData _build(
+    OgColors c,
+    OgTones tones,
+    OgHome home,
+    Brightness brightness,
+  ) {
     final type = OgType.of(c);
     final text = type.textTheme(c.text);
     // Buttons, tabs and chips use the button role: they stand out by fill
@@ -74,7 +80,7 @@ abstract final class OgTheme {
         unselectedLabelStyle: type.button,
       ),
       chipTheme: ChipThemeData(labelStyle: type.button),
-      extensions: [c, tones, type],
+      extensions: [c, tones, type, home],
     );
     return base;
   }

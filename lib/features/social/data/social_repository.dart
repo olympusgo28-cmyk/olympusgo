@@ -189,7 +189,7 @@ class SupabaseSocialRepository implements SocialRepository {
         SuggestedPlayer(
           player: PlayerSummary.fromRow(r),
           level: (r['level'] as num?)?.toDouble(),
-          note: '${r['sessions']} sessions',
+          note: r['sessions'] == 1 ? '1 session' : '${r['sessions']} sessions',
         ),
     ];
   });

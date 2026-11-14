@@ -2,6 +2,7 @@
 library;
 
 export 'og_colors.dart';
+export 'og_home.dart';
 export 'og_layout.dart';
 export 'og_text.dart';
 export 'og_theme.dart';

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
+import '../../../core/theme/og_home.dart';
 import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
@@ -37,9 +38,13 @@ String thousands(int n) {
 /// The one card for Meets, tournaments and events (the "Play cards"
 /// artboard). The button follows the player's state.
 class PlayCard extends ConsumerWidget {
-  const PlayCard({super.key, required this.activity});
+  const PlayCard({super.key, required this.activity, this.onHome = false});
 
   final Activity activity;
+
+  /// On Home the card is white with a light border (near-black with a dark
+  /// one in the dark theme).
+  final bool onHome;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,15 +105,22 @@ class PlayCard extends ConsumerWidget {
         '${a.audience ?? 'All ages'} • ${thousands(a.spotsTaken)} going • $price',
     };
 
+    // An activity nobody gave a cover is stored near-black. On Home its banner
+    // takes the kind's own colour instead (the same one as its icon tile).
+    final plainCover = onHome && a.coverColor == _defaultCover;
+    final bannerColor = plainCover ? tile : Color(a.coverColor);
+    final bannerInk = plainCover ? tileInk : Color(a.coverInk);
     final hasBanner = a.coverTitle != null || a.kind == ActivityKind.tournament;
     return Pressable(
       semanticLabel: '${a.kind.label}: ${a.title}. $dateLine. ${a.venue.name}',
       onPressed: open,
       child: Container(
         decoration: BoxDecoration(
-          color: c.bg,
+          color: onHome ? context.home.page : c.bg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: c.border),
+          border: Border.all(
+            color: onHome ? context.home.cardBorder : c.border,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -118,7 +130,7 @@ class PlayCard extends ConsumerWidget {
             // title use their name.
             if (hasBanner)
               CourtHero(
-                color: Color(a.coverColor),
+                color: bannerColor,
                 height: 132,
                 child: Stack(
                   children: [
@@ -130,9 +142,7 @@ class PlayCard extends ConsumerWidget {
                           a.coverTitle ?? a.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: context.type.title.copyWith(
-                            color: Color(a.coverInk),
-                          ),
+                          style: context.type.title.copyWith(color: bannerInk),
                         ),
                       ),
                     ),
@@ -200,12 +210,13 @@ class PlayCard extends ConsumerWidget {
                     style: context.type.section,
                   ),
                   const SizedBox(height: 12),
-                  _Line(OgIcons.calendarBox, dateLine, dateSub),
+                  _Line(OgIcons.calendarBox, dateLine, dateSub, tight: onHome),
                   const SizedBox(height: 12),
                   _Line(
                     OgIcons.mapPin,
                     a.online ? '${a.venue.name} and online' : a.venue.name,
                     a.venue.address,
+                    tight: onHome,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -227,13 +238,15 @@ class PlayCard extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  // Empty when no friend is going, so every card in a row is
-                  // the same height.
-                  SizedBox(
-                    height: 28,
-                    child: a.proof == null ? null : _Proof(a.proof!),
-                  ),
+                  // Elsewhere an empty strip keeps every card in a row the same
+                  // height; on Home the card ends where its content does.
+                  if (!onHome || a.proof != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 28,
+                      child: a.proof == null ? null : _Proof(a.proof!),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -279,9 +292,14 @@ class _GenderChip extends StatelessWidget {
   }
 }
 
-class _Line extends StatelessWidget {
-  const _Line(this.icon, this.title, this.sub);
+/// What an activity is stored with when nobody picked a cover.
+const _defaultCover = 0xFF1C1F23;
 
+class _Line extends StatelessWidget {
+  const _Line(this.icon, this.title, this.sub, {this.tight = false});
+
+  /// Leaves out the spare line a missing second line would take.
+  final bool tight;
   final String icon;
   final String title;
   final String? sub;
@@ -308,12 +326,13 @@ class _Line extends StatelessWidget {
                 style: context.type.body,
               ),
               // Always takes a line, so cards line up with or without one.
-              Text(
-                sub ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.type.caption,
-              ),
+              if (!tight || (sub?.isNotEmpty ?? false))
+                Text(
+                  sub ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.type.caption,
+                ),
             ],
           ),
         ),
