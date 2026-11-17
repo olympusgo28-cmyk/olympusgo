@@ -39,7 +39,7 @@ Brand constants: `orange500 #E8590C`, `orange700 #C94A00`, `orange300 #FF7A1A`, 
 
 ### Type
 
-Font: **Jost** everywhere, Regular (400) and Medium (500) only (owner, 9 Nov 2026, Q257). There is no Bold and no Semibold. Hierarchy comes from size and colour first, weight last. The roles live once in the theme (`OgType` in `packages/og_design/lib/og_type.dart`); screens use `context.type.<role>` and never set a size or weight.
+Font: **Inter** everywhere, Regular (400) and Medium (500) only (owner, 15 Nov 2026, Q271; it was Jost, Q257). There is no Bold and no Semibold. Hierarchy comes from size and colour first, weight last. The roles live once in the theme (`OgType` in `packages/og_design/lib/og_type.dart`); screens use `context.type.<role>` and never set a size or weight.
 
 | Role | Size | Weight | Colour | Use |
 | --- | --- | --- | --- | --- |

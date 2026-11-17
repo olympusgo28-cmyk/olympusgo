@@ -6,7 +6,7 @@ import 'og_colors.dart';
 /// The type roles (owner, 9 Nov 2026, Q257). Every piece of text in the app
 /// uses one of these; no screen sets a size or weight of its own.
 ///
-/// Jost everywhere. Score, display, title and section are Medium (500);
+/// Inter everywhere (owner, 15 Nov 2026; it was Jost). Score, display, title and section are Medium (500);
 /// everything else is Regular (400). There is no Bold. Hierarchy comes from
 /// size and colour first.
 ///
@@ -73,14 +73,14 @@ class OgType extends ThemeExtension<OgType> {
     FontWeight weight, {
     double? height,
     Color? color,
-  }) => GoogleFonts.jost(
+  }) => GoogleFonts.inter(
     fontSize: size,
     fontWeight: weight,
     height: height,
     color: color,
   );
 
-  /// Jost's two weights, to load before the first frame so nothing reflows.
+  /// Inter's two weights, to load before the first frame so nothing reflows.
   static Future<List<void>> preload() => GoogleFonts.pendingFonts([
     face(15, FontWeight.w400),
     face(15, FontWeight.w500),

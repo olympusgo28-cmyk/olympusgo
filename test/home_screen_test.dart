@@ -671,7 +671,7 @@ void main() {
     ) async {
       await _open(tester, withMeets: true, withContent: false);
       // The Play card is not part of this redesign, and the test font is
-      // wider than Jost, so its own layout may complain here; the row is
+      // wider than Inter, so its own layout may complain here; the row is
       // what is under test.
       while (tester.takeException() != null) {}
       expect(find.text('Meets', skipOffstage: false), findsOneWidget);

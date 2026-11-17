@@ -25,7 +25,7 @@ Future<void> main() async {
       'No SUPABASE_ANON_KEY: running in demo mode (nothing is saved).',
     );
   }
-  // Load Jost's two weights before the first frame so nothing reflows (Q257).
+  // Load Inter's two weights before the first frame so nothing reflows (Q257).
   GoogleFonts.config.allowRuntimeFetching = true;
   await waitForFonts(OgType.preload());
   runApp(const ProviderScope(child: OlympusGoApp()));

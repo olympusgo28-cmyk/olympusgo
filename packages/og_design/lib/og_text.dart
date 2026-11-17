@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// The old type helpers, kept for the admin web app. The phone app uses the
-/// roles in [OgType] instead (Q257). Jost everywhere; no Bold.
+/// roles in [OgType] instead (Q257). Inter everywhere; no Bold.
 abstract final class OgText {
   static TextStyle _face({
     required double fontSize,
@@ -11,7 +11,7 @@ abstract final class OgText {
     Color? color,
     double? letterSpacing,
     TextDecoration? decoration,
-  }) => GoogleFonts.jost(
+  }) => GoogleFonts.inter(
     fontSize: fontSize,
     fontWeight: fontWeight.value > 500 ? FontWeight.w500 : fontWeight,
     height: height,
