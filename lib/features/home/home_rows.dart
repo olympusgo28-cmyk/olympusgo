@@ -12,19 +12,17 @@ import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
-import '../../core/widgets/og_toast.dart';
 import '../../core/widgets/pressable.dart';
-import '../auth/data/auth_repository.dart';
 import '../clubs/application/club_providers.dart';
 import '../clubs/data/club_repository.dart';
 import '../clubs/domain/club_models.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
 import '../play/presentation/play_card/play_card.dart';
+import '../social/presentation/player_card.dart';
 import '../shop/application/shop_providers.dart';
 import '../shop/domain/shop_models.dart';
 import '../social/application/social_providers.dart';
-import '../social/domain/social_models.dart';
 
 const weekdayNames = [
   'Monday',
@@ -265,9 +263,17 @@ class HomeSection extends StatelessWidget {
 
 /// A sideways row of cards with the page gutters.
 class Shelf extends StatelessWidget {
-  const Shelf({super.key, required this.children, this.stretch = true});
+  const Shelf({
+    super.key,
+    required this.children,
+    this.stretch = true,
+    this.padding = const EdgeInsets.symmetric(horizontal: 20),
+  });
 
   final List<Widget> children;
+
+  /// Around the row; a shelf of cards with a shadow adds room underneath.
+  final EdgeInsets padding;
 
   /// Tiles share the tallest one's height; activity cards keep their own,
   /// since a cover on one would leave a gap in the next.
@@ -288,7 +294,7 @@ class Shelf extends StatelessWidget {
     );
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: padding,
       child: stretch ? IntrinsicHeight(child: row) : row,
     );
   }
@@ -531,7 +537,6 @@ class PlayerShelf extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final players = ref.watch(suggestedPlayersProvider).value ?? [];
     if (players.isEmpty) return const SizedBox.shrink();
-    final following = ref.watch(myFollowingProvider).value ?? const {};
     return HomeSection(
       title: title,
       home: home,
@@ -540,134 +545,11 @@ class PlayerShelf extends ConsumerWidget {
           ? context.go(Routes.discover)
           : context.push(linkRoute!),
       child: Shelf(
+        // Room under the cards for their shadow.
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         children: [
-          for (final p in players)
-            _PlayerTile(
-              p: p,
-              following: following.contains(p.player.id),
-              home: home,
-            ),
+          for (final p in players) PlayerCard(suggestion: p, onHome: home),
         ],
-      ),
-    );
-  }
-}
-
-class _PlayerTile extends ConsumerWidget {
-  const _PlayerTile({
-    required this.p,
-    required this.following,
-    this.home = false,
-  });
-
-  final SuggestedPlayer p;
-  final bool following;
-  final bool home;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final t = context.tones;
-    final h = context.home;
-    // On Home the tile is white (charcoal in dark) with the heading colour.
-    final tile = home ? h.surface : t.soft;
-    final strong = home ? h.heading : c.inverseCard;
-    final onStrong = home ? h.surface : c.onInverseCard;
-    return Pressable(
-      semanticLabel: '${p.player.displayName}, ${p.note}',
-      onPressed: () => context.push(Routes.player(p.player.id)),
-      child: Container(
-        width: 132,
-        padding: const EdgeInsets.fromLTRB(10, 16, 10, 14),
-        decoration: BoxDecoration(
-          color: tile,
-          borderRadius: BorderRadius.circular(22),
-          border: home ? Border.all(color: h.cardBorder) : null,
-        ),
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.bottomCenter,
-              children: [
-                SolidAvatar.forId(
-                  p.player.id,
-                  initials: p.player.initials,
-                  size: 60,
-                ),
-                if (p.level != null)
-                  Positioned(
-                    bottom: -8,
-                    child: Container(
-                      height: 20,
-                      padding: const EdgeInsets.symmetric(horizontal: 7),
-                      decoration: BoxDecoration(
-                        color: strong,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: tile, width: 2),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        p.level!.toStringAsFixed(1),
-                        style: context.type.caption.copyWith(
-                          color: home ? onStrong : c.accent,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              p.player.displayName,
-              textAlign: TextAlign.center,
-              style: context.type.body.copyWith(color: home ? h.heading : null),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              p.note,
-              textAlign: TextAlign.center,
-              style: context.type.caption,
-            ),
-            const SizedBox(height: 8),
-            const Spacer(),
-            Pressable(
-              semanticLabel: following
-                  ? 'Following ${p.player.displayName}'
-                  : 'Follow ${p.player.displayName}',
-              onPressed: () async {
-                HapticFeedback.selectionClick();
-                try {
-                  await ref
-                      .read(myFollowingProvider.notifier)
-                      .toggle(p.player.id);
-                } on AuthFailure catch (e) {
-                  if (context.mounted) {
-                    showOgToast(context, e.message, error: true);
-                  }
-                }
-              },
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: following ? tile : strong,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: following ? c.borderControl : strong,
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  following ? 'Following' : 'Follow',
-                  style: context.type.caption.copyWith(
-                    color: following ? (home ? h.heading : c.text) : onStrong,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

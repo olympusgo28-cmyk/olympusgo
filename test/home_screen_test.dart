@@ -96,7 +96,7 @@ Future<GoRouter> _open(
                   SuggestedPlayer(
                     player: PlayerSummary(id: 'p1', fullName: 'Hannah Ong'),
                     level: 3.5,
-                    note: 'Plays Fridays',
+                    mutualFriends: 2,
                   ),
                 ]
               : const [],
