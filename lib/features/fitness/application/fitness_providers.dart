@@ -29,8 +29,11 @@ Future<WorkoutSummary> workoutSummary(Ref ref, int? days) =>
     ref.watch(fitnessRepositoryProvider).summary(days: days);
 
 @riverpod
-Future<ExerciseHistory> exerciseHistory(Ref ref, String id) =>
-    ref.watch(fitnessRepositoryProvider).history(id);
+Future<ExerciseHistory> exerciseHistory(Ref ref, String id) {
+  // Read again on a new sign-in, so one account never sees another's sets.
+  ref.watch(currentUserIdProvider.select((v) => v.value));
+  return ref.watch(fitnessRepositoryProvider).history(id);
+}
 
 @riverpod
 Future<AiStatus> aiStatus(Ref ref) =>
@@ -141,6 +144,52 @@ class ActiveSession extends _$ActiveSession {
     await _set(w.logged(set, DateTime.now()));
   });
 
+  /// Logs a set of the exercise under way, as the workout plans it now.
+  Future<void> logCurrent() => _inOrder(() async {
+    final w = await future;
+    final item = w?.current;
+    if (w == null || item == null || w.finished) return;
+    await _set(
+      w.logged(
+        LoggedSet(
+          exerciseId: item.exerciseId,
+          reps: item.timed ? null : item.reps,
+          seconds: item.timed ? item.seconds : null,
+          weightG: item.weighted ? item.weightG : null,
+        ),
+        DateTime.now(),
+      ),
+    );
+  });
+
+  /// Starts the exercise at [index] at [grams], last time's weight. Only
+  /// while it is still untouched: no weight, no set done, and not changed
+  /// by the player. Checked when its turn comes, so it can't overwrite
+  /// something entered in the meantime.
+  Future<void> prefillWeight(int index, int grams) => _inOrder(() async {
+    final w = await future;
+    if (w == null || w.complete || w.finished || w.item != index) return;
+    final item = w.plan[index];
+    if (!item.weighted || item.weightG != null || grams <= 0) return;
+    if (w.setsDone > 0 || w.weightSet.contains(index)) return;
+    await _set(w.adjusted(item.change(weightG: grams)));
+  });
+
+  /// Ends the rest under way.
+  Future<void> skipRest() => _inOrder(() async {
+    final w = await future;
+    if (w == null || w.restUntil == null) return;
+    await _set(w.rested());
+  });
+
+  /// Adds [seconds] to the rest under way.
+  Future<void> addRest(int seconds) => _inOrder(() async {
+    final w = await future;
+    if (w == null) return;
+    final next = w.restAdded(seconds, DateTime.now());
+    if (!identical(next, w)) await _set(next);
+  });
+
   /// Changes the exercise at [index], if the workout is still on it.
   Future<void> adjust(int index, ProgramItem changed) => _inOrder(() async {
     final w = await future;
@@ -159,6 +208,8 @@ class ActiveSession extends _$ActiveSession {
     // Another account may have signed in while that was saving.
     if ((await future)?.key == ended.key) await _set(null);
     ref.invalidate(workoutSummaryProvider);
+    // The next workout's "last time" and bests include this one.
+    ref.invalidate(exerciseHistoryProvider);
   });
 
   Future<void> discard() => _inOrder(() async {

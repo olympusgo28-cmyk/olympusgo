@@ -308,6 +308,9 @@ class DemoFitnessRepository implements FitnessRepository {
     ),
   ];
   final _log = <WorkoutEntry>[];
+
+  /// Every saved set, newest workout first, for "last time" and bests.
+  final _sets = <({String workout, LoggedSet set, DateTime at})>[];
   ActiveWorkout? _active;
   var _agreed = false;
   var _plans = 0;
@@ -348,6 +351,10 @@ class DemoFitnessRepository implements FitnessRepository {
   Future<void> saveWorkout(ActiveWorkout workout) async {
     if (_log.any((w) => w.id == workout.key)) return;
     final ended = workout.endedAt ?? DateTime.now();
+    _sets.insertAll(0, [
+      for (final s in workout.done.reversed)
+        (workout: workout.key, set: s, at: workout.startedAt),
+    ]);
     _log.insert(
       0,
       WorkoutEntry(
@@ -365,8 +372,10 @@ class DemoFitnessRepository implements FitnessRepository {
   }
 
   @override
-  Future<void> deleteWorkout(String id) async =>
-      _log.removeWhere((w) => w.id == id);
+  Future<void> deleteWorkout(String id) async {
+    _log.removeWhere((w) => w.id == id);
+    _sets.removeWhere((s) => s.workout == id);
+  }
 
   @override
   Future<WorkoutSummary> summary({int? days = 30}) async {
@@ -390,8 +399,35 @@ class DemoFitnessRepository implements FitnessRepository {
   }
 
   @override
-  Future<ExerciseHistory> history(String exerciseId) async =>
-      const ExerciseHistory();
+  Future<ExerciseHistory> history(String exerciseId) async {
+    final mine = _sets.where((s) => s.set.exerciseId == exerciseId).toList();
+    if (mine.isEmpty) return const ExerciseHistory();
+    PersonalBest of(({String workout, LoggedSet set, DateTime at}) s) =>
+        PersonalBest(
+          exerciseId: exerciseId,
+          exercise: '',
+          at: s.at,
+          reps: s.set.reps,
+          seconds: s.set.seconds,
+          weightG: s.set.weightG,
+        );
+    // The database's order: weight, then reps, then seconds.
+    var best = mine.first;
+    for (final s in mine) {
+      final a = s.set, b = best.set;
+      final c = [
+        (a.weightG ?? -1).compareTo(b.weightG ?? -1),
+        (a.reps ?? -1).compareTo(b.reps ?? -1),
+        (a.seconds ?? -1).compareTo(b.seconds ?? -1),
+      ].firstWhere((x) => x != 0, orElse: () => 0);
+      if (c > 0) best = s;
+    }
+    return ExerciseHistory(
+      times: mine.map((s) => s.workout).toSet().length,
+      best: of(best),
+      recent: [for (final s in mine.take(30)) of(s)],
+    );
+  }
 
   @override
   Future<AiStatus> aiStatus() async =>

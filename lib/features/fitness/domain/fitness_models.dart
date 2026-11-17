@@ -235,6 +235,9 @@ class ActiveWorkout {
     this.setsDone = 0,
     this.lastSetAt,
     this.endedAt,
+    this.restUntil,
+    this.restFor = 0,
+    this.weightSet = const [],
   });
 
   factory ActiveWorkout.fromJson(Map<String, dynamic> r) => ActiveWorkout(
@@ -258,6 +261,11 @@ class ActiveWorkout {
     endedAt: r['ended_at'] == null
         ? null
         : DateTime.parse(r['ended_at'] as String),
+    restUntil: r['rest_until'] == null
+        ? null
+        : DateTime.parse(r['rest_until'] as String),
+    restFor: r['rest_for'] as int? ?? 0,
+    weightSet: [...(r['weight_set'] as List? ?? const []).cast<int>()],
   );
 
   /// Made once, so a retry can't save this workout twice.
@@ -279,6 +287,34 @@ class ActiveWorkout {
   /// Set once the player finishes. Saving may still be waiting on a signal.
   final DateTime? endedAt;
 
+  /// When the rest under way ends, and how long it is in all. Kept with the
+  /// workout on the phone, so leaving the screen or the app keeps its place.
+  /// Never sent to the server.
+  final DateTime? restUntil;
+  final int restFor;
+
+  /// The exercises in [plan] whose weight or reps were set during this
+  /// workout, by the player or from last time. Last time's weight is offered
+  /// once: a weight the player then clears stays cleared, even after leaving
+  /// the screen.
+  final List<int> weightSet;
+
+  /// A rest can be stretched to this and no further: the longest time the
+  /// database takes for anything timed.
+  static const longestRestSeconds = 3600;
+
+  /// Seconds of rest left at [now]. A rest can never have more left than its
+  /// own length: if it seems to, the phone's clock was moved back, and the
+  /// rest is over, so the player is never left waiting on a stuck countdown.
+  int restLeft(DateTime now) {
+    final until = restUntil;
+    if (until == null || finished) return 0;
+    final ms = until.difference(now).inMilliseconds;
+    if (ms <= 0) return 0;
+    final left = (ms + 999) ~/ 1000;
+    return left > restFor ? 0 : left;
+  }
+
   /// The server refuses a workout longer than this.
   static const longest = Duration(hours: 12);
 
@@ -298,6 +334,10 @@ class ActiveWorkout {
     int? setsDone,
     DateTime? lastSetAt,
     DateTime? endedAt,
+    DateTime? restUntil,
+    int? restFor,
+    bool noRest = false,
+    List<int>? weightSet,
   }) => ActiveWorkout(
     key: key,
     name: name,
@@ -309,21 +349,48 @@ class ActiveWorkout {
     setsDone: setsDone ?? this.setsDone,
     lastSetAt: lastSetAt ?? this.lastSetAt,
     endedAt: endedAt ?? this.endedAt,
+    restUntil: noRest ? null : (restUntil ?? this.restUntil),
+    restFor: noRest ? 0 : (restFor ?? this.restFor),
+    weightSet: weightSet ?? this.weightSet,
   );
 
   ActiveWorkout logged(LoggedSet set, DateTime at) {
     final moved = setsDone + 1 >= plan[item].sets;
+    // No rest after the very last set.
+    final over = moved && item + 1 >= plan.length;
+    final rest = over ? 0 : plan[item].restSeconds;
     return _with(
       done: [...done, set],
       item: moved ? item + 1 : item,
       setsDone: moved ? 0 : setsDone + 1,
       lastSetAt: at,
+      restUntil: rest > 0 ? at.add(Duration(seconds: rest)) : null,
+      restFor: rest > 0 ? rest : null,
+      noRest: rest <= 0,
+    );
+  }
+
+  /// Ends the rest now.
+  ActiveWorkout rested() => _with(noRest: true);
+
+  /// Adds [seconds] to a rest still under way at [now].
+  ActiveWorkout restAdded(int seconds, DateTime now) {
+    final left = restLeft(now);
+    if (left == 0 || seconds <= 0 || left >= longestRestSeconds) return this;
+    final more = seconds.clamp(0, longestRestSeconds - left);
+    if (more <= 0) return this;
+    // Counted from what is left, so a clock moved backwards adds no more.
+    return _with(
+      restUntil: now.add(Duration(seconds: left + more)),
+      restFor: left + more,
     );
   }
 
   /// A changed weight or rep count for the rest of the current exercise.
-  ActiveWorkout adjusted(ProgramItem changed) =>
-      _with(plan: [...plan]..[item] = changed);
+  ActiveWorkout adjusted(ProgramItem changed) => _with(
+    plan: [...plan]..[item] = changed,
+    weightSet: weightSet.contains(item) ? null : [...weightSet, item],
+  );
 
   /// Finishes at [at]. A workout left open too long ends at its last set, and
   /// a clock moved backwards ends at its start, so the end is never out of
@@ -347,6 +414,9 @@ class ActiveWorkout {
     'sets_done': setsDone,
     'last_set_at': lastSetAt?.toUtc().toIso8601String(),
     'ended_at': endedAt?.toUtc().toIso8601String(),
+    'rest_until': restUntil?.toUtc().toIso8601String(),
+    'rest_for': restFor,
+    'weight_set': weightSet,
   };
 
   /// What the server stores.

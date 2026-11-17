@@ -30,7 +30,7 @@
 - Deleting an account is still done by support. Fitness data goes when that deletes the login, and a test proves it. The support procedure must name these tables (Q182).
 - There's no export of a player's data yet, so workouts aren't in one.
 - A workout refused by the server, for example after an exercise stops being suitable, can only be discarded.
-- The rest timer counts from the clock while the app is open. It doesn't sound or notify if the app is closed, and it restarts from nothing if the player leaves the screen.
+- The rest timer's end is kept with the workout on the phone, so leaving the screen or the app keeps its place (17 Nov 2026, Q277). It still doesn't sound or notify if the app is closed (Q277 a).
 - A workout left open for over 12 hours ends at its last set. If the phone's clock moved backwards it ends at its start.
 - A phone with a clock over 5 minutes fast can't save until real time catches up. The workout waits on the phone.
 - A finished workout that couldn't save waits for the player to tap save. Nothing retries by itself.
