@@ -15,6 +15,11 @@ abstract class Profile with _$Profile {
     /// Links on Profile (owner, 16 Nov 2026). The server has no column for
     /// them yet, so a live profile has none (Q274).
     @Default(<String>[]) List<String> links,
+
+    /// On the sport profile's personal card (owner, 17 Nov 2026). The server
+    /// has no columns for these yet, so a live profile has none (Q275).
+    @JsonKey(name: 'height_cm') int? heightCm,
+    String? birthplace,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     @JsonKey(name: 'onboarding_completed')
     @Default(false)
@@ -85,6 +90,11 @@ abstract class ProfileSummary with _$ProfileSummary {
 
     /// Who sees their next sessions: "Circle", "Followers", "Only me".
     @Default('Followers') String sessionsShownTo,
+
+    /// The player's best doubles ranking and the partner they reached it with.
+    /// Nothing sends these yet (Q275).
+    int? bestDoublesRank,
+    String? bestDoublesPartner,
   }) = _ProfileSummary;
 }
 

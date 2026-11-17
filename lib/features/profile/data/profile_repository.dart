@@ -202,6 +202,8 @@ class DemoProfileRepository implements ProfileRepository {
           fullName: 'Aaron Ng',
           bio: 'Doubles on weeknights. Happy to rotate with beginners.',
           links: ['olympusgo.example/aaronng'],
+          heightCm: 178,
+          birthplace: 'Singapore',
           onboardingCompleted: true,
         )
       : null;
@@ -303,6 +305,8 @@ class DemoProfileRepository implements ProfileRepository {
     clubRank: 4,
     localRank: 12,
     area: 'Tampines',
+    bestDoublesRank: 3,
+    bestDoublesPartner: 'Mei Wong',
     badgeCount: 6,
     sessionsShownTo: 'Circle',
     badges: [

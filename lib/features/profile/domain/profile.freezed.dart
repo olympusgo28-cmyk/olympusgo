@@ -18,7 +18,9 @@ mixin _$Profile {
 
  String get id; String? get username;@JsonKey(name: 'full_name') String? get fullName; String? get bio;/// Links on Profile (owner, 16 Nov 2026). The server has no column for
 /// them yet, so a live profile has none (Q274).
- List<String> get links;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'onboarding_completed') bool get onboardingCompleted;
+ List<String> get links;/// On the sport profile's personal card (owner, 17 Nov 2026). The server
+/// has no columns for these yet, so a live profile has none (Q275).
+@JsonKey(name: 'height_cm') int? get heightCm; String? get birthplace;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'onboarding_completed') bool get onboardingCompleted;
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -32,20 +34,20 @@ $ProfileCopyWith<Profile> get copyWith => _$ProfileCopyWithImpl<Profile>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Profile;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.fullName, _this.fullName) || other.fullName == _this.fullName)&&(identical(other.bio, _this.bio) || other.bio == _this.bio)&&const DeepCollectionEquality().equals(other.links, _this.links)&&(identical(other.avatarUrl, _this.avatarUrl) || other.avatarUrl == _this.avatarUrl)&&(identical(other.onboardingCompleted, _this.onboardingCompleted) || other.onboardingCompleted == _this.onboardingCompleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.fullName, _this.fullName) || other.fullName == _this.fullName)&&(identical(other.bio, _this.bio) || other.bio == _this.bio)&&const DeepCollectionEquality().equals(other.links, _this.links)&&(identical(other.heightCm, _this.heightCm) || other.heightCm == _this.heightCm)&&(identical(other.birthplace, _this.birthplace) || other.birthplace == _this.birthplace)&&(identical(other.avatarUrl, _this.avatarUrl) || other.avatarUrl == _this.avatarUrl)&&(identical(other.onboardingCompleted, _this.onboardingCompleted) || other.onboardingCompleted == _this.onboardingCompleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Profile;
-  return Object.hash(runtimeType,_this.id,_this.username,_this.fullName,_this.bio,const DeepCollectionEquality().hash(_this.links),_this.avatarUrl,_this.onboardingCompleted);
+  return Object.hash(runtimeType,_this.id,_this.username,_this.fullName,_this.bio,const DeepCollectionEquality().hash(_this.links),_this.heightCm,_this.birthplace,_this.avatarUrl,_this.onboardingCompleted);
 }
 
 @override
 String toString() {
   final _this = this as Profile;
-  return 'Profile(id: ${_this.id}, username: ${_this.username}, fullName: ${_this.fullName}, bio: ${_this.bio}, links: ${_this.links}, avatarUrl: ${_this.avatarUrl}, onboardingCompleted: ${_this.onboardingCompleted})';
+  return 'Profile(id: ${_this.id}, username: ${_this.username}, fullName: ${_this.fullName}, bio: ${_this.bio}, links: ${_this.links}, heightCm: ${_this.heightCm}, birthplace: ${_this.birthplace}, avatarUrl: ${_this.avatarUrl}, onboardingCompleted: ${_this.onboardingCompleted})';
 }
 
 
@@ -56,7 +58,7 @@ abstract mixin class $ProfileCopyWith<$Res>  {
   factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) = _$ProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
+ String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'height_cm') int? heightCm, String? birthplace,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
 });
 
 
@@ -73,14 +75,16 @@ class _$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? heightCm = freezed,Object? birthplace = freezed,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
   return _then(Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String?,links: null == links ? _self.links : links // ignore: cast_nullable_to_non_nullable
-as List<String>,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as List<String>,heightCm: freezed == heightCm ? _self.heightCm : heightCm // ignore: cast_nullable_to_non_nullable
+as int?,birthplace: freezed == birthplace ? _self.birthplace : birthplace // ignore: cast_nullable_to_non_nullable
+as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -167,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'height_cm')  int? heightCm,  String? birthplace, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.heightCm,_that.birthplace,_that.avatarUrl,_that.onboardingCompleted);case _:
   return orElse();
 
 }
@@ -188,10 +192,10 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'height_cm')  int? heightCm,  String? birthplace, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)  $default,) {final _that = this;
 switch (_that) {
 case _Profile():
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.heightCm,_that.birthplace,_that.avatarUrl,_that.onboardingCompleted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +212,10 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'height_cm')  int? heightCm,  String? birthplace, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.heightCm,_that.birthplace,_that.avatarUrl,_that.onboardingCompleted);case _:
   return null;
 
 }
@@ -223,7 +227,7 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_th
 @JsonSerializable()
 
 class _Profile extends Profile {
-  const _Profile({required this.id, this.username, @JsonKey(name: 'full_name') this.fullName, this.bio,  List<String> links = const <String>[], @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'onboarding_completed') this.onboardingCompleted = false}): _links = links,super._();
+  const _Profile({required this.id, this.username, @JsonKey(name: 'full_name') this.fullName, this.bio,  List<String> links = const <String>[], @JsonKey(name: 'height_cm') this.heightCm, this.birthplace, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'onboarding_completed') this.onboardingCompleted = false}): _links = links,super._();
   factory _Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
 
 @override final  String id;
@@ -241,6 +245,10 @@ class _Profile extends Profile {
   return EqualUnmodifiableListView(_links);
 }
 
+/// On the sport profile's personal card (owner, 17 Nov 2026). The server
+/// has no columns for these yet, so a live profile has none (Q275).
+@override@JsonKey(name: 'height_cm') final  int? heightCm;
+@override final  String? birthplace;
 @override@JsonKey(name: 'avatar_url') final  String? avatarUrl;
 @override@JsonKey(name: 'onboarding_completed') final  bool onboardingCompleted;
 
@@ -257,18 +265,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.bio, bio) || other.bio == bio)&&const DeepCollectionEquality().equals(other.links, _links)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.bio, bio) || other.bio == bio)&&const DeepCollectionEquality().equals(other.links, _links)&&(identical(other.heightCm, heightCm) || other.heightCm == heightCm)&&(identical(other.birthplace, birthplace) || other.birthplace == birthplace)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,username,fullName,bio,const DeepCollectionEquality().hash(_links),avatarUrl,onboardingCompleted);
+    return Object.hash(runtimeType,id,username,fullName,bio,const DeepCollectionEquality().hash(_links),heightCm,birthplace,avatarUrl,onboardingCompleted);
 }
 
 @override
 String toString() {
-    return 'Profile(id: $id, username: $username, fullName: $fullName, bio: $bio, links: $links, avatarUrl: $avatarUrl, onboardingCompleted: $onboardingCompleted)';
+    return 'Profile(id: $id, username: $username, fullName: $fullName, bio: $bio, links: $links, heightCm: $heightCm, birthplace: $birthplace, avatarUrl: $avatarUrl, onboardingCompleted: $onboardingCompleted)';
 }
 
 
@@ -279,7 +287,7 @@ abstract mixin class _$ProfileCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   factory _$ProfileCopyWith(_Profile value, $Res Function(_Profile) _then) = __$ProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
+ String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'height_cm') int? heightCm, String? birthplace,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
 });
 
 
@@ -296,14 +304,16 @@ class __$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? heightCm = freezed,Object? birthplace = freezed,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
   return _then(_Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String?,links: null == links ? _self._links : links // ignore: cast_nullable_to_non_nullable
-as List<String>,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as List<String>,heightCm: freezed == heightCm ? _self.heightCm : heightCm // ignore: cast_nullable_to_non_nullable
+as int?,birthplace: freezed == birthplace ? _self.birthplace : birthplace // ignore: cast_nullable_to_non_nullable
+as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -872,7 +882,9 @@ mixin _$ProfileSummary {
  int? get clubRank;/// Rank among players nearby, and where.
  int? get localRank; String? get area; List<ProfileBadge> get badges;/// All badges earned; [badges] holds the latest few.
  int get badgeCount;/// Who sees their next sessions: "Circle", "Followers", "Only me".
- String get sessionsShownTo;
+ String get sessionsShownTo;/// The player's best doubles ranking and the partner they reached it with.
+/// Nothing sends these yet (Q275).
+ int? get bestDoublesRank; String? get bestDoublesPartner;
 /// Create a copy of ProfileSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -884,20 +896,20 @@ $ProfileSummaryCopyWith<ProfileSummary> get copyWith => _$ProfileSummaryCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as ProfileSummary;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileSummary&&(identical(other.sessions, _this.sessions) || other.sessions == _this.sessions)&&(identical(other.clubRank, _this.clubRank) || other.clubRank == _this.clubRank)&&(identical(other.localRank, _this.localRank) || other.localRank == _this.localRank)&&(identical(other.area, _this.area) || other.area == _this.area)&&const DeepCollectionEquality().equals(other.badges, _this.badges)&&(identical(other.badgeCount, _this.badgeCount) || other.badgeCount == _this.badgeCount)&&(identical(other.sessionsShownTo, _this.sessionsShownTo) || other.sessionsShownTo == _this.sessionsShownTo));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileSummary&&(identical(other.sessions, _this.sessions) || other.sessions == _this.sessions)&&(identical(other.clubRank, _this.clubRank) || other.clubRank == _this.clubRank)&&(identical(other.localRank, _this.localRank) || other.localRank == _this.localRank)&&(identical(other.area, _this.area) || other.area == _this.area)&&const DeepCollectionEquality().equals(other.badges, _this.badges)&&(identical(other.badgeCount, _this.badgeCount) || other.badgeCount == _this.badgeCount)&&(identical(other.sessionsShownTo, _this.sessionsShownTo) || other.sessionsShownTo == _this.sessionsShownTo)&&(identical(other.bestDoublesRank, _this.bestDoublesRank) || other.bestDoublesRank == _this.bestDoublesRank)&&(identical(other.bestDoublesPartner, _this.bestDoublesPartner) || other.bestDoublesPartner == _this.bestDoublesPartner));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ProfileSummary;
-  return Object.hash(runtimeType,_this.sessions,_this.clubRank,_this.localRank,_this.area,const DeepCollectionEquality().hash(_this.badges),_this.badgeCount,_this.sessionsShownTo);
+  return Object.hash(runtimeType,_this.sessions,_this.clubRank,_this.localRank,_this.area,const DeepCollectionEquality().hash(_this.badges),_this.badgeCount,_this.sessionsShownTo,_this.bestDoublesRank,_this.bestDoublesPartner);
 }
 
 @override
 String toString() {
   final _this = this as ProfileSummary;
-  return 'ProfileSummary(sessions: ${_this.sessions}, clubRank: ${_this.clubRank}, localRank: ${_this.localRank}, area: ${_this.area}, badges: ${_this.badges}, badgeCount: ${_this.badgeCount}, sessionsShownTo: ${_this.sessionsShownTo})';
+  return 'ProfileSummary(sessions: ${_this.sessions}, clubRank: ${_this.clubRank}, localRank: ${_this.localRank}, area: ${_this.area}, badges: ${_this.badges}, badgeCount: ${_this.badgeCount}, sessionsShownTo: ${_this.sessionsShownTo}, bestDoublesRank: ${_this.bestDoublesRank}, bestDoublesPartner: ${_this.bestDoublesPartner})';
 }
 
 
@@ -908,7 +920,7 @@ abstract mixin class $ProfileSummaryCopyWith<$Res>  {
   factory $ProfileSummaryCopyWith(ProfileSummary value, $Res Function(ProfileSummary) _then) = _$ProfileSummaryCopyWithImpl;
 @useResult
 $Res call({
- int sessions, int? clubRank, int? localRank, String? area, List<ProfileBadge> badges, int badgeCount, String sessionsShownTo
+ int sessions, int? clubRank, int? localRank, String? area, List<ProfileBadge> badges, int badgeCount, String sessionsShownTo, int? bestDoublesRank, String? bestDoublesPartner
 });
 
 
@@ -925,7 +937,7 @@ class _$ProfileSummaryCopyWithImpl<$Res>
 
 /// Create a copy of ProfileSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sessions = null,Object? clubRank = freezed,Object? localRank = freezed,Object? area = freezed,Object? badges = null,Object? badgeCount = null,Object? sessionsShownTo = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? sessions = null,Object? clubRank = freezed,Object? localRank = freezed,Object? area = freezed,Object? badges = null,Object? badgeCount = null,Object? sessionsShownTo = null,Object? bestDoublesRank = freezed,Object? bestDoublesPartner = freezed,}) {
   return _then(ProfileSummary(
 sessions: null == sessions ? _self.sessions : sessions // ignore: cast_nullable_to_non_nullable
 as int,clubRank: freezed == clubRank ? _self.clubRank : clubRank // ignore: cast_nullable_to_non_nullable
@@ -934,7 +946,9 @@ as int?,area: freezed == area ? _self.area : area // ignore: cast_nullable_to_no
 as String?,badges: null == badges ? _self.badges : badges // ignore: cast_nullable_to_non_nullable
 as List<ProfileBadge>,badgeCount: null == badgeCount ? _self.badgeCount : badgeCount // ignore: cast_nullable_to_non_nullable
 as int,sessionsShownTo: null == sessionsShownTo ? _self.sessionsShownTo : sessionsShownTo // ignore: cast_nullable_to_non_nullable
-as String,
+as String,bestDoublesRank: freezed == bestDoublesRank ? _self.bestDoublesRank : bestDoublesRank // ignore: cast_nullable_to_non_nullable
+as int?,bestDoublesPartner: freezed == bestDoublesPartner ? _self.bestDoublesPartner : bestDoublesPartner // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1019,10 +1033,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo,  int? bestDoublesRank,  String? bestDoublesPartner)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProfileSummary() when $default != null:
-return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo);case _:
+return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo,_that.bestDoublesRank,_that.bestDoublesPartner);case _:
   return orElse();
 
 }
@@ -1040,10 +1054,10 @@ return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo,  int? bestDoublesRank,  String? bestDoublesPartner)  $default,) {final _that = this;
 switch (_that) {
 case _ProfileSummary():
-return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo);case _:
+return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo,_that.bestDoublesRank,_that.bestDoublesPartner);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1060,10 +1074,10 @@ return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int sessions,  int? clubRank,  int? localRank,  String? area,  List<ProfileBadge> badges,  int badgeCount,  String sessionsShownTo,  int? bestDoublesRank,  String? bestDoublesPartner)?  $default,) {final _that = this;
 switch (_that) {
 case _ProfileSummary() when $default != null:
-return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo);case _:
+return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.badges,_that.badgeCount,_that.sessionsShownTo,_that.bestDoublesRank,_that.bestDoublesPartner);case _:
   return null;
 
 }
@@ -1075,7 +1089,7 @@ return $default(_that.sessions,_that.clubRank,_that.localRank,_that.area,_that.b
 
 
 class _ProfileSummary implements ProfileSummary {
-  const _ProfileSummary({this.sessions = 0, this.clubRank, this.localRank, this.area,  List<ProfileBadge> badges = const [], this.badgeCount = 0, this.sessionsShownTo = 'Followers'}): _badges = badges;
+  const _ProfileSummary({this.sessions = 0, this.clubRank, this.localRank, this.area,  List<ProfileBadge> badges = const [], this.badgeCount = 0, this.sessionsShownTo = 'Followers', this.bestDoublesRank, this.bestDoublesPartner}): _badges = badges;
   
 
 /// Past sessions played.
@@ -1096,6 +1110,10 @@ class _ProfileSummary implements ProfileSummary {
 @override@JsonKey() final  int badgeCount;
 /// Who sees their next sessions: "Circle", "Followers", "Only me".
 @override@JsonKey() final  String sessionsShownTo;
+/// The player's best doubles ranking and the partner they reached it with.
+/// Nothing sends these yet (Q275).
+@override final  int? bestDoublesRank;
+@override final  String? bestDoublesPartner;
 
 /// Create a copy of ProfileSummary
 /// with the given fields replaced by the non-null parameter values.
@@ -1107,18 +1125,18 @@ _$ProfileSummaryCopyWith<_ProfileSummary> get copyWith => __$ProfileSummaryCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileSummary&&(identical(other.sessions, sessions) || other.sessions == sessions)&&(identical(other.clubRank, clubRank) || other.clubRank == clubRank)&&(identical(other.localRank, localRank) || other.localRank == localRank)&&(identical(other.area, area) || other.area == area)&&const DeepCollectionEquality().equals(other.badges, _badges)&&(identical(other.badgeCount, badgeCount) || other.badgeCount == badgeCount)&&(identical(other.sessionsShownTo, sessionsShownTo) || other.sessionsShownTo == sessionsShownTo));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileSummary&&(identical(other.sessions, sessions) || other.sessions == sessions)&&(identical(other.clubRank, clubRank) || other.clubRank == clubRank)&&(identical(other.localRank, localRank) || other.localRank == localRank)&&(identical(other.area, area) || other.area == area)&&const DeepCollectionEquality().equals(other.badges, _badges)&&(identical(other.badgeCount, badgeCount) || other.badgeCount == badgeCount)&&(identical(other.sessionsShownTo, sessionsShownTo) || other.sessionsShownTo == sessionsShownTo)&&(identical(other.bestDoublesRank, bestDoublesRank) || other.bestDoublesRank == bestDoublesRank)&&(identical(other.bestDoublesPartner, bestDoublesPartner) || other.bestDoublesPartner == bestDoublesPartner));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,sessions,clubRank,localRank,area,const DeepCollectionEquality().hash(_badges),badgeCount,sessionsShownTo);
+    return Object.hash(runtimeType,sessions,clubRank,localRank,area,const DeepCollectionEquality().hash(_badges),badgeCount,sessionsShownTo,bestDoublesRank,bestDoublesPartner);
 }
 
 @override
 String toString() {
-    return 'ProfileSummary(sessions: $sessions, clubRank: $clubRank, localRank: $localRank, area: $area, badges: $badges, badgeCount: $badgeCount, sessionsShownTo: $sessionsShownTo)';
+    return 'ProfileSummary(sessions: $sessions, clubRank: $clubRank, localRank: $localRank, area: $area, badges: $badges, badgeCount: $badgeCount, sessionsShownTo: $sessionsShownTo, bestDoublesRank: $bestDoublesRank, bestDoublesPartner: $bestDoublesPartner)';
 }
 
 
@@ -1129,7 +1147,7 @@ abstract mixin class _$ProfileSummaryCopyWith<$Res> implements $ProfileSummaryCo
   factory _$ProfileSummaryCopyWith(_ProfileSummary value, $Res Function(_ProfileSummary) _then) = __$ProfileSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- int sessions, int? clubRank, int? localRank, String? area, List<ProfileBadge> badges, int badgeCount, String sessionsShownTo
+ int sessions, int? clubRank, int? localRank, String? area, List<ProfileBadge> badges, int badgeCount, String sessionsShownTo, int? bestDoublesRank, String? bestDoublesPartner
 });
 
 
@@ -1146,7 +1164,7 @@ class __$ProfileSummaryCopyWithImpl<$Res>
 
 /// Create a copy of ProfileSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sessions = null,Object? clubRank = freezed,Object? localRank = freezed,Object? area = freezed,Object? badges = null,Object? badgeCount = null,Object? sessionsShownTo = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? sessions = null,Object? clubRank = freezed,Object? localRank = freezed,Object? area = freezed,Object? badges = null,Object? badgeCount = null,Object? sessionsShownTo = null,Object? bestDoublesRank = freezed,Object? bestDoublesPartner = freezed,}) {
   return _then(_ProfileSummary(
 sessions: null == sessions ? _self.sessions : sessions // ignore: cast_nullable_to_non_nullable
 as int,clubRank: freezed == clubRank ? _self.clubRank : clubRank // ignore: cast_nullable_to_non_nullable
@@ -1155,7 +1173,9 @@ as int?,area: freezed == area ? _self.area : area // ignore: cast_nullable_to_no
 as String?,badges: null == badges ? _self._badges : badges // ignore: cast_nullable_to_non_nullable
 as List<ProfileBadge>,badgeCount: null == badgeCount ? _self.badgeCount : badgeCount // ignore: cast_nullable_to_non_nullable
 as int,sessionsShownTo: null == sessionsShownTo ? _self.sessionsShownTo : sessionsShownTo // ignore: cast_nullable_to_non_nullable
-as String,
+as String,bestDoublesRank: freezed == bestDoublesRank ? _self.bestDoublesRank : bestDoublesRank // ignore: cast_nullable_to_non_nullable
+as int?,bestDoublesPartner: freezed == bestDoublesPartner ? _self.bestDoublesPartner : bestDoublesPartner // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -63,6 +63,22 @@ class _Auth implements AuthRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+const _twoSports = [
+  PlayerSport(sport: 'badminton', level: 2, playMin: 1, playMax: 3),
+  PlayerSport(sport: 'tennis', level: 3, playMin: 2, playMax: 4),
+];
+
+class _MeFull extends SessionProfile {
+  @override
+  Future<Profile?> build() async => const Profile(
+    id: 'u1',
+    username: 'nicholas28',
+    fullName: 'Nicholas Ong',
+    heightCm: 178,
+    birthplace: 'Singapore',
+  );
+}
+
 final List<Override> _data = [
   myPastSessionsProvider.overrideWith(
     (_) async => [
@@ -96,17 +112,10 @@ final List<Override> _data = [
       ),
     ],
   ),
-  mySportsProvider.overrideWith(
-    (_) async => const [
-      PlayerSport(sport: 'badminton', level: 2, playMin: 1, playMax: 3),
-      PlayerSport(sport: 'tennis', level: 3, playMin: 2, playMax: 4),
-    ],
-  ),
   mySocialProvider.overrideWith(
     (_) async => const PlayerSocial(followers: 3, following: 5),
   ),
   clubListProvider(ClubTab.mine).overrideWith((_) async => const []),
-  privateInfoProvider.overrideWith((_) async => const PrivateInfo()),
 ];
 
 Future<void> _pump(
@@ -121,6 +130,8 @@ Future<void> _pump(
   ),
   PointsSummary wallet = const PointsSummary(),
   List<Activity> schedule = const [],
+  List<PlayerSport> sports = _twoSports,
+  PrivateInfo info = const PrivateInfo(),
 }) async {
   // Tall and wide, so the test font's square letters fit.
   await tester.binding.setSurfaceSize(const Size(820, 2400));
@@ -133,6 +144,8 @@ Future<void> _pump(
         mySummaryProvider.overrideWith((_) async => summary),
         pointsSummaryProvider.overrideWith((_) async => wallet),
         myScheduleProvider.overrideWith((_) async => schedule),
+        mySportsProvider.overrideWith((_) async => sports),
+        privateInfoProvider.overrideWith((_) async => info),
         ...extra,
       ],
       child: MaterialApp.router(
@@ -525,6 +538,161 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('the hero covers the width; back and share sit over it', (
+      tester,
+    ) async {
+      await _pump(tester, const PassportScreen());
+      final width = tester.getSize(find.byType(Scaffold)).width;
+      final back = tester.getRect(find.bySemanticsLabel('Back'));
+      final share = tester.getRect(find.bySemanticsLabel('Share'));
+      // Close to the screen's edges, not inset like the page's content.
+      expect(back.left, 12);
+      expect(share.right, width - 12);
+      expect(back.size, const Size(44, 44));
+      expect(back.top, share.top);
+      final hero = tester.getRect(
+        find
+            .byWidgetPredicate(
+              (w) =>
+                  w is Container &&
+                  w.decoration is BoxDecoration &&
+                  (w.decoration! as BoxDecoration).color ==
+                      OgColors.charcoal900,
+            )
+            .first,
+      );
+      expect(hero.left, 0);
+      expect(hero.right, width);
+    });
+
+    testWidgets(
+      'the personal card: photo, name, flag, age, height, birthplace',
+      (tester) async {
+        await _pump(
+          tester,
+          const PassportScreen(),
+          me: _MeFull.new,
+          info: PrivateInfo(birthday: DateTime(2000, 1, 1)),
+        );
+        expect(find.byType(Avatar), findsOneWidget);
+        expect(find.text('Nicholas Ong'), findsOneWidget);
+        expect(
+          find.text('Singapore'),
+          findsNWidgets(2),
+          reason: 'country, birthplace',
+        );
+        expect(find.text('178 cm'), findsOneWidget);
+        final now = DateTime.now();
+        final age = now.year - 2000 - (now.month == 1 && now.day < 1 ? 1 : 0);
+        expect(find.text('$age'), findsOneWidget);
+        for (final label in ['Age', 'Height', 'Birthplace', 'Ranking']) {
+          expect(find.text(label), findsOneWidget, reason: label);
+        }
+        // Name above the boxes, hero above the card.
+        expect(
+          tester.getTopLeft(find.text('Nicholas Ong')).dy,
+          lessThan(tester.getTopLeft(find.text('Age')).dy),
+        );
+      },
+    );
+
+    testWidgets('with no data the boxes show a dash', (tester) async {
+      await _pump(
+        tester,
+        const PassportScreen(),
+        summary: const ProfileSummary(),
+      );
+      expect(
+        find.text('—'),
+        findsNWidgets(4),
+        reason: 'age, height, birthplace, ranking',
+      );
+    });
+
+    testWidgets('ranking, and the best doubles ranking with the partner', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const PassportScreen(),
+        summary: const ProfileSummary(
+          localRank: 8,
+          area: 'Tampines',
+          bestDoublesRank: 3,
+          bestDoublesPartner: 'Mei Wong',
+        ),
+      );
+      expect(find.text('#8'), findsOneWidget);
+      expect(find.text('Tampines'), findsOneWidget);
+      expect(find.text('Best doubles'), findsOneWidget);
+      expect(find.text('#3'), findsOneWidget);
+      expect(find.text('with Mei Wong'), findsOneWidget);
+    });
+
+    testWidgets('no best doubles box when there is none', (tester) async {
+      await _pump(
+        tester,
+        const PassportScreen(),
+        summary: const ProfileSummary(localRank: 8),
+      );
+      expect(find.text('Best doubles'), findsNothing);
+    });
+
+    testWidgets('the sport selector holds the main sports, five at most', (
+      tester,
+    ) async {
+      const seven = [
+        PlayerSport(sport: 'badminton', level: 2, playMin: 1, playMax: 3),
+        PlayerSport(sport: 'tennis', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'squash', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'padel', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'cycling', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'football', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'hyrox', level: 3, playMin: 2, playMax: 4),
+      ];
+      await _pump(tester, const PassportScreen(), sports: seven);
+      for (final s in ['Badminton', 'Tennis', 'Squash', 'Padel', 'Cycling']) {
+        expect(find.bySemanticsLabel(s), findsOneWidget, reason: s);
+      }
+      expect(find.bySemanticsLabel('Football'), findsNothing);
+      expect(find.bySemanticsLabel('Hyrox'), findsNothing);
+    });
+
+    testWidgets('a sport opened from the list takes the fifth place', (
+      tester,
+    ) async {
+      const seven = [
+        PlayerSport(sport: 'badminton', level: 2, playMin: 1, playMax: 3),
+        PlayerSport(sport: 'tennis', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'squash', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'padel', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'cycling', level: 3, playMin: 2, playMax: 4),
+        PlayerSport(sport: 'football', level: 3, playMin: 2, playMax: 4),
+      ];
+      await _pump(
+        tester,
+        const PassportScreen(initialSport: 'football'),
+        sports: seven,
+      );
+      expect(find.text('PASSPORT · FOOTBALL'), findsOneWidget);
+      expect(find.bySemanticsLabel('Cycling'), findsNothing);
+    });
+
+    testWidgets('selecting a sport shows its overview; the tabs stay', (
+      tester,
+    ) async {
+      await _pump(tester, const PassportScreen());
+      for (final t in ['Overview', 'Gear', 'Upcoming', 'Challenges']) {
+        expect(find.bySemanticsLabel(t), findsOneWidget, reason: t);
+      }
+      await tester.tap(find.bySemanticsLabel('Tennis'));
+      await tester.pumpAndSettle();
+      expect(find.text('PASSPORT · TENNIS'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Gear'));
+      await tester.pumpAndSettle();
+      expect(find.text('Your tennis gear'), findsOneWidget);
     });
   });
 }
