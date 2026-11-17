@@ -88,7 +88,7 @@ class DemoClubRepository implements ClubRepository {
       'hannahgoh',
       0xFF101010,
       6.2,
-      ink: 0xFFC6FF00,
+      ink: 0xFFFF7A1A,
     );
     _person('cp-siti', 'Siti Kamal', 'sitikamal', 0xFF0E6B4E, 5.7);
     _person(
@@ -534,8 +534,8 @@ class DemoClubRepository implements ClubRepository {
         id: 'an-2',
         author: 'Siti Kamal',
         authorRole: 'admin',
-        title: 'Club reward: 2 Meets to go',
-        body: 'We need 2 more Meets with 6 or more paid players to unlock the S\$20 shuttle voucher.',
+        title: 'Two Meets this weekend',
+        body: 'Saturday and Sunday mornings are open. Bring a friend.',
         at: _daysAgo(2, 19),
       ),
       Announcement(
@@ -1339,6 +1339,17 @@ class DemoClubRepository implements ClubRepository {
   }
 
   @override
+  Future<List<GroupRank>> groupRanking() async => const [
+    GroupRank(
+      rank: 1,
+      clubId: 'demo',
+      name: 'Tampines Smashers',
+      area: 'Tampines',
+      games: 12,
+    ),
+  ];
+
+  @override
   Future<void> report(
     ReportTarget target,
     ContentReport reason,
@@ -1393,50 +1404,6 @@ class DemoClubRepository implements ClubRepository {
       myNote: mine <= 0
           ? 'Top of the club'
           : '${(double.parse(rows[mine - 1].score) - double.parse(rows[mine].score)).toStringAsFixed(1)} behind #$mine',
-    );
-  }
-
-  @override
-  Future<ClubReward> reward(String clubId) async {
-    await _tick();
-    final now = DateTime.now();
-    final month = now.month;
-    String monthName(int m) => const [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ][(m - 1) % 12];
-    return ClubReward(
-      meets: [
-        RewardMeet(
-          title: 'Doubles Social',
-          at: _daysAgo(12, 20),
-          paidPresent: 9,
-        ),
-        RewardMeet(
-          title: 'Morning Singles',
-          at: _daysAgo(11, 9),
-          paidPresent: 6,
-        ),
-        RewardMeet(
-          title: 'Beginner Rotation',
-          at: _daysAgo(8, 19),
-          paidPresent: 5,
-        ),
-      ],
-      past: [
-        (monthName(month - 1 + 12), 'S\$20 shuttle voucher, used'),
-        (monthName(month - 2 + 12), 'Not reached, 3 of 4'),
-      ],
     );
   }
 

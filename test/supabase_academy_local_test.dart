@@ -4,7 +4,11 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/features/academy/data/academy_repository.dart';
+import 'package:olympus_go/features/academy/data/coach_repository.dart';
 import 'package:olympus_go/features/academy/domain/academy_models.dart';
 import 'package:olympus_go/features/academy/domain/academy_more.dart';
 import 'package:olympus_go/features/onboarding/domain/sport.dart';
@@ -17,9 +21,18 @@ void main() {
       ? 'Needs a local Supabase stack'
       : null;
 
+  final service = Platform.environment['LOCAL_SUPABASE_SERVICE_KEY'];
+  SupabaseClient admin() => SupabaseClient(
+    url!,
+    service!,
+    authOptions: const AuthClientOptions(autoRefreshToken: false),
+  );
+  final clients = <String, SupabaseClient>{};
+
   Future<(String, String, SupabaseAcademyRepository)> player(
-    String name,
-  ) async {
+    String name, {
+    String birthday = '1990-01-01',
+  }) async {
     final client = SupabaseClient(
       url!,
       key!,
@@ -30,9 +43,14 @@ void main() {
     );
     final stamp = DateTime.now().microsecondsSinceEpoch;
     final email = '$name.$stamp@test.local';
-    final res = await client.auth.signUp(
+    final res = await signUpLocal(
+      client,
       email: email,
       password: 'test-password-123',
+    );
+    await client.rpc(
+      'set_birthday',
+      params: {'p_birthday': birthday, 'p_country': 'SG'},
     );
     final username = '${name}_${stamp % 100000}';
     await client
@@ -43,6 +61,7 @@ void main() {
           'onboarding_completed': true,
         })
         .eq('id', res.user!.id);
+    clients[name] = client;
     return (email, username, SupabaseAcademyRepository(client));
   }
 
@@ -54,6 +73,21 @@ void main() {
       final (_, extraName, _) = await player('extra');
       final (_, _, parent) = await player('parent');
       final (_, _, stranger) = await player('stranger');
+      final (_, _, _) = await player('ethan', birthday: '2016-03-01');
+      final (_, _, _) = await player('zoe', birthday: '2016-04-01');
+      final (_, _, _) = await player('max', birthday: '2016-05-01');
+      String idOf(String name) => clients[name]!.auth.currentUser!.id;
+      final staff = admin();
+
+      // Only a linked child can be enrolled, so their age is real.
+      for (final kid in ['ethan', 'zoe', 'max']) {
+        await staff.from('guardian_links').insert({
+          'child_id': idOf(kid),
+          'parent_id': idOf('parent'),
+          'status': 'approved',
+          'decided_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
 
       final id = await head.createAcademy(
         AcademyDraft(
@@ -61,17 +95,38 @@ void main() {
           blurb: 'Kids classes',
           venues: const ['Our Tampines Hub, Tampines'],
           sport: Sport.badminton,
-          documents: const {'biz'},
           coachEmails: [coachEmail, 'nobody@test.local'],
         ),
       );
       var a = await head.academy(id);
       expect(a.myRole, AcademyRole.headCoach);
       expect(a.area, 'Tampines');
-      expect(a.verification, 'submitted');
-      expect(a.coaches.map((k) => k.name), ['head Test', 'coach Test']);
-      expect(a.invitedCoaches, ['nobody@test.local']);
+      expect(a.verification, 'none');
+      expect(a.coaches.map((k) => k.name), ['head Test']);
+      expect(a.invitedCoaches, hasLength(2));
+
+      // An unverified academy isn't listed, and a coach has to agree.
+      await expectLater(parent.academy(id), throwsA(isA<Object>()));
+      final coaching = SupabaseCoachRepository(clients['coach']!);
+      expect((await coaching.coachInvites()).single.$1, id);
+      await coaching.answerInvite(id, accept: true);
       expect((await coach.academy(id)).myRole, AcademyRole.coach);
+
+      // Staff's checks, done here with the service key.
+      final expires = DateTime.now().add(const Duration(days: 300));
+      for (final who in ['head', 'coach']) {
+        await staff.from('coach_licences').insert({
+          'user_id': idOf(who),
+          'nroc_number': 'NROC-$who',
+          'expires_on': expires.toIso8601String().substring(0, 10),
+          'status': 'verified',
+          'verified_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
+      await staff
+          .from('academies')
+          .update({'verification': 'verified', 'uen': '201912345A'})
+          .eq('id', id);
 
       // Only the head coach adds classes.
       final headId = a.coaches.first.id;
@@ -102,36 +157,48 @@ void main() {
       await parent.requestEnrol(
         academyId: id,
         classId: classId,
-        student: 'Ethan Ng',
-        age: 10,
+        playerId: idOf('ethan'),
         note: 'Played at school',
       );
       await expectLater(
         parent.requestEnrol(
           academyId: id,
           classId: classId,
-          student: 'Ethan Ng',
+          playerId: idOf('ethan'),
         ),
         throwsA(isA<Object>()),
       );
+      await expectLater(
+        stranger.requestEnrol(
+          academyId: id,
+          classId: classId,
+          playerId: idOf('ethan'),
+        ),
+        throwsA(isA<Object>()),
+      );
+      expect(
+        (await parent.myPlayers()).map((p) => p.name),
+        containsAll(['parent Test', 'ethan Test']),
+      );
       await expectLater(stranger.requests(id), throwsA(isA<Object>()));
       final reqs = await head.requests(id);
-      expect(reqs.single.student, 'Ethan Ng');
+      expect(reqs.single.student, 'ethan Test');
       expect(reqs.single.parent, 'parent Test');
       await head.decide(reqs.single.id, RequestState.accepted);
       expect((await head.academy(id)).pendingRequests, 0);
 
       final kids = await parent.myStudents();
       final ethan = kids.single;
-      expect(ethan.name, 'Ethan Ng');
-      expect(ethan.age, 10);
+      expect(ethan.name, 'ethan Test');
+      expect(ethan.age, inInclusiveRange(9, 11));
+      expect(ethan.playerId, idOf('ethan'));
       expect(ethan.skills, hasLength(12));
       expect((await parent.academy(id)).myRole, AcademyRole.parent);
       await expectLater(stranger.student(ethan.id), throwsA(isA<Object>()));
 
       final slots = await parent.trialSlots(id);
       expect(slots, isNotEmpty);
-      await parent.bookTrial(id, slots.first, 'Mia Ng');
+      await parent.bookTrial(id, slots.first, idOf('zoe'));
       expect((await head.requests(id)).first.note, startsWith('Trial on'));
 
       // The coach runs today's class.
@@ -214,10 +281,10 @@ void main() {
       expect(s.notes.first.text, 'Work on the forehand clear.');
 
       await expectLater(
-        coach.setFilmingConsent(ethan.id, own: true, train: false),
+        coach.setFilmingConsent(ethan.id, own: true),
         throwsA(isA<Object>()),
       );
-      await parent.setFilmingConsent(ethan.id, own: true, train: false);
+      await parent.setFilmingConsent(ethan.id, own: true);
       expect((await parent.student(ethan.id)).filmingConsent, isTrue);
 
       // Settings.
@@ -227,9 +294,12 @@ void main() {
       expect(a.makeupsPerMonth, 3);
       await head.setCoach(id, '@$extraName', add: true);
       a = await head.academy(id);
-      expect(a.coaches, hasLength(3));
-      await head.setCoach(id, a.coaches.last.id, add: false);
-      expect((await head.academy(id)).coaches, hasLength(2));
+      expect(a.coaches, hasLength(2));
+      await head.setCoach(id, idOf('extra'), add: false);
+      expect(
+        await SupabaseCoachRepository(clients['extra']!).coachInvites(),
+        isEmpty,
+      );
       await expectLater(
         coach.setCoach(id, extraName, add: true),
         throwsA(isA<Object>()),
@@ -240,12 +310,12 @@ void main() {
       await parent.requestEnrol(
         academyId: id,
         classId: classId,
-        student: 'Zoe Ng',
+        playerId: idOf('zoe'),
       );
       await parent.requestEnrol(
         academyId: id,
         classId: classId,
-        student: 'Max Ng',
+        playerId: idOf('max'),
       );
       final pending = (await head.requests(id))
           .where(

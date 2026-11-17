@@ -4,14 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:og_money/og_money.dart';
+
 import '../../../core/format.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../play/domain/activity.dart' show money;
 import '../application/academy_providers.dart';
 import '../domain/academy_models.dart';
 
@@ -42,6 +45,8 @@ class _AcademyClassEditScreenState
   final _levelName = TextEditingController();
   final _ages = TextEditingController();
   final _fee = TextEditingController();
+  final _trial = TextEditingController();
+  final _dropIn = TextEditingController();
   final _capacity = TextEditingController(text: '12');
   final _court = TextEditingController();
   int _level = 1;
@@ -54,7 +59,16 @@ class _AcademyClassEditScreenState
 
   @override
   void dispose() {
-    for (final c in [_name, _levelName, _ages, _fee, _capacity, _court]) {
+    for (final c in [
+      _name,
+      _levelName,
+      _ages,
+      _fee,
+      _trial,
+      _dropIn,
+      _capacity,
+      _court,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -65,13 +79,16 @@ class _AcademyClassEditScreenState
     _loaded = true;
     final x = a.classes.where((c) => c.id == widget.classId).firstOrNull;
     if (x == null) {
-      _coachId = a.coaches.where((k) => k.head).firstOrNull?.id ?? '';
+      // A coach needs a verified licence before they get a class.
+      _coachId = a.coaches.where((k) => k.head && k.nroc).firstOrNull?.id ?? '';
       return;
     }
     _name.text = x.name;
     _levelName.text = x.levelName;
     _ages.text = x.ages;
     _fee.text = x.feeCents == 0 ? '' : (x.feeCents / 100).toStringAsFixed(0);
+    _trial.text = x.trialPriceCents == null ? '' : money(x.trialPriceCents!);
+    _dropIn.text = x.dropinPriceCents == null ? '' : money(x.dropinPriceCents!);
     _capacity.text = '${x.capacity}';
     _court.text = x.court;
     _level = x.level;
@@ -147,6 +164,8 @@ class _AcademyClassEditScreenState
               coach: '',
               coachId: _coachId,
               court: _court.text.trim(),
+              trialPriceCents: parseMinor(_trial.text.trim()),
+              dropinPriceCents: parseMinor(_dropIn.text.trim()),
             ),
           );
       HapticFeedback.mediumImpact();
@@ -167,7 +186,6 @@ class _AcademyClassEditScreenState
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final title = widget.classId == null ? 'Add a class' : 'Edit class';
     final a = ref.watch(academyProvider(widget.academyId)).value;
     if (a == null) {
@@ -196,7 +214,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Level', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Level', style: context.type.body),
             const SizedBox(height: 8),
             KitSegments(
               labels: const ['1', '2', '3', '4', '5'],
@@ -214,7 +232,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Days', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Days', style: context.type.body),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -245,7 +263,7 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Length', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Length', style: context.type.body),
             const SizedBox(height: 8),
             KitSegments(
               labels: const ['45 min', '60 min', '90 min', '2 hr'],
@@ -280,6 +298,29 @@ class _AcademyClassEditScreenState
             ),
           ],
         ),
+        Row(
+          children: [
+            Expanded(
+              child: KitInput(
+                label: 'Trial (S\$, optional)',
+                controller: _trial,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: KitInput(
+                label: 'Single class (S\$, optional)',
+                controller: _dropIn,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+              ),
+            ),
+          ],
+        ),
         KitInput(
           label: 'Court',
           hint: 'Court 3',
@@ -289,20 +330,30 @@ class _AcademyClassEditScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Coach', style: OgText.body(15, weight: FontWeight.w700)),
+            Text('Coach', style: context.type.body),
+            KitChoiceRow(
+              title: 'No coach yet',
+              subtitle: 'Parents can’t book until there’s a coach',
+              selected: _coachId.isEmpty,
+              onTap: () => setState(() => _coachId = ''),
+            ),
             for (final k in a.coaches)
               KitChoiceRow(
                 title: k.name,
-                subtitle: k.head ? 'Head coach' : k.role,
+                subtitle:
+                    '${k.head ? 'Head coach' : k.role}'
+                    '${k.nroc ? '' : ' · licence not verified yet'}',
                 selected: _coachId == k.id,
                 onTap: () => setState(() => _coachId = k.id),
               ),
           ],
         ),
         Text(
-          'Parents pay the academy directly for now. The fee shows on the '
-          'academy page so they know what to expect.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          'Monthly and term fees are paid to the academy directly, and show on '
+          'the academy page so parents know what to expect. Trials and single '
+          'classes are paid in the app. Leave them blank if you don’t offer '
+          'them. The platform fee is added on top for the parent.',
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -341,9 +392,10 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
           .read(academyRepositoryProvider)
           .setCoach(widget.id, username.trim(), add: add);
       HapticFeedback.mediumImpact();
+      if (!mounted) return;
       ref.invalidate(academyProvider(widget.id));
       if (add) _username.clear();
-      if (mounted) showOgToast(context, add ? 'Coach added' : 'Coach removed');
+      showOgToast(context, add ? 'Invitation sent' : 'Coach removed');
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
     } finally {
@@ -353,7 +405,6 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final a = ref.watch(academyProvider(widget.id)).value;
     if (a == null) {
       return const KitScaffold(
@@ -379,20 +430,16 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
                       k.id.isEmpty ? k.name : k.id,
                       initials: k.initials,
                       size: 40,
-                      fontSize: 14,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            k.name,
-                            style: OgText.body(15, weight: FontWeight.w700),
-                          ),
+                          Text(k.name, style: context.type.body),
                           Text(
                             k.head ? 'Head coach' : k.role,
-                            style: OgText.body(13, color: c.textMuted),
+                            style: context.type.caption,
                           ),
                         ],
                       ),
@@ -407,16 +454,32 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
               ),
           ],
         ),
-        if (a.invitedCoaches.isNotEmpty) ...[
-          Text('Invited by email', style: OgText.heading(20)),
+        if (a.invitedCoaches.isNotEmpty || a.pendingCoaches.isNotEmpty) ...[
+          Text('Invited', style: context.type.section),
           for (final e in a.invitedCoaches)
             Text(
-              '$e · joins when they sign up',
-              style: OgText.body(14, color: c.textMuted),
+              '$e · can join once they have an account',
+              style: context.type.secondary,
+            ),
+          for (final k in a.pendingCoaches)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${k.name} · hasn’t answered yet',
+                    style: context.type.secondary,
+                  ),
+                ),
+                if (head)
+                  KitLink(
+                    'Withdraw',
+                    onPressed: _busy ? null : () => _set(k.id, false),
+                  ),
+              ],
             ),
         ],
         if (head) ...[
-          Text('Add a coach', style: OgText.heading(20)),
+          Text('Add a coach', style: context.type.section),
           KitInput(
             label: 'Their OlympusGO username',
             hint: '@coachravi',
@@ -430,7 +493,7 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
           Text(
             'Coaches can take attendance, write notes to parents and edit '
             'lesson plans. Only you can add classes and change settings.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       ],
@@ -444,11 +507,14 @@ class _AcademyCoachesScreenState extends ConsumerState<AcademyCoachesScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Remove ${k.name}?', style: OgText.heading(22)),
+          Text('Remove ${k.name}?', style: context.type.section),
           const SizedBox(height: 8),
           Text(
             'Their classes are left without a coach until you pick a new one.',
-            style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
+            style: context.type.body.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 18),
           KitButton(
@@ -486,7 +552,7 @@ Future<void> showAcademyBilling(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Billing and make-ups', style: OgText.heading(22)),
+          Text('Billing and make-ups', style: context.type.section),
           const SizedBox(height: 12),
           for (final b in Billing.values)
             KitChoiceRow(
@@ -495,10 +561,7 @@ Future<void> showAcademyBilling(
               onTap: () => set(() => billing = b),
             ),
           const SizedBox(height: 12),
-          Text(
-            'Make-up classes each month',
-            style: OgText.body(15, weight: FontWeight.w700),
-          ),
+          Text('Make-up classes each month', style: context.type.body),
           const SizedBox(height: 8),
           KitSegments(
             labels: const ['0', '1', '2', '3', '4'],
@@ -509,7 +572,10 @@ Future<void> showAcademyBilling(
           Text(
             'Parents pay the academy directly for now. This is what the '
             'academy page tells them.',
-            style: OgText.body(13, height: 1.45, color: sheet.og.textMuted),
+            style: context.type.caption.copyWith(
+              color: sheet.og.textMuted,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 16),
           KitButton(label: 'Save', onPressed: () => Navigator.pop(sheet, true)),
@@ -524,83 +590,6 @@ Future<void> showAcademyBilling(
         .updateAcademy(a.id, billing: billing, makeups: makeups);
     ref.invalidate(academyProvider(a.id));
     if (context.mounted) showOgToast(context, 'Saved');
-  } on AuthFailure catch (e) {
-    if (context.mounted) showOgToast(context, e.message, error: true);
-  }
-}
-
-/// Verification: which documents the academy has, sent to Olympus to check.
-Future<void> showAcademyVerification(
-  BuildContext context,
-  WidgetRef ref,
-  Academy a,
-) async {
-  const docs = [
-    ('biz', 'Business licence', 'ACRA business profile or licence'),
-    ('coach', 'NROC licences', 'National Registry of Coaches, for every coach'),
-  ];
-  final picked = <String>{};
-  final status = switch (a.verification) {
-    'verified' => 'Verified. Parents see the Verified tag on your page.',
-    'submitted' =>
-      'Sent for review. Our team checks within 1 to 3 working days and '
-          'emails you if anything is missing.',
-    _ => 'Not verified yet. Verified academies show a tag parents trust.',
-  };
-  final send = await showKitSheet<bool>(
-    context,
-    builder: (sheet) => StatefulBuilder(
-      builder: (sheet, set) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Verification', style: OgText.heading(22)),
-          const SizedBox(height: 8),
-          Text(
-            status,
-            style: OgText.body(15, height: 1.45, color: sheet.og.textMuted),
-          ),
-          if (a.verification == 'none') ...[
-            const SizedBox(height: 12),
-            for (final (id, title, sub) in docs)
-              KitChoiceRow(
-                title: title,
-                subtitle: sub,
-                multi: true,
-                selected: picked.contains(id),
-                onTap: () => set(() {
-                  if (!picked.remove(id)) picked.add(id);
-                }),
-              ),
-            const SizedBox(height: 8),
-            Text(
-              'Tick what you have. Our team emails you to collect copies.',
-              style: OgText.body(13, color: sheet.og.textMuted),
-            ),
-            const SizedBox(height: 16),
-            KitButton(
-              label: 'Send for review',
-              onPressed: () => Navigator.pop(sheet, true),
-            ),
-          ] else ...[
-            const SizedBox(height: 16),
-            KitButton(label: 'Done', onPressed: () => Navigator.pop(sheet)),
-          ],
-        ],
-      ),
-    ),
-  );
-  if (send != true || !context.mounted) return;
-  if (picked.isEmpty) {
-    showOgToast(context, 'Tick at least one document.', error: true);
-    return;
-  }
-  try {
-    await ref
-        .read(academyRepositoryProvider)
-        .updateAcademy(a.id, documents: picked);
-    ref.invalidate(academyProvider(a.id));
-    if (context.mounted) showOgToast(context, 'Sent for review');
   } on AuthFailure catch (e) {
     if (context.mounted) showOgToast(context, e.message, error: true);
   }

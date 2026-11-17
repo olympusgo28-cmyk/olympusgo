@@ -1,0 +1,10 @@
+olympus_worker/vendor/good_badminton/court comes unchanged from Good-Badminton
+(https://github.com/yo-WASSUP/Good-Badminton, commit 24f2208929f8), which is
+under the Apache License 2.0. The licence is beside it.
+
+Nothing from Ultralytics is used. Good-Badminton's shuttlecock detector and its
+system.py are left out for that reason, and the check in tests/test_licences.py
+fails the build if Ultralytics appears.
+
+Pose uses rtmlib with RTMPose and YOLOX. See Q179 for the open check on the
+model weights.

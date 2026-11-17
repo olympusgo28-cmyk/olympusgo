@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../navigation/breadcrumbs.dart';
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import 'og_buttons.dart';
 import 'og_kit.dart';
+import '../../core/theme/og_type.dart';
 
 /// Layout used by every full-screen flow step in the design: 24px side
 /// padding, content from the top, actions pinned to the bottom. It scrolls
@@ -44,7 +44,6 @@ class OgFlowScreen extends StatelessWidget {
   final double padBottom;
 
   Widget _page(BuildContext context) {
-    final c = context.og;
     final rest = [...children];
     VoidCallback? onBack;
     if (rest.isNotEmpty && rest.first is OgBackButton) {
@@ -73,7 +72,7 @@ class OgFlowScreen extends StatelessWidget {
       children: [
         if (leading != null) ...[leading, const SizedBox(height: 12)],
         if (lead != null) ...[
-          Text(lead, style: OgText.body(15, height: 1.45, color: c.textMuted)),
+          Text(lead, style: context.type.secondary.copyWith(height: 1.45)),
           const SizedBox(height: 8),
         ],
         ...rest,
@@ -143,11 +142,10 @@ class OgHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     Crumbs.name(context, title);
     final titleText = Semantics(
       header: true,
-      child: Text(title, style: OgText.h1.copyWith(color: c.text)),
+      child: Text(title, style: context.type.title),
     );
     return Padding(
       padding: EdgeInsets.only(top: topGap),
@@ -170,7 +168,7 @@ class OgHeading extends StatelessWidget {
           ],
           if (lead != null) ...[
             const SizedBox(height: 12),
-            Text(lead!, style: OgText.lead(c.textMuted)),
+            Text(lead!, style: context.type.secondary),
           ],
         ],
       ),
@@ -232,12 +230,7 @@ class OgErrorText extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: OgText.body(
-                  14,
-                  weight: FontWeight.w600,
-                  color: c.error,
-                  height: 1.35,
-                ),
+                style: context.type.body.copyWith(color: c.error, height: 1.35),
               ),
             ),
           ],

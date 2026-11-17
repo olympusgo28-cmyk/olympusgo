@@ -11,6 +11,15 @@ abstract class Profile with _$Profile {
     String? username,
     @JsonKey(name: 'full_name') String? fullName,
     String? bio,
+
+    /// Links on Profile (owner, 16 Nov 2026). The server has no column for
+    /// them yet, so a live profile has none (Q274).
+    @Default(<String>[]) List<String> links,
+
+    /// On the sport profile's personal card (owner, 17 Nov 2026). The server
+    /// has no columns for these yet, so a live profile has none (Q275).
+    @JsonKey(name: 'height_cm') int? heightCm,
+    String? birthplace,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     @JsonKey(name: 'onboarding_completed')
     @Default(false)
@@ -56,7 +65,7 @@ abstract class ProfileBadge with _$ProfileBadge {
   const factory ProfileBadge({
     required String mark,
     required String name,
-    @Default(0xFFFFE8CC) int color,
+    @Default(0xFFFFE6D6) int color,
     @Default(0xFF7A3B00) int ink,
   }) = _ProfileBadge;
 }
@@ -81,6 +90,11 @@ abstract class ProfileSummary with _$ProfileSummary {
 
     /// Who sees their next sessions: "Circle", "Followers", "Only me".
     @Default('Followers') String sessionsShownTo,
+
+    /// The player's best doubles ranking and the partner they reached it with.
+    /// Nothing sends these yet (Q275).
+    int? bestDoublesRank,
+    String? bestDoublesPartner,
   }) = _ProfileSummary;
 }
 
@@ -108,6 +122,23 @@ class HistoryItem {
 }
 
 /// Sessions and results in one sport.
+/// A player's rating in one sport, from confirmed results.
+class RatingCard {
+  const RatingCard({
+    required this.level,
+    required this.matches,
+    required this.provisional,
+    this.history = const [],
+  });
+
+  final double level;
+  final int matches;
+  final bool provisional;
+
+  /// The rating after each result, oldest first.
+  final List<double> history;
+}
+
 class PassportHistory {
   const PassportHistory({
     this.sessions = 0,

@@ -45,7 +45,7 @@ final class HomeCategoriesControllerProvider
 }
 
 String _$homeCategoriesControllerHash() =>
-    r'af6d8b5a0b35f87ec82718a0048a0c49d2e05acc';
+    r'79c4873c5fcbf98e8455f2b7eff22122dc3a324e';
 
 /// Saved on the device, like other display choices.
 

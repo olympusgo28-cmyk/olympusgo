@@ -1,7 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/domain/country.dart';
+import '../../onboarding/domain/sport.dart';
 import '../../profile/domain/profile.dart';
+import '../../settings/domain/settings_models.dart';
 
 part 'social_models.freezed.dart';
 
@@ -64,14 +66,36 @@ abstract class PlayerDetail with _$PlayerDetail {
   }) = _PlayerDetail;
 }
 
-/// A player worth following, with their level and a line about them.
+/// A player worth following, with their sport and a line about them.
 @freezed
 abstract class SuggestedPlayer with _$SuggestedPlayer {
   const factory SuggestedPlayer({
     required PlayerSummary player,
     double? level,
-    @Default('') String note,
+
+    /// The sport this suggestion is for; its icon shows on the Player card.
+    Sport? sport,
+    @Default(Gender.preferNotToSay) Gender gender,
+
+    /// People you both follow, and clubs you are both in.
+    @Default(0) int mutualFriends,
+    @Default(0) int mutualClubs,
   }) = _SuggestedPlayer;
+
+  const SuggestedPlayer._();
+
+  /// The Player card's note (owner, 15 Nov 2026): gender · mutual counts, else
+  /// "Suggested for you". A gender of "prefer not to say" is left out.
+  String get note {
+    final parts = [
+      if (gender != Gender.preferNotToSay) gender.label,
+      if (mutualFriends > 0)
+        '$mutualFriends mutual ${mutualFriends == 1 ? 'friend' : 'friends'}',
+      if (mutualClubs > 0)
+        '$mutualClubs mutual ${mutualClubs == 1 ? 'club' : 'clubs'}',
+    ];
+    return parts.isEmpty ? 'Suggested for you' : parts.join(' · ');
+  }
 }
 
 enum ReportReason {
@@ -107,5 +131,9 @@ abstract class ChatMessage with _$ChatMessage {
     required String senderId,
     required String body,
     required DateTime createdAt,
+
+    /// Set by the phone, to match a message to its optimistic copy.
+    String? clientId,
+    @Default(false) bool deleted,
   }) = _ChatMessage;
 }

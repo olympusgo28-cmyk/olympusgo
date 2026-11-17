@@ -7,13 +7,14 @@ import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_fields.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_screen.dart';
-import '../../auth/presentation/validators.dart';
+import '../../auth/data/auth_repository.dart';
+import '../../guardian/application/guardian_providers.dart';
 import '../application/onboarding_controller.dart';
 
 /// Step 1: full name, typed large like a Passport.
@@ -68,12 +69,15 @@ class _FullNameScreenState extends ConsumerState<FullNameScreen> {
             onChanged: (_) => setState(() {}),
             onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             onSubmitted: (_) => _continue(),
-            style: OgText.display(36, height: 1.2, color: c.text),
+            style: context.type.display.copyWith(height: 1.2),
             decoration: InputDecoration(
               counterText: '',
               border: InputBorder.none,
               hintText: 'Full name',
-              hintStyle: OgText.display(36, height: 1.2, color: c.border),
+              hintStyle: context.type.display.copyWith(
+                color: c.border,
+                height: 1.2,
+              ),
             ),
           ),
         ),
@@ -128,6 +132,7 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
   late DateTime? _date = ref.read(onboardingControllerProvider).birthday;
   late Country _country = ref.read(onboardingControllerProvider).country;
   String? _error;
+  bool _busy = false;
 
   static const _months = [
     'January',
@@ -178,49 +183,49 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
     if (picked != null) setState(() => _country = picked);
   }
 
-  void _continue() {
+  /// The server works out the age group from the birthday and the country's
+  /// limits, so the branch below follows its answer, not a sum done here.
+  Future<void> _continue() async {
     final date = _date;
     if (date == null) {
       return setState(() => _error = 'Enter your date of birth.');
     }
-    final notifier = ref.read(onboardingControllerProvider.notifier)
-      ..setBirthday(date, _country);
-    final age = ref.read(onboardingControllerProvider).age!;
-    if (age < 13) {
-      return setState(
-        () => _error = 'Under 13? A parent adds you inside their own OlympusGO account instead.',
-      );
-    }
-    if (age < 18) {
-      context.push(Routes.parent);
-    } else {
-      notifier.setParentEmail('');
-      context.push(Routes.sports);
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    try {
+      final audience = await ref
+          .read(guardianRepositoryProvider)
+          .setBirthday(date, _country);
+      ref
+          .read(onboardingControllerProvider.notifier)
+          .setBirthday(date, _country);
+      ref.invalidate(restrictionsProvider);
+      if (!mounted) return;
+      context.push(audience == 'adult' ? Routes.sports : Routes.parent);
+    } on AuthFailure catch (e) {
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     Widget part(
       String label,
       String value, {
       double? width,
       bool flex = false,
     }) {
-      final field = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(label, style: OgText.label),
-          const SizedBox(height: 8),
-          OgSelectField(
-            value: value,
-            semanticLabel: label,
-            chevron: false,
-            placeholder: _date == null,
-            onTap: _pickDate,
-          ),
-        ],
+      // Outlined (Q251): the label rests inside until a date is picked.
+      final field = OgSelectField(
+        label: label,
+        value: value,
+        chevron: false,
+        placeholder: _date == null,
+        onTap: _pickDate,
       );
       return flex
           ? Expanded(child: field)
@@ -254,62 +259,36 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        Text('Country', style: OgText.label),
-        const SizedBox(height: 8),
         OgSelectField(
+          label: 'Country',
           value: _country.name,
-          semanticLabel: 'Country',
           onTap: _pickCountry,
         ),
         const SizedBox(height: 8),
         Text(
           'Sets your currency, emergency number and local rules.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+          style: context.type.secondary.copyWith(height: 1.4),
         ),
         if (_error != null) OgErrorText(_error!),
       ],
-      bottom: [OgButton(label: 'Continue', onPressed: _continue)],
+      bottom: [
+        OgButton(label: 'Continue', loading: _busy, onPressed: _continue),
+      ],
     );
   }
 }
 
 /// Under 18: a parent or guardian approves the account.
-class ParentApprovalScreen extends ConsumerStatefulWidget {
+class ParentApprovalScreen extends StatelessWidget {
   const ParentApprovalScreen({super.key});
 
   @override
-  ConsumerState<ParentApprovalScreen> createState() =>
-      _ParentApprovalScreenState();
-}
-
-class _ParentApprovalScreenState extends ConsumerState<ParentApprovalScreen> {
-  late final _email = TextEditingController(
-    text: ref.read(onboardingControllerProvider).parentEmail ?? '',
-  );
-  String? _error;
-
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
-  }
-
-  void _send() {
-    final email = _email.text.trim();
-    final invalid = Validators.email(email);
-    if (invalid != null) return setState(() => _error = invalid);
-    ref.read(onboardingControllerProvider.notifier).setParentEmail(email);
-    context.push(Routes.sports);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return OgFlowScreen(
-      children: [
-        const OgBackButton(),
-        const SizedBox(height: 24),
-        const OgIconBadge(
+      children: const [
+        OgBackButton(),
+        SizedBox(height: 24),
+        OgIconBadge(
           child: OgIcon(
             OgIcons.shield,
             size: 36,
@@ -317,33 +296,18 @@ class _ParentApprovalScreenState extends ConsumerState<ParentApprovalScreen> {
             strokeWidth: 2.2,
           ),
         ),
-        const OgHeading(
-          title: 'A parent needs to approve',
+        OgHeading(
+          title: 'A parent needs to link your account',
           lead:
-              "Because you're under 18, a parent or guardian approves your account. "
-              'Until they do, you can look around, but not join Meets or message people.',
-        ),
-        const SizedBox(height: 28),
-        OgTextField(
-          label: "Parent or guardian's email",
-          controller: _email,
-          hint: 'parent@example.com',
-          keyboardType: TextInputType.emailAddress,
-          autocorrect: false,
-          textInputAction: TextInputAction.send,
-          onSubmitted: (_) => _send(),
-          error: _error,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Under 13? A parent adds you inside their own OlympusGO account instead.',
-          style: OgText.body(14, height: 1.4, color: c.textMuted),
+              "Because you're under 18, a parent or guardian links their OlympusGO "
+              "account to yours. Finish setting up, then you'll get a code to show them.",
         ),
       ],
       bottom: [
-        OgButton(label: 'Send to my parent', onPressed: _send),
-        const SizedBox(height: 16),
-        OgTextLink('Wrong birthday? Change it', onPressed: () => context.pop()),
+        OgButton(
+          label: 'Continue',
+          onPressed: () => context.push(Routes.sports),
+        ),
       ],
     );
   }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import 'main_shell.dart';
 
 /// Scrolling page for a main tab: 24px gutters, content scrolls under the
@@ -71,7 +71,7 @@ class TabTitle extends StatelessWidget {
     header: true,
     child: Text(
       text,
-      style: OgText.h1.copyWith(color: color ?? context.og.text),
+      style: context.type.title.copyWith(color: color ?? context.og.text),
     ),
   );
 }
@@ -88,7 +88,7 @@ class SectionTitle extends StatelessWidget {
     padding: EdgeInsets.only(top: top),
     child: Semantics(
       header: true,
-      child: Text(text, style: OgText.section.copyWith(color: context.og.text)),
+      child: Text(text, style: context.type.section),
     ),
   );
 }

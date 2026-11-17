@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PendingCode {
 
- CodeChannel get channel; String get destination;
+ CodeTarget get target; String get destination;
 /// Create a copy of PendingCode
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $PendingCodeCopyWith<PendingCode> get copyWith => _$PendingCodeCopyWithImpl<Pend
 @override
 bool operator ==(Object other) {
   final _this = this as PendingCode;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingCode&&(identical(other.channel, _this.channel) || other.channel == _this.channel)&&(identical(other.destination, _this.destination) || other.destination == _this.destination));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingCode&&(identical(other.target, _this.target) || other.target == _this.target)&&(identical(other.destination, _this.destination) || other.destination == _this.destination));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PendingCode;
-  return Object.hash(runtimeType,_this.channel,_this.destination);
+  return Object.hash(runtimeType,_this.target,_this.destination);
 }
 
 @override
 String toString() {
   final _this = this as PendingCode;
-  return 'PendingCode(channel: ${_this.channel}, destination: ${_this.destination})';
+  return 'PendingCode(target: ${_this.target}, destination: ${_this.destination})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $PendingCodeCopyWith<$Res>  {
   factory $PendingCodeCopyWith(PendingCode value, $Res Function(PendingCode) _then) = _$PendingCodeCopyWithImpl;
 @useResult
 $Res call({
- CodeChannel channel, String destination
+ CodeTarget target, String destination
 });
 
 
@@ -68,10 +68,10 @@ class _$PendingCodeCopyWithImpl<$Res>
 
 /// Create a copy of PendingCode
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? channel = null,Object? destination = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? destination = null,}) {
   return _then(PendingCode(
-channel: null == channel ? _self.channel : channel // ignore: cast_nullable_to_non_nullable
-as CodeChannel,destination: null == destination ? _self.destination : destination // ignore: cast_nullable_to_non_nullable
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as CodeTarget,destination: null == destination ? _self.destination : destination // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -157,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CodeChannel channel,  String destination)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CodeTarget target,  String destination)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PendingCode() when $default != null:
-return $default(_that.channel,_that.destination);case _:
+return $default(_that.target,_that.destination);case _:
   return orElse();
 
 }
@@ -178,10 +178,10 @@ return $default(_that.channel,_that.destination);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CodeChannel channel,  String destination)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CodeTarget target,  String destination)  $default,) {final _that = this;
 switch (_that) {
 case _PendingCode():
-return $default(_that.channel,_that.destination);case _:
+return $default(_that.target,_that.destination);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +198,10 @@ return $default(_that.channel,_that.destination);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CodeChannel channel,  String destination)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CodeTarget target,  String destination)?  $default,) {final _that = this;
 switch (_that) {
 case _PendingCode() when $default != null:
-return $default(_that.channel,_that.destination);case _:
+return $default(_that.target,_that.destination);case _:
   return null;
 
 }
@@ -213,10 +213,10 @@ return $default(_that.channel,_that.destination);case _:
 
 
 class _PendingCode implements PendingCode {
-  const _PendingCode({required this.channel, required this.destination});
+  const _PendingCode({required this.target, required this.destination});
   
 
-@override final  CodeChannel channel;
+@override final  CodeTarget target;
 @override final  String destination;
 
 /// Create a copy of PendingCode
@@ -229,18 +229,18 @@ _$PendingCodeCopyWith<_PendingCode> get copyWith => __$PendingCodeCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PendingCode&&(identical(other.channel, channel) || other.channel == channel)&&(identical(other.destination, destination) || other.destination == destination));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PendingCode&&(identical(other.target, target) || other.target == target)&&(identical(other.destination, destination) || other.destination == destination));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,channel,destination);
+    return Object.hash(runtimeType,target,destination);
 }
 
 @override
 String toString() {
-    return 'PendingCode(channel: $channel, destination: $destination)';
+    return 'PendingCode(target: $target, destination: $destination)';
 }
 
 
@@ -251,7 +251,7 @@ abstract mixin class _$PendingCodeCopyWith<$Res> implements $PendingCodeCopyWith
   factory _$PendingCodeCopyWith(_PendingCode value, $Res Function(_PendingCode) _then) = __$PendingCodeCopyWithImpl;
 @override @useResult
 $Res call({
- CodeChannel channel, String destination
+ CodeTarget target, String destination
 });
 
 
@@ -268,10 +268,10 @@ class __$PendingCodeCopyWithImpl<$Res>
 
 /// Create a copy of PendingCode
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? channel = null,Object? destination = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? destination = null,}) {
   return _then(_PendingCode(
-channel: null == channel ? _self.channel : channel // ignore: cast_nullable_to_non_nullable
-as CodeChannel,destination: null == destination ? _self.destination : destination // ignore: cast_nullable_to_non_nullable
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as CodeTarget,destination: null == destination ? _self.destination : destination // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

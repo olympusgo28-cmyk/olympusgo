@@ -9,45 +9,6 @@ part of 'settings_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(accountDetails)
-final accountDetailsProvider = AccountDetailsProvider._();
-
-final class AccountDetailsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<AccountDetails>,
-          AccountDetails,
-          FutureOr<AccountDetails>
-        >
-    with $FutureModifier<AccountDetails>, $FutureProvider<AccountDetails> {
-  AccountDetailsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'accountDetailsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$accountDetailsHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<AccountDetails> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<AccountDetails> create(Ref ref) {
-    return accountDetails(ref);
-  }
-}
-
-String _$accountDetailsHash() => r'0c7cede8385df2a653cab46081b4ef870a067c9c';
-
 @ProviderFor(privateInfo)
 final privateInfoProvider = PrivateInfoProvider._();
 
@@ -86,6 +47,123 @@ final class PrivateInfoProvider
 }
 
 String _$privateInfoHash() => r'f52f7d093b79a57edd675a53b1a179923fa3bffa';
+
+/// The Account information screen. A failed load is not retried behind the
+/// player's back (Riverpod would retry forever and the screen would never
+/// leave its skeleton); the screen shows the error and Try again.
+
+@ProviderFor(AccountInfoNotifier)
+final accountInfoProvider = AccountInfoNotifierProvider._();
+
+/// The Account information screen. A failed load is not retried behind the
+/// player's back (Riverpod would retry forever and the screen would never
+/// leave its skeleton); the screen shows the error and Try again.
+final class AccountInfoNotifierProvider
+    extends $AsyncNotifierProvider<AccountInfoNotifier, AccountInfo> {
+  /// The Account information screen. A failed load is not retried behind the
+  /// player's back (Riverpod would retry forever and the screen would never
+  /// leave its skeleton); the screen shows the error and Try again.
+  AccountInfoNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: _noRetry,
+        name: r'accountInfoProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$accountInfoNotifierHash();
+
+  @$internal
+  @override
+  AccountInfoNotifier create() => AccountInfoNotifier();
+}
+
+String _$accountInfoNotifierHash() =>
+    r'58bac9dc4df7068a3d7d10d9b282a12a0671b211';
+
+/// The Account information screen. A failed load is not retried behind the
+/// player's back (Riverpod would retry forever and the screen would never
+/// leave its skeleton); the screen shows the error and Try again.
+
+abstract class _$AccountInfoNotifier extends $AsyncNotifier<AccountInfo> {
+  FutureOr<AccountInfo> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<AccountInfo>, AccountInfo>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<AccountInfo>, AccountInfo>,
+              AsyncValue<AccountInfo>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Edit profile. Each edit saves on its own screen and shows here straight
+/// away; Profile and the rest of the app reload with it. Sports load here
+/// too, so a failed load shows Try again at once instead of retrying.
+
+@ProviderFor(MyProfileNotifier)
+final myProfileProvider = MyProfileNotifierProvider._();
+
+/// Edit profile. Each edit saves on its own screen and shows here straight
+/// away; Profile and the rest of the app reload with it. Sports load here
+/// too, so a failed load shows Try again at once instead of retrying.
+final class MyProfileNotifierProvider
+    extends $AsyncNotifierProvider<MyProfileNotifier, MyProfile> {
+  /// Edit profile. Each edit saves on its own screen and shows here straight
+  /// away; Profile and the rest of the app reload with it. Sports load here
+  /// too, so a failed load shows Try again at once instead of retrying.
+  MyProfileNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: _noRetry,
+        name: r'myProfileProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myProfileNotifierHash();
+
+  @$internal
+  @override
+  MyProfileNotifier create() => MyProfileNotifier();
+}
+
+String _$myProfileNotifierHash() => r'a0c59fb02ce281c4333d7a30d5d1d621f8c97070';
+
+/// Edit profile. Each edit saves on its own screen and shows here straight
+/// away; Profile and the rest of the app reload with it. Sports load here
+/// too, so a failed load shows Try again at once instead of retrying.
+
+abstract class _$MyProfileNotifier extends $AsyncNotifier<MyProfile> {
+  FutureOr<MyProfile> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<MyProfile>, MyProfile>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<MyProfile>, MyProfile>,
+              AsyncValue<MyProfile>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 /// Notification switches. Each change saves straight away.
 
@@ -190,15 +268,21 @@ abstract class _$PrivacySettings extends $AsyncNotifier<PrivacyPrefs> {
   }
 }
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 
 @ProviderFor(FaceIdEnabled)
 final faceIdEnabledProvider = FaceIdEnabledProvider._();
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 final class FaceIdEnabledProvider
     extends $AsyncNotifierProvider<FaceIdEnabled, bool> {
-  /// Face ID unlock on this phone.
+  /// Face ID unlock for the signed-in account on this phone. Off until this
+  /// player switches it on; another account on the same phone is not affected
+  /// (Q249).
   FaceIdEnabledProvider._()
     : super(
         from: null,
@@ -218,9 +302,11 @@ final class FaceIdEnabledProvider
   FaceIdEnabled create() => FaceIdEnabled();
 }
 
-String _$faceIdEnabledHash() => r'49dc48cbdc884cc939d98cb486d504ba7e267111';
+String _$faceIdEnabledHash() => r'fb6683eb7526a52db1e8343699c518df9b2415a3';
 
-/// Face ID unlock on this phone.
+/// Face ID unlock for the signed-in account on this phone. Off until this
+/// player switches it on; another account on the same phone is not affected
+/// (Q249).
 
 abstract class _$FaceIdEnabled extends $AsyncNotifier<bool> {
   FutureOr<bool> build();

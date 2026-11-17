@@ -11,7 +11,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -20,7 +20,6 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../play/application/play_providers.dart';
-import '../../shop/application/shop_providers.dart';
 import '../application/club_providers.dart';
 import '../data/club_repository.dart';
 import '../domain/club_models.dart';
@@ -108,7 +107,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Share a Meet', style: OgText.heading(26)),
+          Text('Share a Meet', style: context.type.title),
           const SizedBox(height: 12),
           for (final s in sessions)
             KitNavTile(
@@ -198,7 +197,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
           const KitBack(),
           const SizedBox(width: 10),
           if (club != null) ...[
-            ClubMark(club, size: 40, radius: 12, fontSize: 15),
+            ClubMark(club, size: 40, radius: 12),
             const SizedBox(width: 10),
           ],
           Expanded(
@@ -209,12 +208,12 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                   club?.name ?? 'Club chat',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: OgText.display(17, color: c.text),
+                  style: context.type.section,
                 ),
                 if (club != null)
                   Text(
                     '${club.memberCount} members',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
               ],
             ),
@@ -247,20 +246,17 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
           const KitBack(),
           const SizedBox(width: 10),
           if (team != null) ...[
-            TeamMark(team, size: 40, radius: 12, fontSize: 18),
+            TeamMark(team, size: 40, radius: 12),
             const SizedBox(width: 10),
           ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  team?.name ?? 'Team chat',
-                  style: OgText.display(17, color: c.text),
-                ),
+                Text(team?.name ?? 'Team chat', style: context.type.section),
                 Text(
                   'Team chat · $players players, $staff staff',
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
             ),
@@ -310,11 +306,11 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                 onSubmitted: (_) => _send(),
                 textInputAction: TextInputAction.send,
                 textCapitalization: TextCapitalization.sentences,
-                style: OgText.body(15, color: c.text),
+                style: context.type.body,
                 cursorColor: c.primary,
                 decoration: InputDecoration(
                   hintText: 'Message ${name ?? ''}'.trim(),
-                  hintStyle: OgText.body(15, color: c.textMuted),
+                  hintStyle: context.type.secondary,
                   border: InputBorder.none,
                   isDense: true,
                 ),
@@ -326,7 +322,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
             icon: OgIcons.paperPlane,
             label: 'Send',
             size: 20,
-            background: c.primary,
+            background: c.primarySmall,
             color: c.onPrimary,
             onPressed: _send,
           ),
@@ -363,25 +359,22 @@ class _Pinned extends StatelessWidget {
             child: team
                 ? Text(
                     'This chat is only for the team. Staff can see all messages, and there are no private messages between adults and students.',
-                    style: OgText.body(13, color: context.tones.onTag),
+                    style: context.type.caption.copyWith(
+                      color: context.tones.onTag,
+                    ),
                   )
                 : Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(
-                          text: 'Pinned: ',
-                          style: OgText.body(
-                            13,
-                            weight: FontWeight.w700,
-                            color: c.text,
-                          ),
-                        ),
+                        TextSpan(text: 'Pinned: ', style: context.type.caption),
                         const TextSpan(
-                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit and points.',
+                          text: 'Your organizer marks attendance at each Meet. Present players get Passport credit.',
                         ),
                       ],
                     ),
-                    style: OgText.body(13, color: context.tones.onTag),
+                    style: context.type.caption.copyWith(
+                      color: context.tones.onTag,
+                    ),
                   ),
           ),
         ],
@@ -421,9 +414,7 @@ class _Thread extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
                   day,
-                  style: OgText.body(
-                    12,
-                    weight: FontWeight.w600,
+                  style: context.type.caption.copyWith(
                     color: const Color(0xFF7A8087),
                   ),
                 ),
@@ -445,7 +436,10 @@ class _Thread extends StatelessWidget {
                     color: t.track,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(m.body, style: OgText.body(13, color: t.onTag)),
+                  child: Text(
+                    m.body,
+                    style: context.type.caption.copyWith(color: t.onTag),
+                  ),
                 ),
               )
             : m.sender.id == me
@@ -493,9 +487,7 @@ class _Theirs extends StatelessWidget {
                     Flexible(
                       child: Text(
                         m.sender.displayName,
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w600,
+                        style: context.type.body.copyWith(
                           color: m.roleName != null && roleColor != null
                               ? roleColor
                               : c.text,
@@ -515,9 +507,7 @@ class _Theirs extends StatelessWidget {
                         ),
                         child: Text(
                           m.roleName!,
-                          style: OgText.body(
-                            11,
-                            weight: FontWeight.w600,
+                          style: context.type.caption.copyWith(
                             color: roleColor,
                           ),
                         ),
@@ -526,7 +516,9 @@ class _Theirs extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       _clock(m.at),
-                      style: OgText.body(12, color: const Color(0xFF7A8087)),
+                      style: context.type.caption.copyWith(
+                        color: const Color(0xFF7A8087),
+                      ),
                     ),
                     if (!m.removed)
                       KitIconButton(
@@ -547,10 +539,9 @@ class _Theirs extends StatelessWidget {
                     context,
                     Text(
                       'Removed by an organizer',
-                      style: OgText.body(
-                        14,
-                        color: c.textMuted,
-                      ).copyWith(fontStyle: FontStyle.italic),
+                      style: context.type.secondary.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                     fill: t.soft,
                   )
@@ -558,7 +549,10 @@ class _Theirs extends StatelessWidget {
                   if (m.body.isNotEmpty)
                     _bubble(
                       context,
-                      Text(m.body, style: OgText.body(15, height: 1.4)),
+                      Text(
+                        m.body,
+                        style: context.type.body.copyWith(height: 1.4),
+                      ),
                     ),
                   if (m.photo != null) _PhotoBubble(path: m.photo!),
                   if (m.meet != null) _MeetBubble(meet: m.meet!),
@@ -608,10 +602,9 @@ class _Mine extends StatelessWidget {
           if (m.removed)
             Text(
               'Removed by an organizer',
-              style: OgText.body(
-                14,
-                color: c.textMuted,
-              ).copyWith(fontStyle: FontStyle.italic),
+              style: context.type.secondary.copyWith(
+                fontStyle: FontStyle.italic,
+              ),
             )
           else if (m.photo != null)
             _PhotoBubble(path: m.photo!)
@@ -621,7 +614,7 @@ class _Mine extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: c.primary,
+                color: c.primarySmall,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(4),
@@ -631,13 +624,18 @@ class _Mine extends StatelessWidget {
               ),
               child: Text(
                 m.body,
-                style: OgText.body(15, height: 1.4, color: c.onPrimary),
+                style: context.type.body.copyWith(
+                  color: c.onPrimary,
+                  height: 1.4,
+                ),
               ),
             ),
           const SizedBox(height: 4),
           Text(
             _clock(m.at),
-            style: OgText.body(12, color: const Color(0xFF7A8087)),
+            style: context.type.caption.copyWith(
+              color: const Color(0xFF7A8087),
+            ),
           ),
         ],
       ),
@@ -705,18 +703,15 @@ class _MeetBubble extends StatelessWidget {
                   children: [
                     Text(
                       dows[meet.startsAt.weekday - 1],
-                      style: OgText.body(
-                        10,
-                        weight: FontWeight.w600,
+                      style: context.type.caption.copyWith(
                         color: context.tones.gold,
                       ),
                     ),
                     Text(
                       '${meet.startsAt.day}',
-                      style: OgText.display(
-                        18,
-                        height: 1,
+                      style: context.type.section.copyWith(
                         color: c.onInverseCard,
+                        height: 1,
                       ),
                     ),
                   ],
@@ -727,15 +722,9 @@ class _MeetBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      meet.title,
-                      style: OgText.body(15, weight: FontWeight.w600),
-                    ),
+                    Text(meet.title, style: context.type.body),
                     const SizedBox(height: 2),
-                    Text(
-                      meet.detail,
-                      style: OgText.body(13, color: c.textMuted),
-                    ),
+                    Text(meet.detail, style: context.type.caption),
                   ],
                 ),
               ),
@@ -746,7 +735,6 @@ class _MeetBubble extends StatelessWidget {
             label: 'Join Meet',
             height: 40,
             radius: 20,
-            fontSize: 14,
             onPressed: () => context.push(Routes.activity(meet.activityId)),
           ),
         ],
@@ -799,7 +787,7 @@ class _LineupBubble extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'Lineup · vs ${fixture.opponent}',
-                    style: OgText.body(14, weight: FontWeight.w600),
+                    style: context.type.body,
                   ),
                 ),
               ],
@@ -807,12 +795,12 @@ class _LineupBubble extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               '${Fmt.day(fixture.startsAt)} · $singles singles, $doubles doubles, $reserves reserves',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             const SizedBox(height: 6),
             Text(
               'View lineup',
-              style: OgText.body(14, weight: FontWeight.w600, color: c.link),
+              style: context.type.button.copyWith(color: c.link),
             ),
           ],
         ),
@@ -859,7 +847,7 @@ class _ChatModerationScreenState extends ConsumerState<ChatModerationScreen> {
     }
 
     return KitScaffold(
-      header: const KitHeader(title: 'Chat · organizer tools', titleSize: 22),
+      header: const KitHeader(title: 'Chat · organizer tools'),
       children: [
         const KitNote(
           'You run this chat, so you are the first to act. Delete what breaks the rules and report serious cases to us.',
@@ -885,17 +873,11 @@ class _ChatModerationScreenState extends ConsumerState<ChatModerationScreen> {
                                 Flexible(
                                   child: Text(
                                     m.sender.displayName,
-                                    style: OgText.body(
-                                      14,
-                                      weight: FontWeight.w600,
-                                    ),
+                                    style: context.type.body,
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  _clock(m.at),
-                                  style: OgText.body(12, color: c.textMuted),
-                                ),
+                                Text(_clock(m.at), style: context.type.caption),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -925,11 +907,10 @@ class _ChatModerationScreenState extends ConsumerState<ChatModerationScreen> {
                                                 ? 'Shared ${m.meet!.title}'
                                                 : 'Shared a photo')),
                                 style: m.removed
-                                    ? OgText.body(
-                                        14,
-                                        color: c.textMuted,
-                                      ).copyWith(fontStyle: FontStyle.italic)
-                                    : OgText.body(15, height: 1.4),
+                                    ? context.type.secondary.copyWith(
+                                        fontStyle: FontStyle.italic,
+                                      )
+                                    : context.type.body.copyWith(height: 1.4),
                               ),
                             ),
                           ],
@@ -1068,7 +1049,7 @@ class _AnnouncementCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${a.author}, ${a.authorRole}',
-                  style: OgText.body(15, weight: FontWeight.w600, color: fg),
+                  style: context.type.body.copyWith(color: fg),
                 ),
               ),
               if (a.pinned) ...[
@@ -1079,26 +1060,20 @@ class _AnnouncementCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              Text(when, style: OgText.body(13, color: c.textMuted)),
+              Text(when, style: context.type.caption),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             a.title,
-            style: OgText.body(
-              17,
-              weight: FontWeight.w600,
-              height: 1.3,
-              color: fg,
-            ),
+            style: context.type.section.copyWith(color: fg, height: 1.3),
           ),
           const SizedBox(height: 8),
           Text(
             a.body,
-            style: OgText.body(
-              15,
-              height: 1.45,
+            style: context.type.body.copyWith(
               color: dark ? const Color(0xFFD9D9D2) : context.tones.onTag,
+              height: 1.45,
             ),
           ),
         ],
@@ -1260,15 +1235,13 @@ class ReportContentScreen extends ConsumerStatefulWidget {
     required String this.messageId,
   }) : clubId = null,
        activityId = null,
-       videoId = null,
-       live = false;
+       postId = null;
 
   const ReportContentScreen.club({super.key, required String this.clubId})
     : scope = null,
       messageId = null,
       activityId = null,
-      videoId = null,
-      live = false;
+      postId = null;
 
   /// A tournament or event.
   const ReportContentScreen.activity({
@@ -1277,25 +1250,20 @@ class ReportContentScreen extends ConsumerStatefulWidget {
   }) : scope = null,
        messageId = null,
        clubId = null,
-       videoId = null,
-       live = false;
+       postId = null;
 
-  /// A shop video, or a live stream.
-  const ReportContentScreen.video({
-    super.key,
-    required String this.videoId,
-    this.live = false,
-  }) : scope = null,
-       messageId = null,
-       clubId = null,
-       activityId = null;
+  /// A post in the video feed.
+  const ReportContentScreen.video({super.key, required String this.postId})
+    : scope = null,
+      messageId = null,
+      clubId = null,
+      activityId = null;
 
   final ChatScope? scope;
   final String? messageId;
   final String? clubId;
   final String? activityId;
-  final String? videoId;
-  final bool live;
+  final String? postId;
 
   @override
   ConsumerState<ReportContentScreen> createState() =>
@@ -1310,6 +1278,7 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
   final _note = TextEditingController();
 
   bool get _isMessage => widget.messageId != null;
+  bool get _isVideo => widget.postId != null;
 
   @override
   void dispose() {
@@ -1324,8 +1293,8 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
       await repo.report(
         _isMessage
             ? ReportTarget.message(widget.messageId!, scope: widget.scope!)
-            : widget.videoId != null
-            ? ReportTarget.video(widget.videoId!, live: widget.live)
+            : _isVideo
+            ? ReportTarget.video(widget.postId!)
             : widget.activityId != null
             ? ReportTarget.activity(widget.activityId!)
             : ReportTarget.club(widget.clubId!),
@@ -1348,12 +1317,12 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
   Widget build(BuildContext context) {
     final title = _isMessage
         ? 'Report a message'
-        : widget.videoId != null
-        ? 'Report a video or live'
+        : _isVideo
+        ? 'Report a video'
         : 'Report a club or event';
     if (_sent) {
       return KitScaffold(
-        header: KitHeader(title: title, titleSize: 22),
+        header: KitHeader(title: title),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         bottom: [
           KitButton(label: 'Done', onPressed: () => context.pop()),
@@ -1375,13 +1344,11 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ],
       );
     }
-    final reasons = _isMessage
+    final reasons = _isMessage || _isVideo
         ? ContentReport.forMessage
-        : widget.videoId != null
-        ? ContentReport.forVideo
         : ContentReport.forClub;
     return KitScaffold(
-      header: KitHeader(title: title, titleSize: 22),
+      header: KitHeader(title: title),
       bottom: [
         KitButton(
           label: _why == null ? 'Pick what is wrong' : 'Send report',
@@ -1390,19 +1357,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
         ),
       ],
       children: [
-        _isMessage
-            ? _messageCard(context)
-            : widget.videoId != null
-            ? _videoCard(context)
-            : widget.activityId != null
-            ? _activityCard(context)
-            : _clubCard(context),
+        if (!_isVideo)
+          _isMessage
+              ? _messageCard(context)
+              : widget.activityId != null
+              ? _activityCard(context)
+              : _clubCard(context),
         KitTitle(
           'What is wrong with it?',
-          lead: _isMessage
+          lead: _isMessage || _isVideo
               ? 'Reports are private. They are not told who reported.'
-              : widget.videoId != null
-              ? 'Reports are private. The creator is not told who reported.'
               : 'Reports are private. The organizer is not told who reported.',
         ),
         Column(
@@ -1418,17 +1382,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
           ],
         ),
         KitTextArea(label: 'Tell us more', optional: true, controller: _note),
-        KitConfirmBox(
-          label: _isMessage
-              ? 'Hide this message from me now'
-              : widget.videoId != null
-              ? 'Do not show me this video again'
-              : widget.activityId != null
-              ? 'Hide this from my results'
-              : 'Hide this club from my results',
-          checked: _hide,
-          onChanged: (v) => setState(() => _hide = v),
-        ),
+        if (!_isVideo)
+          KitConfirmBox(
+            label: _isMessage
+                ? 'Hide this message from me now'
+                : widget.activityId != null
+                ? 'Hide this from my results'
+                : 'Hide this club from my results',
+            checked: _hide,
+            onChanged: (v) => setState(() => _hide = v),
+          ),
       ],
     );
   }
@@ -1440,7 +1403,6 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
     String title,
     String sub,
   ) {
-    final c = context.og;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1457,21 +1419,16 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
               children: [
                 Text(
                   eyebrow.toUpperCase(),
-                  style: OgText.body(
-                    12,
-                    weight: FontWeight.w600,
-                    letterSpacing: 0.4,
-                    color: c.textMuted,
-                  ),
+                  style: context.type.caption.copyWith(letterSpacing: 0.4),
                 ),
                 const SizedBox(height: 2),
-                Text(title, style: OgText.body(15, weight: FontWeight.w600)),
+                Text(title, style: context.type.body),
                 const SizedBox(height: 2),
                 Text(
                   sub,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
             ),
@@ -1499,37 +1456,6 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
     );
   }
 
-  Widget _videoCard(BuildContext context) {
-    if (widget.live) {
-      final l = ref
-          .watch(shopLivesProvider)
-          .value
-          ?.where((l) => l.id == widget.videoId)
-          .firstOrNull;
-      if (l == null) return const SizedBox.shrink();
-      return _card(
-        context,
-        SolidAvatar.forId(l.id, initials: l.shopMark),
-        'Live',
-        l.title,
-        '${l.host} · ${l.shop}',
-      );
-    }
-    final v = ref
-        .watch(shopVideosProvider)
-        .value
-        ?.where((v) => v.id == widget.videoId)
-        .firstOrNull;
-    if (v == null) return const SizedBox.shrink();
-    return _card(
-      context,
-      SolidAvatar.forId(v.id, initials: v.creatorMark),
-      'Video',
-      v.title,
-      v.creator,
-    );
-  }
-
   Widget _activityCard(BuildContext context) {
     final a = ref.watch(activityDetailProvider(widget.activityId!)).value;
     if (a == null) return const SizedBox.shrink();
@@ -1547,7 +1473,7 @@ class _ReportContentScreenState extends ConsumerState<ReportContentScreen> {
     if (club == null) return const SizedBox.shrink();
     return _card(
       context,
-      ClubMark(club, size: 44, radius: 22, fontSize: 14),
+      ClubMark(club, size: 44, radius: 22),
       'Club',
       club.name,
       '${club.memberCount} members · ${club.area}',

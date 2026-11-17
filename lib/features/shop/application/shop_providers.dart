@@ -30,20 +30,8 @@ Future<MallDetail> mallDetail(Ref ref, String id) =>
     ref.watch(shopRepositoryProvider).mall(id);
 
 @riverpod
-Future<List<ShopVideo>> shopVideos(Ref ref) =>
-    ref.watch(shopRepositoryProvider).videos();
-
-@riverpod
-Future<List<LiveStream>> shopLives(Ref ref) =>
-    ref.watch(shopRepositoryProvider).lives();
-
-@riverpod
 Future<List<CartLine>> cart(Ref ref) =>
     ref.watch(shopRepositoryProvider).cart();
-
-@riverpod
-Future<List<Address>> addresses(Ref ref) =>
-    ref.watch(shopRepositoryProvider).addresses();
 
 @riverpod
 Future<List<Order>> myOrders(Ref ref) =>
@@ -53,28 +41,21 @@ Future<List<Order>> myOrders(Ref ref) =>
 Future<Order> orderDetail(Ref ref, String id) =>
     ref.watch(shopRepositoryProvider).order(id);
 
+/// The shop this account runs, if any.
 @riverpod
-Future<SellerSummary?> sellerSummary(Ref ref) =>
-    ref.watch(shopRepositoryProvider).sellerSummary();
+Future<Mall?> myShop(Ref ref) => ref.watch(shopRepositoryProvider).myShop();
 
 @riverpod
-Future<List<Order>> sellerOrders(Ref ref) =>
-    ref.watch(shopRepositoryProvider).sellerOrders();
-
-@riverpod
-Future<List<Product>> sellerProducts(Ref ref) =>
-    ref.watch(shopRepositoryProvider).sellerProducts();
+Future<List<Order>> ownerOrders(Ref ref) =>
+    ref.watch(shopRepositoryProvider).ownerOrders();
 
 /// Refreshes the shop after the cart, an order or a listing changes.
 void refreshShop(void Function(ProviderOrFamily provider) invalidate) {
   invalidate(cartProvider);
   invalidate(myOrdersProvider);
   invalidate(orderDetailProvider);
-  invalidate(sellerSummaryProvider);
-  invalidate(sellerOrdersProvider);
-  invalidate(sellerProductsProvider);
+  invalidate(ownerOrdersProvider);
   invalidate(shopProductsProvider);
   invalidate(productDetailProvider);
   invalidate(mallDetailProvider);
-  invalidate(addressesProvider);
 }

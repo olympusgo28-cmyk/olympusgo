@@ -1,35 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:olympus_go/core/domain/country.dart';
 import 'package:olympus_go/features/auth/presentation/validators.dart';
 import 'package:olympus_go/features/onboarding/application/onboarding_controller.dart';
-import 'package:olympus_go/features/onboarding/domain/onboarding_models.dart';
 import 'package:olympus_go/features/onboarding/domain/sport.dart';
 
 void main() {
-  group('OnboardingDraft.age', () {
-    test('is null before a birthday is entered', () {
-      expect(const OnboardingDraft().age, isNull);
-    });
-
-    test('counts a birthday later this year as not yet reached', () {
-      final now = DateTime.now();
-      final tomorrow = now.add(const Duration(days: 1));
-      final draft = OnboardingDraft(
-        birthday: DateTime(now.year - 18, tomorrow.month, tomorrow.day),
-      );
-      expect(draft.age, 17);
-    });
-  });
-
-  test('fullPhone joins dial code and digits only', () {
-    const draft = OnboardingDraft(
-      phoneCountry: Country.malaysia,
-      phoneNumber: '12 345 6789',
-    );
-    expect(draft.fullPhone, '+60123456789');
-  });
-
   test('toggleSport keeps the design order and can remove a sport', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

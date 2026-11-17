@@ -1,0 +1,528 @@
+{
+  "date": "5 November 2026",
+  "features": [
+    {
+      "area": "Account and onboarding",
+      "status": "Implemented; local tests",
+      "built": "Phone/email/username login, codes, saved accounts, biometric vault, recovery request, name, birthday, sports, levels and username.",
+      "limits": "Real SMS/email delivery and real-device biometric recovery remain unproven.",
+      "source": "lib/features/auth; lib/features/onboarding; docs/features/phase-1-status.md"
+    },
+    {
+      "area": "Parents and minors",
+      "status": "Implemented; local tests",
+      "built": "Restricted mode, parent codes, linked children, consent and server age restrictions.",
+      "limits": "Human privacy/security review and complete device journeys remain necessary.",
+      "source": "lib/features/guardian; test/supabase_safety_local_test.dart"
+    },
+    {
+      "area": "Home and navigation",
+      "status": "Implemented; rendered",
+      "built": "Five tabs, eight category tiles, search, saved items, schedule shortcuts and category editing.",
+      "limits": "Demo promotes creator challenges that are not a live release feature.",
+      "source": "lib/features/home; lib/features/shell"
+    },
+    {
+      "area": "Discover and search",
+      "status": "Implemented; rendered",
+      "built": "Player/activity discovery, filters, map, coarse location and search results.",
+      "limits": "Production map service and denied-location/offline device walkthroughs remain.",
+      "source": "lib/features/discover; docs/features/phase-2-status.md"
+    },
+    {
+      "area": "Profile and Passport",
+      "status": "Implemented; partial scope",
+      "built": "Profile editing, sports, rating, sessions, history chart, badges, gear, follows, QR sharing and leaderboards.",
+      "limits": "Detailed point-by-point sport statistics are not built.",
+      "source": "lib/features/profile; lib/features/social; docs/features/phase-3-status.md"
+    },
+    {
+      "area": "Meets",
+      "status": "Implemented; local journeys",
+      "built": "Create, discover, join, leave, waitlist, guests, repeat sessions, host roster, check-in, attendance and recap.",
+      "limits": "Paid flows use a local payment stand-in; paid guest additions have limits.",
+      "source": "lib/features/play; test/supabase_play_local_test.dart"
+    },
+    {
+      "area": "Scoring and ratings",
+      "status": "Implemented; local tests",
+      "built": "Round generation, presets, score submission/confirmation/disputes, ratings and history.",
+      "limits": "No point-by-point scoring; identical rematches have documented limits.",
+      "source": "packages/match_engine; test/score_rules_test.dart; docs/features/phase-3-status.md"
+    },
+    {
+      "area": "Tournaments and events",
+      "status": "Implemented; partial scope",
+      "built": "Tournament creation, entries/partners, draws, groups/knockout, scoring/results; events, tickets, door checks and cancellations.",
+      "limits": "Paid tournament entry remains closed.",
+      "source": "test/supabase_tournament_local_test.dart; docs/features/phase-4a-status.md"
+    },
+    {
+      "area": "Clubs and teams",
+      "status": "Implemented; local journeys",
+      "built": "Creation, membership requests, roles/permissions, bans, audit, ownership, announcements, chats, rosters, fixtures and lineups.",
+      "limits": "Leagues are not defined/built; group chat does not have all DM retry behavior.",
+      "source": "lib/features/clubs; test/supabase_clubs_local_test.dart; docs/features/phase-2-status.md"
+    },
+    {
+      "area": "Inbox and messaging",
+      "status": "Implemented; partial delivery",
+      "built": "Direct messages, optimistic send/retry/delete, group messages, reporting and blocking.",
+      "limits": "Push queue/settings exist, but documented phone delivery is not connected.",
+      "source": "lib/features/inbox; supabase/functions/send-push; docs/features/phase-2-status.md"
+    },
+    {
+      "area": "Payments and earnings",
+      "status": "Built behind stand-in",
+      "built": "Quotes, holds, webhook confirmation, balanced ledger, refunds, releases, payouts, reconciliation and receipts.",
+      "limits": "Hosted app cannot collect; Stripe UI, onboarding and real test-mode validation incomplete.",
+      "source": "lib/features/play/data/payment_gateway.dart; docs/features/phase-4a-status.md"
+    },
+    {
+      "area": "Shop",
+      "status": "Implemented; checkout gated",
+      "built": "Partner catalogue, products, per-shop carts, quotes, stock, checkout, cancel, collect, report and owner mark-ready.",
+      "limits": "No player marketplace/delivery/returns/live shopping; real payments unavailable.",
+      "source": "lib/features/shop; test/supabase_shop_local_test.dart; docs/features/phase-4b-status.md"
+    },
+    {
+      "area": "Points and vouchers",
+      "status": "Implemented; gated",
+      "built": "Points lots/expiry/redemption, voucher wallet, single discount per item, campaign progress and organizer milestones.",
+      "limits": "Earning flags/config and partner funding unresolved; court voucher redemption deferred.",
+      "source": "lib/features/game; test/supabase_voucher_local_test.dart; docs/features/phase-4d-status.md"
+    },
+    {
+      "area": "Academies and lessons",
+      "status": "Implemented; local journeys",
+      "built": "Academy setup, verification, coaches/invitations, students, classes, trials, single lessons, one-to-one, attendance, make-ups and assessments.",
+      "limits": "Monthly/term billing and coach pay remain direct; paid lessons use stand-in.",
+      "source": "lib/features/academy; test/supabase_lesson_local_test.dart; docs/features/phase-4c-status.md"
+    },
+    {
+      "area": "Services",
+      "status": "Implemented; local tests",
+      "built": "Partner list and confirmed referral to external partner pages.",
+      "limits": "Partner coverage/operations must be completed; no medical workflow inferred.",
+      "source": "lib/features/services; docs/features/phase-4c-status.md"
+    },
+    {
+      "area": "Venues",
+      "status": "Browse implemented; booking deferred",
+      "built": "Venue list/detail and directions; prototype booking routes exist.",
+      "limits": "Court booking is explicitly deferred by Q25, not a regression.",
+      "source": "lib/features/venues; docs/features/phase-4b-status.md"
+    },
+    {
+      "area": "Fitness",
+      "status": "Implemented; flag off by default",
+      "built": "Exercise catalogue, programs/templates, workout sets/rest timer, persistent draft, log, personal bests and calculators.",
+      "limits": "Coach review, videos, background timer and stronger retry recovery remain.",
+      "source": "lib/features/fitness; test/supabase_fitness_local_test.dart; docs/features/phase-5a-status.md"
+    },
+    {
+      "area": "AI plans",
+      "status": "Built behind stand-in",
+      "built": "Adult consent, plan request, validation, editable program and withdrawal.",
+      "limits": "Real model/schema/quality/cost and provider privacy terms are unproven.",
+      "source": "supabase/functions/ai-plan; docs/features/phase-5b-status.md"
+    },
+    {
+      "area": "Video analysis",
+      "status": "Built; accuracy unproven",
+      "built": "Private upload, parent consent, corner marking, job/report, heatmap, keep/delete and purge.",
+      "limits": "Singles only; no real-match accuracy proof, doubles or rally report; flags remain off.",
+      "source": "lib/features/analysis; workers/analysis; docs/features/phase-5c-status.md"
+    },
+    {
+      "area": "Video feed",
+      "status": "Built behind stand-ins",
+      "built": "Adult upload, audience/caption, checks/review states, feed, reactions, report, retry and delete.",
+      "limits": "No real checker/video host; metadata stripping and child-in-adult-post policy unresolved.",
+      "source": "lib/features/feed; test/supabase_feed_local_test.dart; docs/features/phase-5d-status.md"
+    },
+    {
+      "area": "Settings and safety",
+      "status": "Implemented; deletion incomplete",
+      "built": "Notifications/privacy, blocked users, reports/cases, help/legal, country and account changes.",
+      "limits": "Deletion is a support-only message after a deletion-style confirmation; language options mostly coming soon.",
+      "source": "lib/features/settings; lib/features/safety"
+    },
+    {
+      "area": "Staff admin",
+      "status": "Implemented; tests + login rendered",
+      "built": "Roles/MFA; reports, first posts, users, scores, sports/rules, catalogue, verification, services, campaigns, analysis, payments, orders, lessons and audit.",
+      "limits": "Only login was manually rendered this session; authenticated actions covered by tests/source, not a fresh full browser walkthrough.",
+      "source": "admin/lib/main.dart; admin/test"
+    },
+    {
+      "area": "Public web and partner tools",
+      "status": "Partial",
+      "built": "Static share landing, deep-link fallback, privacy and terms pages in share_site. Owner tools largely reside in mobile.",
+      "limits": "No separate Next.js public app or dedicated academy/partner web application was found in this checkout.",
+      "source": "share_site; README.md; docs/ARCHITECTURE.md"
+    }
+  ],
+  "findings": [
+    {
+      "id": "A01",
+      "priority": "P1",
+      "kind": "Confirmed bug",
+      "area": "Accessibility",
+      "title": "Shared headers and layouts fail at 200% text",
+      "evidence": "At 320\u00d7568 logical pixels and 200% text, 220 of 251 route visits recorded RenderFlex overflow. Many share the same header defect; these are not 220 independent bugs. Account Centre visibly breaks labels into individual letters.",
+      "action": "Make headers, rows and bottom controls grow/wrap; avoid fixed heights for text. Recheck at 320/375/402 widths with 100/150/200% text.",
+      "source": "lib/core/widgets/og_kit.dart:112; evidence/olympus-audit-large-text.tsv; evidence/accountHub-large-text.png"
+    },
+    {
+      "id": "A02",
+      "priority": "P1",
+      "kind": "Confirmed bug",
+      "area": "Navigation",
+      "title": "Phone verification crashes without navigation payload",
+      "evidence": "Opening /settings/personal/verify directly produces a null-check exception. Router casts s.extra! to String.",
+      "action": "Guard missing/invalid extra; return to contact-change start with a recovery message. Add direct-link and restoration tests.",
+      "source": "lib/core/router/app_router.dart:417; evidence/olympus-audit-final-routes.tsv"
+    },
+    {
+      "id": "A03",
+      "priority": "P1",
+      "kind": "Code-confirmed UX defect",
+      "area": "Account",
+      "title": "Deletion asks for confirmation before admitting it is unavailable",
+      "evidence": "The action asks for Delete with Face ID, then a real backend only shows a toast directing the user to Help. No deletion request is submitted there.",
+      "action": "Immediately label this as Request account deletion and open the real support path, or implement the approved deletion lifecycle before offering Delete.",
+      "source": "lib/features/settings/presentation/account_screens.dart:480; lib/features/settings/presentation/account_screens.dart:501"
+    },
+    {
+      "id": "A04",
+      "priority": "P1",
+      "kind": "Code-confirmed risk",
+      "area": "Startup",
+      "title": "Font failure can prevent first app frame",
+      "evidence": "main awaits GoogleFonts.pendingFonts before runApp, with a timeout handler but no error handler. A fast network/font failure can propagate. Fresh offline startup was not reproduced on a wiped device.",
+      "action": "Bundle all used fonts; let startup render a fallback on any font error. Test fresh-install airplane mode.",
+      "source": "lib/main.dart:34; pubspec.yaml; docs/OPEN_QUESTIONS.md Q34"
+    },
+    {
+      "id": "A05",
+      "priority": "P2",
+      "kind": "Code-confirmed defect",
+      "area": "Dates",
+      "title": "Venue times are displayed in device timezone",
+      "evidence": "Activity and competition repositories call toLocal(); this differs from the venue-time requirement and misleads travelers.",
+      "action": "Use venue/activity timezone consistently and show the zone when helpful. Test Singapore activity viewed in New Zealand and across DST.",
+      "source": "lib/features/play/data/play_repository.dart:178; lib/features/play/data/competition_repository.dart:200; AGENTS.md"
+    },
+    {
+      "id": "A06",
+      "priority": "P2",
+      "kind": "Code-confirmed defect",
+      "area": "Accessibility",
+      "title": "Some shared controls/text are below the design minimum",
+      "evidence": "Follow control has height 40; verified tag uses 11 px text; Passport includes 11 px labels. Design minimum is 44 px targets and 12 px text.",
+      "action": "Increase hit areas without necessarily enlarging visual pills; raise small type and run semantics/tap-target tests.",
+      "source": "lib/core/widgets/og_rows.dart:647; lib/features/settings/presentation/account_screens.dart:92; lib/features/profile/presentation/passport_screen.dart:1308"
+    },
+    {
+      "id": "A07",
+      "priority": "P1",
+      "kind": "Test gap",
+      "area": "Quality",
+      "title": "Screen sweep can report success despite recorded screen errors",
+      "evidence": "The audit replaces FlutterError.onError and writes ERROR rows but never asserts that the error set is empty. The large-text run without screenshots passed despite hundreds of recorded overflows.",
+      "action": "Fail on unexpected route errors/overflows; explicitly allow expected redirects and mock native plugins.",
+      "source": "test/route_audit_test.dart:112; evidence/olympus-audit-large-text.tsv"
+    },
+    {
+      "id": "A08",
+      "priority": "P2",
+      "kind": "Test gap",
+      "area": "Quality",
+      "title": "Route sweep misses newer features and depends on external fonts",
+      "evidence": "Existing list omits fitness, AI, analysis, videos and match rounds. Without valid font files the sweep used placeholder glyphs and falsely reported 22 overflow routes. Some medium-weight glyphs were still absent in screenshot mode.",
+      "action": "Bundle fonts, validate their presence, generate/verify route coverage, and isolate each route to prevent delayed plugin errors being attributed to the next screen.",
+      "source": "test/route_audit_routes.dart; test/route_audit_test.dart; evidence/olympus-audit-new-routes.tsv"
+    },
+    {
+      "id": "A09",
+      "priority": "P1",
+      "kind": "Test gap",
+      "area": "CI",
+      "title": "Feed API and race suites are absent from explicit CI lists",
+      "evidence": "CI runs clips but does not list supabase_feed_local_test.dart or feed_races.sh. Default flutter test skips API tests without local variables.",
+      "action": "Add feed API tests and the feed race script to required CI jobs, and assert expected integration-test counts.",
+      "source": " .github/workflows/ci.yml:73; .github/workflows/ci.yml:125"
+    },
+    {
+      "id": "A10",
+      "priority": "P2",
+      "kind": "Test gap",
+      "area": "CI",
+      "title": "Database lint failures are blanket-advisory",
+      "evidence": "CI uses continue-on-error for all db lint errors. This run reported eight errors inside pgTAP extension helpers, not application-schema errors.",
+      "action": "Limit/allowlist known extension or temporary-table diagnostics and fail new public/private function errors.",
+      "source": " .github/workflows/ci.yml:77; evidence/olympus-audit-dblint.log"
+    },
+    {
+      "id": "A11",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Payments",
+      "title": "Real payment collection is not implemented end to end",
+      "evidence": "Hosted canCollect is false. Successful local money journeys use a stand-in, not Stripe test mode.",
+      "action": "Complete approved card/hosted payment UX, Connect onboarding and saved-method flows; validate webhook replay, late success, refunds and reconciliation against the real test provider.",
+      "source": "lib/features/play/data/payment_gateway.dart:110; docs/features/phase-4a-status.md"
+    },
+    {
+      "id": "A12",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Messaging",
+      "title": "Push delivery and real code delivery are not proven",
+      "evidence": "Status docs state no push reaches a phone without Firebase; SMS/email real senders remain unproven.",
+      "action": "Connect development providers and test foreground/background delivery, deep links, opt-outs, quiet hours, token refresh and resend failures on devices.",
+      "source": "docs/features/phase-1-status.md; docs/features/phase-2-status.md; supabase/functions/send-push"
+    },
+    {
+      "id": "A13",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Video feed",
+      "title": "Real moderation and video hosting are missing",
+      "evidence": "Hosted posts cannot go live successfully without selected providers. Matching accuracy/outages are unmeasured.",
+      "action": "Keep flag off; implement real adapters, failure/retry monitoring and operational review before release.",
+      "source": "docs/features/phase-5d-status.md; docs/OPEN_QUESTIONS.md Q213\u2013Q214"
+    },
+    {
+      "id": "A14",
+      "priority": "P1",
+      "kind": "Documented privacy gap",
+      "area": "Video feed",
+      "title": "Uploaded video location metadata is not removed",
+      "evidence": "Existing status and Q226 say viewers receive the original file, which may include filming location. No fresh metadata attack was performed.",
+      "action": "Strip metadata or re-encode before public delivery; verify with a tagged iPhone sample and inspect the delivered file.",
+      "source": "docs/features/phase-5d-status.md; docs/OPEN_QUESTIONS.md Q226"
+    },
+    {
+      "id": "A15",
+      "priority": "P1",
+      "kind": "Decision needed",
+      "area": "Video feed",
+      "title": "Child appearance in adult posts has no reliable control",
+      "evidence": "After first-post reviews, the documented controls are uploader attestation and reports, not automatic age detection.",
+      "action": "Resolve Q212 with the owner and safety/legal reviewers before enabling public feed; specify moderation escalation and response ownership.",
+      "source": "docs/OPEN_QUESTIONS.md Q212; docs/features/phase-5d-status.md"
+    },
+    {
+      "id": "A16",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Video analysis",
+      "title": "Movement reports are not validated on real matches",
+      "evidence": "Worker tests pass but real-match accuracy is unproven; changing ends may cause tracking of the opponent.",
+      "action": "Validate a labeled real-clip set, detect/refuse end changes, expose confidence/limitations, and keep the feature gated until accuracy is acceptable.",
+      "source": "docs/features/phase-5c-status.md; workers/analysis/olympus_worker/metrics.py"
+    },
+    {
+      "id": "A17",
+      "priority": "P2",
+      "kind": "Documented UX gap",
+      "area": "Uploads",
+      "title": "Long videos are rejected after uploading; uploads need app open",
+      "evidence": "Client length is a maximum placeholder and worker validates later. Closing the app interrupts upload.",
+      "action": "Measure duration/format before upload, show size/time expectations, support resumable uploads or clearly communicate foreground requirement.",
+      "source": "docs/features/phase-5c-status.md; docs/features/phase-5d-status.md"
+    },
+    {
+      "id": "A18",
+      "priority": "P1",
+      "kind": "Accessibility gap",
+      "area": "Video analysis",
+      "title": "Court corners cannot be adjusted with a screen reader",
+      "evidence": "Documented corner dots are readable but drag-only for moving.",
+      "action": "Offer selected-corner nudge controls or numeric adjustment with spoken feedback; verify using VoiceOver/TalkBack.",
+      "source": "docs/features/phase-5c-status.md; lib/features/analysis/presentation"
+    },
+    {
+      "id": "A19",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "AI plans",
+      "title": "Real model response and data-transfer terms unvalidated",
+      "evidence": "Adapter is tested with a fake server; schema, quality, latency, token cost and account terms have not met the real provider.",
+      "action": "Run consented development test cases, validate schema/caps and quality, then obtain required review before enabling.",
+      "source": "docs/features/phase-5b-status.md; docs/OPEN_QUESTIONS.md Q188\u2013Q190"
+    },
+    {
+      "id": "A20",
+      "priority": "P2",
+      "kind": "Documented UX gap",
+      "area": "AI plans",
+      "title": "In-progress plan does not survive app closure",
+      "evidence": "Returning within a session works, but app closure loses the pending request and a retry can consume another daily plan.",
+      "action": "Persist job/request id, recover status on launch and show quota usage before retry.",
+      "source": "docs/features/phase-5b-status.md"
+    },
+    {
+      "id": "A21",
+      "priority": "P2",
+      "kind": "Documented UX gap",
+      "area": "Fitness",
+      "title": "Rest timer and save recovery are incomplete",
+      "evidence": "Timer resets on leaving screen and does not notify while closed; finished unsaved workouts need manual retry; server-rejected workouts may only be discarded.",
+      "action": "Persist timer deadline, clarify notification behavior, retain editable rejected drafts and provide safe automatic retry/status.",
+      "source": "docs/features/phase-5a-status.md"
+    },
+    {
+      "id": "A22",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Fitness",
+      "title": "Exercise guidance needs qualified review",
+      "evidence": "Catalogue, minor suitability and templates have not been coach-reviewed.",
+      "action": "Review and version exercise guidance, suitability and templates; do not describe current templates as validated.",
+      "source": "docs/features/phase-5a-status.md"
+    },
+    {
+      "id": "A23",
+      "priority": "P2",
+      "kind": "Documented UX gap",
+      "area": "Earnings",
+      "title": "Shop totals and earnings detail rows do not reconcile visually",
+      "evidence": "Shop amounts are included in totals but activity-only rows omit shop sales.",
+      "action": "Add shop/lesson source rows and filters; every total should reconcile to visible/exportable entries.",
+      "source": "docs/features/phase-4b-status.md; lib/features/earnings"
+    },
+    {
+      "id": "A24",
+      "priority": "P2",
+      "kind": "Documented UX gap",
+      "area": "Vouchers",
+      "title": "Discount changes the Items line when commission is on top",
+      "evidence": "Total is documented as correct, but item subtotal shifts because commission follows discounted price.",
+      "action": "Display item price, discount, commission and final total separately with consistent receipts.",
+      "source": "docs/features/phase-4d-status.md"
+    },
+    {
+      "id": "A25",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Home",
+      "title": "Promotional hero competes with the main player task",
+      "evidence": "Home screenshot devotes much of the first screen to a creator campaign before categories; Play also starts with hosting promotion. This is a design judgement, not a functional failure.",
+      "action": "Prioritize next session and Find a game; make hosting secondary for non-hosts and label demo-only offers. Test completion time with new players.",
+      "source": "evidence/home.png; lib/features/play/presentation/play_screen.dart"
+    },
+    {
+      "id": "A26",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Navigation",
+      "title": "Broad information architecture needs clearer entry points",
+      "evidence": "Play, Game, Fitness, Profile and Account Centre divide related sessions, rewards, progress and settings.",
+      "action": "Use task-oriented labels and consistent shortcuts for My sessions, My progress and Manage; test whether players can find each without instruction.",
+      "source": "lib/core/router/routes.dart; evidence/home.png; evidence/profile.png"
+    },
+    {
+      "id": "A27",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Discovery",
+      "title": "Make empty and disabled states explain the next action",
+      "evidence": "Several categories are gated; demo visibility is richer than connected-app availability.",
+      "action": "For each flag-off/empty/permission/offline state say why and offer a useful alternative; do not imply a transaction can be completed.",
+      "source": "lib/features/discover/presentation/coming_screens.dart; docs/features/*status.md"
+    },
+    {
+      "id": "A28",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Forms",
+      "title": "Long creation flows need explicit recovery testing",
+      "evidence": "Multiple-step Meet, tournament, club and academy forms exist; process-death recovery for all drafts was not verified.",
+      "action": "Test keyboard overlap, validation, back navigation, destructive exit confirmation and draft restoration; retain entered values on recoverable failure.",
+      "source": "lib/features/play/presentation/create_meet_screens.dart; lib/features/academy/presentation"
+    },
+    {
+      "id": "A29",
+      "priority": "P2",
+      "kind": "Design debt",
+      "area": "Theme",
+      "title": "Raw colors bypass centralized design tokens",
+      "evidence": "Raw Color literals remain in profile, shop, group chat and other screens even though design tests cover shared tokens.",
+      "action": "Move semantic colors into shared tokens, then compare full screens in both themes and with high text scale.",
+      "source": "lib/features/profile/presentation/profile_screen.dart:27; lib/features/shop/presentation/shop_screens.dart:87"
+    },
+    {
+      "id": "A30",
+      "priority": "P2",
+      "kind": "Release gap",
+      "area": "Maps",
+      "title": "Map hosting is still the public OpenStreetMap tile endpoint",
+      "evidence": "Find screen requests tile.openstreetmap.org; status docs explicitly flag production suitability.",
+      "action": "Choose and configure the approved production tile provider, attribution, caching and quota/failure handling.",
+      "source": "lib/features/discover/presentation/find_screen.dart:325; docs/features/phase-2-status.md"
+    },
+    {
+      "id": "A31",
+      "priority": "P1",
+      "kind": "Release gap",
+      "area": "Governance",
+      "title": "Required human reviews and device release checks remain unproven",
+      "evidence": "Status docs report agent reviews but no required human approvals. This audit did not verify app-store builds or hosted deployments.",
+      "action": "Complete the repository-required security/privacy/architecture reviews and two human money reviews; run real iOS/Android camera, biometrics, notification and payment checks.",
+      "source": "AGENTS.md; docs/features/phase-1-status.md; docs/features/phase-4a-status.md"
+    },
+    {
+      "id": "A32",
+      "priority": "P2",
+      "kind": "Documentation debt",
+      "area": "Project",
+      "title": "README and operational instructions lag the implementation",
+      "evidence": "README describes later phases as coming soon; current code reaches Phase 5d. It names a different hosted project than Env default.",
+      "action": "Document actual feature flags, implemented scope and local commands; remove ambiguous hosted setup instructions and nominate the authoritative development project. Do not use either hosted project during this audit.",
+      "source": "README.md; lib/core/config/env.dart; docs/features/phase-5d-status.md"
+    },
+    {
+      "id": "A33",
+      "priority": "P2",
+      "kind": "Documented gap",
+      "area": "Privacy",
+      "title": "Data export and automated account lifecycle are unfinished",
+      "evidence": "Status docs state support deletion and no player export; video deletion must coordinate with pending checks.",
+      "action": "Implement the approved lifecycle across money, guardians, workouts, clips, posts and storage with export/download and deletion-status visibility.",
+      "source": "docs/features/phase-5a-status.md; docs/OPEN_QUESTIONS.md Q208"
+    },
+    {
+      "id": "A34",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Lists",
+      "title": "Long histories need pagination and useful filters",
+      "evidence": "Workout log documents latest-100 limit; feed documents 50-post list without paging.",
+      "action": "Add cursor pagination, clear date filters and count wording that distinguishes loaded rows from total records.",
+      "source": "docs/features/phase-5a-status.md; docs/OPEN_QUESTIONS.md Q217"
+    },
+    {
+      "id": "A35",
+      "priority": "P2",
+      "kind": "Documented gap",
+      "area": "Admin",
+      "title": "Campaign editor supports only one quest",
+      "evidence": "Database and player app support multiple quests but staff editor creates one.",
+      "action": "Support adding/reordering/removing quest definitions with validation and a player-view preview.",
+      "source": "docs/features/phase-4d-status.md; admin/lib/features/game/campaigns_screen.dart"
+    },
+    {
+      "id": "A36",
+      "priority": "P2",
+      "kind": "UX recommendation",
+      "area": "Support",
+      "title": "Error recovery and service health need a cross-feature review",
+      "evidence": "Many individual failure-state tests exist, but this session did not exercise every offline/process-death/error combination on devices.",
+      "action": "Standardize retry, saved/pending state and support references; run a device matrix for network loss during join/pay/save/upload without exposing personal data in logs.",
+      "source": "docs/TESTING.md; test/pay_flow_test.dart; test/fitness_screens_test.dart"
+    }
+  ]
+}

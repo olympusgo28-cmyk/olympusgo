@@ -28,8 +28,8 @@ class SupabaseUpdatesRepository implements UpdatesRepository {
           title: r['title'] as String,
           body: r['body'] as String? ?? '',
           mark: r['mark'] as String? ?? '•',
-          color: _hex(r['color'] as String?) ?? 0xFF16181B,
-          ink: _hex(r['ink'] as String?) ?? 0xFFC6FF00,
+          color: _rebrand(_hex(r['color'] as String?)) ?? 0xFF1C1F23,
+          ink: _rebrand(_hex(r['ink'] as String?)) ?? 0xFFFF7A1A,
           square: r['square'] as bool? ?? false,
           link: r['link'] as String?,
           at: DateTime.parse(r['created_at'] as String).toLocal(),
@@ -39,6 +39,14 @@ class SupabaseUpdatesRepository implements UpdatesRepository {
   }
 
   /// "#F2C14E" → 0xFFF2C14E.
+  /// The database functions still write the old palette on each row, so
+  /// the new one is applied here, in one place.
+  static int? _rebrand(int? color) => switch (color) {
+    0xFFC6FF00 => 0xFFFF7A1A,
+    0xFF16181B => 0xFF1C1F23,
+    _ => color,
+  };
+
   static int? _hex(String? s) => s == null || s.length != 7
       ? null
       : int.tryParse('FF${s.substring(1)}', radix: 16);
@@ -95,7 +103,7 @@ class DemoUpdatesRepository implements UpdatesRepository {
         title: 'You earned 4 points',
         body: 'Hannah marked you present at Doubles Social',
         mark: 'Pt',
-        color: 0xFFFFE8CC,
+        color: 0xFFFFE6D6,
         ink: 0xFF7A3B00,
         link: Routes.points,
         at: ago(1, 22),
@@ -105,7 +113,7 @@ class DemoUpdatesRepository implements UpdatesRepository {
         title: 'Your Meet recap is ready',
         body: '3 wins, rating 5.3 to 5.4. Share your stats card',
         mark: 'St',
-        ink: 0xFFF28500,
+        ink: 0xFFE8590C,
         link: Routes.meetRecap('ts-social'),
         at: ago(1, 22),
       ),
@@ -129,17 +137,6 @@ class DemoUpdatesRepository implements UpdatesRepository {
         ink: 0xFF5A4300,
         link: Routes.activity('t-open'),
         at: ago(4, 12),
-        read: true,
-      ),
-      InboxUpdate(
-        id: 'u-reward',
-        title: 'Club reward: 2 of 4 Meets',
-        body: 'Tampines Smashers is halfway to discounted shuttles',
-        mark: 'Cl',
-        color: 0xFFDCEEE6,
-        ink: 0xFF0A4F3A,
-        link: Routes.clubReward('c-ts'),
-        at: ago(5, 18),
         read: true,
       ),
     ];

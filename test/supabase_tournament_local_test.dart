@@ -4,6 +4,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/local_accounts.dart';
+
 import 'package:olympus_go/features/clubs/data/supabase_club_repository.dart';
 import 'package:olympus_go/features/clubs/domain/club_models.dart';
 import 'package:olympus_go/features/clubs/domain/club_sport.dart';
@@ -34,9 +37,14 @@ void main() {
       ),
     );
     final stamp = DateTime.now().microsecondsSinceEpoch;
-    final res = await client.auth.signUp(
+    final res = await signUpLocal(
+      client,
       email: '$name.$stamp@test.local',
       password: 'test-password-123',
+    );
+    await client.rpc(
+      'set_birthday',
+      params: {'p_birthday': '1990-01-01', 'p_country': 'SG'},
     );
     await client
         .from('profiles')
@@ -130,6 +138,20 @@ void main() {
       expect(ko.first.matches.first.a, 'A1 · winner');
       expect(ko.first.matches.first.b, 'B2 · runner-up');
       expect(ko[1].matches.single.a, 'SF1 winner');
+
+      // Only a tournament that has started moves ratings.
+      await SupabaseClient(
+            url!,
+            Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+          )
+          .from('activities')
+          .update({
+            'starts_at': DateTime.now()
+                .toUtc()
+                .subtract(const Duration(hours: 1))
+                .toIso8601String(),
+          })
+          .eq('id', id);
 
       // Play every group match, then the knockout, as they become ready.
       for (var round = 0; round < 10; round++) {
@@ -253,7 +275,7 @@ void main() {
         2,
       );
 
-      await b.withdraw(id, toWallet: true, injury: false);
+      await b.withdraw(id, injury: false);
       expect(await host.entries(id, 'XD'), isEmpty);
       expect((await a.info(id)).mine, isNull);
     },
@@ -409,6 +431,11 @@ void main() {
     final (other, _) = await player('other', 4);
     expect(await SupabaseGameRepository(other).gear(), isEmpty);
 
+    // Leaderboards are snapshots a job builds, so build one now.
+    await SupabaseClient(
+      url!,
+      Platform.environment['LOCAL_SUPABASE_SERVICE_KEY']!,
+    ).rpc('leaderboards_refresh');
     final points = await game.leaderboard(
       local: false,
       sport: 'Badminton',

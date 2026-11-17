@@ -3,25 +3,30 @@ import 'package:flutter/services.dart';
 
 import '../domain/country.dart';
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import 'og_fields.dart';
+import 'og_screen.dart';
+import '../../core/theme/og_type.dart';
 
-/// Country code dropdown plus mobile number, as in the design.
+/// One outlined field: flag and country code, a divider, then the number.
+/// With [onCountryChanged] the country part opens a list; without it the
+/// country is fixed, as for an account's own region.
 class PhoneField extends StatefulWidget {
   const PhoneField({
     super.key,
     required this.country,
-    required this.onCountryChanged,
     required this.controller,
+    this.onCountryChanged,
     this.onSubmitted,
     this.error,
+    this.label = 'Mobile number',
   });
 
   final Country country;
-  final ValueChanged<Country> onCountryChanged;
+  final ValueChanged<Country>? onCountryChanged;
   final TextEditingController controller;
   final ValueChanged<String>? onSubmitted;
   final String? error;
+  final String label;
 
   @override
   State<PhoneField> createState() => _PhoneFieldState();
@@ -31,10 +36,49 @@ class _PhoneFieldState extends State<PhoneField> {
   final _menu = OverlayPortalController();
   final _link = LayerLink();
 
+  bool get _canPick => widget.onCountryChanged != null;
+
   void _pick(Country c) {
     HapticFeedback.selectionClick();
-    widget.onCountryChanged(c);
+    widget.onCountryChanged?.call(c);
     _menu.hide();
+  }
+
+  Widget _countryPart(OgColors c) {
+    final part = Padding(
+      padding: const EdgeInsets.only(left: 14, right: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          widget.country.flag(),
+          const SizedBox(width: 8),
+          Text(widget.country.dialCode, style: context.type.body),
+          if (_canPick)
+            Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: c.text),
+          const SizedBox(width: 10),
+          Container(width: 2, height: 28, color: c.borderControl),
+        ],
+      ),
+    );
+    if (!_canPick) {
+      return Semantics(
+        label:
+            'Country code, ${widget.country.name} ${widget.country.dialCode}',
+        child: ExcludeSemantics(child: part),
+      );
+    }
+    return Semantics(
+      button: true,
+      label: 'Country code, ${widget.country.name} ${widget.country.dialCode}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _menu.toggle();
+        },
+        child: ExcludeSemantics(child: part),
+      ),
+    );
   }
 
   @override
@@ -43,78 +87,28 @@ class _PhoneFieldState extends State<PhoneField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Mobile number', style: OgText.label),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CompositedTransformTarget(
-              link: _link,
-              child: OverlayPortal(
-                controller: _menu,
-                overlayChildBuilder: (_) => _dropdown(c),
-                child: Semantics(
-                  button: true,
-                  label:
-                      'Country code, ${widget.country.name} ${widget.country.dialCode}',
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      _menu.toggle();
-                    },
-                    child: Container(
-                      width: 124,
-                      height: 56,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: c.surfaceRaised,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: c.borderControl, width: 2),
-                      ),
-                      child: ExcludeSemantics(
-                        child: Row(
-                          children: [
-                            widget.country.flag(),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.country.dialCode,
-                              style: OgText.body(
-                                18,
-                                weight: FontWeight.w600,
-                                color: c.text,
-                              ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 20,
-                              color: c.text,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+        CompositedTransformTarget(
+          link: _link,
+          child: OverlayPortal(
+            controller: _menu,
+            overlayChildBuilder: (_) => _dropdown(c),
+            child: OgInput(
+              controller: widget.controller,
+              label: widget.label,
+              prefix: _countryPart(c),
+              keyboardType: TextInputType.phone,
+              autofillHints: const [AutofillHints.telephoneNumberNational],
+              textInputAction: TextInputAction.done,
+              onSubmitted: widget.onSubmitted,
+              // Red outline only: the sentence goes underneath, with its icon.
+              error: widget.error == null ? null : '',
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]')),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OgInput(
-                controller: widget.controller,
-                semanticLabel: 'Mobile number',
-                keyboardType: TextInputType.phone,
-                autofillHints: const [AutofillHints.telephoneNumberNational],
-                textInputAction: TextInputAction.done,
-                onSubmitted: widget.onSubmitted,
-                error: widget.error,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]')),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
+        if (widget.error != null) OgErrorText(widget.error!),
       ],
     );
   }
@@ -130,7 +124,7 @@ class _PhoneFieldState extends State<PhoneField> {
         ),
         CompositedTransformFollower(
           link: _link,
-          offset: const Offset(0, 62),
+          offset: const Offset(0, 64),
           child: Align(
             alignment: Alignment.topLeft,
             child: Material(
@@ -184,20 +178,8 @@ class _PhoneFieldState extends State<PhoneField> {
               children: [
                 country.flag(),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    country.name,
-                    style: OgText.body(
-                      16,
-                      weight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: c.text,
-                    ),
-                  ),
-                ),
-                Text(
-                  country.dialCode,
-                  style: OgText.body(16, color: c.textMuted),
-                ),
+                Expanded(child: Text(country.name, style: context.type.body)),
+                Text(country.dialCode, style: context.type.secondary),
               ],
             ),
           ),

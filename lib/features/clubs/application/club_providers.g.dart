@@ -985,80 +985,6 @@ final class ClubLeaderboardFamily extends $Family
   String toString() => r'clubLeaderboardProvider';
 }
 
-@ProviderFor(clubReward)
-final clubRewardProvider = ClubRewardFamily._();
-
-final class ClubRewardProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<ClubReward>,
-          ClubReward,
-          FutureOr<ClubReward>
-        >
-    with $FutureModifier<ClubReward>, $FutureProvider<ClubReward> {
-  ClubRewardProvider._({
-    required ClubRewardFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'clubRewardProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$clubRewardHash();
-
-  @override
-  String toString() {
-    return r'clubRewardProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<ClubReward> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<ClubReward> create(Ref ref) {
-    final argument = this.argument as String;
-    return clubReward(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ClubRewardProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$clubRewardHash() => r'e38c41d13d71180d8c2c5a7a43e91bb0c07d40ed';
-
-final class ClubRewardFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<ClubReward>, String> {
-  ClubRewardFamily._()
-    : super(
-        retry: null,
-        name: r'clubRewardProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  ClubRewardProvider call(String clubId) =>
-      ClubRewardProvider._(argument: clubId, from: this);
-
-  @override
-  String toString() => r'clubRewardProvider';
-}
-
 @ProviderFor(inviteCandidates)
 final inviteCandidatesProvider = InviteCandidatesProvider._();
 
@@ -1727,3 +1653,42 @@ abstract class _$TeamDraftController extends $Notifier<TeamDraft> {
     return element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(groupRanking)
+final groupRankingProvider = GroupRankingProvider._();
+
+final class GroupRankingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<GroupRank>>,
+          List<GroupRank>,
+          FutureOr<List<GroupRank>>
+        >
+    with $FutureModifier<List<GroupRank>>, $FutureProvider<List<GroupRank>> {
+  GroupRankingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'groupRankingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupRankingHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<GroupRank>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<GroupRank>> create(Ref ref) {
+    return groupRanking(ref);
+  }
+}
+
+String _$groupRankingHash() => r'329c0520152ba0395cc9662352bf8505356a5069';

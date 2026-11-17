@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:og_money/og_money.dart' show pointsText;
 
 import '../../core/format.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_home.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/theme/og_tones.dart';
 import '../../core/widgets/og_icon.dart';
 import '../../core/widgets/og_kit.dart';
-import '../../core/widgets/og_toast.dart';
 import '../../core/widgets/pressable.dart';
-import '../auth/data/auth_repository.dart';
 import '../clubs/application/club_providers.dart';
 import '../clubs/data/club_repository.dart';
 import '../clubs/domain/club_models.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
-import '../play/presentation/play_card.dart';
+import '../play/presentation/play_card/play_card.dart';
+import '../social/presentation/player_card.dart';
 import '../shop/application/shop_providers.dart';
 import '../shop/domain/shop_models.dart';
 import '../social/application/social_providers.dart';
-import '../social/domain/social_models.dart';
 
 const weekdayNames = [
   'Monday',
@@ -55,7 +55,11 @@ class StatusScrim extends StatefulWidget {
     required this.after,
     required this.child,
     this.darkHero = false,
+    this.color,
   });
+
+  /// The band under the clock; the page colour unless a screen has its own.
+  final Color? color;
 
   final double after;
   final Widget child;
@@ -103,7 +107,7 @@ class _StatusScrimState extends State<StatusScrim> {
               child: AnimatedOpacity(
                 opacity: _shown ? 1 : 0,
                 duration: const Duration(milliseconds: 150),
-                child: ColoredBox(color: c.bg),
+                child: ColoredBox(color: widget.color ?? c.bg),
               ),
             ),
           ),
@@ -182,7 +186,7 @@ class SearchPill extends StatelessWidget {
             Expanded(
               child: Text(
                 'Search Meets, clubs, players, shops',
-                style: OgText.body(16, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -203,6 +207,7 @@ class HomeSection extends StatelessWidget {
     this.onSeeAll,
     this.linkLabel = 'See all',
     this.top = 26,
+    this.home = false,
   });
 
   final String title;
@@ -211,9 +216,11 @@ class HomeSection extends StatelessWidget {
   final String linkLabel;
   final double top;
 
+  /// Home's own colours (owner, 14 Nov 2026): heading and link.
+  final bool home;
+
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Padding(
       padding: EdgeInsets.only(top: top),
       child: Column(
@@ -222,19 +229,28 @@ class HomeSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              // Heading and link share one centre line.
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Semantics(
                     header: true,
                     child: Text(
                       title,
-                      style: OgText.display(26, height: 1.1, color: c.text),
+                      style: context.type.title.copyWith(
+                        height: 1.1,
+                        color: home ? context.home.heading : null,
+                      ),
                     ),
                   ),
                 ),
                 if (onSeeAll != null)
-                  KitLink(linkLabel, onPressed: onSeeAll, minHeight: 32),
+                  KitLink(
+                    linkLabel,
+                    onPressed: onSeeAll,
+                    minHeight: 44,
+                    color: home ? context.home.link : null,
+                  ),
               ],
             ),
           ),
@@ -247,9 +263,17 @@ class HomeSection extends StatelessWidget {
 
 /// A sideways row of cards with the page gutters.
 class Shelf extends StatelessWidget {
-  const Shelf({super.key, required this.children, this.stretch = true});
+  const Shelf({
+    super.key,
+    required this.children,
+    this.stretch = true,
+    this.padding = const EdgeInsets.symmetric(horizontal: 20),
+  });
 
   final List<Widget> children;
+
+  /// Around the row; a shelf of cards with a shadow adds room underneath.
+  final EdgeInsets padding;
 
   /// Tiles share the tallest one's height; activity cards keep their own,
   /// since a cover on one would leave a gap in the next.
@@ -270,7 +294,7 @@ class Shelf extends StatelessWidget {
     );
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: padding,
       child: stretch ? IntrinsicHeight(child: row) : row,
     );
   }
@@ -282,10 +306,14 @@ class ActivityShelf extends ConsumerWidget {
     required this.kind,
     required this.title,
     this.where,
+    this.home = false,
   });
 
   final ActivityKind kind;
   final String title;
+
+  /// Dressed for Home: its heading, link and card colours.
+  final bool home;
 
   /// Narrows the row, as Discover's filters do.
   final bool Function(Activity)? where;
@@ -297,12 +325,19 @@ class ActivityShelf extends ConsumerWidget {
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     return HomeSection(
       title: title,
+      home: home,
       onSeeAll: () => context.push(Routes.playKind(kind)),
       child: Shelf(
-        stretch: false,
+        // Meet cards share the tallest one's height, measured by the row
+        // itself, with no fixed number (owner, 15 Nov 2026). Tournament and
+        // event cards keep their own: a cover on one would leave a gap.
+        stretch: kind == ActivityKind.meet,
         children: [
           for (final a in list)
-            SizedBox(width: 318, child: PlayCard(activity: a)),
+            SizedBox(
+              width: 318,
+              child: PlayCard(activity: a, onHome: home),
+            ),
         ],
       ),
     );
@@ -404,7 +439,10 @@ class _ClubTile extends ConsumerWidget {
                     Positioned(
                       left: 14,
                       bottom: 10,
-                      child: Text(mark, style: OgText.heading(44, color: ink)),
+                      child: Text(
+                        mark,
+                        style: context.type.score.copyWith(color: ink),
+                      ),
                     ),
                     if (unread > 0)
                       Positioned(
@@ -413,7 +451,6 @@ class _ClubTile extends ConsumerWidget {
                         child: KitTag(
                           '$unread new',
                           height: 22,
-                          fontSize: 11,
                           background: c.accent,
                           foreground: OgColors.ink,
                         ),
@@ -431,18 +468,14 @@ class _ClubTile extends ConsumerWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(16, weight: FontWeight.w700),
+                    style: context.type.body,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     next ?? (isClub ? 'No sessions this week' : team!.meta),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      color: c.link,
-                    ),
+                    style: context.type.caption.copyWith(color: c.link),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -464,7 +497,6 @@ class _ClubTile extends ConsumerWidget {
                                     faces[i].player.id,
                                     initials: faces[i].player.initials,
                                     size: 20,
-                                    fontSize: 8,
                                   ),
                                 ),
                               ),
@@ -472,14 +504,7 @@ class _ClubTile extends ConsumerWidget {
                         ),
                       ),
                       if (faces.isNotEmpty) const SizedBox(width: 8),
-                      Text(
-                        '$count members',
-                        style: OgText.body(
-                          12,
-                          weight: FontWeight.w600,
-                          color: c.textMuted,
-                        ),
-                      ),
+                      Text('$count members', style: context.type.caption),
                     ],
                   ),
                 ],
@@ -498,10 +523,12 @@ class PlayerShelf extends ConsumerWidget {
     this.title = 'Players',
     this.linkLabel = 'See all',
     this.linkRoute,
+    this.home = false,
   });
 
   final String title;
   final String linkLabel;
+  final bool home;
 
   /// Pushed from the link; without one the link opens Discover.
   final String? linkRoute;
@@ -510,132 +537,19 @@ class PlayerShelf extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final players = ref.watch(suggestedPlayersProvider).value ?? [];
     if (players.isEmpty) return const SizedBox.shrink();
-    final following = ref.watch(myFollowingProvider).value ?? const {};
     return HomeSection(
       title: title,
+      home: home,
       linkLabel: linkLabel,
       onSeeAll: () => linkRoute == null
           ? context.go(Routes.discover)
           : context.push(linkRoute!),
       child: Shelf(
+        // Room under the cards for their shadow.
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         children: [
-          for (final p in players)
-            _PlayerTile(p: p, following: following.contains(p.player.id)),
+          for (final p in players) PlayerCard(suggestion: p, onHome: home),
         ],
-      ),
-    );
-  }
-}
-
-class _PlayerTile extends ConsumerWidget {
-  const _PlayerTile({required this.p, required this.following});
-
-  final SuggestedPlayer p;
-  final bool following;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
-    final t = context.tones;
-    return Pressable(
-      semanticLabel: '${p.player.displayName}, ${p.note}',
-      onPressed: () => context.push(Routes.player(p.player.id)),
-      child: Container(
-        width: 132,
-        padding: const EdgeInsets.fromLTRB(10, 16, 10, 14),
-        decoration: BoxDecoration(
-          color: t.soft,
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.bottomCenter,
-              children: [
-                SolidAvatar.forId(
-                  p.player.id,
-                  initials: p.player.initials,
-                  size: 60,
-                  fontSize: 18,
-                ),
-                if (p.level != null)
-                  Positioned(
-                    bottom: -8,
-                    child: Container(
-                      height: 20,
-                      padding: const EdgeInsets.symmetric(horizontal: 7),
-                      decoration: BoxDecoration(
-                        color: c.inverseCard,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: t.soft, width: 2),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        p.level!.toStringAsFixed(1),
-                        style: OgText.body(
-                          11,
-                          weight: FontWeight.w700,
-                          color: c.accent,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              p.player.displayName,
-              textAlign: TextAlign.center,
-              style: OgText.body(14, weight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              p.note,
-              textAlign: TextAlign.center,
-              style: OgText.body(12, color: c.textMuted),
-            ),
-            const SizedBox(height: 8),
-            const Spacer(),
-            Pressable(
-              semanticLabel: following
-                  ? 'Following ${p.player.displayName}'
-                  : 'Follow ${p.player.displayName}',
-              onPressed: () async {
-                HapticFeedback.selectionClick();
-                try {
-                  await ref
-                      .read(myFollowingProvider.notifier)
-                      .toggle(p.player.id);
-                } on AuthFailure catch (e) {
-                  if (context.mounted) {
-                    showOgToast(context, e.message, error: true);
-                  }
-                }
-              },
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: following ? c.bg : c.inverseCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: following ? c.borderControl : c.inverseCard,
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  following ? 'Following' : 'Follow',
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w700,
-                    color: following ? c.text : c.onInverseCard,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -648,7 +562,6 @@ class MallShelf extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final malls = ref.watch(mallsProvider).value ?? [];
     if (malls.isEmpty) return const SizedBox.shrink();
-    final c = context.og;
     return HomeSection(
       title: 'Malls',
       onSeeAll: () => context.push(Routes.shop),
@@ -678,7 +591,7 @@ class MallShelf extends ConsumerWidget {
                       alignment: Alignment.center,
                       child: Text(
                         m.initials,
-                        style: OgText.heading(44, color: Color(m.ink)),
+                        style: context.type.score.copyWith(color: Color(m.ink)),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -686,27 +599,22 @@ class MallShelf extends ConsumerWidget {
                       m.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(
-                        14,
-                        weight: FontWeight.w700,
-                        height: 1.25,
-                      ),
+                      style: context.type.body.copyWith(height: 1.25),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       m.blurb,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: OgText.body(12, color: c.textMuted),
+                      style: context.type.caption,
                     ),
                     if (m.pointsAccepted) ...[
                       const SizedBox(height: 6),
                       KitTag(
                         'Points accepted',
                         height: 20,
-                        fontSize: 11,
-                        background: c.primaryTint,
-                        foreground: const Color(0xFF7A3B00),
+                        background: context.home.pointsTag,
+                        foreground: context.home.onPointsTag,
                       ),
                     ],
                   ],
@@ -720,7 +628,10 @@ class MallShelf extends ConsumerWidget {
 }
 
 class ProductShelf extends ConsumerWidget {
-  const ProductShelf({super.key});
+  const ProductShelf({super.key, this.home = false});
+
+  /// Dressed for Home: its tiles, heading and link colours.
+  final bool home;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -728,10 +639,12 @@ class ProductShelf extends ConsumerWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     final c = context.og;
     final t = context.tones;
+    final h = context.home;
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: HomeSection(
         title: 'Popular items',
+        home: home,
         onSeeAll: () => context.push(Routes.shop),
         child: Shelf(
           children: [
@@ -747,8 +660,9 @@ class ProductShelf extends ConsumerWidget {
                       Container(
                         height: 156,
                         decoration: BoxDecoration(
-                          color: t.soft,
+                          color: home ? h.surface : t.soft,
                           borderRadius: BorderRadius.circular(22),
+                          border: home ? Border.all(color: h.cardBorder) : null,
                         ),
                         alignment: Alignment.center,
                         child: OgIcon(
@@ -757,40 +671,38 @@ class ProductShelf extends ConsumerWidget {
                               : OgIcons.bag,
                           size: 44,
                           strokeWidth: 1.2,
-                          color: const Color(0xFF9A9AA0),
+                          color: c.textMuted,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         p.name,
-                        style: OgText.body(
-                          14,
-                          weight: FontWeight.w700,
+                        style: context.type.body.copyWith(
                           height: 1.25,
+                          color: home ? h.heading : null,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        p.mallName,
-                        style: OgText.body(12, color: c.textMuted),
-                      ),
+                      Text(p.mallName, style: context.type.caption),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'S\$${money(p.priceCents, decimals: p.priceCents % 100 != 0)}',
-                            style: OgText.body(15, weight: FontWeight.w700),
-                          ),
-                          if (p.maxPoints > 0) ...[
-                            const SizedBox(width: 8),
-                            KitTag(
-                              'up to ${p.maxPoints} pts',
-                              height: 20,
-                              fontSize: 11,
-                              background: c.primaryTint,
-                              foreground: const Color(0xFF7A3B00),
+                            style: context.type.body.copyWith(
+                              color: home ? h.heading : null,
                             ),
-                          ],
+                          ),
+                          if (p.pointsCapCents > 0)
+                            KitTag(
+                              'up to ${pointsText(p.pointsCapCents)} pts',
+                              height: 20,
+                              background: h.pointsTag,
+                              foreground: h.onPointsTag,
+                            ),
                         ],
                       ),
                     ],

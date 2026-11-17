@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/cupertino_sheets.dart';
 import '../../../core/widgets/og_buttons.dart';
@@ -15,582 +15,16 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_rows.dart';
 import '../../../core/widgets/og_screen.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
+import '../../../core/widgets/resend_timer.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../auth/presentation/code_copy.dart';
+import '../../fitness/application/fitness_providers.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../social/application/social_providers.dart';
-import '../application/avatar_upload.dart';
 import '../application/settings_providers.dart';
 import '../domain/settings_models.dart';
-
-/// Settings: account, preferences and more, with Log out at the bottom.
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        const OgBackButton(),
-        const OgHeading(title: 'Settings', topGap: 8),
-        const SectionLabel('Account'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.person,
-              title: 'Account centre',
-              subtitle: 'Name, username, bio and gender',
-              onTap: () => context.push(Routes.accountCentre),
-            ),
-            NavRow(
-              icon: OgIcons.idCard,
-              title: 'Personal information',
-              subtitle: 'Email, mobile, birthday and Face ID',
-              onTap: () => context.push(Routes.personalInfo),
-            ),
-          ],
-        ),
-        const SectionLabel('Preferences'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.bell,
-              title: 'Notifications',
-              subtitle: 'Meets, messages and followers',
-              onTap: () => context.push(Routes.notifications),
-            ),
-            NavRow(
-              icon: OgIcons.shield,
-              title: 'Privacy and safety',
-              subtitle: 'Who can see and find you',
-              onTap: () => context.push(Routes.privacy),
-            ),
-          ],
-        ),
-        const SectionLabel('More'),
-        RowGroup(
-          children: [
-            NavRow(
-              icon: OgIcons.wallet,
-              title: 'Wallet and points',
-              subtitle: 'Refunds, withdrawals and points',
-              onTap: () => context.push(Routes.wallet),
-            ),
-            NavRow(
-              icon: OgIcons.bag,
-              title: 'My orders',
-              subtitle: 'Track, return and review',
-              onTap: () => context.push(Routes.orders()),
-            ),
-            NavRow(
-              icon: OgIcons.bookmark,
-              title: 'Saved',
-              subtitle: 'Meets, players and clubs',
-              onTap: () => context.push(Routes.saved),
-            ),
-            NavRow(
-              icon: OgIcons.block,
-              title: 'Blocked players',
-              subtitle: 'People you blocked',
-              onTap: () => context.push(Routes.blocked),
-            ),
-            NavRow(
-              icon: OgIcons.help,
-              title: 'Help',
-              subtitle: 'Questions and support',
-              onTap: () => context.push(Routes.help),
-            ),
-          ],
-        ),
-      ],
-      bottom: [
-        Pressable(
-          onPressed: () => context.push(Routes.logOut),
-          isButton: true,
-          semanticLabel: 'Log out',
-          child: SizedBox(
-            height: 52,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OgIcon(OgIcons.logOut, size: 22, color: c.link),
-                const SizedBox(width: 10),
-                Text(
-                  'Log out',
-                  style: OgText.body(
-                    16,
-                    weight: FontWeight.w600,
-                    color: c.link,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Account centre: photo, name, username, bio and gender. Used both from
-/// Settings and once right after onboarding ([onboarding] true).
-class AccountCentreScreen extends ConsumerStatefulWidget {
-  const AccountCentreScreen({super.key, this.onboarding = false});
-
-  final bool onboarding;
-
-  @override
-  ConsumerState<AccountCentreScreen> createState() =>
-      _AccountCentreScreenState();
-}
-
-class _AccountCentreScreenState extends ConsumerState<AccountCentreScreen> {
-  final _name = TextEditingController();
-  final _username = TextEditingController();
-  final _bio = TextEditingController();
-  Gender _gender = Gender.preferNotToSay;
-  String? _avatarUrl;
-  bool _loaded = false;
-  bool _busy = false;
-  bool _uploading = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _username.dispose();
-    _bio.dispose();
-    super.dispose();
-  }
-
-  void _fill(AccountDetails d) {
-    if (_loaded) return;
-    _loaded = true;
-    _name.text = d.fullName;
-    _username.text = d.username;
-    _bio.text = d.bio;
-    _gender = d.gender;
-    _avatarUrl = d.avatarUrl;
-  }
-
-  Future<void> _pickGender() async {
-    final picked = await showOgListPicker<Gender>(
-      context: context,
-      title: 'Gender',
-      items: Gender.values,
-      selected: _gender,
-      label: (g) => g.label,
-    );
-    if (picked != null) setState(() => _gender = picked);
-  }
-
-  Future<void> _changePhoto() async {
-    final source = await showCupertinoModalPopup<ImageSourceChoice>(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Profile photo'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () =>
-                Navigator.of(context).pop(ImageSourceChoice.camera),
-            child: const Text('Take Photo'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () =>
-                Navigator.of(context).pop(ImageSourceChoice.library),
-            child: const Text('Choose from Library'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-    setState(() => _uploading = true);
-    try {
-      final url = await pickAndUploadAvatar(ref, source);
-      if (url != null && mounted) setState(() => _avatarUrl = url);
-    } on AuthFailure catch (e) {
-      if (mounted) showOgToast(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
-
-  Future<void> _save() async {
-    final name = _name.text.trim();
-    final username = _username.text.trim();
-    if (name.isEmpty) return setState(() => _error = 'Enter your name.');
-    if (!RegExp(r'^[A-Za-z0-9_]{3,30}$').hasMatch(username)) {
-      return setState(
-        () => _error = 'Usernames use 3 to 30 letters, numbers or underscores.',
-      );
-    }
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref
-          .read(settingsRepositoryProvider)
-          .saveAccount(
-            AccountDetails(
-              fullName: name,
-              username: username,
-              bio: _bio.text,
-              gender: _gender,
-            ),
-          );
-      await ref.read(sessionProfileProvider.notifier).reload();
-      if (!mounted) return;
-      if (widget.onboarding) {
-        context.push(Routes.setupPersonal);
-      } else {
-        showOgToast(context, 'Saved');
-        context.pop();
-      }
-    } on AuthFailure catch (e) {
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final details = ref.watch(accountDetailsProvider);
-    details.whenData(_fill);
-    final initials = _initials(_name.text);
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        OgBackButton(
-          onPressed: widget.onboarding ? () => context.go(Routes.home) : null,
-        ),
-        const OgHeading(title: 'Account centre', topGap: 8),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Avatar(
-                  initials: initials,
-                  tone: AvatarTone.brand,
-                  imageUrl: _avatarUrl,
-                  size: 72,
-                  fontSize: 28,
-                ),
-                if (_uploading)
-                  const CupertinoActivityIndicator(color: OgColors.white),
-              ],
-            ),
-            const SizedBox(width: 16),
-            OgTextLink(
-              'Change photo',
-              align: Alignment.centerLeft,
-              onPressed: _changePhoto,
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        OgTextField(
-          label: 'Name',
-          controller: _name,
-          autofillHints: const [AutofillHints.name],
-          capitalization: TextCapitalization.words,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        OgTextField(
-          label: 'Username',
-          controller: _username,
-          autocorrect: false,
-          autofillHints: const [AutofillHints.username],
-        ),
-        const SizedBox(height: 12),
-        OgTextArea(label: 'Bio', controller: _bio, minLines: 2),
-        const SizedBox(height: 12),
-        Text('Gender', style: OgText.label),
-        const SizedBox(height: 8),
-        OgSelectField(
-          value: _gender.label,
-          semanticLabel: 'Gender',
-          onTap: _pickGender,
-        ),
-        const SizedBox(height: 14),
-        Pressable(
-          onPressed: () => context.push(
-            widget.onboarding ? Routes.setupPersonal : Routes.personalInfo,
-          ),
-          semanticLabel: 'Personal information settings',
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.og.borderControl, width: 2),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Personal information settings',
-                    style: OgText.body(
-                      16,
-                      weight: FontWeight.w600,
-                      color: context.og.text,
-                    ),
-                  ),
-                ),
-                OgIcon(
-                  OgIcons.chevronRight,
-                  size: 22,
-                  color: context.og.text,
-                  strokeWidth: 2.5,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_error != null) OgErrorText(_error!),
-      ],
-      bottom: [
-        OgButton(
-          label: widget.onboarding ? 'Continue' : 'Save',
-          loading: _busy,
-          onPressed: details.hasValue ? _save : null,
-        ),
-      ],
-    );
-  }
-}
-
-String _initials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((p) => p.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) return parts.first[0].toUpperCase();
-  return (parts.first[0] + parts.last[0]).toUpperCase();
-}
-
-/// Email, mobile, birthday (read only) and the Face ID switch.
-class PersonalInfoScreen extends ConsumerStatefulWidget {
-  const PersonalInfoScreen({super.key, this.onboarding = false});
-
-  final bool onboarding;
-
-  @override
-  ConsumerState<PersonalInfoScreen> createState() => _PersonalInfoScreenState();
-}
-
-class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
-  final _email = TextEditingController();
-  final _mobile = TextEditingController();
-  PrivateInfo? _original;
-  bool _busy = false;
-  String? _error;
-
-  static const _months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _mobile.dispose();
-    super.dispose();
-  }
-
-  void _fill(PrivateInfo info) {
-    if (_original != null) return;
-    _original = info;
-    _email.text = info.email;
-    final dial = info.country.dialCode.substring(1);
-    var digits = info.phone.replaceAll('+', '');
-    if (digits.startsWith(dial)) digits = digits.substring(dial.length);
-    _mobile.text = digits.length == 8
-        ? '${digits.substring(0, 4)} ${digits.substring(4)}'
-        : digits;
-  }
-
-  Future<void> _finish() async {
-    if (widget.onboarding) {
-      context.go(Routes.profile);
-      return;
-    }
-    final email = _email.text.trim();
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      if (_original != null && email != _original!.email) {
-        await ref.read(settingsRepositoryProvider).changeEmail(email);
-        if (mounted) showOgToast(context, 'Check $email to confirm the change');
-      }
-      final digits = _mobile.text.replaceAll(RegExp(r'\D'), '');
-      final phone = '${_original?.country.dialCode ?? '+65'}$digits';
-      if (_original != null &&
-          digits.isNotEmpty &&
-          phone.replaceAll('+', '') != _original!.phone.replaceAll('+', '')) {
-        await ref.read(authRepositoryProvider).startPhoneChange(phone);
-        if (mounted) context.push(Routes.verifyPhoneChange, extra: phone);
-        return;
-      }
-      if (mounted) context.pop();
-    } on AuthFailure catch (e) {
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.og;
-    final info = ref.watch(privateInfoProvider);
-    info.whenData(_fill);
-    final faceId = ref.watch(faceIdEnabledProvider).value ?? true;
-    final birthday = info.value?.birthday;
-    final country = info.value?.country;
-
-    return OgFlowScreen(
-      asPage: true,
-      children: [
-        const OgBackButton(),
-        const OgHeading(
-          title: 'Personal information',
-          topGap: 8,
-          lead: 'Only you can see these details.',
-        ),
-        const SizedBox(height: 20),
-        OgTextField(
-          label: 'Email',
-          controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
-          autocorrect: false,
-        ),
-        const SizedBox(height: 16),
-        Text('Mobile', style: OgText.label),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Container(
-              width: 124,
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: c.surfaceRaised,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: c.borderControl, width: 2),
-              ),
-              child: Row(
-                children: [
-                  if (country != null) country.flag(),
-                  const SizedBox(width: 8),
-                  Text(
-                    country?.dialCode ?? '',
-                    style: OgText.body(
-                      18,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OgInput(
-                controller: _mobile,
-                semanticLabel: 'Mobile',
-                keyboardType: TextInputType.phone,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text('Date of birth', style: OgText.label),
-        const SizedBox(height: 8),
-        Semantics(
-          readOnly: true,
-          label: 'Date of birth',
-          value: birthday == null
-              ? ''
-              : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}',
-          child: Container(
-            height: 56,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.borderControl, width: 2),
-            ),
-            child: ExcludeSemantics(
-              child: Text(
-                birthday == null
-                    ? ''
-                    : '${birthday.day} ${_months[birthday.month - 1]} ${birthday.year}',
-                style: OgText.body(18, color: c.textMuted),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          "Your date of birth can't be changed.",
-          style: OgText.body(14, color: c.textMuted),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: c.border, width: 2),
-          ),
-          child: SwitchRow(
-            leading: OgIcon(OgIcons.faceId, size: 26, color: c.text),
-            title: 'Enable Face ID',
-            subtitle: 'Unlock OlympusGO with your face.',
-            value: faceId,
-            onChanged: (v) => ref.read(faceIdEnabledProvider.notifier).set(v),
-          ),
-        ),
-        if (_error != null) OgErrorText(_error!),
-      ],
-      bottom: [
-        OgButton(
-          label: widget.onboarding ? 'Continue' : 'Save',
-          loading: _busy,
-          onPressed: _finish,
-        ),
-      ],
-    );
-  }
-}
+import 'confirm_its_you_screen.dart';
 
 enum ImageSourceChoice { camera, library }
 
@@ -600,7 +34,6 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final prefs =
         ref.watch(notificationSettingsProvider).value ??
         const NotificationPrefs();
@@ -665,7 +98,7 @@ class NotificationsScreen extends ConsumerWidget {
         Text(
           'Changes save as you go.',
           textAlign: TextAlign.center,
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
       ],
     );
@@ -678,10 +111,11 @@ class PrivacyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final prefs =
         ref.watch(privacySettingsProvider).value ?? const PrivacyPrefs();
     final notifier = ref.read(privacySettingsProvider.notifier);
+    final aiStatus = ref.watch(aiStatusProvider);
+    final ai = aiStatus.value;
     Future<void> change(PrivacyPrefs Function(PrivacyPrefs) edit) async {
       try {
         await notifier.change(edit);
@@ -696,7 +130,7 @@ class PrivacyScreen extends ConsumerWidget {
         const OgBackButton(),
         const OgHeading(title: 'Privacy and safety', topGap: 8),
         const SizedBox(height: 20),
-        Text('Who can see my profile', style: OgText.label),
+        Text('Who can see my profile', style: context.type.caption),
         const SizedBox(height: 8),
         OgSelectField(
           value: prefs.visibility.label,
@@ -722,27 +156,53 @@ class PrivacyScreen extends ConsumerWidget {
               value: prefs.showLevel,
               onChanged: (v) => change((p) => p.copyWith(showLevel: v)),
             ),
-            SwitchRow(
-              title: 'Find me by mobile number',
-              subtitle: 'Friends can look you up',
-              value: prefs.findableByPhone,
-              onChanged: (v) => change((p) => p.copyWith(findableByPhone: v)),
-            ),
-            SwitchRow(
-              title: 'Share my location at Meets',
-              subtitle: 'Only while you are checked in',
-              value: prefs.shareLocationAtMeets,
-              onChanged: (v) =>
-                  change((p) => p.copyWith(shareLocationAtMeets: v)),
-            ),
+            // "Find me by mobile number" and "Share my location at Meets"
+            // are not shown: no lookup by mobile and no location sharing
+            // exist, so the switches changed nothing. They come back with
+            // the features (Q266).
+            // Stays while they've agreed, so withdrawing is always possible.
+            if ((ai?.open ?? false) || (ai?.agreed ?? false))
+              SwitchRow(
+                title: 'AI plans',
+                subtitle: 'Sends a workout summary to our AI provider',
+                value: ai!.agreed,
+                onChanged: (v) async {
+                  if (v) {
+                    await context.push(Routes.fitnessAiPlan);
+                    return;
+                  }
+                  final container = ProviderScope.containerOf(
+                    context,
+                    listen: false,
+                  );
+                  try {
+                    await container
+                        .read(fitnessRepositoryProvider)
+                        .setAiConsent(false);
+                    container.invalidate(aiStatusProvider);
+                  } on AuthFailure catch (e) {
+                    if (context.mounted) {
+                      showOgToast(context, e.message, error: true);
+                    }
+                  }
+                },
+              ),
           ],
         ),
+        // Never hide a way to withdraw in silence.
+        if (aiStatus.hasError && !aiStatus.hasValue) ...[
+          const SizedBox(height: 12),
+          KitLink(
+            'Can’t load AI plans. Try again',
+            onPressed: () => ref.invalidate(aiStatusProvider),
+          ),
+        ],
       ],
       bottom: [
         Text(
           'Changes save as you go.',
           textAlign: TextAlign.center,
-          style: OgText.body(14, color: c.textMuted),
+          style: context.type.secondary,
         ),
       ],
     );
@@ -754,7 +214,6 @@ class BlockedPlayersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final blocked = ref.watch(blockedPlayersProvider);
     return OgFlowScreen(
       asPage: true,
@@ -772,7 +231,7 @@ class BlockedPlayersScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 12),
               child: Text(
                 "You haven't blocked anyone.",
-                style: OgText.body(16, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -789,7 +248,6 @@ class BlockedPlayersScreen extends ConsumerWidget {
                 trailing: OgButton.outline(
                   label: 'Unblock',
                   height: 40,
-                  fontSize: 15,
                   expand: false,
                   onPressed: () async {
                     try {
@@ -843,7 +301,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     ),
     (
       'Where is my refund?',
-      'Refunds go to your Wallet first, then to your card or bank if you ask.',
+      'Refunds go back to the card or PayNow you paid with. PayNow takes minutes, and a card takes 3 to 5 working days.',
     ),
     (
       'How do I block or report someone?',
@@ -892,7 +350,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           hint: 'Search help',
           onChanged: (v) => setState(() => _query = v),
         ),
-        const SectionLabel('Common questions', top: 22, size: 13),
+        const SectionLabel('Common questions', top: 22),
         for (final i in shown)
           Container(
             decoration: BoxDecoration(
@@ -914,14 +372,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              _faqs[i].$1,
-                              style: OgText.body(
-                                16,
-                                weight: FontWeight.w600,
-                                color: c.text,
-                              ),
-                            ),
+                            child: Text(_faqs[i].$1, style: context.type.body),
                           ),
                           AnimatedRotation(
                             turns: _open.contains(i) ? 0.5 : 0,
@@ -946,10 +397,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Text(
                             _faqs[i].$2,
-                            style: OgText.body(
-                              15,
+                            style: context.type.secondary.copyWith(
                               height: 1.45,
-                              color: c.textMuted,
                             ),
                           ),
                         )
@@ -963,7 +412,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
             padding: const EdgeInsets.only(top: 16),
             child: Text(
               'No answers match. Contact support below.',
-              style: OgText.body(15, color: c.textMuted),
+              style: context.type.secondary,
             ),
           ),
         const SizedBox(height: 12),
@@ -980,7 +429,6 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
         OgButton.outline(
           label: 'Contact support',
           height: 52,
-          fontSize: 18,
           onPressed: _contact,
         ),
       ],
@@ -1028,10 +476,7 @@ class _SupportSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Contact support',
-                style: OgText.section.copyWith(color: c.text),
-              ),
+              Text('Contact support', style: context.type.section),
               const SizedBox(height: 12),
               OgTextArea(
                 label: 'How can we help?',
@@ -1096,14 +541,14 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
           child: Text(
             'Log out?',
             textAlign: TextAlign.center,
-            style: OgText.h1.copyWith(color: c.text),
+            style: context.type.title,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'You can log back in with your email, mobile or username.',
           textAlign: TextAlign.center,
-          style: OgText.lead(c.textMuted),
+          style: context.type.secondary,
         ),
       ],
       bottom: [
@@ -1112,7 +557,6 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
         OgButton.outline(
           label: 'Cancel',
           height: 52,
-          fontSize: 18,
           onPressed: () => context.pop(),
         ),
       ],
@@ -1120,7 +564,7 @@ class _LogOutScreenState extends ConsumerState<LogOutScreen> {
   }
 }
 
-/// Confirms a new mobile number with the 6-digit SMS code.
+/// Confirms a new mobile number or email with its 6-digit code.
 class VerifyPhoneChangeScreen extends ConsumerStatefulWidget {
   const VerifyPhoneChangeScreen({super.key, required this.phone});
 
@@ -1137,26 +581,74 @@ class _VerifyPhoneChangeScreenState
   String? _error;
   bool _busy = false;
 
+  /// This screen confirms a new email as well as a new mobile.
+  bool get _isEmail => widget.phone.contains('@');
+
   @override
   void dispose() {
     _code.dispose();
     super.dispose();
   }
 
+  CodeTarget get _target => _isEmail ? CodeTarget.email : CodeTarget.mobile;
+  LoginContact get _changing =>
+      _isEmail ? LoginContact.email : LoginContact.mobile;
+
+  Future<bool> _resend() async {
+    try {
+      final auth = ref.read(authRepositoryProvider);
+      // If the proof ran out while they waited, confirm it's them again.
+      return await withConfirmItsYou(
+        context,
+        _changing,
+        () => _isEmail
+            ? auth.startEmailChange(widget.phone)
+            : auth.startPhoneChange(widget.phone),
+      );
+    } on AuthFailure catch (e) {
+      if (mounted) setState(() => _error = e.message);
+      return false;
+    }
+  }
+
   Future<void> _verify() async {
-    if (_busy || _code.text.length != 6) return;
+    if (_busy) return;
+    if (_code.text.length != 6) {
+      return setState(() => _error = 'Enter all 6 digits of the code.');
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .verifyPhoneChange(widget.phone, _code.text);
-      ref.invalidate(privateInfoProvider);
+      final auth = ref.read(authRepositoryProvider);
+      final code = _code.text;
+      final done = await withConfirmItsYou(
+        context,
+        _changing,
+        () => _isEmail
+            ? auth.verifyEmailChange(widget.phone, code)
+            : auth.verifyPhoneChange(widget.phone, code),
+      );
+      if (!done) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      ref
+        ..invalidate(privateInfoProvider)
+        ..invalidate(accountInfoProvider);
       if (!mounted) return;
-      showOgToast(context, 'Mobile number updated');
-      context.go(Routes.settings);
+      showOgToast(
+        context,
+        _isEmail ? 'Email updated' : 'Mobile number updated',
+      );
+      // Back to the change screen, which closes itself, so the player lands
+      // on Account information (or its onboarding step) with the new value.
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(Routes.accountInfo);
+      }
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
       _code.clear();
@@ -1172,17 +664,17 @@ class _VerifyPhoneChangeScreenState
       children: [
         const OgBackButton(),
         OgHeading(
-          title: 'Verify your number',
-          lead:
-              'We texted a 6-digit code to ${widget.phone}. It works for 10 minutes.',
+          title: codeTitle(_target),
+          lead: codeLead(_target, widget.phone),
         ),
         const SizedBox(height: 32),
-        OgCodeInput(
+        OgCodeField(
           controller: _code,
           hasError: _error != null,
           onCompleted: (_) => _verify(),
         ),
         if (_error != null) OgErrorText(_error!),
+        ResendTimer(onResend: _resend),
       ],
       bottom: [OgButton(label: 'Verify', loading: _busy, onPressed: _verify)],
     );

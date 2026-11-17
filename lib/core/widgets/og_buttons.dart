@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import 'og_icon.dart';
 import 'og_kit.dart';
 import 'pressable.dart';
+import '../../core/theme/og_type.dart';
 
 enum OgButtonStyle { primary, outline }
 
@@ -17,7 +17,6 @@ class OgButton extends StatelessWidget {
     this.style = OgButtonStyle.primary,
     this.loading = false,
     this.height = 56,
-    this.fontSize = 20,
     this.icon,
     this.expand = true,
     this.outlineColor,
@@ -29,7 +28,6 @@ class OgButton extends StatelessWidget {
     required this.onPressed,
     this.loading = false,
     this.height = 56,
-    this.fontSize = 20,
     this.icon,
     this.expand = true,
     this.outlineColor,
@@ -40,7 +38,6 @@ class OgButton extends StatelessWidget {
   final OgButtonStyle style;
   final bool loading;
   final double height;
-  final double fontSize;
   final String? icon;
   final bool expand;
 
@@ -65,7 +62,7 @@ class OgButton extends StatelessWidget {
                 child: Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: OgText.display(fontSize, height: 1.2, color: fg),
+                  style: context.type.button.copyWith(color: fg, height: 1.2),
                 ),
               ),
             ],
@@ -81,7 +78,8 @@ class OgButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: primary ? c.primary : null,
+          // The darker orange: white 15 Regular needs 4.5:1 (Q257).
+          color: primary ? c.primarySmall : null,
           borderRadius: BorderRadius.circular(height / 2),
           border: primary
               ? null
@@ -124,8 +122,16 @@ class OgMethodButton extends StatelessWidget {
           children: [
             OgIcon(icon, size: 22, color: c.text),
             const SizedBox(width: 12),
-            ExcludeSemantics(
-              child: Text(label, style: OgText.display(18, color: c.text)),
+            // Shrinks rather than spilling over at large text sizes.
+            Flexible(
+              child: ExcludeSemantics(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.type.button,
+                ),
+              ),
             ),
           ],
         ),
@@ -163,9 +169,7 @@ class OgTextLink extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: OgText.body(
-              15,
-              weight: FontWeight.w600,
+            style: context.type.button.copyWith(
               color: fg,
               decoration: TextDecoration.underline,
             ),

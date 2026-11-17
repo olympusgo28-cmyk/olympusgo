@@ -39,6 +39,16 @@ enum Country {
   static Country fromCode(String? code) =>
       values.firstWhere((c) => c.code == code, orElse: () => singapore);
 
+  /// The country whose dialling code a number starts with ("+60…" is
+  /// Malaysia), or null when none matches.
+  static Country? fromPhone(String phone) {
+    final compact = phone.replaceAll(' ', '');
+    for (final c in values) {
+      if (compact.startsWith(c.dialCode)) return c;
+    }
+    return null;
+  }
+
   Widget flag() => ExcludeSemantics(
     child: Container(
       width: 28,

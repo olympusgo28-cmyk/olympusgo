@@ -6,10 +6,10 @@ import '../../features/play/domain/activity.dart' show money;
 import '../config/env.dart';
 import '../providers.dart';
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import '../theme/og_tones.dart';
 import 'og_icon.dart';
 import 'og_kit.dart';
+import '../../core/theme/og_type.dart';
 
 /// The payment sheet from the canvas: what you pay for, the lines, the
 /// total, how to pay and the refund notes; then confirm with Face ID.
@@ -75,10 +75,11 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
   String get _total => 'S\$${money(widget.totalCents)}';
 
   Future<void> _confirm() async {
-    // Demo mode skips the device check, so a simulator never asks for its
-    // passcode.
+    // Demo mode and the local stand-in skip the device check, so a simulator
+    // never asks for its passcode.
     final ok =
         !Env.hasSupabase ||
+        Env.localStandIn ||
         await ref
             .read(biometricVaultProvider)
             .authenticate('Pay $_total to ${widget.payee}');
@@ -111,12 +112,12 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
             Text(
               'Confirm it’s you',
               textAlign: TextAlign.center,
-              style: OgText.heading(30),
+              style: context.type.title,
             ),
             Text(
               'Pay $_total to ${widget.payee}.\nUse Face ID or your passcode.',
               textAlign: TextAlign.center,
-              style: OgText.body(15, height: 1.45, color: t.onTag),
+              style: context.type.body.copyWith(color: t.onTag, height: 1.45),
             ),
             KitButton(
               label: 'Confirm',
@@ -147,19 +148,17 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                   children: [
                     Text(
                       widget.kicker.toUpperCase(),
-                      style: OgText.body(
-                        12,
-                        weight: FontWeight.w700,
-                        color: c.textMuted,
-                        letterSpacing: 1,
-                      ),
+                      style: context.type.caption.copyWith(letterSpacing: 1),
                     ),
                     const SizedBox(height: 5),
-                    Text(widget.title, style: OgText.heading(28, height: 1)),
+                    Text(
+                      widget.title,
+                      style: context.type.title.copyWith(height: 1),
+                    ),
                     const SizedBox(height: 5),
                     Text(
                       widget.subtitle,
-                      style: OgText.body(14, height: 1.35, color: c.textMuted),
+                      style: context.type.secondary.copyWith(height: 1.35),
                     ),
                   ],
                 ),
@@ -192,13 +191,10 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                         Expanded(
                           child: Text(
                             label,
-                            style: OgText.body(15, color: t.onTag),
+                            style: context.type.body.copyWith(color: t.onTag),
                           ),
                         ),
-                        Text(
-                          value,
-                          style: OgText.body(15, weight: FontWeight.w700),
-                        ),
+                        Text(value, style: context.type.body),
                       ],
                     ),
                   ),
@@ -206,13 +202,8 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Total',
-                        style: OgText.body(15, weight: FontWeight.w700),
-                      ),
-                    ),
-                    Text(_total, style: OgText.heading(36, height: 1)),
+                    Expanded(child: Text('Total', style: context.type.body)),
+                    Text(_total, style: context.type.score.copyWith(height: 1)),
                   ],
                 ),
               ],
@@ -222,10 +213,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Pay with',
-                  style: OgText.body(14, weight: FontWeight.w700),
-                ),
+                Text('Pay with', style: context.type.body),
                 for (final m in widget.methods)
                   KitChoiceRow(
                     title: m.title,
@@ -251,7 +239,10 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
                 Expanded(
                   child: Text(
                     n,
-                    style: OgText.body(13, height: 1.4, color: t.onTag),
+                    style: context.type.caption.copyWith(
+                      color: t.onTag,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],

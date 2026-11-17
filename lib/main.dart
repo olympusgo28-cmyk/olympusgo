@@ -4,8 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
+import 'core/config/session_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/og_theme.dart';
+import 'core/theme/og_type.dart';
+import 'features/fitness/presentation/body_map.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,22 +16,37 @@ Future<void> main() async {
     await Supabase.initialize(
       url: Env.supabaseUrl,
       publishableKey: Env.supabaseAnonKey,
+      httpClient: sessionHttpClient,
+      authOptions: const FlutterAuthClientOptions(
+        localStorage: SecureSessionStorage(),
+      ),
     );
   } else {
     debugPrint(
       'No SUPABASE_ANON_KEY: running in demo mode (nothing is saved).',
     );
   }
-  // Load the two brand fonts before the first frame so nothing reflows.
+  // Load Inter's two weights before the first frame so nothing reflows (Q257).
   GoogleFonts.config.allowRuntimeFetching = true;
-  await GoogleFonts.pendingFonts([
-    GoogleFonts.archivo(fontWeight: FontWeight.w700),
-    GoogleFonts.archivo(fontWeight: FontWeight.w800),
-    GoogleFonts.figtree(),
-    GoogleFonts.figtree(fontWeight: FontWeight.w600),
-    GoogleFonts.figtree(fontWeight: FontWeight.w700),
-  ]).timeout(const Duration(seconds: 3), onTimeout: () => []);
+  await waitForFonts(OgType.preload());
+  // The body outline is MIT-licensed: its notices are registered with the
+  // app's licences. No page shows them yet (Q277 g).
+  registerBodyMapLicence();
   runApp(const ProviderScope(child: OlympusGoApp()));
+}
+
+/// Waits a short while for the fonts. A slow or failed load leaves the
+/// fallback font, so the first frame always comes.
+@visibleForTesting
+Future<void> waitForFonts(
+  Future<Object?> pending, {
+  Duration limit = const Duration(seconds: 3),
+}) async {
+  try {
+    await pending.timeout(limit);
+  } on Object catch (e) {
+    debugPrint('Fonts not loaded: ${e.runtimeType}');
+  }
 }
 
 class OlympusGoApp extends ConsumerWidget {

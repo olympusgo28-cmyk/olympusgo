@@ -885,7 +885,9 @@ $PlayerSocialCopyWith<$Res> get social {
 /// @nodoc
 mixin _$SuggestedPlayer {
 
- PlayerSummary get player; double? get level; String get note;
+ PlayerSummary get player; double? get level;/// The sport this suggestion is for; its icon shows on the Player card.
+ Sport? get sport; Gender get gender;/// People you both follow, and clubs you are both in.
+ int get mutualFriends; int get mutualClubs;
 /// Create a copy of SuggestedPlayer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -897,20 +899,20 @@ $SuggestedPlayerCopyWith<SuggestedPlayer> get copyWith => _$SuggestedPlayerCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as SuggestedPlayer;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SuggestedPlayer&&(identical(other.player, _this.player) || other.player == _this.player)&&(identical(other.level, _this.level) || other.level == _this.level)&&(identical(other.note, _this.note) || other.note == _this.note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SuggestedPlayer&&(identical(other.player, _this.player) || other.player == _this.player)&&(identical(other.level, _this.level) || other.level == _this.level)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.mutualFriends, _this.mutualFriends) || other.mutualFriends == _this.mutualFriends)&&(identical(other.mutualClubs, _this.mutualClubs) || other.mutualClubs == _this.mutualClubs));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SuggestedPlayer;
-  return Object.hash(runtimeType,_this.player,_this.level,_this.note);
+  return Object.hash(runtimeType,_this.player,_this.level,_this.sport,_this.gender,_this.mutualFriends,_this.mutualClubs);
 }
 
 @override
 String toString() {
   final _this = this as SuggestedPlayer;
-  return 'SuggestedPlayer(player: ${_this.player}, level: ${_this.level}, note: ${_this.note})';
+  return 'SuggestedPlayer(player: ${_this.player}, level: ${_this.level}, sport: ${_this.sport}, gender: ${_this.gender}, mutualFriends: ${_this.mutualFriends}, mutualClubs: ${_this.mutualClubs})';
 }
 
 
@@ -921,7 +923,7 @@ abstract mixin class $SuggestedPlayerCopyWith<$Res>  {
   factory $SuggestedPlayerCopyWith(SuggestedPlayer value, $Res Function(SuggestedPlayer) _then) = _$SuggestedPlayerCopyWithImpl;
 @useResult
 $Res call({
- PlayerSummary player, double? level, String note
+ PlayerSummary player, double? level, Sport? sport, Gender gender, int mutualFriends, int mutualClubs
 });
 
 
@@ -938,12 +940,15 @@ class _$SuggestedPlayerCopyWithImpl<$Res>
 
 /// Create a copy of SuggestedPlayer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? player = null,Object? level = freezed,Object? note = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? player = null,Object? level = freezed,Object? sport = freezed,Object? gender = null,Object? mutualFriends = null,Object? mutualClubs = null,}) {
   return _then(SuggestedPlayer(
 player: null == player ? _self.player : player // ignore: cast_nullable_to_non_nullable
 as PlayerSummary,level: freezed == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
-as double?,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String,
+as double?,sport: freezed == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
+as Sport?,gender: null == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
+as Gender,mutualFriends: null == mutualFriends ? _self.mutualFriends : mutualFriends // ignore: cast_nullable_to_non_nullable
+as int,mutualClubs: null == mutualClubs ? _self.mutualClubs : mutualClubs // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 /// Create a copy of SuggestedPlayer
@@ -1037,10 +1042,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerSummary player,  double? level,  String note)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerSummary player,  double? level,  Sport? sport,  Gender gender,  int mutualFriends,  int mutualClubs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SuggestedPlayer() when $default != null:
-return $default(_that.player,_that.level,_that.note);case _:
+return $default(_that.player,_that.level,_that.sport,_that.gender,_that.mutualFriends,_that.mutualClubs);case _:
   return orElse();
 
 }
@@ -1058,10 +1063,10 @@ return $default(_that.player,_that.level,_that.note);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerSummary player,  double? level,  String note)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerSummary player,  double? level,  Sport? sport,  Gender gender,  int mutualFriends,  int mutualClubs)  $default,) {final _that = this;
 switch (_that) {
 case _SuggestedPlayer():
-return $default(_that.player,_that.level,_that.note);case _:
+return $default(_that.player,_that.level,_that.sport,_that.gender,_that.mutualFriends,_that.mutualClubs);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1078,10 +1083,10 @@ return $default(_that.player,_that.level,_that.note);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerSummary player,  double? level,  String note)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerSummary player,  double? level,  Sport? sport,  Gender gender,  int mutualFriends,  int mutualClubs)?  $default,) {final _that = this;
 switch (_that) {
 case _SuggestedPlayer() when $default != null:
-return $default(_that.player,_that.level,_that.note);case _:
+return $default(_that.player,_that.level,_that.sport,_that.gender,_that.mutualFriends,_that.mutualClubs);case _:
   return null;
 
 }
@@ -1092,13 +1097,18 @@ return $default(_that.player,_that.level,_that.note);case _:
 /// @nodoc
 
 
-class _SuggestedPlayer implements SuggestedPlayer {
-  const _SuggestedPlayer({required this.player, this.level, this.note = ''});
+class _SuggestedPlayer extends SuggestedPlayer {
+  const _SuggestedPlayer({required this.player, this.level, this.sport, this.gender = Gender.preferNotToSay, this.mutualFriends = 0, this.mutualClubs = 0}): super._();
   
 
 @override final  PlayerSummary player;
 @override final  double? level;
-@override@JsonKey() final  String note;
+/// The sport this suggestion is for; its icon shows on the Player card.
+@override final  Sport? sport;
+@override@JsonKey() final  Gender gender;
+/// People you both follow, and clubs you are both in.
+@override@JsonKey() final  int mutualFriends;
+@override@JsonKey() final  int mutualClubs;
 
 /// Create a copy of SuggestedPlayer
 /// with the given fields replaced by the non-null parameter values.
@@ -1110,18 +1120,18 @@ _$SuggestedPlayerCopyWith<_SuggestedPlayer> get copyWith => __$SuggestedPlayerCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SuggestedPlayer&&(identical(other.player, player) || other.player == player)&&(identical(other.level, level) || other.level == level)&&(identical(other.note, note) || other.note == note));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SuggestedPlayer&&(identical(other.player, player) || other.player == player)&&(identical(other.level, level) || other.level == level)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.mutualFriends, mutualFriends) || other.mutualFriends == mutualFriends)&&(identical(other.mutualClubs, mutualClubs) || other.mutualClubs == mutualClubs));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,player,level,note);
+    return Object.hash(runtimeType,player,level,sport,gender,mutualFriends,mutualClubs);
 }
 
 @override
 String toString() {
-    return 'SuggestedPlayer(player: $player, level: $level, note: $note)';
+    return 'SuggestedPlayer(player: $player, level: $level, sport: $sport, gender: $gender, mutualFriends: $mutualFriends, mutualClubs: $mutualClubs)';
 }
 
 
@@ -1132,7 +1142,7 @@ abstract mixin class _$SuggestedPlayerCopyWith<$Res> implements $SuggestedPlayer
   factory _$SuggestedPlayerCopyWith(_SuggestedPlayer value, $Res Function(_SuggestedPlayer) _then) = __$SuggestedPlayerCopyWithImpl;
 @override @useResult
 $Res call({
- PlayerSummary player, double? level, String note
+ PlayerSummary player, double? level, Sport? sport, Gender gender, int mutualFriends, int mutualClubs
 });
 
 
@@ -1149,12 +1159,15 @@ class __$SuggestedPlayerCopyWithImpl<$Res>
 
 /// Create a copy of SuggestedPlayer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? player = null,Object? level = freezed,Object? note = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? player = null,Object? level = freezed,Object? sport = freezed,Object? gender = null,Object? mutualFriends = null,Object? mutualClubs = null,}) {
   return _then(_SuggestedPlayer(
 player: null == player ? _self.player : player // ignore: cast_nullable_to_non_nullable
 as PlayerSummary,level: freezed == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
-as double?,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String,
+as double?,sport: freezed == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
+as Sport?,gender: null == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
+as Gender,mutualFriends: null == mutualFriends ? _self.mutualFriends : mutualFriends // ignore: cast_nullable_to_non_nullable
+as int,mutualClubs: null == mutualClubs ? _self.mutualClubs : mutualClubs // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -1467,7 +1480,8 @@ $PlayerSummaryCopyWith<$Res> get other {
 /// @nodoc
 mixin _$ChatMessage {
 
- String get id; String get senderId; String get body; DateTime get createdAt;
+ String get id; String get senderId; String get body; DateTime get createdAt;/// Set by the phone, to match a message to its optimistic copy.
+ String? get clientId; bool get deleted;
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1479,20 +1493,20 @@ $ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<Chat
 @override
 bool operator ==(Object other) {
   final _this = this as ChatMessage;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.senderId, _this.senderId) || other.senderId == _this.senderId)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.senderId, _this.senderId) || other.senderId == _this.senderId)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.clientId, _this.clientId) || other.clientId == _this.clientId)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChatMessage;
-  return Object.hash(runtimeType,_this.id,_this.senderId,_this.body,_this.createdAt);
+  return Object.hash(runtimeType,_this.id,_this.senderId,_this.body,_this.createdAt,_this.clientId,_this.deleted);
 }
 
 @override
 String toString() {
   final _this = this as ChatMessage;
-  return 'ChatMessage(id: ${_this.id}, senderId: ${_this.senderId}, body: ${_this.body}, createdAt: ${_this.createdAt})';
+  return 'ChatMessage(id: ${_this.id}, senderId: ${_this.senderId}, body: ${_this.body}, createdAt: ${_this.createdAt}, clientId: ${_this.clientId}, deleted: ${_this.deleted})';
 }
 
 
@@ -1503,7 +1517,7 @@ abstract mixin class $ChatMessageCopyWith<$Res>  {
   factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) _then) = _$ChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id, String senderId, String body, DateTime createdAt
+ String id, String senderId, String body, DateTime createdAt, String? clientId, bool deleted
 });
 
 
@@ -1520,13 +1534,15 @@ class _$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? body = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? body = null,Object? createdAt = null,Object? clientId = freezed,Object? deleted = null,}) {
   return _then(ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
 as String,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,clientId: freezed == clientId ? _self.clientId : clientId // ignore: cast_nullable_to_non_nullable
+as String?,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1611,10 +1627,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String body,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String body,  DateTime createdAt,  String? clientId,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.body,_that.createdAt,_that.clientId,_that.deleted);case _:
   return orElse();
 
 }
@@ -1632,10 +1648,10 @@ return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String body,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String body,  DateTime createdAt,  String? clientId,  bool deleted)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage():
-return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.body,_that.createdAt,_that.clientId,_that.deleted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1652,10 +1668,10 @@ return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String body,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String body,  DateTime createdAt,  String? clientId,  bool deleted)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.body,_that.createdAt,_that.clientId,_that.deleted);case _:
   return null;
 
 }
@@ -1667,13 +1683,16 @@ return $default(_that.id,_that.senderId,_that.body,_that.createdAt);case _:
 
 
 class _ChatMessage implements ChatMessage {
-  const _ChatMessage({required this.id, required this.senderId, required this.body, required this.createdAt});
+  const _ChatMessage({required this.id, required this.senderId, required this.body, required this.createdAt, this.clientId, this.deleted = false});
   
 
 @override final  String id;
 @override final  String senderId;
 @override final  String body;
 @override final  DateTime createdAt;
+/// Set by the phone, to match a message to its optimistic copy.
+@override final  String? clientId;
+@override@JsonKey() final  bool deleted;
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -1685,18 +1704,18 @@ _$ChatMessageCopyWith<_ChatMessage> get copyWith => __$ChatMessageCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.body, body) || other.body == body)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.body, body) || other.body == body)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.clientId, clientId) || other.clientId == clientId)&&(identical(other.deleted, deleted) || other.deleted == deleted));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,senderId,body,createdAt);
+    return Object.hash(runtimeType,id,senderId,body,createdAt,clientId,deleted);
 }
 
 @override
 String toString() {
-    return 'ChatMessage(id: $id, senderId: $senderId, body: $body, createdAt: $createdAt)';
+    return 'ChatMessage(id: $id, senderId: $senderId, body: $body, createdAt: $createdAt, clientId: $clientId, deleted: $deleted)';
 }
 
 
@@ -1707,7 +1726,7 @@ abstract mixin class _$ChatMessageCopyWith<$Res> implements $ChatMessageCopyWith
   factory _$ChatMessageCopyWith(_ChatMessage value, $Res Function(_ChatMessage) _then) = __$ChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String senderId, String body, DateTime createdAt
+ String id, String senderId, String body, DateTime createdAt, String? clientId, bool deleted
 });
 
 
@@ -1724,13 +1743,15 @@ class __$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? body = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? body = null,Object? createdAt = null,Object? clientId = freezed,Object? deleted = null,}) {
   return _then(_ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
 as String,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,clientId: freezed == clientId ? _self.clientId : clientId // ignore: cast_nullable_to_non_nullable
+as String?,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

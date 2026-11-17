@@ -14,8 +14,8 @@ abstract class InboxUpdate with _$InboxUpdate {
 
     /// Two letters (or "!") on the round tile.
     required String mark,
-    @Default(0xFF16181B) int color,
-    @Default(0xFFC6FF00) int ink,
+    @Default(0xFF1C1F23) int color,
+    @Default(0xFFFF7A1A) int ink,
 
     /// A square tile, for academies and clubs.
     @Default(false) bool square,

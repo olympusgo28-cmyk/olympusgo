@@ -17,8 +17,10 @@ abstract class SportSkill with _$SportSkill {
 
   const SportSkill._();
 
-  /// "Level 4.0 · Low Intermediate". The play range is set inside.
-  String get summary => 'Level ${SkillScale.describe(level)}';
+  /// "Level 4.0 · Low Intermediate · Plays with 3.0 to 5.0".
+  String get summary =>
+      'Level ${SkillScale.describe(level)} · Plays with '
+      '${playMin.toStringAsFixed(1)} to ${playMax.toStringAsFixed(1)}';
 }
 
 /// Everything collected during the 7 onboarding steps, held in memory until
@@ -29,30 +31,13 @@ abstract class OnboardingDraft with _$OnboardingDraft {
     @Default('') String fullName,
     DateTime? birthday,
     @Default(Country.singapore) Country country,
-    String? parentEmail,
     @Default([Sport.badminton, Sport.pickleball]) List<Sport> sports,
     @Default({}) Map<Sport, SportSkill> skills,
     @Default('') String username,
-    @Default(Country.singapore) Country phoneCountry,
-    @Default('') String phoneNumber,
+    @Default('') String email,
   }) = _OnboardingDraft;
 
   const OnboardingDraft._();
 
   SportSkill skillFor(Sport sport) => skills[sport] ?? SportSkill(sport: sport);
-
-  /// Age in whole years today, or null before a birthday is entered.
-  int? get age {
-    final b = birthday;
-    if (b == null) return null;
-    final now = DateTime.now();
-    var years = now.year - b.year;
-    if (now.month < b.month || (now.month == b.month && now.day < b.day)) {
-      years--;
-    }
-    return years;
-  }
-
-  String get fullPhone =>
-      '${phoneCountry.dialCode}${phoneNumber.replaceAll(RegExp(r'\D'), '')}';
 }

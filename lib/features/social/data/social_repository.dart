@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/demo/demo_world.dart';
 import '../../../core/domain/country.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../onboarding/domain/sport.dart';
 import '../../profile/domain/profile.dart';
+import '../../settings/domain/settings_models.dart';
 import '../domain/social_models.dart';
 
 /// Follows, blocks, reports, saved players and player search.
@@ -48,6 +50,9 @@ class SupabaseSocialRepository implements SocialRepository {
     try {
       return await run();
     } on PostgrestException catch (e) {
+      // Social functions raise readable messages, such as the report limit;
+      // pass those through.
+      if (e.code == 'P0001') throw AuthFailure(e.message);
       if (e.code == '42501') {
         throw const AuthFailure("You can't do that with this player.");
       }
@@ -183,10 +188,12 @@ class SupabaseSocialRepository implements SocialRepository {
     final rows = await _client.rpc('suggested_players') as List;
     return [
       for (final r in rows.cast<Map<String, dynamic>>())
+        // The server sends the matched sport, but no gender or mutual counts
+        // yet, so the note reads "Suggested for you" (Q272).
         SuggestedPlayer(
           player: PlayerSummary.fromRow(r),
           level: (r['level'] as num?)?.toDouble(),
-          note: '${r['sessions']} sessions',
+          sport: r['sport'] == null ? null : Sport.fromId(r['sport'] as String),
         ),
     ];
   });
@@ -349,7 +356,9 @@ class DemoSocialRepository implements SocialRepository {
           fullName: 'Hannah Goh',
         ),
         6.2,
-        'Hosts 3 Meets a week',
+        Gender.female,
+        3,
+        0,
       ),
       (
         PlayerSummary(
@@ -358,7 +367,9 @@ class DemoSocialRepository implements SocialRepository {
           fullName: 'Priya Raman',
         ),
         5.1,
-        '18 sessions',
+        Gender.female,
+        2,
+        1,
       ),
       (
         PlayerSummary(
@@ -367,7 +378,9 @@ class DemoSocialRepository implements SocialRepository {
           fullName: 'Siti Lim',
         ),
         5.0,
-        '25 sessions',
+        Gender.preferNotToSay,
+        0,
+        0,
       ),
       (
         PlayerSummary(
@@ -376,7 +389,9 @@ class DemoSocialRepository implements SocialRepository {
           fullName: 'Mei Ling',
         ),
         5.4,
-        '12 sessions',
+        Gender.male,
+        0,
+        2,
       ),
     ];
     for (final p in people) {
@@ -385,7 +400,14 @@ class DemoSocialRepository implements SocialRepository {
     return [
       for (final p in people)
         if (!_w.following.contains(p.$1.id))
-          SuggestedPlayer(player: p.$1, level: p.$2, note: p.$3),
+          SuggestedPlayer(
+            player: p.$1,
+            level: p.$2,
+            sport: Sport.badminton,
+            gender: p.$3,
+            mutualFriends: p.$4,
+            mutualClubs: p.$5,
+          ),
     ];
   }
 

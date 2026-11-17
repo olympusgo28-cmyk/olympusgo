@@ -6,7 +6,8 @@ import '../../../core/widgets/og_icon.dart';
 
 part 'home_categories.g.dart';
 
-/// A shortcut in Home's Categories grid.
+/// A service on Home's circles and in the All services list. Those in
+/// [defaultHomeShown] are on until the player edits them.
 enum HomeCategory {
   play('Play', 'Meets, tournaments, events', OgIcons.racquet, Routes.play),
   group('Group', 'Clubs and teams', OgIcons.group, Routes.clubs),
@@ -16,9 +17,12 @@ enum HomeCategory {
     OgIcons.mortarboard,
     Routes.academies,
   ),
-  game('Game', 'Campaigns and challenges', OgIcons.trophyTeam, Routes.game),
   venue('Venue', 'Find and book courts', OgIcons.mapPin, Routes.venues),
-  shop('Shop', 'Gear, services and malls', OgIcons.bag, Routes.shop);
+  game('Game', 'Campaigns and challenges', OgIcons.trophyTeam, Routes.game),
+  shop('Shop', 'Gear, services and malls', OgIcons.bag, Routes.shop),
+  fitness('Fitness', 'Workouts', OgIcons.running, Routes.fitness),
+  services('Services', 'Physio and partners', OgIcons.heart, Routes.services),
+  record('Record', 'Log a workout', OgIcons.pencil, Routes.fitnessLog);
 
   const HomeCategory(this.label, this.sub, this.icon, this.route);
   final String label;
@@ -33,6 +37,22 @@ typedef HomeCategories = ({List<HomeCategory> order, Set<HomeCategory> shown});
 /// At least this many stay on.
 const minHomeCategories = 3;
 
+/// At most this many circles show on Home, with More after them: two rows
+/// of four (owner, 14 Nov 2026).
+const maxHomeCategories = 7;
+
+/// What a new install shows (owner, 14 Nov 2026). Every one is also in the
+/// All services list that More opens.
+const defaultHomeShown = {
+  HomeCategory.play,
+  HomeCategory.group,
+  HomeCategory.academy,
+  HomeCategory.venue,
+  HomeCategory.game,
+  HomeCategory.shop,
+  HomeCategory.fitness,
+};
+
 /// Saved on the device, like other display choices.
 @Riverpod(keepAlive: true)
 class HomeCategoriesController extends _$HomeCategoriesController {
@@ -42,7 +62,7 @@ class HomeCategoriesController extends _$HomeCategoriesController {
   @override
   HomeCategories build() {
     _load();
-    return (order: HomeCategory.values, shown: HomeCategory.values.toSet());
+    return (order: HomeCategory.values, shown: {...defaultHomeShown});
   }
 
   /// "play,group,-academy,…": the order, with hidden ones marked "-".
@@ -58,12 +78,15 @@ class HomeCategoriesController extends _$HomeCategoriesController {
       order.add(c);
       if (!part.startsWith('-')) shown.add(c);
     }
-    // Categories added in a later version go at the end, switched on.
+    // Categories added in a later version go at the end, switched off.
     for (final c in HomeCategory.values) {
       if (!order.contains(c)) order.add(c);
-      if (!saved.contains(c.name)) shown.add(c);
     }
-    state = (order: order, shown: shown);
+    // A saved choice keeps at most its first 7.
+    state = (
+      order: order,
+      shown: order.where(shown.contains).take(maxHomeCategories).toSet(),
+    );
   }
 
   Future<void> save(HomeCategories value) async {

@@ -3,7 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 
 /// Brief confirmation pill near the bottom of the screen ("Link copied").
 /// Announced to VoiceOver; fades away on its own.
@@ -99,11 +99,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
                 child: Text(
                   widget.message,
                   textAlign: TextAlign.center,
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w600,
-                    color: OgColors.offWhite,
-                  ),
+                  style: context.type.body.copyWith(color: OgColors.offWhite),
                 ),
               ),
             ),

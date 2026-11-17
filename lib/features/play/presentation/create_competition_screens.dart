@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_rows.dart';
@@ -46,12 +46,12 @@ class BannerPicker extends StatelessWidget {
       children: [
         Text(
           '${noun[0].toUpperCase()}${noun.substring(1)} banner',
-          style: OgText.heading(20),
+          style: context.type.section,
         ),
         const SizedBox(height: 4),
         Text(
           'Shown on the $noun card and page.${required ? ' Required.' : ''}',
-          style: OgText.body(13, color: c.textMuted),
+          style: context.type.caption,
         ),
         const SizedBox(height: 10),
         ClipRRect(
@@ -69,8 +69,7 @@ class BannerPicker extends StatelessWidget {
                     v.text.trim().isEmpty ? 'Banner title' : v.text.trim(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.heading(
-                      30,
+                    style: context.type.title.copyWith(
                       color: Color(bannerInk(color))
                           .withValues(alpha: v.text.trim().isEmpty ? 0.5 : 1),
                     ),
@@ -135,21 +134,16 @@ class _Money extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
+                  // The total stands out by colour, not weight.
                   Expanded(
                     child: Text(
                       k,
-                      style: OgText.body(
-                        14,
-                        weight: bold ? FontWeight.w800 : FontWeight.w400,
-                      ),
+                      style: bold ? context.type.body : context.type.secondary,
                     ),
                   ),
                   Text(
                     v,
-                    style: OgText.body(
-                      14,
-                      weight: bold ? FontWeight.w800 : FontWeight.w600,
-                    ),
+                    style: bold ? context.type.body : context.type.secondary,
                   ),
                 ],
               ),
@@ -243,7 +237,6 @@ class _NewEventScreenState extends ConsumerState<NewEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final d = ref.watch(activityDraftControllerProvider);
     final fee = d.chargeFee ? platformFee(d.feeCents) : 200;
     final hosting = ref.watch(hostingProvider).value ?? const <Activity>[];
@@ -382,12 +375,11 @@ class _NewEventScreenState extends ConsumerState<NewEventScreen> {
             ),
             Text(
               d.chargeFee
-                  ? 'Attendees who cancel by the day before get all of it back '
-                        'to their Wallet, or the ticket price to their card. If '
-                        'you cancel, they get all of it back.'
+                  ? 'Attendees who cancel by the day before get the ticket '
+                        'price back. If you cancel, they get all of it back.'
                   : 'If someone releases their ticket, your S\$2 for it is '
                         'returned.',
-              style: OgText.body(13, height: 1.45, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.45),
             ),
           ],
         ),
@@ -397,7 +389,7 @@ class _NewEventScreenState extends ConsumerState<NewEventScreen> {
             children: [
               Text(
                 'Link to another event · Show it on this event’s page',
-                style: OgText.body(13, color: c.textMuted),
+                style: context.type.caption,
               ),
               for (final t in tournaments)
                 KitChoiceRow(
@@ -562,7 +554,6 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
   }
 
   List<Widget> _details(ActivityDraft d) {
-    final c = context.og;
     return [
       CreateSection(
         'Tournament details',
@@ -584,7 +575,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             'tournament uses draws and matches.',
             tone: KitTone.info,
           ),
-          Text('Tier', style: OgText.body(15, weight: FontWeight.w700)),
+          Text('Tier', style: context.type.body),
           KitSegments(
             labels: _tiers.keys.toList(),
             selected: _tiers.keys.toList().indexOf(d.tier),
@@ -593,7 +584,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           ),
           Text(
             _tiers[d.tier] ?? '',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
         ],
       ),
@@ -643,7 +634,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           ),
           Text(
             'Courts are used to build the match schedule.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
       ),
@@ -651,7 +642,6 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
   }
 
   List<Widget> _game(ActivityDraft d) {
-    final c = context.og;
     final lo = (d.levelMin.floor() - 1).clamp(0, 7);
     final hi = (d.levelMax.floor() - 1).clamp(0, 7);
     final short = '${SkillBand.values[lo].code}–${SkillBand.values[hi].code}';
@@ -670,7 +660,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
                 ? 'Teams enter with a roster. Each tie is a set of matches.'
                 : 'Players sign up for events alone or with a partner, up to '
                       '2 events each.',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
         ],
       ),
@@ -704,7 +694,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             Text(
               'The list comes from the sport: ${d.sports.first.label} has '
               'singles, doubles and mixed events.',
-              style: OgText.body(13, height: 1.4, color: c.textMuted),
+              style: context.type.caption.copyWith(height: 1.4),
             ),
           ],
         ),
@@ -768,15 +758,11 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Show level on the card as',
-                  style: OgText.body(13, color: c.textMuted),
-                ),
+                Text('Show level on the card as', style: context.type.caption),
                 const SizedBox(height: 8),
                 KitSegments(
                   labels: ['Short form · $short', 'Numbers · $numbers'],
                   selected: d.levelAsNumbers ? 1 : 0,
-                  fontSize: 13,
                   onSelect: (i) =>
                       _edit((d) => d.copyWith(levelAsNumbers: i == 1)),
                 ),
@@ -814,7 +800,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           ),
           Text(
             'Date of birth is checked privately. Only the division is shown.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         ],
       ),
@@ -828,7 +814,6 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
   }
 
   List<Widget> _entry(ActivityDraft d) {
-    final c = context.og;
     final unit = d.teamEntry ? 'teams' : 'entries per event';
     final prices = d.teamEntry
         ? const [4000, 6000, 8000, 10000]
@@ -873,7 +858,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             'Counted in $unit. If an event has fewer than ${d.minEntries} '
             'when registration closes, it is cancelled and everyone in it is '
             'refunded.',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
           CreatePickRow(
             label: 'Registration closes',
@@ -906,7 +891,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           Text(
             'Platform fee: 10%, minimum S\$2. Doubles pay per pair, twice the '
             'entry fee.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
           _Money([
             (
@@ -922,10 +907,9 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
             ('You receive', 'S\$${money(d.feeCents)}', false),
           ]),
           Text(
-            'If they withdraw before registration closes: all of it back to '
-            'their Wallet, or the entry fee to their card. If you cancel, they '
-            'get all of it back.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            'If they withdraw before registration closes, they get the entry '
+            'fee back. If you cancel, they get all of it back.',
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       ),
@@ -968,7 +952,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           if (events.isNotEmpty) ...[
             Text(
               'Link to an event · Show this tournament on an event page',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
             for (final e in events)
               KitChoiceRow(
@@ -1005,7 +989,7 @@ class _NewTournamentScreenState extends ConsumerState<NewTournamentScreen> {
           Text(
             'Results update ratings. Tournament leaderboard points apply once '
             '16+ entries are confirmed and the organizer is verified.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         ],
       ),

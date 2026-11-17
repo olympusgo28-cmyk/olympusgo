@@ -8,7 +8,7 @@ import '../../../core/config/env.dart';
 import '../../../core/format.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -77,18 +77,18 @@ class AcademyTodayScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(a.name, style: OgText.heading(24)),
+                  Text(a.name, style: context.type.title),
                   Text(
                     [
                       a.sport.label,
                       a.area,
                       if (a.audience.isNotEmpty) a.audience,
                     ].join(' · '),
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                   Text(
                     '${plural(a.students, 'student')} · ${plural(a.classes.length, 'class', 'classes')} · ${plural(a.coaches.length, 'coach', 'coaches')}',
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -104,6 +104,12 @@ class AcademyTodayScreen extends ConsumerWidget {
                   ? KitCountBadge(a.pendingRequests, size: 22)
                   : null,
               onTap: () => context.push(Routes.academyRequests(a.id)),
+            ),
+            KitNavTile(
+              icon: OgIcons.calendar,
+              title: 'Lessons',
+              subtitle: 'Paid lessons and one-to-one times',
+              onTap: () => context.push(Routes.academyLessons(a.id)),
             ),
             KitNavTile(
               icon: OgIcons.calendarBox,
@@ -143,7 +149,7 @@ class AcademyTodayScreen extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Needs you', style: OgText.heading(22)),
+              Text('Needs you', style: context.type.section),
               for (final al in alerts)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
@@ -169,17 +175,13 @@ class AcademyTodayScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                al.title,
-                                style: OgText.body(15, weight: FontWeight.w700),
-                              ),
+                              Text(al.title, style: context.type.body),
                               const SizedBox(height: 2),
                               Text(
                                 al.body,
-                                style: OgText.body(
-                                  13,
-                                  height: 1.4,
+                                style: context.type.caption.copyWith(
                                   color: t.onTag,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -212,10 +214,10 @@ class AcademyTodayScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     isToday ? "Today's classes" : 'Next classes',
-                    style: OgText.heading(22),
+                    style: context.type.section,
                   ),
                 ),
-                Text(Fmt.day(day), style: OgText.body(13, color: c.textMuted)),
+                Text(Fmt.day(day), style: context.type.caption),
               ],
             ),
             if (classes.isEmpty)
@@ -223,7 +225,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'No classes yet. Add classes from All classes.',
-                  style: OgText.body(14, color: c.textMuted),
+                  style: context.type.secondary,
                 ),
               ),
             for (final x in classes)
@@ -244,7 +246,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                         width: 78,
                         child: Text(
                           Fmt.clock(x.hour, x.minute),
-                          style: OgText.body(15, weight: FontWeight.w800),
+                          style: context.type.body,
                         ),
                       ),
                       Expanded(
@@ -253,7 +255,7 @@ class AcademyTodayScreen extends ConsumerWidget {
                           children: [
                             Text(
                               '${x.name}${x.levelName.isEmpty ? '' : ' · ${x.levelName}'}',
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: context.type.body,
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -262,12 +264,14 @@ class AcademyTodayScreen extends ConsumerWidget {
                                 if (x.court.isNotEmpty) x.court,
                                 '${x.enrolled} of ${plural(x.capacity, 'student')}',
                               ].join(' · '),
-                              style: OgText.body(13, color: c.textMuted),
+                              style: context.type.caption,
                             ),
                             if (x.lesson.isNotEmpty)
                               Text(
                                 'Week ${x.week} of ${x.termWeeks} · ${x.lesson}',
-                                style: OgText.body(13, color: c.link),
+                                style: context.type.caption.copyWith(
+                                  color: c.link,
+                                ),
                               ),
                           ],
                         ),
@@ -334,13 +338,13 @@ class AcademyClassesScreen extends ConsumerWidget {
       children: [
         Text(
           '${plural(a.classes.length, 'class', 'classes')} a week · ${plural(students, 'student')}',
-          style: OgText.body(14, weight: FontWeight.w600, color: c.textMuted),
+          style: context.type.secondary,
         ),
         for (final e in byDay.entries)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(e.key, style: OgText.heading(20)),
+              Text(e.key, style: context.type.section),
               for (final x in e.value)
                 Pressable(
                   semanticLabel: '${x.name}, ${classDays(x)}',
@@ -356,7 +360,7 @@ class AcademyClassesScreen extends ConsumerWidget {
                           width: 76,
                           child: Text(
                             Fmt.clock(x.hour, x.minute),
-                            style: OgText.body(14, weight: FontWeight.w700),
+                            style: context.type.body,
                           ),
                         ),
                         Expanded(
@@ -364,13 +368,10 @@ class AcademyClassesScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                x.name,
-                                style: OgText.body(15, weight: FontWeight.w700),
-                              ),
+                              Text(x.name, style: context.type.body),
                               Text(
                                 '${x.coach}, ${plural(x.enrolled, 'student')}',
-                                style: OgText.body(13, color: c.textMuted),
+                                style: context.type.caption,
                               ),
                             ],
                           ),
@@ -379,7 +380,6 @@ class AcademyClassesScreen extends ConsumerWidget {
                           KitTag(
                             'Full',
                             height: 22,
-                            fontSize: 11,
                             background: t.dangerFill,
                             foreground: t.onDangerFill,
                           ),
@@ -487,7 +487,7 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
             child: Text(
               'Each parent got one summary: attendance, this week’s lesson, '
               'their child’s skill update and your note.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -501,7 +501,6 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
     return KitScaffold(
       header: KitHeader(
         title: '${x.name}${x.levelName.isEmpty ? '' : ' · ${x.levelName}'}',
-        titleSize: 19,
         subtitle:
             '${Fmt.day(at)} · ${Fmt.timeRange(at, x.endOf(at))}${x.court.isEmpty ? '' : ' · ${x.court}'}',
       ),
@@ -526,9 +525,7 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
             children: [
               Text(
                 'WEEK ${x.week} OF ${x.termWeeks}',
-                style: OgText.body(
-                  11,
-                  weight: FontWeight.w800,
+                style: context.type.caption.copyWith(
                   color: t.gold,
                   letterSpacing: 0.6,
                 ),
@@ -536,29 +533,31 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
               const SizedBox(height: 4),
               Text(
                 x.lesson.isEmpty ? 'No lesson plan yet' : x.lesson,
-                style: OgText.heading(26, color: Colors.white),
+                style: context.type.title.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 4),
               Text(
                 'Same plan for all Level ${x.level} classes',
-                style: OgText.body(13, color: const Color(0xFFC9C9CF)),
+                style: context.type.caption.copyWith(
+                  color: const Color(0xFFC9C9CF),
+                ),
               ),
             ],
           ),
         ),
         Row(
           children: [
-            Expanded(child: Text('Students', style: OgText.heading(22))),
+            Expanded(child: Text('Students', style: context.type.section)),
             Text(
               '$present of ${roster.length} present',
-              style: OgText.body(13, color: c.textMuted),
+              style: context.type.caption,
             ),
           ],
         ),
         if (focusName != null)
           Text(
             'Tap $focusName to update it for each student.',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
         for (final s in roster)
           Builder(
@@ -577,26 +576,15 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
                 ),
                 child: Row(
                   children: [
-                    SolidAvatar.forId(
-                      s.id,
-                      initials: s.initials,
-                      size: 40,
-                      fontSize: 13,
-                    ),
+                    SolidAvatar.forId(s.id, initials: s.initials, size: 40),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            s.name,
-                            style: OgText.body(15, weight: FontWeight.w700),
-                          ),
+                          Text(s.name, style: context.type.body),
                           if (s.flag.isNotEmpty)
-                            Text(
-                              s.flag,
-                              style: OgText.body(12, color: c.textMuted),
-                            ),
+                            Text(s.flag, style: context.type.caption),
                         ],
                       ),
                     ),
@@ -609,7 +597,6 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
                         child: KitTag(
                           current.label,
                           height: 30,
-                          fontSize: 12,
                           background: tone(current).$1,
                           foreground: tone(current).$2,
                         ),
@@ -618,7 +605,6 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
                     KitChip(
                       label: here ? 'Present' : 'Absent',
                       height: 34,
-                      fontSize: 13,
                       selected: here,
                       onTap: () => setState(
                         () => here ? _absent.add(s.id) : _absent.remove(s.id),
@@ -634,7 +620,7 @@ class _ClassSessionScreenState extends ConsumerState<ClassSessionScreen> {
         Text(
           'Each parent gets one summary: attendance, this week’s lesson, '
           'their child’s skill update and your note.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -701,44 +687,33 @@ class ClassRosterScreen extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  SolidAvatar.forId(
-                    s.id,
-                    initials: s.initials,
-                    size: 42,
-                    fontSize: 14,
-                  ),
+                  SolidAvatar.forId(s.id, initials: s.initials, size: 42),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          s.name,
-                          style: OgText.body(15, weight: FontWeight.w700),
-                        ),
+                        Text(s.name, style: context.type.body),
                         Text(
                           [
                             if (s.age != null) 'Age ${s.age}',
                             '${s.skillsGot} of ${s.skills.length} skills',
                           ].join(', '),
-                          style: OgText.body(13, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                         if (s.flag.isNotEmpty)
-                          Text(s.flag, style: OgText.body(12, color: c.link)),
+                          Text(
+                            s.flag,
+                            style: context.type.caption.copyWith(color: c.link),
+                          ),
                       ],
                     ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        '${s.attendancePct}%',
-                        style: OgText.body(15, weight: FontWeight.w800),
-                      ),
-                      Text(
-                        'attended',
-                        style: OgText.body(12, color: c.textMuted),
-                      ),
+                      Text('${s.attendancePct}%', style: context.type.body),
+                      Text('attended', style: context.type.caption),
                     ],
                   ),
                 ],
@@ -801,7 +776,6 @@ class EnrolRequestsScreen extends ConsumerWidget {
                           .map((w) => w[0])
                           .join(),
                       size: 42,
-                      fontSize: 14,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -812,7 +786,7 @@ class EnrolRequestsScreen extends ConsumerWidget {
                             r.age == null
                                 ? r.student
                                 : '${r.student}, age ${r.age}',
-                            style: OgText.body(15, weight: FontWeight.w700),
+                            style: context.type.body,
                           ),
                           Text(
                             [
@@ -821,7 +795,7 @@ class EnrolRequestsScreen extends ConsumerWidget {
                                   : 'Parent: ${r.parent}',
                               r.className,
                             ].join(' · '),
-                            style: OgText.body(13, color: c.textMuted),
+                            style: context.type.caption,
                           ),
                         ],
                       ),
@@ -832,7 +806,10 @@ class EnrolRequestsScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     '“${r.note}”',
-                    style: OgText.body(14, height: 1.4, color: t.onTag),
+                    style: context.type.body.copyWith(
+                      color: t.onTag,
+                      height: 1.4,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -843,7 +820,6 @@ class EnrolRequestsScreen extends ConsumerWidget {
                         child: KitButton(
                           label: 'Accept',
                           height: 44,
-                          fontSize: 15,
                           onPressed: () =>
                               _decide(ref, r, RequestState.accepted),
                         ),
@@ -853,7 +829,6 @@ class EnrolRequestsScreen extends ConsumerWidget {
                         child: KitButton(
                           label: 'Decline',
                           height: 44,
-                          fontSize: 15,
                           style: KitButtonStyle.dangerOutline,
                           onPressed: () =>
                               _decide(ref, r, RequestState.declined),
@@ -868,9 +843,7 @@ class EnrolRequestsScreen extends ConsumerWidget {
                           r.state == RequestState.accepted
                               ? 'Accepted. The first invoice was sent.'
                               : 'Declined. They were told.',
-                          style: OgText.body(
-                            14,
-                            weight: FontWeight.w600,
+                          style: context.type.body.copyWith(
                             color: r.state == RequestState.accepted
                                 ? t.successInk
                                 : t.dangerText,

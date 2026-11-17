@@ -31,7 +31,7 @@ enum ProfileVisibility {
       values.firstWhere((v) => v.id == id, orElse: () => followers);
 }
 
-/// Fields on the Account centre screen.
+/// The player's private account fields (Account information).
 @freezed
 abstract class AccountDetails with _$AccountDetails {
   const factory AccountDetails({

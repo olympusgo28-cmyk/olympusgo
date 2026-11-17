@@ -31,7 +31,7 @@ abstract interface class VenueRepository {
   Future<CourtBooking> booking(String id);
 
   /// Cancels a booking. Returns the amount refunded.
-  Future<int> cancel(String id, {required bool toWallet});
+  Future<int> cancel(String id);
 }
 
 /// Free start times for one day: hourly from opening, each needing a free
@@ -104,8 +104,8 @@ class SupabaseVenueRepository implements VenueRepository {
     rating: (r['rating'] as num?)?.toDouble(),
     ratingCount: r['rating_count'] as int? ?? 0,
     autoCheckIn: r['auto_check_in'] as bool? ?? false,
-    color: _hex(r['color'] as String?) ?? 0xFF16181B,
-    ink: _hex(r['ink'] as String?) ?? 0xFFC6FF00,
+    color: _hex(r['color'] as String?) ?? 0xFF1C1F23,
+    ink: _hex(r['ink'] as String?) ?? 0xFFFF7A1A,
     courts: [
       for (final c
           in (r['venue_courts'] as List? ?? const [])
@@ -237,11 +237,10 @@ class SupabaseVenueRepository implements VenueRepository {
   });
 
   @override
-  Future<int> cancel(String id, {required bool toWallet}) => _guard(
-    () async => await _client.rpc(
-      'cancel_court_booking',
-      params: {'booking': id, 'to_wallet': toWallet},
-    ) as int,
+  Future<int> cancel(String id) => _guard(
+    () async =>
+        await _client.rpc('cancel_court_booking', params: {'booking': id})
+            as int,
   );
 }
 
@@ -507,14 +506,14 @@ class DemoVenueRepository implements VenueRepository {
   }
 
   @override
-  Future<int> cancel(String id, {required bool toWallet}) async {
+  Future<int> cancel(String id) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     final i = _bookings.indexWhere((b) => b.id == id);
     final b = _bookings[i];
     if (b.status == BookingStatus.cancelled) {
       throw const AuthFailure('This booking is already cancelled.');
     }
-    final refund = b.refundTo(wallet: toWallet);
+    final refund = b.refundDueCents;
     _bookings[i] = b.copyWith(
       status: BookingStatus.cancelled,
       refundCents: refund,

@@ -16,6 +16,7 @@ abstract interface class ProfileRepository {
 
   /// Your past sessions in [sport], newest first.
   Future<PassportHistory> history(String sport);
+  Future<RatingCard?> rating(String sport);
 
   /// Replaces the player's Passport sports and their own levels.
   Future<void> saveSports(String userId, List<PlayerSport> sports);
@@ -101,14 +102,25 @@ class SupabaseProfileRepository implements ProfileRepository {
   @override
   Future<ProfileSummary> summary(String userId) => _guard(() async {
     // Ranks, areas and badges arrive with leaderboards; sessions are real.
-    final played = await _client
-        .from('activity_participants')
-        .select('activity_id, activities!inner(starts_at)')
-        .eq('user_id', userId)
-        .eq('status', 'joined')
-        .lt('activities.starts_at', DateTime.now().toUtc().toIso8601String())
-        .count(CountOption.exact);
-    return ProfileSummary(sessions: played.count);
+    final played = await _client.rpc(
+      'player_session_count',
+      params: {'p_user': userId},
+    );
+    return ProfileSummary(sessions: played as int);
+  });
+
+  @override
+  Future<RatingCard?> rating(String sport) => _guard(() async {
+    final j = await _client.rpc('my_rating', params: {'p_sport': sport});
+    if (j == null) return null;
+    return RatingCard(
+      level: (j['level'] as num).toDouble(),
+      matches: j['matches'] as int,
+      provisional: j['provisional'] as bool,
+      history: [
+        for (final p in j['history'] as List) (p['rating'] as num).toDouble(),
+      ],
+    );
   });
 
   @override
@@ -161,25 +173,6 @@ class SupabaseProfileRepository implements ProfileRepository {
         })
         .eq('id', userId);
 
-    final private = await _client
-        .from('account_private')
-        .select('birthday')
-        .eq('id', userId)
-        .single();
-    await _client
-        .from('account_private')
-        .update({
-          // Birthday is locked once saved; only send it the first time.
-          if (private['birthday'] == null && d.birthday != null)
-            'birthday': d.birthday!.toIso8601String().substring(0, 10),
-          'country_code': d.country.code,
-          // Blank means no parent; the column takes an address or nothing.
-          'parent_email': (d.parentEmail?.trim().isEmpty ?? true)
-              ? null
-              : d.parentEmail!.trim(),
-        })
-        .eq('id', userId);
-
     final chosen = d.sports.map((s) => s.id).toList();
     await _client
         .from('player_sports')
@@ -208,6 +201,9 @@ class DemoProfileRepository implements ProfileRepository {
           username: 'aaronng',
           fullName: 'Aaron Ng',
           bio: 'Doubles on weeknights. Happy to rotate with beginners.',
+          links: ['olympusgo.example/aaronng'],
+          heightCm: 178,
+          birthplace: 'Singapore',
           onboardingCompleted: true,
         )
       : null;
@@ -230,6 +226,9 @@ class DemoProfileRepository implements ProfileRepository {
           ),
         ]
       : const [];
+
+  @override
+  Future<RatingCard?> rating(String sport) async => null;
 
   @override
   Future<PassportHistory> history(String sport) async {
@@ -306,6 +305,8 @@ class DemoProfileRepository implements ProfileRepository {
     clubRank: 4,
     localRank: 12,
     area: 'Tampines',
+    bestDoublesRank: 3,
+    bestDoublesPartner: 'Mei Wong',
     badgeCount: 6,
     sessionsShownTo: 'Circle',
     badges: [

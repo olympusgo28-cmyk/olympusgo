@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
+import 'og_fields.dart';
 import 'og_icon.dart';
 import 'pressable.dart';
+import '../../core/theme/og_type.dart';
 
 /// Small uppercase label above a group ("ACCOUNT", "RECENT").
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key, this.top = 24, this.size = 14});
+  const SectionLabel(this.text, {super.key, this.top = 24});
 
   final String text;
   final double top;
-  final double size;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -22,12 +22,7 @@ class SectionLabel extends StatelessWidget {
       header: true,
       child: Text(
         text.toUpperCase(),
-        style: OgText.body(
-          size,
-          weight: FontWeight.w600,
-          letterSpacing: size * 0.06,
-          color: context.og.textMuted,
-        ),
+        style: context.type.caption.copyWith(letterSpacing: 0.8),
       ),
     ),
   );
@@ -121,17 +116,10 @@ class NavRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: OgText.body(
-                      17,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
+                  Text(title, style: context.type.body),
                   Text(
                     subtitle,
-                    style: OgText.body(14, height: 1.35, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.35),
                   ),
                 ],
               ),
@@ -187,16 +175,12 @@ class SwitchRow extends StatelessWidget {
                   Text(
                     title,
                     style: leading == null
-                        ? OgText.body(
-                            compact ? 16 : 17,
-                            weight: FontWeight.w600,
-                            color: c.text,
-                          )
-                        : OgText.display(18, height: 1.2, color: c.text),
+                        ? context.type.body
+                        : context.type.body.copyWith(height: 1.2),
                   ),
                   Text(
                     subtitle,
-                    style: OgText.body(14, height: 1.35, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.35),
                   ),
                 ],
               ),
@@ -260,12 +244,12 @@ class OgSearchField extends StatelessWidget {
               textInputAction: TextInputAction.search,
               onTapOutside: (_) =>
                   FocusManager.instance.primaryFocus?.unfocus(),
-              style: OgText.body(16, color: c.text),
+              style: context.type.body,
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
                 hintText: hint,
-                hintStyle: OgText.body(16, color: c.textMuted),
+                hintStyle: context.type.tertiary,
               ),
             ),
           ),
@@ -283,14 +267,12 @@ class PillTabs extends StatelessWidget {
     required this.index,
     required this.onChanged,
     this.height = 44,
-    this.fontSize = 18,
   });
 
   final List<String> labels;
   final int index;
   final ValueChanged<int> onChanged;
   final double height;
-  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -320,16 +302,15 @@ class PillTabs extends StatelessWidget {
                     height: height,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: i == index ? c.primary : Colors.transparent,
+                      color: i == index ? c.primarySmall : Colors.transparent,
                       borderRadius: BorderRadius.circular(height / 2 + 2),
                     ),
                     child: ExcludeSemantics(
                       child: Text(
                         labels[i],
-                        style: OgText.display(
-                          fontSize,
-                          height: 1.2,
+                        style: context.type.button.copyWith(
                           color: i == index ? c.onPrimary : c.text,
+                          height: 1.2,
                         ),
                       ),
                     ),
@@ -380,20 +361,13 @@ class ListRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: OgText.body(
-                    16,
-                    weight: FontWeight.w600,
-                    color: c.text,
-                  ),
-                ),
+                Text(title, style: context.type.body),
                 if (subtitle != null)
                   Text(
                     subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
               ],
             ),
@@ -419,14 +393,12 @@ class OgChip extends StatelessWidget {
     required this.onTap,
     this.selected = false,
     this.height = 40,
-    this.fontSize = 15,
   });
 
   final String label;
   final VoidCallback onTap;
   final bool selected;
   final double height;
-  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -446,19 +418,17 @@ class OgChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? c.primary : Colors.transparent,
+            color: selected ? c.primarySmall : Colors.transparent,
             borderRadius: BorderRadius.circular(height / 2),
             border: Border.all(
-              color: selected ? c.primary : c.border,
+              color: selected ? c.primarySmall : c.border,
               width: 2,
             ),
           ),
           child: ExcludeSemantics(
             child: Text(
               label,
-              style: OgText.body(
-                fontSize,
-                weight: FontWeight.w600,
+              style: context.type.button.copyWith(
                 color: selected ? c.onPrimary : c.text,
               ),
             ),
@@ -518,9 +488,7 @@ class RadioRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
-                  child: Text(label, style: OgText.body(16, color: c.text)),
-                ),
+                Expanded(child: Text(label, style: context.type.body)),
               ],
             ),
           ),
@@ -547,13 +515,13 @@ class KeyValueRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(label, style: OgText.body(16, color: c.textMuted)),
+          Text(label, style: context.type.body),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: OgText.body(16, weight: FontWeight.w600, color: c.text),
+              style: context.type.secondary,
             ),
           ),
         ],
@@ -571,6 +539,7 @@ class OgTextArea extends StatelessWidget {
     this.maxLength = 150,
     this.minLines = 3,
     this.hint,
+    this.autofocus = false,
   });
 
   final String label;
@@ -578,43 +547,24 @@ class OgTextArea extends StatelessWidget {
   final int maxLength;
   final int minLines;
   final String? hint;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
-    OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: color, width: width),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(label, style: OgText.label),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          minLines: minLines,
-          maxLines: minLines + 2,
-          maxLength: maxLength,
-          textCapitalization: TextCapitalization.sentences,
-          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-          style: OgText.body(16, height: 1.35, color: c.text),
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: hint,
-            hintStyle: OgText.body(16, color: c.textMuted),
-            counterText: '',
-            filled: true,
-            fillColor: c.surfaceRaised,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 10,
-            ),
-            enabledBorder: border(c.borderControl, 2),
-            focusedBorder: border(c.primary, 3),
-          ),
-        ),
-      ],
+    return TextField(
+      controller: controller,
+      autofocus: autofocus,
+      minLines: minLines,
+      maxLines: minLines + 2,
+      maxLength: maxLength,
+      textCapitalization: TextCapitalization.sentences,
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      style: context.type.body.copyWith(height: 1.35),
+      decoration: ogOutlinedDecoration(
+        context,
+        label: label,
+        hint: hint,
+      ).copyWith(counterText: '', alignLabelWithHint: true),
     );
   }
 }
@@ -649,16 +599,15 @@ class FollowButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: following ? c.surfaceRaised : c.primary,
+          color: following ? c.surfaceRaised : c.primarySmall,
           borderRadius: BorderRadius.circular(20),
           border: following ? Border.all(color: c.text, width: 2) : null,
         ),
         child: Text(
           label,
-          style: OgText.display(
-            15,
-            height: 1.2,
+          style: context.type.button.copyWith(
             color: following ? c.text : c.onPrimary,
+            height: 1.2,
           ),
         ),
       ),

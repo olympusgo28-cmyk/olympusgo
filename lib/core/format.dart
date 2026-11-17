@@ -42,6 +42,11 @@ abstract final class Fmt {
     return '$h:${minute.toString().padLeft(2, '0')} ${hour < 12 ? 'AM' : 'PM'}';
   }
 
+  /// "Tue, 17 Nov 26": the Meet card's date (owner, 15 Nov 2026).
+  static String dayShortYear(DateTime d) =>
+      '${_days[d.weekday - 1]}, ${d.day.toString().padLeft(2, '0')} '
+      '${_months[d.month - 1]} ${(d.year % 100).toString().padLeft(2, '0')}';
+
   /// "Fri 16 Oct · 7:30 PM".
   static String dayTime(DateTime d) => '${day(d)} · ${time(d)}';
 

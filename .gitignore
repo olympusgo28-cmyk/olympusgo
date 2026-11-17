@@ -55,3 +55,6 @@ env.json
 supabase/.temp/
 supabase/.branches/
 .claude/launch.json
+
+# Golden test diff images written when a golden fails
+test/failures/

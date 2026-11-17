@@ -94,6 +94,19 @@ Future<List<Activity>> hubActivities(Ref ref, HubTab tab) async {
     ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
 }
 
+/// Sports new Meets can be created in.
+@Riverpod(keepAlive: true)
+Future<List<Sport>> liveSports(Ref ref) =>
+    ref.watch(playRepositoryProvider).liveSports();
+
+@Riverpod(keepAlive: true)
+Future<bool> paymentsEnabled(Ref ref) =>
+    ref.watch(playRepositoryProvider).paymentsEnabled();
+
+/// The signed-in player's QR token.
+@riverpod
+Future<String> myQr(Ref ref) => ref.watch(playRepositoryProvider).myQr();
+
 @riverpod
 Future<Activity> activityDetail(Ref ref, String id) =>
     ref.watch(playRepositoryProvider).activity(id);
@@ -142,6 +155,24 @@ Future<CancelPreview> cancelPreview(Ref ref, String id) =>
 @riverpod
 Future<MeetRecap> meetRecap(Ref ref, String id) =>
     ref.watch(playRepositoryProvider).recap(id);
+
+@riverpod
+Future<ScoringPreset> activityScoring(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).scoring(id);
+
+@riverpod
+Future<List<(String, String, ScoringPreset)>> scoringPresets(
+  Ref ref,
+  String sport,
+) => ref.watch(playRepositoryProvider).presets(sport);
+
+@riverpod
+Future<List<String>> meetDisputes(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).disputes(id);
+
+@riverpod
+Future<List<Round>> meetRounds(Ref ref, String id) =>
+    ref.watch(playRepositoryProvider).rounds(id);
 
 @riverpod
 Future<MatchScore> matchScore(Ref ref, String id) =>

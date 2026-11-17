@@ -1,0 +1,12 @@
+name: match_engine
+description: Scoring rules and match generation. Pure Dart, shared by the app and validation.
+publish_to: 'none'
+version: 1.0.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -7,16 +7,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/domain/country.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/widgets/avatar.dart';
 import '../../../core/widgets/og_buttons.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/format.dart';
+import '../../clubs/application/club_providers.dart';
+import '../../clubs/data/club_repository.dart';
+import '../../home/home_rows.dart' show StatusScrim;
 import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
@@ -24,10 +28,16 @@ import '../../settings/application/settings_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../domain/passport.dart';
 import '../domain/profile.dart';
+import 'passport_card.dart';
+import 'passport_history_screen.dart';
 
 /// The player's Passport: hero card, sport switcher and four tabs.
 class PassportScreen extends ConsumerStatefulWidget {
-  const PassportScreen({super.key});
+  const PassportScreen({super.key, this.initialSport});
+
+  /// Opens on this sport (a sport id) when the player has it, from a sport
+  /// row on the Sport Passport.
+  final String? initialSport;
 
   @override
   ConsumerState<PassportScreen> createState() => _PassportScreenState();
@@ -35,6 +45,7 @@ class PassportScreen extends ConsumerStatefulWidget {
 
 class _PassportScreenState extends ConsumerState<PassportScreen> {
   int _sport = 0;
+  bool _startedOnSport = false;
   int _tab = 0;
 
   @override
@@ -42,7 +53,19 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     final c = context.og;
     final mq = MediaQuery.of(context);
     final profile = ref.watch(sessionProfileProvider).value;
-    final sports = ref.watch(mySportsProvider).value ?? const <PlayerSport>[];
+    final mine = ref.watch(mySportsProvider).value ?? const <PlayerSport>[];
+    // The main sports, at most five: the first five on the Passport. A sport
+    // opened from the Sport Passport list that is not among them takes the
+    // fifth place.
+    final sports = [...mine.take(5)];
+    final opened = mine.indexWhere((s) => s.sport == widget.initialSport);
+    if (opened >= 5) sports[4] = mine[opened];
+    // Once the sports arrive, start on the one the player tapped.
+    if (!_startedOnSport && sports.isNotEmpty) {
+      _startedOnSport = true;
+      final i = sports.indexWhere((s) => s.sport == widget.initialSport);
+      if (i >= 0) _sport = i;
+    }
     final info = ref.watch(privateInfoProvider).value;
     final social = ref.watch(mySocialProvider).value;
     final current = sports.isEmpty
@@ -55,105 +78,91 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     final stats = demo ? DemoPassport.stats(sport.id) : null;
 
     final age = info?.birthday == null ? null : _age(info!.birthday!);
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: c.bg,
-        body: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  math.max(4, 56 - mq.padding.top),
-                  24,
-                  0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  // The info card overlaps the hero's bottom 34px.
-                  child: Stack(
+    final summary = ref.watch(mySummaryProvider).value;
+    final heroHeight = mq.padding.top + 176;
+    return Scaffold(
+      backgroundColor: c.bg,
+      // The hero is dark, so the status bar's icons are light until the hero
+      // has scrolled away; then a page-coloured band sits behind the clock.
+      body: StatusScrim(
+        after: heroHeight - mq.padding.top - 20,
+        darkHero: true,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              // The personal card overlaps the hero's bottom 56 points.
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: heroHeight,
+                    child: _HeroBanner(top: mq.padding.top),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        child: _Hero(
+                      SizedBox(height: heroHeight - 56),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _PersonalCard(
                           profile: profile,
-                          sport: sport,
-                          level: current?.level,
-                          country: info?.country.code ?? 'SG',
+                          country: info?.country ?? Country.singapore,
+                          age: age,
+                          rank: summary?.localRank,
+                          area: summary?.area,
+                          bestDoublesRank: summary?.bestDoublesRank,
+                          bestDoublesPartner: summary?.bestDoublesPartner,
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 210),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: _InfoCard(
-                              profile: profile,
-                              country: info?.country.name ?? 'Singapore',
-                              stats: [
-                                ('Age', age == null ? '—' : '$age'),
-                                (
-                                  'Play',
-                                  demo ? '48' : '${stats?.matches ?? 0}',
-                                ),
-                                ('Hand', demo ? 'Right' : '—'),
-                                ('Since', '${DateTime.now().year}'),
-                              ],
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _NavHeader(
-                  sports: sports.map((s) => Sport.fromId(s.sport)).toList(),
-                  sportIndex: math.min(_sport, math.max(0, sports.length - 1)),
-                  tab: _tab,
-                  onSport: (i) => setState(() => _sport = i),
-                  onTab: (i) => setState(() => _tab = i),
-                  colors: c,
-                ),
+            ),
+            // The main sports and the tabs for the one selected.
+            SliverToBoxAdapter(
+              child: _SportTabs(
+                sports: sports.map((s) => Sport.fromId(s.sport)).toList(),
+                sportIndex: math.min(_sport, math.max(0, sports.length - 1)),
+                tab: _tab,
+                onSport: (i) => setState(() => _sport = i),
+                onTab: (i) => setState(() => _tab = i),
+                colors: c,
               ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, mq.padding.bottom + 32),
-                sliver: SliverList.list(
-                  children: switch (_tab) {
-                    0 => _overview(context, current, stats, demo),
-                    1 => _gear(
-                      context,
-                      demo ? DemoPassport.gear(sport.id) : const [],
-                      sport,
-                    ),
-                    2 => _upcoming(
-                      context,
-                      demo
-                          ? DemoPassport.upcoming
-                          : [
-                              for (final a
-                                  in ref.watch(myScheduleProvider).value ??
-                                      const <Activity>[])
-                                UpcomingGame(
-                                  when: Fmt.dayTime(a.startsAt),
-                                  title: a.title,
-                                  place: a.venue.name,
-                                  waitlist: a.myStatus == MyStatus.waitlist,
-                                ),
-                            ],
-                    ),
-                    _ => _challenges(context, social?.followers ?? 0),
-                  },
-                ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, mq.padding.bottom + 32),
+              sliver: SliverList.list(
+                children: switch (_tab) {
+                  0 => _overview(context, current, stats, demo),
+                  1 => _gear(
+                    context,
+                    demo ? DemoPassport.gear(sport.id) : const [],
+                    sport,
+                  ),
+                  2 => _upcoming(
+                    context,
+                    demo
+                        ? DemoPassport.upcoming
+                        : [
+                            for (final a
+                                in ref.watch(myScheduleProvider).value ??
+                                    const <Activity>[])
+                              UpcomingGame(
+                                when: Fmt.dayTime(a.startsAt),
+                                title: a.title,
+                                place: a.venue.name,
+                                waitlist: a.myStatus == MyStatus.waitlist,
+                              ),
+                          ],
+                  ),
+                  _ => _challenges(context, social?.followers ?? 0),
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -174,7 +183,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     Widget? action,
     double top = 20,
   }) {
-    final c = context.og;
     return Padding(
       padding: EdgeInsets.only(top: top),
       child: Row(
@@ -182,11 +190,10 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           Expanded(
             child: Semantics(
               header: true,
-              child: Text(text, style: OgText.display(20, color: c.text)),
+              child: Text(text, style: context.type.section),
             ),
           ),
-          if (trailing != null)
-            Text(trailing, style: OgText.body(14, color: c.textMuted)),
+          if (trailing != null) Text(trailing, style: context.type.secondary),
           ?action,
         ],
       ),
@@ -200,8 +207,24 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     bool demo,
   ) {
     final c = context.og;
+    final summary = ref.watch(mySummaryProvider).value;
+    final mine = ref.watch(mySportsProvider).value ?? const <PlayerSport>[];
+    final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
     return [
       const SizedBox(height: 12),
+      // The Passport card moved here from Profile (owner, 16 Nov 2026).
+      if (level != null) ...[
+        PassportCard(
+          sport: level,
+          sessions: summary?.sessions ?? 0,
+          clubRank: summary?.clubRank,
+          clubs: clubs.length,
+          localRank: summary?.localRank,
+          area: summary?.area,
+          isMainSport: mine.isNotEmpty && mine.first.sport == level.sport,
+        ),
+        const SizedBox(height: 12),
+      ],
       KitCard(
         children: [
           KitNavTile(
@@ -237,8 +260,8 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        Text(label, style: OgText.body(12, color: c.textMuted)),
-                        Text(value, style: OgText.display(20, color: c.text)),
+                        Text(label, style: context.type.caption),
+                        Text(value, style: context.type.section),
                       ],
                     ),
                   ),
@@ -267,8 +290,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     ),
                     child: Text(
                       win ? 'W' : 'L',
-                      style: OgText.display(
-                        17,
+                      style: context.type.section.copyWith(
                         color: win ? c.onPrimary : c.text,
                       ),
                     ),
@@ -287,9 +309,23 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: c.border, width: 2),
           ),
-          child: Text(
-            'Play your first ranked match to start your season, form and stats.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+          child: Consumer(
+            builder: (context, ref, _) {
+              final played = level == null
+                  ? 0
+                  : ref.watch(ratingCardProvider(level.sport)).value?.matches ??
+                        0;
+              return Text(
+                played == 0
+                    ? 'Play your first ranked match to start your season, form '
+                          'and stats.'
+                    : played < 5
+                    ? '$played of 5 ranked matches played. Your form and '
+                          'stats start after 5.'
+                    : 'See your matches in Sessions and rating.',
+                style: context.type.secondary.copyWith(height: 1.45),
+              );
+            },
           ),
         ),
       ],
@@ -311,7 +347,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 child: SizedBox(
                   height: 54,
                   width: double.infinity,
-                  child: CustomPaint(painter: _LevelPainter(level, c)),
+                  child: CustomPaint(
+                    painter: _LevelPainter(level, c, context.type),
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
@@ -322,14 +360,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     TextSpan(
                       text:
                           '${level.playMin.toStringAsFixed(1)} to ${level.playMax.toStringAsFixed(1)}',
-                      style: TextStyle(
-                        color: c.text,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      // The range stands out by colour, not weight.
+                      style: context.type.body,
                     ),
                   ],
                 ),
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
             ],
           ),
@@ -355,25 +391,23 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                     children: [
                       Text(
                         'NEXT UP · TUE 13 OCT · 7:30 PM',
-                        style: OgText.body(
-                          12,
-                          weight: FontWeight.w600,
-                          letterSpacing: 0.72,
+                        style: context.type.caption.copyWith(
                           color: c.highlight,
+                          letterSpacing: 0.72,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         DemoPassport.upcoming.first.title,
-                        style: OgText.body(
-                          17,
-                          weight: FontWeight.w600,
+                        style: context.type.section.copyWith(
                           color: c.onInverseCard,
                         ),
                       ),
                       Text(
                         DemoPassport.upcoming.first.place,
-                        style: OgText.body(14, color: c.onInverseCardMuted),
+                        style: context.type.body.copyWith(
+                          color: c.onInverseCardMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -412,22 +446,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            card.label,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(card.label, style: context.type.caption),
                           Text(
                             card.value,
-                            style: OgText.display(
-                              26,
-                              height: 1.15,
-                              color: c.text,
-                            ),
+                            style: context.type.score.copyWith(height: 1.15),
                           ),
-                          Text(
-                            card.note,
-                            style: OgText.body(13, color: c.textMuted),
-                          ),
+                          Text(card.note, style: context.type.caption),
                         ],
                       ),
                     ),
@@ -453,17 +477,8 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: OgText.body(
-                              15,
-                              weight: FontWeight.w600,
-                              color: c.text,
-                            ),
-                          ),
-                        ),
-                        Text('$pct%', style: OgText.display(18, color: c.text)),
+                        Expanded(child: Text(label, style: context.type.body)),
+                        Text('$pct%', style: context.type.section),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -501,11 +516,11 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 children: [
                   Text(
                     'Your ${sport.label.toLowerCase()} gear',
-                    style: OgText.display(20, color: c.text),
+                    style: context.type.section,
                   ),
                   Text(
                     'Tap an item for details.',
-                    style: OgText.body(14, color: c.textMuted),
+                    style: context.type.secondary,
                   ),
                 ],
               ),
@@ -514,7 +529,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
               label: 'Add gear',
               icon: OgIcons.plus,
               height: 44,
-              fontSize: 15,
               expand: false,
               onPressed: () => context.push(Routes.gearEdit('new')),
             ),
@@ -526,7 +540,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'Add your racquet, shoes and strings to track restrings and wear.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ),
       for (final g in gear)
@@ -566,17 +580,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                           children: [
                             Text(
                               g.name,
-                              style: OgText.body(
-                                16,
-                                weight: FontWeight.w600,
-                                height: 1.25,
-                                color: c.text,
-                              ),
+                              style: context.type.body.copyWith(height: 1.25),
                             ),
-                            Text(
-                              g.type,
-                              style: OgText.body(13, color: c.textMuted),
-                            ),
+                            Text(g.type, style: context.type.caption),
                             if (g.tags.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Wrap(
@@ -595,11 +601,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                                       ),
                                       child: Text(
                                         t,
-                                        style: OgText.body(
-                                          12,
-                                          weight: FontWeight.w600,
-                                          color: c.text,
-                                        ),
+                                        style: context.type.caption,
                                       ),
                                     ),
                                 ],
@@ -624,16 +626,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          g.price!,
-                          style: OgText.display(20, color: c.text),
-                        ),
+                        child: Text(g.price!, style: context.type.section),
                       ),
                       OgButton(
                         label: 'Add to cart',
                         icon: OgIcons.cart,
                         height: 40,
-                        fontSize: 16,
                         expand: false,
                         onPressed: () => context.push(Routes.cart),
                       ),
@@ -654,7 +652,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'No games coming up. Join a Meet and it shows here.',
-            style: OgText.body(15, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
         ),
       ];
@@ -676,21 +674,10 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                   children: [
                     Text(
                       g.when,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.link,
-                      ),
+                      style: context.type.caption.copyWith(color: c.link),
                     ),
-                    Text(
-                      g.title,
-                      style: OgText.body(
-                        16,
-                        weight: FontWeight.w600,
-                        color: c.text,
-                      ),
-                    ),
-                    Text(g.place, style: OgText.body(14, color: c.textMuted)),
+                    Text(g.title, style: context.type.body),
+                    Text(g.place, style: context.type.secondary),
                   ],
                 ),
               ),
@@ -708,9 +695,7 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
                 ),
                 child: Text(
                   g.waitlist ? 'Waitlist' : 'Going',
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w600,
+                  style: context.type.caption.copyWith(
                     color: g.waitlist ? c.text : c.onPrimary,
                   ),
                 ),
@@ -748,12 +733,12 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             const SizedBox(height: 12),
             Text(
               'Challenges are for creators',
-              style: OgText.display(22, height: 1.2, color: c.text),
+              style: context.type.title.copyWith(height: 1.2),
             ),
             const SizedBox(height: 6),
             Text(
               'Reach 1,000 followers to set challenges for your fans, track who joins and reward the winners. If you later drop below 1,000, you keep access for 30 days to get back.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
             const SizedBox(height: 16),
             Semantics(
@@ -772,19 +757,9 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    '$followers followers',
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w600,
-                      color: c.text,
-                    ),
-                  ),
+                  child: Text('$followers followers', style: context.type.body),
                 ),
-                Text(
-                  '1,000 to unlock',
-                  style: OgText.body(14, color: c.textMuted),
-                ),
+                Text('1,000 to unlock', style: context.type.secondary),
               ],
             ),
           ],
@@ -794,7 +769,6 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
       OgButton.outline(
         label: 'See the creator view',
         height: 52,
-        fontSize: 18,
         onPressed: () => context.push(Routes.creatorChallenges),
       ),
     ];
@@ -807,19 +781,65 @@ String _gearArt(GearKind kind) => switch (kind) {
   GearKind.racquet => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g transform="rotate(30 100 100)"><defs><clipPath id="cp"><ellipse cx="100" cy="62" rx="34" ry="46"/></clipPath></defs><g clip-path="url(#cp)" stroke="#7A8088" stroke-width="1.5"><line x1="76" x2="76" y1="14" y2="110"/><line x1="84" x2="84" y1="14" y2="110"/><line x1="92" x2="92" y1="14" y2="110"/><line x1="100" x2="100" y1="14" y2="110"/><line x1="108" x2="108" y1="14" y2="110"/><line x1="116" x2="116" y1="14" y2="110"/><line x1="124" x2="124" y1="14" y2="110"/><line x1="60" x2="140" y1="26" y2="26"/><line x1="60" x2="140" y1="34" y2="34"/><line x1="60" x2="140" y1="42" y2="42"/><line x1="60" x2="140" y1="50" y2="50"/><line x1="60" x2="140" y1="58" y2="58"/><line x1="60" x2="140" y1="66" y2="66"/><line x1="60" x2="140" y1="74" y2="74"/><line x1="60" x2="140" y1="82" y2="82"/><line x1="60" x2="140" y1="90" y2="90"/><line x1="60" x2="140" y1="98" y2="98"/></g><ellipse cx="100" cy="62" rx="34" ry="46" fill="none" stroke="#1C1F23" stroke-width="7"/><path d="M84 98L100 128L116 98" fill="none" stroke="#1C1F23" stroke-width="6" stroke-linejoin="round"/><line x1="100" y1="126" x2="100" y2="158" stroke="#1C1F23" stroke-width="6"/><rect x="93" y="150" width="14" height="42" rx="5" fill="#E8590C"/></g></svg>',
 };
 
-/// Dark hero: court lines, sport and flag badges, first name, level, portrait.
-class _Hero extends StatelessWidget {
-  const _Hero({
-    required this.profile,
-    required this.sport,
-    required this.level,
-    required this.country,
-  });
+/// The hero (owner, 17 Nov 2026): the screen's full width, dark with court
+/// lines, bottom corners rounded to 28. Over it, the back button at the left
+/// and the share button at the right, below the status bar. [top] is the
+/// status bar's height.
+class _HeroBanner extends StatelessWidget {
+  const _HeroBanner({required this.top});
 
-  final Profile? profile;
-  final Sport sport;
-  final double? level;
-  final String country;
+  final double top;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(
+        color: OgColors.charcoal900,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ExcludeSemantics(
+              child: SvgPicture.string(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 244" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#FF7A1A" stroke-opacity=".12" stroke-width="3"><rect x="-30" y="90" width="230" height="190" rx="6"/><path d="M85 90v190M-30 185h230"/><rect x="170" y="40" width="230" height="190" rx="6"/><path d="M285 40v190M170 135h230"/></g></svg>',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            top: top + 8,
+            child: _CircleButton(
+              icon: OgIcons.back,
+              label: 'Back',
+              onTap: () => context.pop(),
+            ),
+          ),
+          Positioned(
+            right: 12,
+            top: top + 8,
+            child: _CircleButton(
+              icon: OgIcons.share,
+              label: 'Share',
+              onTap: () => context.push(Routes.shareProfile),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A country's flag in a circle.
+class _Flag extends StatelessWidget {
+  const _Flag(this.code);
+
+  final String code;
+
+  /// The flag is 20 points across.
+  static const _size = 20.0;
 
   static const _flags = {
     'SG': '<rect width="44" height="44" fill="#FFFFFF"/><rect width="44" height="22" fill="#E03C31"/><circle cx="14" cy="11" r="6" fill="#FFFFFF"/><circle cx="16.5" cy="11" r="5.4" fill="#E03C31"/><circle cx="22" cy="7" r="1.3" fill="#FFFFFF"/><circle cx="26" cy="10.5" r="1.3" fill="#FFFFFF"/><circle cx="24.5" cy="15" r="1.3" fill="#FFFFFF"/><circle cx="19.5" cy="15" r="1.3" fill="#FFFFFF"/><circle cx="18" cy="10.5" r="1.3" fill="#FFFFFF"/>',
@@ -830,115 +850,17 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final first = profile?.firstName ?? '';
     return Container(
-      height: 244,
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: OgColors.charcoal900,
-        borderRadius: BorderRadius.circular(28),
+        shape: BoxShape.circle,
+        border: Border.all(color: context.og.border),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ExcludeSemantics(
-              child: SvgPicture.string(
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 244" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#FF7A1A" stroke-opacity=".12" stroke-width="3"><rect x="-30" y="90" width="230" height="190" rx="6"/><path d="M85 90v190M-30 185h230"/></g></svg>',
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 4,
-            bottom: 0,
-            child: ExcludeSemantics(
-              child: SvgPicture.string(
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 230"><path d="M0 230C0 172 40 150 100 146c60 4 100 26 100 84z" fill="#E8590C"/><path d="M70 150L100 184L130 150" fill="none" stroke="#FF7A1A" stroke-width="9" stroke-linejoin="round"/><rect x="84" y="116" width="32" height="38" rx="12" fill="#D39A72"/><ellipse cx="60" cy="86" rx="7" ry="11" fill="#D39A72"/><ellipse cx="140" cy="86" rx="7" ry="11" fill="#D39A72"/><ellipse cx="100" cy="84" rx="41" ry="47" fill="#E3AE85"/><path d="M58 80C54 40 76 24 102 24s46 16 40 56c-6-18-16-26-42-26S64 62 58 80z" fill="#1C1F23"/><circle cx="84" cy="88" r="3.4" fill="#1C1F23"/><circle cx="116" cy="88" r="3.4" fill="#1C1F23"/><path d="M85 108q15 11 30 0" fill="none" stroke="#1C1F23" stroke-width="3.4" stroke-linecap="round"/></svg>',
-                width: 184,
-                height: 212,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 12,
-            top: 12,
-            child: _CircleButton(
-              icon: OgIcons.back,
-              label: 'Back',
-              onTap: () => context.pop(),
-            ),
-          ),
-          Positioned(
-            right: 12,
-            top: 12,
-            child: _CircleButton(
-              icon: OgIcons.share,
-              label: 'Share',
-              onTap: () => context.push(Routes.shareProfile),
-            ),
-          ),
-          Positioned(
-            left: 18,
-            top: 68,
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2A2F35),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: OgIcon(sport.icon, color: OgColors.orange300),
-                ),
-                const SizedBox(width: 8),
-                ClipOval(
-                  child: SvgPicture.string(
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">${_flags[country] ?? _flags['SG']}</svg>',
-                    width: 44,
-                    height: 44,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 18,
-            top: 118,
-            right: 150,
-            child: Text(
-              first,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: OgText.display(54, height: 1, color: OgColors.offWhite),
-            ),
-          ),
-          if (level != null)
-            Positioned(
-              left: 18,
-              top: 186,
-              child: Row(
-                children: [
-                  SvgPicture.string(
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 3l-5 3 2 4 2-1v11h10V9l2 1 2-4-5-3c-.5 1.5-2 2.3-4 2.3S8.5 4.5 8 3z" fill="#E8590C"/></svg>',
-                    width: 20,
-                    height: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'DOUBLES · LEVEL ${level!.toStringAsFixed(1)}',
-                    style: OgText.body(
-                      13,
-                      weight: FontWeight.w600,
-                      letterSpacing: 0.78,
-                      color: OgColors.grey400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+      child: ClipOval(
+        child: SvgPicture.string(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">${_flags[code] ?? _flags['SG']}</svg>',
+          width: _size,
+          height: _size,
+        ),
       ),
     );
   }
@@ -972,22 +894,63 @@ class _CircleButton extends StatelessWidget {
   );
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({
+/// The personal card (owner, 17 Nov 2026), over the hero's bottom edge: the
+/// player's photo (or initials), full name, country flag and country; then
+/// Age, Height and Birthplace; then Ranking and, when there is one, the best
+/// doubles ranking with the partner it was reached with.
+class _PersonalCard extends StatelessWidget {
+  const _PersonalCard({
     required this.profile,
     required this.country,
-    required this.stats,
+    required this.age,
+    required this.rank,
+    required this.area,
+    required this.bestDoublesRank,
+    required this.bestDoublesPartner,
   });
 
   final Profile? profile;
-  final String country;
-  final List<(String, String)> stats;
+  final Country country;
+  final int? age;
+  final int? rank;
+  final String? area;
+  final int? bestDoublesRank;
+  final String? bestDoublesPartner;
 
   @override
   Widget build(BuildContext context) {
     final c = context.og;
+    Widget box(String label, String value, {String? note}) => Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: context.type.caption),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.type.section.copyWith(height: 1.2),
+            ),
+            if (note != null)
+              Text(
+                note,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.type.caption,
+              ),
+          ],
+        ),
+      ),
+    );
+    final height = profile?.heightCm;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: c.surfaceRaised,
         borderRadius: BorderRadius.circular(24),
@@ -1007,26 +970,31 @@ class _InfoCard extends StatelessWidget {
                 initials: profile?.initials ?? '?',
                 tone: AvatarTone.brand,
                 imageUrl: profile?.avatarUrl,
-                size: 60,
-                fontSize: 22,
+                size: 72,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       profile?.fullName ?? '',
-                      style: OgText.display(24, height: 1.1, color: c.text),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.type.title.copyWith(height: 1.1),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        OgIcon(OgIcons.location, size: 16, color: c.textMuted),
-                        const SizedBox(width: 4),
-                        Text(
-                          country,
-                          style: OgText.body(15, color: c.textMuted),
+                        _Flag(country.code),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            country.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.type.secondary,
+                          ),
                         ),
                       ],
                     ),
@@ -1038,28 +1006,25 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              for (final (i, (label, value)) in stats.indexed) ...[
-                if (i > 0) const SizedBox(width: 6),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(label, style: OgText.body(12, color: c.textMuted)),
-                        Text(
-                          value,
-                          style: OgText.display(19, height: 1.2, color: c.text),
-                        ),
-                      ],
-                    ),
-                  ),
+              box('Age', age == null ? '—' : '$age'),
+              const SizedBox(width: 6),
+              box('Height', height == null ? '—' : '$height cm'),
+              const SizedBox(width: 6),
+              box('Birthplace', profile?.birthplace ?? '—'),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              box('Ranking', rank == null ? '—' : '#$rank', note: area),
+              if (bestDoublesRank != null) ...[
+                const SizedBox(width: 6),
+                box(
+                  'Best doubles',
+                  '#$bestDoublesRank',
+                  note: bestDoublesPartner == null
+                      ? null
+                      : 'with $bestDoublesPartner',
                 ),
               ],
             ],
@@ -1070,9 +1035,10 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-/// Sticky sport switcher and tab strip.
-class _NavHeader extends SliverPersistentHeaderDelegate {
-  _NavHeader({
+/// The player's main sports (at most five), the selected one dark with its
+/// name and the others icon-only, over the tab strip for the selected sport.
+class _SportTabs extends StatelessWidget {
+  const _SportTabs({
     required this.sports,
     required this.sportIndex,
     required this.tab,
@@ -1080,7 +1046,6 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
     required this.onTab,
     required this.colors,
   });
-
   final List<Sport> sports;
   final int sportIndex;
   final int tab;
@@ -1089,23 +1054,12 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
   final OgColors colors;
 
   static const _tabs = ['Overview', 'Gear', 'Upcoming', 'Challenges'];
-  static const _height = 10 + 48 + 6 + 46.0;
-
   @override
-  double get minExtent => _height;
-  @override
-  double get maxExtent => _height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+  Widget build(BuildContext context) {
     final c = colors;
     return Container(
       color: c.bg,
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1156,9 +1110,7 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
                               const SizedBox(width: 8),
                               Text(
                                 s.label,
-                                style: OgText.body(
-                                  16,
-                                  weight: FontWeight.w600,
+                                style: context.type.body.copyWith(
                                   color: OgColors.offWhite,
                                 ),
                               ),
@@ -1208,9 +1160,7 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
                           child: ExcludeSemantics(
                             child: Text(
                               t,
-                              style: OgText.body(
-                                15,
-                                weight: FontWeight.w600,
+                              style: context.type.body.copyWith(
                                 color: i == tab ? c.text : c.textMuted,
                               ),
                             ),
@@ -1226,21 +1176,15 @@ class _NavHeader extends SliverPersistentHeaderDelegate {
       ),
     );
   }
-
-  @override
-  bool shouldRebuild(_NavHeader old) =>
-      old.sportIndex != sportIndex ||
-      old.tab != tab ||
-      old.sports.length != sports.length ||
-      old.colors != colors;
 }
 
 /// Level marker on the 1.0–8.0 track with the play-with range shaded.
 class _LevelPainter extends CustomPainter {
-  _LevelPainter(this.sport, this.c);
+  _LevelPainter(this.sport, this.c, this.type);
 
   final PlayerSport sport;
   final OgColors c;
+  final OgType type;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1283,22 +1227,11 @@ class _LevelPainter extends CustomPainter {
       canvas,
       sport.level.toStringAsFixed(1),
       Offset(cx, 0),
-      OgText.display(14, color: c.text),
+      type.section,
       center: true,
     );
-    _text(
-      canvas,
-      '1.0',
-      const Offset(left, 40),
-      OgText.body(11, color: c.textMuted),
-    );
-    _text(
-      canvas,
-      '8.0',
-      Offset(left + width, 40),
-      OgText.body(11, color: c.textMuted),
-      right: true,
-    );
+    _text(canvas, '1.0', const Offset(left, 40), type.caption);
+    _text(canvas, '8.0', Offset(left + width, 40), type.caption, right: true);
   }
 
   void _text(
@@ -1369,6 +1302,7 @@ class _WinRateChartState extends State<_WinRateChart> {
                   _selected,
                   c,
                   '${m.label} ${m.year}',
+                  context.type,
                 ),
               ),
             ),
@@ -1380,12 +1314,13 @@ class _WinRateChartState extends State<_WinRateChart> {
 }
 
 class _WinRatePainter extends CustomPainter {
-  _WinRatePainter(this.months, this.selected, this.c, this.title);
+  _WinRatePainter(this.months, this.selected, this.c, this.title, this.type);
 
   final List<MonthPoint> months;
   final int selected;
   final OgColors c;
   final String title;
+  final OgType type;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1395,7 +1330,7 @@ class _WinRatePainter extends CustomPainter {
     double y(int pct) => (130 - pct * 1.2) * sy;
     final step = (right - left) / (months.length - 1);
     double x(int i) => left + i * step;
-    final muted = OgText.body(11, color: c.textMuted);
+    final muted = type.caption;
 
     for (final pct in [0, 25, 50, 75, 100]) {
       canvas.drawLine(
@@ -1465,11 +1400,7 @@ class _WinRatePainter extends CustomPainter {
         canvas,
         months[i].label,
         Offset(x(i), 148 * sy),
-        OgText.body(
-          12,
-          weight: i == selected ? FontWeight.w800 : FontWeight.w400,
-          color: i == selected ? c.text : c.textMuted,
-        ),
+        type.caption.copyWith(color: i == selected ? c.text : c.textMuted),
         center: true,
       );
     }
@@ -1493,12 +1424,7 @@ class _WinRatePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );
-    _text(
-      canvas,
-      title,
-      Offset(tx + 10, 14 * sy + 7),
-      OgText.body(13, weight: FontWeight.w800, color: c.text),
-    );
+    _text(canvas, title, Offset(tx + 10, 14 * sy + 7), type.caption);
     _rich(
       canvas,
       'Win rate  ',
@@ -1517,11 +1443,12 @@ class _WinRatePainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: a,
-        style: OgText.body(12, color: c.textMuted),
+        style: type.caption,
         children: [
+          // The value stands out by colour, not weight.
           TextSpan(
             text: b,
-            style: OgText.body(12, weight: FontWeight.w800, color: c.text),
+            style: type.caption.copyWith(color: c.text),
           ),
         ],
       ),

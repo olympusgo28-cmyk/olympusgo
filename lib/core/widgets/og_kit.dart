@@ -8,10 +8,10 @@ import 'package:go_router/go_router.dart';
 import '../navigation/breadcrumbs.dart';
 import '../router/routes.dart';
 import '../theme/og_colors.dart';
-import '../theme/og_text.dart';
 import '../theme/og_tones.dart';
 import 'og_icon.dart';
 import 'pressable.dart';
+import '../../core/theme/og_type.dart';
 
 /// Building blocks for the club, team, shop and creator artboards (phase 3+).
 /// These screens share one layout language: a bordered header with an arrow,
@@ -32,9 +32,9 @@ class KitHeader extends StatelessWidget {
     this.trailing,
     this.center = true,
     this.border = true,
-    this.titleSize = 24,
     this.onBack,
     this.crumb,
+    this.background,
   });
 
   final String title;
@@ -50,8 +50,11 @@ class KitHeader extends StatelessWidget {
   final Widget? trailing;
   final bool center;
   final bool border;
-  final double titleSize;
   final VoidCallback? onBack;
+
+  /// The bar's fill; the page colour by default. A grey page (Settings) passes
+  /// its own so the bar and the status bar above it match.
+  final Color? background;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +85,7 @@ class KitHeader extends StatelessWidget {
             textAlign: center ? TextAlign.center : TextAlign.start,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: OgText.display(titleSize, height: 1.2, color: c.text),
+            style: context.type.title.copyWith(height: 1.2),
           ),
         ),
         if (subtitle != null)
@@ -90,7 +93,7 @@ class KitHeader extends StatelessWidget {
             subtitle!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
       ],
     );
@@ -99,7 +102,7 @@ class KitHeader extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(12, 12, 12, trail ? 0 : 8),
       decoration: BoxDecoration(
-        color: c.bg,
+        color: background ?? c.bg,
         border: border
             ? Border(bottom: BorderSide(color: c.border))
             : const Border(),
@@ -169,7 +172,7 @@ class KitBack extends StatelessWidget {
                     prev,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: OgText.body(15, weight: FontWeight.w600, color: fg),
+                    style: context.type.button.copyWith(color: fg),
                   ),
                 ),
               ),
@@ -243,11 +246,7 @@ class KitTrail extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           cr.title,
-                          style: OgText.body(
-                            13,
-                            weight: FontWeight.w600,
-                            color: c.link,
-                          ),
+                          style: context.type.caption.copyWith(color: c.link),
                         ),
                       ),
                     ),
@@ -255,14 +254,7 @@ class KitTrail extends StatelessWidget {
                   ],
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      current,
-                      style: OgText.body(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.textMuted,
-                      ),
-                    ),
+                    child: Text(current, style: context.type.caption),
                   ),
                 ],
               ),
@@ -455,7 +447,6 @@ class KitButton extends StatelessWidget {
     this.style = KitButtonStyle.primary,
     this.height = 54,
     this.radius = 16,
-    this.fontSize = 16,
     this.icon,
     this.loading = false,
     this.expand = true,
@@ -468,7 +459,6 @@ class KitButton extends StatelessWidget {
     required this.onPressed,
     this.height = 54,
     this.radius = 16,
-    this.fontSize = 16,
     this.icon,
     this.loading = false,
     this.expand = true,
@@ -480,7 +470,6 @@ class KitButton extends StatelessWidget {
   final KitButtonStyle style;
   final double height;
   final double radius;
-  final double fontSize;
   final String? icon;
   final bool loading;
   final bool expand;
@@ -494,7 +483,7 @@ class KitButton extends StatelessWidget {
     final (bg, fg, side) = off
         ? (t.disabledFill, t.onDisabledFill, null)
         : switch (style) {
-            KitButtonStyle.primary => (c.primary, c.onPrimary, null),
+            KitButtonStyle.primary => (c.primarySmall, c.onPrimary, null),
             KitButtonStyle.outline => (
               c.bg,
               c.text,
@@ -525,11 +514,7 @@ class KitButton extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: OgText.body(
-                    fontSize,
-                    weight: FontWeight.w600,
-                    color: fg,
-                  ),
+                  style: context.type.button.copyWith(color: fg),
                 ),
               ),
             ],
@@ -587,9 +572,7 @@ class KitLink extends StatelessWidget {
           child: ExcludeSemantics(
             child: Text(
               label,
-              style: OgText.body(
-                size,
-                weight: FontWeight.w600,
+              style: context.type.button.copyWith(
                 color: fg,
                 decoration: underline ? TextDecoration.underline : null,
               ),
@@ -613,7 +596,6 @@ class KitChip extends StatelessWidget {
     this.icon,
     this.trailingIcon,
     this.height = 40,
-    this.fontSize = 14,
     this.background,
     this.foreground,
   });
@@ -624,7 +606,6 @@ class KitChip extends StatelessWidget {
   final String? icon;
   final String? trailingIcon;
   final double height;
-  final double fontSize;
   final Color? background;
   final Color? foreground;
 
@@ -655,10 +636,7 @@ class KitChip extends StatelessWidget {
               OgIcon(icon!, size: 18, color: fg, strokeWidth: 1.9),
               const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: OgText.body(fontSize, weight: FontWeight.w600, color: fg),
-            ),
+            Text(label, style: context.type.button.copyWith(color: fg)),
             if (trailingIcon != null) ...[
               const SizedBox(width: 6),
               OgIcon(trailingIcon!, size: 16, color: fg, strokeWidth: 2.2),
@@ -678,7 +656,6 @@ class KitTag extends StatelessWidget {
     this.background,
     this.foreground,
     this.height = 26,
-    this.fontSize = 12,
     this.radius,
   });
 
@@ -686,7 +663,6 @@ class KitTag extends StatelessWidget {
   final Color? background;
   final Color? foreground;
   final double height;
-  final double fontSize;
   final double? radius;
 
   @override
@@ -704,9 +680,7 @@ class KitTag extends StatelessWidget {
         child: Text(
           label,
           maxLines: 1,
-          style: OgText.body(
-            fontSize,
-            weight: FontWeight.w600,
+          style: context.type.caption.copyWith(
             color: foreground ?? context.og.text,
           ),
         ),
@@ -735,11 +709,7 @@ class KitCountBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         '$count',
-        style: OgText.body(
-          size < 22 ? 11 : 13,
-          weight: FontWeight.w600,
-          color: Colors.white,
-        ),
+        style: context.type.caption.copyWith(color: Colors.white),
       ),
     );
   }
@@ -777,8 +747,8 @@ class KitNote extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: tone == KitTone.white ? Border.all(color: c.border) : null,
       ),
-      child: DefaultTextStyle(
-        style: OgText.body(14, height: 1.45, color: fg),
+      child: DefaultTextStyle.merge(
+        style: context.type.body.copyWith(color: fg, height: 1.45),
         child: child ?? Text(text),
       ),
     );
@@ -801,10 +771,7 @@ class KitSection extends StatelessWidget {
         Expanded(
           child: Semantics(
             header: true,
-            child: Text(
-              title,
-              style: OgText.heading(size, color: context.og.text),
-            ),
+            child: Text(title, style: context.type.section),
           ),
         ),
         ?trailing,
@@ -823,17 +790,16 @@ class KitTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Semantics(
           header: true,
-          child: Text(title, style: OgText.heading(size, color: c.text)),
+          child: Text(title, style: context.type.section),
         ),
         if (lead != null) ...[
           const SizedBox(height: 6),
-          Text(lead!, style: OgText.body(15, height: 1.45, color: c.textMuted)),
+          Text(lead!, style: context.type.secondary.copyWith(height: 1.45)),
         ],
       ],
     );
@@ -870,7 +836,7 @@ class KitCheckList extends StatelessWidget {
               Expanded(
                 child: Text(
                   item,
-                  style: OgText.body(15, height: 1.4, color: context.og.text),
+                  style: context.type.body.copyWith(height: 1.4),
                 ),
               ),
             ],
@@ -924,13 +890,13 @@ class KitKeyValue extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(label, style: OgText.body(15, color: c.textMuted)),
+            Text(label, style: context.type.body),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: OgText.body(15, weight: FontWeight.w600, color: c.text),
+                style: context.type.secondary,
               ),
             ),
           ],
@@ -967,7 +933,10 @@ class KitTickBox extends StatelessWidget {
         height: 24,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: on ? c.primary : off, width: on ? 7 : 2),
+          border: Border.all(
+            color: on ? c.primarySmall : off,
+            width: on ? 7 : 2,
+          ),
         ),
       );
     }
@@ -975,9 +944,9 @@ class KitTickBox extends StatelessWidget {
       width: 24,
       height: 24,
       decoration: BoxDecoration(
-        color: on ? c.primary : c.bg,
+        color: on ? c.primarySmall : c.bg,
         borderRadius: BorderRadius.circular(radius ?? 8),
-        border: Border.all(color: on ? c.primary : off, width: 2),
+        border: Border.all(color: on ? c.primarySmall : off, width: 2),
       ),
       alignment: Alignment.center,
       child: on
@@ -1032,34 +1001,17 @@ class KitChoiceRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: OgText.body(
-                        15,
-                        weight: FontWeight.w600,
-                        color: c.text,
-                      ),
-                    ),
+                    Text(title, style: context.type.body),
                     if (subtitle != null && subtitle!.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
+                      Text(subtitle!, style: context.type.caption),
                     ],
                   ],
                 ),
               ),
               if (tag != null && tag!.isNotEmpty) ...[
                 const SizedBox(width: 12),
-                Text(
-                  tag!,
-                  style: OgText.body(
-                    13,
-                    weight: FontWeight.w600,
-                    color: c.textMuted,
-                  ),
-                ),
+                Text(tag!, style: context.type.caption),
               ],
               const SizedBox(width: 12),
               KitTickBox(on: selected, multi: multi),
@@ -1109,12 +1061,7 @@ class KitConfirmBox extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w600,
-                    height: 1.35,
-                    color: c.text,
-                  ),
+                  style: context.type.body.copyWith(height: 1.35),
                 ),
               ),
             ],
@@ -1172,9 +1119,7 @@ class KitUnderlineTabs extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             labels[i],
-            style: OgText.body(
-              15,
-              weight: on ? FontWeight.w700 : FontWeight.w600,
+            style: context.type.button.copyWith(
               color: on ? c.text : c.textMuted,
             ),
           ),
@@ -1217,7 +1162,6 @@ class KitSegments extends StatelessWidget {
     required this.onSelect,
     this.height = 44,
     this.radius = 16,
-    this.fontSize = 15,
     this.track,
     this.children,
   });
@@ -1227,7 +1171,6 @@ class KitSegments extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final double height;
   final double radius;
-  final double fontSize;
   final Color? track;
 
   /// Custom segment content (icons), one per label.
@@ -1275,9 +1218,7 @@ class KitSegments extends StatelessWidget {
                       children?[i] ??
                       Text(
                         labels[i],
-                        style: OgText.body(
-                          fontSize,
-                          weight: FontWeight.w600,
+                        style: context.type.button.copyWith(
                           color: i == selected ? c.text : c.textMuted,
                         ),
                       ),
@@ -1326,7 +1267,6 @@ class SolidAvatar extends StatelessWidget {
     required this.color,
     this.ink = Colors.white,
     this.size = 44,
-    this.fontSize,
     this.ring,
   });
 
@@ -1335,7 +1275,6 @@ class SolidAvatar extends StatelessWidget {
     super.key,
     required this.initials,
     this.size = 44,
-    this.fontSize,
     this.ring,
   }) : color = Faces.forId(id).$1,
        ink = Faces.forId(id).$2;
@@ -1344,7 +1283,6 @@ class SolidAvatar extends StatelessWidget {
   final Color color;
   final Color ink;
   final double size;
-  final double? fontSize;
   final Color? ring;
 
   @override
@@ -1361,11 +1299,7 @@ class SolidAvatar extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           initials,
-          style: OgText.body(
-            fontSize ?? (size >= 56 ? 17 : (size >= 40 ? 14 : 12)),
-            weight: FontWeight.w600,
-            color: ink,
-          ),
+          style: context.type.initials(size).copyWith(color: ink),
         ),
       ),
     );
@@ -1381,7 +1315,6 @@ class ClubLogo extends StatelessWidget {
     required this.ink,
     this.size = 56,
     this.radius = 18,
-    this.fontSize,
     this.border,
   });
 
@@ -1390,7 +1323,6 @@ class ClubLogo extends StatelessWidget {
   final Color ink;
   final double size;
   final double radius;
-  final double? fontSize;
   final Color? border;
 
   @override
@@ -1407,7 +1339,7 @@ class ClubLogo extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           initials,
-          style: OgText.heading(fontSize ?? size * 0.4, color: ink),
+          style: context.type.initials(size).copyWith(color: ink),
         ),
       ),
     );
@@ -1535,18 +1467,11 @@ class KitNavTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: OgText.body(
-                        16,
-                        weight: FontWeight.w600,
-                        color: titleColor,
-                      ),
+                      style: context.type.body.copyWith(color: titleColor),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: OgText.body(13, color: c.textMuted),
-                      ),
+                      Text(subtitle!, style: context.type.caption),
                     ],
                   ],
                 ),
@@ -1573,7 +1498,7 @@ class KitMuted extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(text, style: OgText.body(size, color: context.og.textMuted));
+      Text(text, style: context.type.secondary);
 }
 
 // ─── Fields ────────────────────────────────────────────────────────────────
@@ -1613,7 +1538,7 @@ class KitInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(label, style: OgText.body(15, weight: FontWeight.w600)),
+        Text(label, style: context.type.caption),
         const SizedBox(height: 6),
         _KitField(
           controller: controller,
@@ -1637,7 +1562,7 @@ class KitInput extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   '${value.text.length}/$maxLength',
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ),
             ),
@@ -1679,17 +1604,10 @@ class KitTextArea extends StatelessWidget {
         Text.rich(
           TextSpan(
             text: label,
-            style: OgText.body(15, weight: FontWeight.w600),
+            style: context.type.caption,
             children: [
               if (optional)
-                TextSpan(
-                  text: ' (optional)',
-                  style: OgText.body(
-                    15,
-                    weight: FontWeight.w500,
-                    color: c.textMuted,
-                  ),
-                ),
+                TextSpan(text: ' (optional)', style: context.type.caption),
             ],
           ),
         ),
@@ -1701,7 +1619,6 @@ class KitTextArea extends StatelessWidget {
           initialValue: initialValue,
           onChanged: onChanged,
           border: c.border,
-          fontSize: 15,
           background: background,
           semanticLabel: label,
         ),
@@ -1723,7 +1640,6 @@ class _KitField extends StatelessWidget {
     this.lines = 1,
     required this.border,
     this.borderWidth = 1,
-    this.fontSize = 16,
     this.background,
     required this.semanticLabel,
   });
@@ -1739,7 +1655,6 @@ class _KitField extends StatelessWidget {
   final int lines;
   final Color border;
   final double borderWidth;
-  final double fontSize;
   final Color? background;
   final String semanticLabel;
 
@@ -1760,11 +1675,11 @@ class _KitField extends StatelessWidget {
       maxLines: lines > 1 ? lines + 3 : 1,
       maxLength: maxLength,
       onTapOutside: (_) => FocusScope.of(context).unfocus(),
-      style: OgText.body(fontSize, height: 1.45, color: c.text),
+      style: context.type.body.copyWith(height: 1.45),
       cursorColor: c.primary,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: OgText.body(fontSize, color: c.textMuted),
+        hintStyle: context.type.tertiary,
         counterText: '',
         filled: true,
         fillColor: background ?? c.bg,
@@ -1836,11 +1751,11 @@ class KitSearchField extends StatelessWidget {
               onChanged: onChanged,
               onTapOutside: (_) => FocusScope.of(context).unfocus(),
               textInputAction: TextInputAction.search,
-              style: OgText.body(soft ? 15 : 16, color: c.text),
+              style: context.type.body,
               cursorColor: c.primary,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: OgText.body(soft ? 15 : 16, color: c.textMuted),
+                hintStyle: context.type.tertiary,
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -2092,7 +2007,10 @@ class KitDoneBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Text(title, style: OgText.heading(50, color: c.onInverseCard)),
+            Text(
+              title,
+              style: context.type.display.copyWith(color: c.onInverseCard),
+            ),
           ],
         ),
       ),
@@ -2124,8 +2042,8 @@ class KitQty extends StatelessWidget {
       semanticLabel: what,
       onPressed: tap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -2143,7 +2061,7 @@ class KitQty extends StatelessWidget {
           child: Text(
             '$value',
             textAlign: TextAlign.center,
-            style: OgText.heading(18),
+            style: context.type.body,
           ),
         ),
         button(CupertinoIcons.plus, 'Raise $label', onMore),

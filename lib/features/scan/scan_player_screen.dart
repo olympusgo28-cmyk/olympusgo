@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/og_colors.dart';
-import '../../core/theme/og_text.dart';
+import '../../core/theme/og_type.dart';
 import '../../core/widgets/avatar.dart';
 import '../../core/widgets/og_buttons.dart';
 import '../../core/widgets/og_screen.dart';
@@ -73,17 +73,10 @@ class ScanPlayerScreen extends ConsumerWidget {
                   tone: AvatarTone.forId(detail.player.id),
                   imageUrl: detail.player.avatarUrl,
                   size: 96,
-                  fontSize: 34,
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  detail.player.displayName,
-                  style: OgText.display(26, color: c.text),
-                ),
-                Text(
-                  detail.player.handle,
-                  style: OgText.body(15, color: c.textMuted),
-                ),
+                Text(detail.player.displayName, style: context.type.title),
+                Text(detail.player.handle, style: context.type.secondary),
                 if (detail.showLevel && detail.sports.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Wrap(
@@ -102,11 +95,7 @@ class ScanPlayerScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             '${Sport.fromId(s.sport).label} ${s.level.toStringAsFixed(1)}',
-                            style: OgText.body(
-                              14,
-                              weight: FontWeight.w600,
-                              color: c.text,
-                            ),
+                            style: context.type.body,
                           ),
                         ),
                     ],
@@ -130,14 +119,12 @@ class ScanPlayerScreen extends ConsumerWidget {
           OgButton.outline(
             label: 'View profile',
             height: 52,
-            fontSize: 18,
             onPressed: () => context.push(Routes.player(detail.player.id)),
           ),
           const SizedBox(height: 10),
           OgButton.outline(
             label: 'Message',
             height: 52,
-            fontSize: 18,
             onPressed: () =>
                 context.push(Routes.messagePlayer(detail.player.id)),
           ),

@@ -28,4 +28,44 @@ void main() {
     expect(matchDecided([(21, 15), (21, 18), (21, 17)]), isFalse);
     expect(matchDecided([(21, 15), (21, 20)]), isFalse);
   });
+
+  test('pickleball games end at 11 with 2 clear', () {
+    const p = ScoringPreset.pickleball;
+    expect(gameWinner(11, 5, p), 1);
+    expect(gameWinner(10, 12, p), 2);
+    expect(gameWinner(11, 10, p), -1);
+    expect(matchDecided([(11, 5), (11, 7)], p), isTrue);
+  });
+
+  test('junior badminton is 15 points, capped at 21', () {
+    final p = ScoringPreset.fromJson({
+      'points_to_win': 15,
+      'win_by': 2,
+      'cap': 21,
+      'best_of': 3,
+    });
+    expect(gameWinner(15, 9, p), 1);
+    expect(gameWinner(21, 20, p), 1);
+    expect(gameWinner(15, 14, p), -1);
+    expect(scoringHint(p), 'A game is won at 15 with 2 clear, or at 21.');
+  });
+
+  test('a format with no rules only refuses a level game', () {
+    final p = ScoringPreset.fromJson(const {});
+    expect(gameWinner(7, 3, p), 1);
+    expect(gameWinner(5, 5, p), -1);
+    expect(scoringHint(p), "A game can't end level.");
+  });
+
+  test('a score key is a version 4 id and differs each time', () {
+    expect(
+      newClientKey(),
+      matches(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+    expect(newClientKey(), isNot(newClientKey()));
+  });
 }

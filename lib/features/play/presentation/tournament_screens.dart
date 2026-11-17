@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/format.dart';
@@ -12,12 +11,11 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/share.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/widgets/og_toast.dart';
-import '../../../core/widgets/pay_sheet.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../social/application/social_providers.dart';
@@ -96,7 +94,10 @@ class CompetitionBanner extends StatelessWidget {
                         a.coverTitle ?? a.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: OgText.heading(34, color: ink, height: 1.0),
+                        style: context.type.display.copyWith(
+                          color: ink,
+                          height: 1.0,
+                        ),
                       ),
                     ),
                   ],
@@ -306,11 +307,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
             Expanded(
               child: Text(
                 "You're in",
-                style: OgText.body(
-                  16,
-                  weight: FontWeight.w700,
-                  color: tones.successInk,
-                ),
+                style: context.type.body.copyWith(color: tones.successInk),
               ),
             ),
             KitButton(
@@ -330,13 +327,13 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                     t.fromCents == 0
                         ? 'Free'
                         : 'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)}',
-                    style: OgText.heading(20),
+                    style: context.type.section,
                   ),
                   Text(
                     t.fromCents == 0
                         ? 'No entry fee'
                         : 'per entry · plus platform fee',
-                    style: OgText.body(12, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
@@ -385,7 +382,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                     if (closes != null)
                       Text(
                         'Closes ${Fmt.day(closes)}',
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                   ],
                 ),
@@ -394,14 +391,14 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                   t.fromCents == 0
                       ? 'Free to enter'
                       : 'From S\$${money(t.fromCents, decimals: t.fromCents % 100 != 0)} per entry',
-                  style: OgText.heading(22),
+                  style: context.type.section,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${t.fromCents == 0 ? '' : 'Plus a platform fee of 10% (minimum S\$2) per entry. '}'
                   'Enter up to ${t.maxEvents} events. Doubles need a partner '
                   'who accepts before the close date.',
-                  style: OgText.body(14, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
                 const SizedBox(height: 12),
                 KitButton(
@@ -429,9 +426,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                   ?mine.group,
                   if (mine.seed != null) 'Seed ${mine.seed}',
                 ].join(' · '),
-                style: OgText.body(
-                  13,
-                  weight: FontWeight.w800,
+                style: context.type.caption.copyWith(
                   color: tones.onSuccessFill,
                 ),
               ),
@@ -440,7 +435,9 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 mine.partner == null
                     ? mine.divisionName
                     : '${mine.divisionName} with ${mine.partner!.displayName}',
-                style: OgText.heading(20, color: tones.onSuccessFill),
+                style: context.type.section.copyWith(
+                  color: tones.onSuccessFill,
+                ),
               ),
               if (mine.firstMatchAt != null) ...[
                 const SizedBox(height: 6),
@@ -448,10 +445,9 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                   'First match ${Fmt.dayTimeComma(mine.firstMatchAt!)}'
                   '${mine.firstCourt == null ? '' : ' · ${mine.firstCourt}'}. '
                   'Check in by ${Fmt.time(mine.firstMatchAt!.subtract(const Duration(minutes: 30)))}.',
-                  style: OgText.body(
-                    14,
-                    height: 1.4,
+                  style: context.type.body.copyWith(
                     color: tones.onSuccessFill,
+                    height: 1.4,
                   ),
                 ),
               ] else ...[
@@ -459,10 +455,9 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
                 Text(
                   'You get the draw and your first match time once '
                   'registration closes.',
-                  style: OgText.body(
-                    14,
-                    height: 1.4,
+                  style: context.type.body.copyWith(
                     color: tones.onSuccessFill,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -478,11 +473,11 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
             ],
           ),
         ),
-      Text('Events', style: OgText.heading(20)),
+      Text('Events', style: context.type.section),
       KitCard(
         children: [for (final d in t.divisions) _DivisionRow(division: d)],
       ),
-      Text('Format and rules', style: OgText.heading(20)),
+      Text('Format and rules', style: context.type.section),
       Column(
         children: [
           KitKeyValue('Draw', t.drawFormat),
@@ -510,7 +505,7 @@ class _TournamentPageScreenState extends ConsumerState<TournamentPageScreen> {
             subtitle: Env.hasSupabase ? 'Organizer' : 'Organizer · Verified',
             trailing: Text(
               'Contact',
-              style: OgText.body(14, weight: FontWeight.w700, color: c.link),
+              style: context.type.button.copyWith(color: c.link),
             ),
             onTap: () => context.push(
               a.clubId != null
@@ -577,11 +572,14 @@ class _IdentityCard extends StatelessWidget {
           ),
           Semantics(
             header: true,
-            child: Text(a.title, style: OgText.heading(24, height: 1.15)),
+            child: Text(
+              a.title,
+              style: context.type.title.copyWith(height: 1.15),
+            ),
           ),
           Text(
             'Hosted by ${info.host}',
-            style: OgText.body(14, weight: FontWeight.w600, color: t.onTag),
+            style: context.type.body.copyWith(color: t.onTag),
           ),
           _Line(icon: OgIcons.calendarBox, text: tournamentDates(a)),
           _Line(
@@ -624,11 +622,7 @@ class _Line extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: OgText.body(
-              14,
-              weight: link ? FontWeight.w700 : FontWeight.w500,
-              color: link ? c.link : c.text,
-            ),
+            style: context.type.body.copyWith(color: link ? c.link : c.text),
           ),
         ),
         if (link) OgIcon(OgIcons.chevronRight, size: 16, color: c.link),
@@ -679,7 +673,6 @@ class _InviteCardState extends ConsumerState<_InviteCard> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final inv = widget.invite;
     return KitCard(
       padding: const EdgeInsets.all(16),
@@ -690,7 +683,6 @@ class _InviteCardState extends ConsumerState<_InviteCard> {
               inv.from.id,
               initials: inv.from.initials,
               size: 44,
-              fontSize: 15,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -699,12 +691,9 @@ class _InviteCardState extends ConsumerState<_InviteCard> {
                 children: [
                   Text(
                     '${inv.from.displayName} asked you to partner them',
-                    style: OgText.body(15, weight: FontWeight.w700),
+                    style: context.type.body,
                   ),
-                  Text(
-                    inv.divisionName,
-                    style: OgText.body(13, color: c.textMuted),
-                  ),
+                  Text(inv.divisionName, style: context.type.caption),
                 ],
               ),
             ),
@@ -753,12 +742,7 @@ class _DivisionRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  d.name,
-                  style: OgText.body(15, weight: FontWeight.w700),
-                ),
-              ),
+              Expanded(child: Text(d.name, style: context.type.body)),
               KitTag(
                 d.full ? 'Full · waitlist' : '${d.left} spots left',
                 background: d.full ? t.dangerFill : t.successFill,
@@ -769,7 +753,7 @@ class _DivisionRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${d.entries} of ${d.capacity} entries · ${d.priceLine}',
-            style: OgText.body(13, color: c.textMuted),
+            style: context.type.caption,
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -804,7 +788,6 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final info = widget.info;
     final id = info.activity.id;
@@ -844,12 +827,12 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('The draw is not out yet', style: OgText.heading(20)),
+                  Text('The draw is not out yet', style: context.type.section),
                   const SizedBox(height: 6),
                   Text(
                     'It is made the day after registration closes. Every '
                     'entrant is told their group and first match.',
-                    style: OgText.body(14, height: 1.45, color: c.textMuted),
+                    style: context.type.secondary.copyWith(height: 1.45),
                   ),
                 ],
               ),
@@ -882,15 +865,11 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                       children: [
                         Text(
                           'COURT',
-                          style: OgText.body(
-                            9,
-                            weight: FontWeight.w800,
-                            color: t.onGold,
-                          ),
+                          style: context.type.caption.copyWith(color: t.onGold),
                         ),
                         Text(
                           next.court.replaceAll('Court ', ''),
-                          style: OgText.heading(20, color: t.onGold),
+                          style: context.type.section.copyWith(color: t.onGold),
                         ),
                       ],
                     ),
@@ -902,16 +881,13 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                       children: [
                         Text(
                           'Your next match · ${Fmt.dayTimeComma(next.at)}',
-                          style: OgText.body(
-                            12,
+                          style: context.type.caption.copyWith(
                             color: const Color(0xFFC9C6BC),
                           ),
                         ),
                         Text(
                           'You${info.mine?.partner == null ? '' : ' / ${info.mine!.partner!.displayName}'} vs ${next.opponent.replaceAll(' and ', ' / ')}',
-                          style: OgText.body(
-                            15,
-                            weight: FontWeight.w700,
+                          style: context.type.body.copyWith(
                             color: Colors.white,
                           ),
                         ),
@@ -933,10 +909,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                     true,
               )
           else if (rounds != null) ...[
-            Text(
-              'Swipe to see the final',
-              style: OgText.body(13, color: c.textMuted),
-            ),
+            Text('Swipe to see the final', style: context.type.caption),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -948,10 +921,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            r.name,
-                            style: OgText.body(13, weight: FontWeight.w800),
-                          ),
+                          Text(r.name, style: context.type.caption),
                           const SizedBox(height: 8),
                           for (final m in r.matches) ...[
                             _KoCard(match: m),
@@ -970,7 +940,7 @@ class _DrawTabState extends ConsumerState<_DrawTab> {
             Env.hasSupabase
                 ? 'Scores show as soon as the umpire enters them. Pull down to refresh.'
                 : 'Scores update live once the umpire or both sides confirm.',
-            style: OgText.body(13, height: 1.4, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.4),
           ),
         ],
       ], 14),
@@ -988,8 +958,7 @@ class _GroupTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.og;
     final t = context.tones;
-    TextStyle head() =>
-        OgText.body(12, weight: FontWeight.w700, color: c.textMuted);
+    TextStyle head() => context.type.caption;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
@@ -1003,16 +972,8 @@ class _GroupTable extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    group.name,
-                    style: OgText.body(15, weight: FontWeight.w800),
-                  ),
-                ),
-                Text(
-                  'Top 2 go through',
-                  style: OgText.body(12, color: c.textMuted),
-                ),
+                Expanded(child: Text(group.name, style: context.type.body)),
+                Text('Top 2 go through', style: context.type.caption),
               ],
             ),
           ),
@@ -1056,10 +1017,7 @@ class _GroupTable extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: 22,
-                    child: Text(
-                      '${r.pos}',
-                      style: OgText.body(14, weight: FontWeight.w700),
-                    ),
+                    child: Text('${r.pos}', style: context.type.body),
                   ),
                   Expanded(
                     child: Column(
@@ -1072,7 +1030,7 @@ class _GroupTable extends StatelessWidget {
                                 r.names,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: OgText.body(14, weight: FontWeight.w700),
+                                style: context.type.body,
                               ),
                             ),
                             if (r.mine) ...[
@@ -1080,7 +1038,6 @@ class _GroupTable extends StatelessWidget {
                               KitTag(
                                 'YOU',
                                 height: 20,
-                                fontSize: 10,
                                 background: t.onSuccessFill,
                                 foreground: Colors.white,
                               ),
@@ -1089,7 +1046,7 @@ class _GroupTable extends StatelessWidget {
                         ),
                         Text(
                           'Seed ${r.seed} · avg ${r.rating.toStringAsFixed(1)}',
-                          style: OgText.body(12, color: c.textMuted),
+                          style: context.type.caption,
                         ),
                       ],
                     ),
@@ -1099,7 +1056,7 @@ class _GroupTable extends StatelessWidget {
                     child: Text(
                       '${r.wins}–${r.losses}',
                       textAlign: TextAlign.center,
-                      style: OgText.body(14),
+                      style: context.type.body,
                     ),
                   ),
                   SizedBox(
@@ -1107,7 +1064,7 @@ class _GroupTable extends StatelessWidget {
                     child: Text(
                       '${r.points}',
                       textAlign: TextAlign.end,
-                      style: OgText.body(14, weight: FontWeight.w700),
+                      style: context.type.body,
                     ),
                   ),
                 ],
@@ -1140,17 +1097,12 @@ class _KoCard extends StatelessWidget {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: OgText.body(
-                13,
-                weight: win ? FontWeight.w700 : FontWeight.w500,
+              style: context.type.caption.copyWith(
                 color: win ? c.text : c.textMuted,
               ),
             ),
           ),
-          Text(
-            score == null ? '' : '$score',
-            style: OgText.body(13, weight: FontWeight.w700),
-          ),
+          Text(score == null ? '' : '$score', style: context.type.caption),
         ],
       ),
     );
@@ -1173,7 +1125,7 @@ class _KoCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(m.when, style: OgText.body(11, color: c.textMuted)),
+        Text(m.when, style: context.type.caption),
       ],
     );
   }
@@ -1187,7 +1139,6 @@ class _MatchesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final a = info.activity;
     final mine = info.mine!;
@@ -1206,17 +1157,13 @@ class _MatchesTab extends ConsumerWidget {
           children: [
             Text(
               [mine.divisionName, ?mine.group].join(' · '),
-              style: OgText.body(
-                13,
-                weight: FontWeight.w700,
-                color: c.textMuted,
-              ),
+              style: context.type.caption,
             ),
             Text(
               mine.partner == null
                   ? 'You'
                   : 'You and ${mine.partner!.displayName}',
-              style: OgText.heading(22),
+              style: context.type.section,
             ),
           ],
         ),
@@ -1239,9 +1186,7 @@ class _MatchesTab extends ConsumerWidget {
                   next.state == MatchState.called
                       ? 'NEXT MATCH · CALLED TO COURT'
                       : 'NEXT MATCH',
-                  style: OgText.body(
-                    12,
-                    weight: FontWeight.w800,
+                  style: context.type.caption.copyWith(
                     color: t.gold,
                     letterSpacing: 0.8,
                   ),
@@ -1249,11 +1194,13 @@ class _MatchesTab extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${next.court}, ${Fmt.time(next.at)}',
-                  style: OgText.heading(26, color: Colors.white),
+                  style: context.type.title.copyWith(color: Colors.white),
                 ),
                 Text(
                   'vs ${next.opponent} · best of 3 games to 21',
-                  style: OgText.body(14, color: const Color(0xFFC9C6BC)),
+                  style: context.type.body.copyWith(
+                    color: const Color(0xFFC9C6BC),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Row(
@@ -1287,7 +1234,7 @@ class _MatchesTab extends ConsumerWidget {
           Text(
             'The umpire enters each score and it is final. Your rating updates '
             'after every match. Top 2 in the group go to the semi-finals.',
-            style: OgText.body(13, height: 1.45, color: c.textMuted),
+            style: context.type.caption.copyWith(height: 1.45),
           ),
         if (matches.isNotEmpty)
           KitButton(
@@ -1338,21 +1285,18 @@ class MatchRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'vs ${m.opponent}',
-                  style: OgText.body(15, weight: FontWeight.w700),
-                ),
+                Text('vs ${m.opponent}', style: context.type.body),
                 Text(
                   showDay
                       ? '${const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][m.at.weekday - 1]}, ${m.stage} · ${m.court}'
                       : '${Fmt.time(m.at)} · ${m.court}',
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
             ),
           ),
           if (m.score != null) ...[
-            Text(m.score!, style: OgText.body(14, weight: FontWeight.w700)),
+            Text(m.score!, style: context.type.body),
             const SizedBox(width: 10),
           ],
           KitTag(label, background: bg, foreground: fg),
@@ -1382,31 +1326,13 @@ class _TournamentRegisterScreenState
 
   Future<void> _pay(TournamentInfo t, int entry, int fee) async {
     final a = t.activity;
-    final picked = t.divisions.where((d) => _picked.contains(d.id)).toList();
     if (entry > 0) {
-      final method = await showPaySheet(
+      showOgToast(
         context,
-        kicker: 'Register',
-        title: a.title,
-        subtitle:
-            '${picked.length} ${picked.length == 1 ? 'event' : 'events'} · ${tournamentDates(a)}',
-        lines: [
-          for (final d in picked)
-            d.full
-                ? ('${d.name} (waitlist)', 'Charged if a spot opens')
-                : (d.name, 'S\$${money(d.feeCents)}'),
-          if (fee > 0) ('Platform fee', 'S\$${money(fee)}'),
-        ],
-        totalCents: entry + fee,
-        payee: t.host,
-        notes: [
-          'Withdraw before registration closes: all of it back to your '
-              'Wallet, or the entry fee to your card. The platform fee is not '
-              'returned to a card.',
-          'You earn ${fee ~/ 50} points after you check in.',
-        ],
+        'Paid tournament entries aren’t open yet. They open once payments are '
+        'switched on.',
       );
-      if (method == null || !mounted) return;
+      return;
     }
     setState(() => _busy = true);
     try {
@@ -1460,7 +1386,7 @@ class _TournamentRegisterScreenState
                         'match time once registration closes.'
                   : 'You’ll get the draw and your first match time once '
                         'registration closes.',
-              style: OgText.body(15, height: 1.45, color: c.textMuted),
+              style: context.type.secondary.copyWith(height: 1.45),
             ),
           ),
         ],
@@ -1501,11 +1427,11 @@ class _TournamentRegisterScreenState
             Row(
               children: [
                 Expanded(
-                  child: Text('Choose events', style: OgText.heading(20)),
+                  child: Text('Choose events', style: context.type.section),
                 ),
                 Text(
                   '${picked.length} of ${info.maxEvents}',
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
             ),
@@ -1535,7 +1461,7 @@ class _TournamentRegisterScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Doubles partner', style: OgText.heading(20)),
+              Text('Doubles partner', style: context.type.section),
               const SizedBox(height: 4),
               if (_partner != null) ...[
                 Container(
@@ -1550,7 +1476,6 @@ class _TournamentRegisterScreenState
                         _partner!.player.id,
                         initials: _partner!.player.initials,
                         size: 40,
-                        fontSize: 14,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1559,11 +1484,11 @@ class _TournamentRegisterScreenState
                           children: [
                             Text(
                               _partner!.player.displayName,
-                              style: OgText.body(15, weight: FontWeight.w700),
+                              style: context.type.body,
                             ),
                             Text(
                               'Invite sent when you pay${closes == null ? '' : ' · must accept by ${Fmt.day(closes)}'}',
-                              style: OgText.body(13, color: c.textMuted),
+                              style: context.type.caption,
                             ),
                           ],
                         ),
@@ -1578,7 +1503,7 @@ class _TournamentRegisterScreenState
               ] else ...[
                 Text(
                   "Suggested · players you've played with in range",
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
                 if (partners.isEmpty)
                   Padding(
@@ -1586,7 +1511,7 @@ class _TournamentRegisterScreenState
                     child: Text(
                       'No suggestions yet. Ask your partner to register, or '
                       'play a few Meets together first.',
-                      style: OgText.body(14, color: c.textMuted),
+                      style: context.type.secondary,
                     ),
                   ),
                 for (final p in partners)
@@ -1598,7 +1523,6 @@ class _TournamentRegisterScreenState
                           p.player.id,
                           initials: p.player.initials,
                           size: 40,
-                          fontSize: 14,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1607,12 +1531,9 @@ class _TournamentRegisterScreenState
                             children: [
                               Text(
                                 p.player.displayName,
-                                style: OgText.body(15, weight: FontWeight.w700),
+                                style: context.type.body,
                               ),
-                              Text(
-                                p.meta,
-                                style: OgText.body(13, color: c.textMuted),
-                              ),
+                              Text(p.meta, style: context.type.caption),
                             ],
                           ),
                         ),
@@ -1621,7 +1542,6 @@ class _TournamentRegisterScreenState
                           expand: false,
                           height: 40,
                           radius: 20,
-                          fontSize: 14,
                           style: KitButtonStyle.outline,
                           onPressed: () => setState(() => _partner = p),
                         ),
@@ -1634,13 +1554,13 @@ class _TournamentRegisterScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Eligibility', style: OgText.heading(20)),
+            Text('Eligibility', style: context.type.section),
             const SizedBox(height: 4),
             KitKeyValue(
               'Verified account',
               _mobileVerified
                   ? 'Mobile verified'
-                  : 'Add your mobile in Account Centre',
+                  : 'Add your mobile in Account information',
             ),
             KitKeyValue(
               'Level in range',
@@ -1674,11 +1594,11 @@ class _TournamentRegisterScreenState
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text('Total', style: OgText.heading(18)),
+                          child: Text('Total', style: context.type.section),
                         ),
                         Text(
                           'S\$${money(entry + fee)}',
-                          style: OgText.heading(18),
+                          style: context.type.section,
                         ),
                       ],
                     ),
@@ -1691,11 +1611,10 @@ class _TournamentRegisterScreenState
           entry == 0
               ? 'Free to enter. Withdraw any time before registration closes. '
                     'Doubles entries are confirmed when your partner says yes.'
-              : 'Withdraw before registration closes: all of it back to your Wallet, '
-                    'or the entry fee to your card. If your partner declines, you get '
-                    'all of it back. Nothing is charged until you confirm on the next '
-                    'step.',
-          style: OgText.body(13, height: 1.45, color: c.textMuted),
+              : 'Withdraw before registration closes: the entry fee back to how '
+                    'you paid. If your partner declines, you get all of it back. '
+                    'Nothing is charged until you confirm on the next step.',
+          style: context.type.caption.copyWith(height: 1.45),
         ),
       ],
     );
@@ -1722,7 +1641,6 @@ class TournamentWithdrawScreen extends ConsumerStatefulWidget {
 class _TournamentWithdrawScreenState
     extends ConsumerState<TournamentWithdrawScreen> {
   String? _why;
-  bool _toWallet = true;
   bool _busy = false;
   int? _refunded;
 
@@ -1731,7 +1649,7 @@ class _TournamentWithdrawScreenState
     try {
       final back = await ref
           .read(tournamentRepositoryProvider)
-          .withdraw(id, toWallet: _toWallet, injury: _why == 'injury');
+          .withdraw(id, injury: _why == 'injury');
       HapticFeedback.mediumImpact();
       refreshCompetition(ref.invalidate);
       refreshPlay(ref.invalidate);
@@ -1745,7 +1663,6 @@ class _TournamentWithdrawScreenState
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final info = ref.watch(tournamentInfoProvider(widget.activityId)).value;
     final partner = info?.mine?.partner?.displayName.split(' ').first;
     if (_refunded case final back?) {
@@ -1767,16 +1684,15 @@ class _TournamentWithdrawScreenState
               children: [
                 Text(
                   back > 0 ? 'S\$${money(back)} refunded' : 'No refund',
-                  style: OgText.heading(24),
+                  style: context.type.title,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   [
-                    if (back > 0)
-                      'It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}.',
+                    if (back > 0) 'It goes back to how you paid.',
                     if (partner != null) '$partner has been told.',
                   ].join(' '),
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -1797,7 +1713,7 @@ class _TournamentWithdrawScreenState
     final refundable = open || _why == 'injury';
     final back = !refundable
         ? 0
-        : (_toWallet ? mine.paidCents : mine.entryCents);
+        : (_why == 'injury' ? mine.paidCents : mine.entryCents);
     return KitScaffold(
       header: const KitHeader(title: 'Withdraw'),
       bottom: [
@@ -1827,7 +1743,7 @@ class _TournamentWithdrawScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Why are you withdrawing?', style: OgText.heading(20)),
+            Text('Why are you withdrawing?', style: context.type.section),
             const SizedBox(height: 6),
             for (final (key, title, sub) in const [
               (
@@ -1851,25 +1767,11 @@ class _TournamentWithdrawScreenState
           ],
         ),
         if (refundable && mine.paidCents > 0)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Where should the refund go?', style: OgText.heading(20)),
-              const SizedBox(height: 6),
-              KitChoiceRow(
-                title: 'Wallet',
-                subtitle: 'All S\$${money(mine.paidCents)} · instant',
-                selected: _toWallet,
-                onTap: () => setState(() => _toWallet = true),
-              ),
-              KitChoiceRow(
-                title: 'Card',
-                subtitle:
-                    'S\$${money(mine.entryCents)} · the S\$${money(mine.feeCents)} platform fee stays · 3 to 5 working days',
-                selected: !_toWallet,
-                onTap: () => setState(() => _toWallet = false),
-              ),
-            ],
+          Text(
+            _why == 'injury'
+                ? 'With a medical note you get all of it back.'
+                : 'The S\$${money(mine.feeCents)} platform fee is not returned.',
+            style: context.type.secondary.copyWith(height: 1.45),
           )
         else if (!refundable)
           const KitNote(
@@ -1883,7 +1785,7 @@ class _TournamentWithdrawScreenState
             '${mine.partner!.displayName.split(' ').first} is told and can find another '
             'partner until registration closes. After that the pair is '
             'withdrawn.',
-            style: OgText.body(14, height: 1.45, color: c.textMuted),
+            style: context.type.secondary.copyWith(height: 1.45),
           ),
       ],
     );
@@ -1924,7 +1826,7 @@ class TournamentResultsScreen extends ConsumerWidget {
             result.podium[place - 1],
             textAlign: TextAlign.center,
             maxLines: 2,
-            style: OgText.body(13, weight: FontWeight.w700),
+            style: context.type.caption,
           ),
           const SizedBox(height: 6),
           Container(
@@ -1938,7 +1840,7 @@ class TournamentResultsScreen extends ConsumerWidget {
                 top: Radius.circular(14),
               ),
             ),
-            child: Text('$place', style: OgText.heading(28)),
+            child: Text('$place', style: context.type.score),
           ),
         ],
       ),
@@ -1972,19 +1874,22 @@ class TournamentResultsScreen extends ConsumerWidget {
             children: [
               Text(
                 'You finished ${result.place < ord.length ? ord[result.place] : '${result.place}th'}',
-                style: OgText.heading(22, color: t.onSuccessFill),
+                style: context.type.section.copyWith(color: t.onSuccessFill),
               ),
               const SizedBox(height: 4),
               Text(
                 '${result.wins} ${result.wins == 1 ? 'win' : 'wins'}, ${result.losses} ${result.losses == 1 ? 'loss' : 'losses'}.'
                 '${result.ratingFrom == null ? '' : ' Your rating moved from ${result.ratingFrom!.toStringAsFixed(1)} to ${result.ratingTo!.toStringAsFixed(1)}'}'
                 '${result.points > 0 ? ' and you earned ${result.points} points.' : '.'}',
-                style: OgText.body(14, height: 1.45, color: t.onSuccessFill),
+                style: context.type.body.copyWith(
+                  color: t.onSuccessFill,
+                  height: 1.45,
+                ),
               ),
             ],
           ),
         ),
-        Text('Your matches', style: OgText.heading(20)),
+        Text('Your matches', style: context.type.section),
         KitCard(
           children: [
             for (final m in result.matches) MatchRow(match: m, showDay: true),
@@ -2000,7 +1905,5 @@ class TournamentResultsScreen extends ConsumerWidget {
   }
 }
 
-/// Whether the player has a verified mobile number. Demo players have one.
-bool get _mobileVerified =>
-    !Env.hasSupabase ||
-    (Supabase.instance.client.auth.currentUser?.phone ?? '').isNotEmpty;
+/// Every account that can reach this screen has a verified mobile.
+const _mobileVerified = true;

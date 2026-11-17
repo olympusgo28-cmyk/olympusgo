@@ -64,6 +64,7 @@ abstract final class OgIcons {
   static const location =
       '<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>';
   static const plus = '<path d="M12 5v14M5 12h14"/>';
+  static const minus = '<path d="M5 12h14"/>';
   static const cart =
       '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2.5l2.2 11h10.3l2-8H6.5"/>';
   static const star =
@@ -106,6 +107,8 @@ abstract final class OgIcons {
       '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8M9 5h3"/>';
 
   // Club, team and shop artboards (phase 3).
+  static const video =
+      '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3"/>';
   static const arrowBack = '<path d="M19 12H5M11 6l-6 6 6 6"/>';
   static const close = '<path d="M6 6l12 12M18 6L6 18"/>';
   static const closeSmall = '<path d="M7 7l10 10M17 7L7 17"/>';
@@ -141,6 +144,10 @@ abstract final class OgIcons {
   static const bookmarkTall = '<path d="M6 3.5h12v17l-6-4.2-6 4.2z"/>';
   static const calendarBox =
       '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>';
+
+  /// A court seen from above, with the net across the middle.
+  static const court =
+      '<rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M12 4v16M7.5 5.5v13M16.5 5.5v13M7.5 12h9"/>';
   static const trophyCup =
       '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>';
   static const trophyTeam =
@@ -206,6 +213,9 @@ abstract final class OgIcons {
   static const mortarboard =
       '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/>';
   static const dots = '<path d="M5 12h.01M12 12h.01M19 12h.01"/>';
+  static const menu = '<path d="M4 7h16M4 12h16M4 17h16"/>';
+  static const copy =
+      '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/>';
   static const walletCard =
       '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/>';
   static const pointsStar =

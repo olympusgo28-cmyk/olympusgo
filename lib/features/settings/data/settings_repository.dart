@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/avatar_address.dart';
 import '../../../core/domain/country.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../profile/data/profile_repository.dart';
@@ -10,10 +11,21 @@ import '../domain/settings_models.dart';
 /// The signed-in player's own account, personal details and preferences.
 abstract interface class SettingsRepository {
   Future<AccountDetails> account();
-  Future<void> saveAccount(AccountDetails details);
+
+  /// Writes only the details given; the others stay as they are, so a
+  /// change made elsewhere is never overwritten with an old value.
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  });
 
   /// Uploads a new profile photo and returns its public URL.
   Future<String> uploadAvatar(Uint8List bytes, String extension);
+
+  /// Clears the profile photo and deletes its file.
+  Future<void> removeAvatar();
 
   Future<PrivateInfo> privateInfo();
 
@@ -21,12 +33,18 @@ abstract interface class SettingsRepository {
   Future<void> saveCountry(Country country);
 
   /// Starts an email change; Supabase emails a confirmation link.
-  Future<void> changeEmail(String email);
 
   Future<NotificationPrefs> notifications();
   Future<void> saveNotifications(NotificationPrefs prefs);
   Future<PrivacyPrefs> privacy();
   Future<void> savePrivacy(PrivacyPrefs prefs);
+
+  /// Closes the account now and returns the day it is erased, unless the
+  /// player logs in before then and keeps it (R-ACC-11, R-REF-18).
+  Future<DateTime> requestDeletion(String? reason);
+
+  /// Undoes [requestDeletion].
+  Future<void> keepAccount();
 }
 
 class SupabaseSettingsRepository implements SettingsRepository {
@@ -80,70 +98,92 @@ class SupabaseSettingsRepository implements SettingsRepository {
   });
 
   @override
-  Future<void> saveAccount(AccountDetails d) => _guard(
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  }) => _guard(
     () => _client
         .from('profiles')
         .update({
-          'full_name': d.fullName.trim(),
-          'username': d.username.trim(),
-          'bio': d.bio.trim().isEmpty ? null : d.bio.trim(),
-          'gender': d.gender.id,
+          'full_name': ?fullName?.trim(),
+          'username': ?username?.trim(),
+          if (bio != null) 'bio': bio.trim().isEmpty ? null : bio.trim(),
+          'gender': ?gender?.id,
         })
         .eq('id', _me),
   );
 
   @override
   Future<void> saveCountry(Country country) => _guard(
-    () => _client
-        .from('account_private')
-        .update({'country_code': country.code})
-        .eq('id', _me),
+    () => _client.rpc('set_country', params: {'p_country': country.code}),
   );
 
   @override
-  Future<String> uploadAvatar(
-    Uint8List bytes,
-    String extension,
-  ) => _guard(() async {
-    final path = '$_me/avatar.$extension';
-    await _client.storage
-        .from('avatars')
-        .uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: 'image/$extension',
-          ),
-        );
-    // Cache-bust so the new photo shows straight away.
-    final url =
-        '${_client.storage.from('avatars').getPublicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}';
-    await _client.from('profiles').update({'avatar_url': url}).eq('id', _me);
-    return url;
-  });
+  Future<String> uploadAvatar(Uint8List bytes, String extension) => _guard(
+    () async {
+      final path = '$_me/avatar.$extension';
+      await _client.storage
+          .from('avatars')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: 'image/$extension',
+            ),
+          );
+      // A path with no host; the database accepts nothing else (Q267). The
+      // number makes the new photo show straight away.
+      final url = storedAvatarPath(
+        _me,
+        extension,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+      await _client.from('profiles').update({'avatar_url': url}).eq('id', _me);
+      return url;
+    },
+  );
+
+  @override
+  Future<void> removeAvatar() async {
+    const failed = AuthFailure("Your photo wasn't removed. Try again.");
+    try {
+      final bucket = _client.storage.from('avatars');
+      // The files go first, so a photo is never left readable after the
+      // profile stops pointing at it. Both names an upload can have.
+      await bucket.remove(['$_me/avatar.jpeg', '$_me/avatar.png']);
+      // remove() says nothing when a file stays, so look again.
+      final left = await bucket.list(
+        path: _me,
+        searchOptions: const SearchOptions(search: 'avatar.'),
+      );
+      if (left.isNotEmpty) throw failed;
+      await _client.from('profiles').update({'avatar_url': null}).eq('id', _me);
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw failed;
+    }
+  }
 
   @override
   Future<PrivateInfo> privateInfo() => _guard(() async {
-    final user = _client.auth.currentUser!;
     final r = await _client
         .from('account_private')
-        .select('birthday, country_code, identity_verified_at')
+        .select('birthday, country_code, identity_verified_at, mobile, email')
         .eq('id', _me)
         .single();
     final birthday = r['birthday'] as String?;
     return PrivateInfo(
-      email: user.email ?? '',
-      phone: user.phone ?? '',
+      email: r['email'] as String? ?? '',
+      phone: r['mobile'] as String? ?? '',
       birthday: birthday == null ? null : DateTime.parse(birthday),
       country: Country.fromCode(r['country_code'] as String?),
       identityVerified: r['identity_verified_at'] != null,
     );
   });
-
-  @override
-  Future<void> changeEmail(String email) =>
-      _guard(() => _client.auth.updateUser(UserAttributes(email: email)));
 
   @override
   Future<NotificationPrefs> notifications() => _guard(() async {
@@ -203,9 +243,48 @@ class SupabaseSettingsRepository implements SettingsRepository {
         })
         .eq('id', _me),
   );
+
+  /// The database says in plain words when something must be handed over
+  /// first, and that reaches the player as it is.
+  Future<T> _deletionGuard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0001') throw AuthFailure(e.message);
+      throw const AuthFailure('Something went wrong. Try again.');
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw const AuthFailure(
+        "Can't reach OlympusGO. Check your connection and try again.",
+      );
+    }
+  }
+
+  @override
+  Future<DateTime> requestDeletion(String? reason) => _deletionGuard(() async {
+    final r = await _client.rpc(
+      'account_delete_request',
+      params: {'p_reason': reason},
+    ) as Map<String, dynamic>;
+    return DateTime.parse(r['erase_after'] as String);
+  });
+
+  @override
+  Future<void> keepAccount() =>
+      _deletionGuard(() => _client.rpc('account_delete_cancel'));
 }
 
 class DemoSettingsRepository implements SettingsRepository {
+  @override
+  Future<DateTime> requestDeletion(String? reason) async {
+    await _tick();
+    return DateTime.now().add(const Duration(days: 30));
+  }
+
+  @override
+  Future<void> keepAccount() => _tick();
+
   DemoSettingsRepository(this._profiles);
 
   /// Shares the demo profile so edits show on the Profile tab.
@@ -229,15 +308,20 @@ class DemoSettingsRepository implements SettingsRepository {
   }
 
   @override
-  Future<void> saveAccount(AccountDetails d) async {
+  Future<void> updateProfile({
+    String? fullName,
+    String? username,
+    String? bio,
+    Gender? gender,
+  }) async {
     await _tick();
-    _gender = d.gender;
+    if (gender != null) _gender = gender;
     final p = _profiles.profile;
     if (p != null) {
       _profiles.profile = p.copyWith(
-        fullName: d.fullName.trim(),
-        username: d.username.trim(),
-        bio: d.bio.trim().isEmpty ? null : d.bio.trim(),
+        fullName: fullName?.trim() ?? p.fullName,
+        username: username?.trim() ?? p.username,
+        bio: bio == null ? p.bio : (bio.trim().isEmpty ? null : bio.trim()),
       );
     }
   }
@@ -246,6 +330,13 @@ class DemoSettingsRepository implements SettingsRepository {
   Future<String> uploadAvatar(Uint8List bytes, String extension) async {
     await _tick();
     throw const AuthFailure('Photos upload once Supabase is connected.');
+  }
+
+  @override
+  Future<void> removeAvatar() async {
+    await _tick();
+    final p = _profiles.profile;
+    if (p != null) _profiles.profile = p.copyWith(avatarUrl: null);
   }
 
   @override
@@ -264,9 +355,6 @@ class DemoSettingsRepository implements SettingsRepository {
     await _tick();
     _country = country;
   }
-
-  @override
-  Future<void> changeEmail(String email) => _tick();
 
   @override
   Future<NotificationPrefs> notifications() async => _notifications;

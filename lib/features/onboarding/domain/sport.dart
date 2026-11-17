@@ -1,20 +1,8 @@
 import '../../../core/widgets/og_icon.dart';
 
-/// Sports a player can add to a Passport or play.
-enum Sport {
-  badminton('badminton', 'Badminton', OgIcons.badminton),
-  pickleball('pickleball', 'Pickleball', OgIcons.pickleball),
-  tennis('tennis', 'Tennis', OgIcons.tennis),
-  padel('padel', 'Padel', OgIcons.padel),
-  tableTennis('table_tennis', 'Table tennis', OgIcons.tableTennis),
-  basketball('basketball', 'Basketball', OgIcons.basketball),
-  football('football', 'Football', OgIcons.football),
-  running('running', 'Running', OgIcons.running),
-  swimming('swimming', 'Swimming', OgIcons.swimming),
-  cycling('cycling', 'Cycling', OgIcons.cycling),
-  squash('squash', 'Squash', OgIcons.sportSquash),
-  hyrox('hyrox', 'Hyrox', OgIcons.sportHyrox);
-
+/// A sport. Staff can add new ones, so this is not a fixed list: the ones
+/// below have their own icons, and any other comes from the catalogue.
+class Sport {
   const Sport(this.id, this.label, this.icon);
 
   /// Value stored in the database.
@@ -22,7 +10,80 @@ enum Sport {
   final String label;
   final String icon;
 
-  static Sport fromId(String id) => values.firstWhere((s) => s.id == id);
+  static const badminton = Sport('badminton', 'Badminton', OgIcons.badminton);
+  static const pickleball = Sport(
+    'pickleball',
+    'Pickleball',
+    OgIcons.pickleball,
+  );
+  static const tennis = Sport('tennis', 'Tennis', OgIcons.tennis);
+  static const padel = Sport('padel', 'Padel', OgIcons.padel);
+  static const tableTennis = Sport(
+    'table_tennis',
+    'Table tennis',
+    OgIcons.tableTennis,
+  );
+  static const basketball = Sport(
+    'basketball',
+    'Basketball',
+    OgIcons.basketball,
+  );
+  static const football = Sport('football', 'Football', OgIcons.football);
+  static const running = Sport('running', 'Running', OgIcons.running);
+  static const swimming = Sport('swimming', 'Swimming', OgIcons.swimming);
+  static const cycling = Sport('cycling', 'Cycling', OgIcons.cycling);
+  static const squash = Sport('squash', 'Squash', OgIcons.sportSquash);
+  static const hyrox = Sport('hyrox', 'Hyrox', OgIcons.sportHyrox);
+
+  static const values = [
+    badminton,
+    pickleball,
+    tennis,
+    padel,
+    tableTennis,
+    basketball,
+    football,
+    running,
+    swimming,
+    cycling,
+    squash,
+    hyrox,
+  ];
+
+  static final _added = <String, Sport>{};
+
+  /// Remembers a sport read from the catalogue.
+  static Sport fromCatalogue(String id, String name) {
+    for (final s in values) {
+      if (s.id == id) return s;
+    }
+    return _added[id] = Sport(id, name, OgIcons.trophy);
+  }
+
+  /// Never throws: a sport staff added after this build still shows.
+  static Sport fromId(String id) {
+    for (final s in values) {
+      if (s.id == id) return s;
+    }
+    return _added[id] ?? Sport(id, _title(id), OgIcons.trophy);
+  }
+
+  static String _title(String id) {
+    final words = id.replaceAll('_', ' ');
+    return words.isEmpty ? id : words[0].toUpperCase() + words.substring(1);
+  }
+
+  /// Position in the design's order. Added sports come last.
+  int get index {
+    final i = values.indexOf(this);
+    return i < 0 ? values.length : i;
+  }
+
+  @override
+  bool operator ==(Object other) => other is Sport && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
 
   /// Offered at sign-up, in the design's order.
   static const signUp = [
@@ -66,6 +127,27 @@ abstract final class SkillScale {
     7.0: 'Advanced',
     8.0: 'Expert',
   };
+
+  /// Short forms, as in "Mid Beginner (MB)". ADV and EXP are the default
+  /// for the two levels the owner gave no example for (Q252).
+  static final _short = <double, String>{
+    1.0: 'LB',
+    2.0: 'MB',
+    3.0: 'HB',
+    4.0: 'LI',
+    5.0: 'MI',
+    6.0: 'HI',
+    7.0: 'ADV',
+    8.0: 'EXP',
+  };
+
+  /// "Mid Beginner (MB)".
+  static String nameWithShort(double level) {
+    final name = _names[level];
+    final short = _short[level];
+    if (name == null) return level.toStringAsFixed(1);
+    return short == null ? name : '$name ($short)';
+  }
 
   /// Whole levels only: 1.0, 2.0 … 8.0.
   static List<double> get levels => [for (var v = min; v <= max; v += 1) v];

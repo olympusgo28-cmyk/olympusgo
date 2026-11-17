@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../feed/application/feed_providers.dart';
 import '../../../core/providers.dart';
 import '../domain/social_models.dart';
 
@@ -66,9 +67,17 @@ class BlockedPlayers extends _$BlockedPlayers {
       ref.watch(socialRepositoryProvider).blocked();
 
   Future<void> block(String id) async {
-    await ref.read(socialRepositoryProvider).block(id);
-    ref.invalidateSelf();
-    ref.invalidate(myFollowingProvider);
+    // A profile calls this without watching the list, so it has to last.
+    final link = ref.keepAlive();
+    try {
+      await ref.read(socialRepositoryProvider).block(id);
+      ref.invalidateSelf();
+      ref.invalidate(myFollowingProvider);
+      ref.invalidate(feedFollowingProvider);
+      ref.invalidate(feedDiscoverProvider);
+    } finally {
+      link.close();
+    }
   }
 
   Future<void> unblock(String id) async {

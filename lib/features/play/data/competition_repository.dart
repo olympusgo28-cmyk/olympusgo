@@ -30,11 +30,7 @@ abstract interface class TournamentRepository {
   });
 
   /// Withdraws. Returns the refund in cents.
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  });
+  Future<int> withdraw(String id, {required bool injury});
 
   /// The invited partner says yes or no.
   Future<void> answerInvite(String id, String entryId, {required bool accept});
@@ -52,7 +48,13 @@ abstract interface class TournamentRepository {
   Future<void> callMatch(String matchId);
 
   /// The umpire's final score, side A first.
-  Future<void> saveScore(String matchId, List<(int, int)> games);
+  /// A correction needs [reason]. [retired] is the side that stopped, 1 or 2.
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  });
 }
 
 /// Event pages: the programme, the live court and tickets.
@@ -364,13 +366,9 @@ class SupabaseTournamentRepository implements TournamentRepository {
   });
 
   @override
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  }) async {
+  Future<int> withdraw(String id, {required bool injury}) async {
     await _guard(() => _rpc('tournament_withdraw', {'p_activity': id}));
-    return _play.leave(id, toWallet: toWallet);
+    return _play.leave(id);
   }
 
   @override
@@ -417,15 +415,21 @@ class SupabaseTournamentRepository implements TournamentRepository {
   });
 
   @override
-  Future<void> saveScore(String matchId, List<(int, int)> games) =>
-      _guard(() async {
-        await _rpc('tournament_score', {
-          'p_match': matchId,
-          'p_games': [
-            for (final g in games) [g.$1, g.$2],
-          ],
-        });
-      });
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  }) => _guard(() async {
+    await _rpc('tournament_score', {
+      'p_match': matchId,
+      'p_games': [
+        for (final g in games) [g.$1, g.$2],
+      ],
+      'p_reason': ?reason,
+      'p_retired': ?retired,
+    });
+  });
 
   @override
   Future<void> cancel(String id, {String message = ''}) =>
@@ -1190,11 +1194,7 @@ class DemoTournamentRepository implements TournamentRepository {
   }
 
   @override
-  Future<int> withdraw(
-    String id, {
-    required bool toWallet,
-    required bool injury,
-  }) async {
+  Future<int> withdraw(String id, {required bool injury}) async {
     await _tick();
     final a = _a(id);
     final mine = _mine.remove(id);
@@ -1207,7 +1207,7 @@ class DemoTournamentRepository implements TournamentRepository {
         a.registrationClosesAt == null ||
         DateTime.now().isBefore(a.registrationClosesAt!);
     if (!open && !injury) return 0;
-    return toWallet ? mine.paidCents : mine.entryCents;
+    return mine.entryCents;
   }
 
   @override
@@ -1255,7 +1255,12 @@ class DemoTournamentRepository implements TournamentRepository {
   Future<void> callMatch(String matchId) => _tick();
 
   @override
-  Future<void> saveScore(String matchId, List<(int, int)> games) => _tick();
+  Future<void> saveScore(
+    String matchId,
+    List<(int, int)> games, {
+    String? reason,
+    int? retired,
+  }) => _tick();
 }
 
 class DemoEventRepository implements EventRepository {
@@ -1356,9 +1361,9 @@ class DemoEventRepository implements EventRepository {
       programme: _programme(id),
       programmeDay: Fmt.day(a.startsAt),
       clubs: finals
-          ? const [EventClub('TS', 'Tampines Smashers', 0xFF16181B, 0xFFF2C14E)]
+          ? const [EventClub('TS', 'Tampines Smashers', 0xFF1C1F23, 0xFFF2C14E)]
           : const [
-              EventClub('TS', 'Tampines Smashers', 0xFF16181B, 0xFFF2C14E),
+              EventClub('TS', 'Tampines Smashers', 0xFF1C1F23, 0xFFF2C14E),
               EventClub('ED', 'East Dinkers', 0xFF0E6B4E, 0xFFFFFFFF),
               EventClub('BR', 'Bedok Racquets', 0xFF3E6B8A, 0xFFFFFFFF),
               EventClub('PS', 'Pasir Smash', 0xFFC8553D, 0xFFFFFFFF),

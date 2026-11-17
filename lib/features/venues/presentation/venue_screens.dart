@@ -9,7 +9,7 @@ import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/og_colors.dart';
-import '../../../core/theme/og_text.dart';
+import '../../../core/theme/og_type.dart';
 import '../../../core/theme/og_tones.dart';
 import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/og_kit.dart';
@@ -19,7 +19,7 @@ import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/domain/activity.dart';
-import '../../wallet/application/wallet_providers.dart';
+import '../../earnings/application/earnings_providers.dart';
 import '../../play/presentation/create_screens.dart' show showCreateMenu;
 import '../application/venue_providers.dart';
 import '../domain/venue_models.dart';
@@ -175,7 +175,9 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
                             header: true,
                             child: Text(
                               'Venue',
-                              style: OgText.heading(44, color: Colors.white),
+                              style: context.type.display.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -265,11 +267,11 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 36),
                         child: Column(
                           children: [
-                            Text('No venues match', style: OgText.heading(24)),
+                            Text('No venues match', style: context.type.title),
                             const SizedBox(height: 6),
                             Text(
                               'Check the spelling or try an area name.',
-                              style: OgText.body(14, color: c.textMuted),
+                              style: context.type.secondary,
                             ),
                           ],
                         ),
@@ -335,7 +337,7 @@ class _VenueRow extends StatelessWidget {
                       bottom: 12,
                       child: Text(
                         v.mark,
-                        style: OgText.heading(40, color: Color(v.ink)),
+                        style: context.type.score.copyWith(color: Color(v.ink)),
                       ),
                     ),
                     Positioned(
@@ -358,17 +360,14 @@ class _VenueRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        v.name,
-                        style: OgText.body(17, weight: FontWeight.w700),
-                      ),
+                      Text(v.name, style: context.type.section),
                       const SizedBox(height: 2),
                       Text(
                         [
                           _courtSummary(v),
                           if (v.distance.isNotEmpty) v.distance,
                         ].join(' · '),
-                        style: OgText.body(13, color: c.textMuted),
+                        style: context.type.caption,
                       ),
                     ],
                   ),
@@ -377,11 +376,7 @@ class _VenueRow extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     'From ${_price(from)} / hour',
-                    style: OgText.body(
-                      14,
-                      weight: FontWeight.w700,
-                      color: c.link,
-                    ),
+                    style: context.type.body.copyWith(color: c.link),
                   ),
                 ],
               ],
@@ -429,12 +424,11 @@ class _VenuePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.og;
     final t = context.tones;
     final v = venue;
     final on = ref.watch(venueActivitiesProvider(v.id)).value ?? const [];
     Widget heading(String text) =>
-        Semantics(header: true, child: Text(text, style: OgText.heading(22)));
+        Semantics(header: true, child: Text(text, style: context.type.section));
     return KitScaffold(
       header: KitHeader(title: 'Venue', crumb: v.name),
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
@@ -460,7 +454,7 @@ class _VenuePage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: Text(
                 v.mark,
-                style: OgText.heading(56, color: Color(v.ink)),
+                style: context.type.score.copyWith(color: Color(v.ink)),
               ),
             ),
           ),
@@ -475,7 +469,7 @@ class _VenuePage extends ConsumerWidget {
                 children: [
                   Semantics(
                     header: true,
-                    child: Text(v.name, style: OgText.heading(32)),
+                    child: Text(v.name, style: context.type.title),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -484,7 +478,7 @@ class _VenuePage extends ConsumerWidget {
                       if (v.distance.isNotEmpty) v.distance,
                       'Open ${_hour(v.opensHour)} to ${_hour(v.closesHour)}',
                     ].join(' · '),
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -505,7 +499,7 @@ class _VenuePage extends ConsumerWidget {
                         KitTag(
                           'Auto check-in',
                           background: OgColors.ink,
-                          foreground: OgColors.lime,
+                          foreground: OgColors.orange300,
                         ),
                     ],
                   ),
@@ -593,20 +587,17 @@ class _OnHereRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    a.title,
-                    style: OgText.body(15, weight: FontWeight.w700),
-                  ),
+                  Text(a.title, style: context.type.body),
                   const SizedBox(height: 2),
                   Text(
                     [a.kind.label, when, ?a.court].join(' · '),
-                    style: OgText.body(13, color: c.textMuted),
+                    style: context.type.caption,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            Text(trailing, style: OgText.body(15, weight: FontWeight.w700)),
+            Text(trailing, style: context.type.body),
           ],
         ),
       ),
@@ -693,9 +684,8 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
       totalCents: court + fee,
       payee: v.name,
       notes: const [
-        'Cancel more than 24 hours before: all of it back to your Wallet, '
-            'or the court price to your card. The platform fee is not '
-            'returned to a card.',
+        'Cancel more than 24 hours before: the court price back to how you '
+            'paid. The platform fee is not returned.',
         "Inside 24 hours, or if you don't come: no refund. If the venue "
             'cancels, you get all of it back.',
       ],
@@ -726,7 +716,6 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final done = _done;
     if (done != null) {
@@ -754,13 +743,13 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
               children: [
                 Text(
                   '${done.sport.label}, ${done.court}',
-                  style: OgText.heading(26),
+                  style: context.type.title,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${_dayLabel(_day)}, ${Fmt.timeRange(done.start, done.end)}. '
                   'Your door code is in the booking.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -775,7 +764,7 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
         start != null &&
         (slots.value?.any((s) => s.start == start && s.free) ?? false);
     Widget heading(String text) =>
-        Semantics(header: true, child: Text(text, style: OgText.heading(22)));
+        Semantics(header: true, child: Text(text, style: context.type.section));
     return KitScaffold(
       header: const KitHeader(title: 'Book a court'),
       bottom: [
@@ -854,7 +843,7 @@ class _BookCourtState extends ConsumerState<_BookCourt> {
             switch (slots) {
               AsyncData(:final value) when value.isEmpty => Text(
                 'Nothing left to book on this day. Try another day.',
-                style: OgText.body(14, color: c.textMuted),
+                style: context.type.secondary,
               ),
               AsyncData(:final value) => GridView.count(
                 crossAxisCount: 3,
@@ -945,9 +934,7 @@ class _SlotButton extends StatelessWidget {
           children: [
             Text(
               time,
-              style: OgText.body(
-                15,
-                weight: FontWeight.w700,
+              style: context.type.body.copyWith(
                 color: selected
                     ? Colors.white
                     : (off ? t.onDisabledFill : c.text),
@@ -955,8 +942,7 @@ class _SlotButton extends StatelessWidget {
             ),
             Text(
               sub,
-              style: OgText.body(
-                12,
+              style: context.type.caption.copyWith(
                 color: selected
                     ? Colors.white
                     : (off ? t.onDisabledFill : c.textMuted),
@@ -1039,7 +1025,7 @@ class CourtBookingScreen extends ConsumerWidget {
                   : KitTag(
                       over ? 'Played' : 'Confirmed',
                       background: OgColors.ink,
-                      foreground: OgColors.lime,
+                      foreground: OgColors.orange300,
                     ),
               if (!cancelled && !over) ...[
                 Semantics(
@@ -1047,29 +1033,29 @@ class CourtBookingScreen extends ConsumerWidget {
                   child: ExcludeSemantics(
                     child: Text(
                       b.doorCode.split('').join(' '),
-                      style: OgText.heading(
-                        64,
+                      style: context.type.display.copyWith(
                         height: 1,
-                      ).copyWith(letterSpacing: 5),
+                        letterSpacing: 5,
+                      ),
                     ),
                   ),
                 ),
                 Text(
                   'Door code for ${b.court}, works from 10 minutes before',
                   textAlign: TextAlign.center,
-                  style: OgText.body(13, color: c.textMuted),
+                  style: context.type.caption,
                 ),
               ],
               Text(
                 b.venueName,
                 textAlign: TextAlign.center,
-                style: OgText.heading(24),
+                style: context.type.title,
               ),
               Text(
                 '${Fmt.day(b.start)}, ${Fmt.timeRange(b.start, b.end)} · '
                 '${b.sport.label}, ${b.court}\n${b.venueAddress}',
                 textAlign: TextAlign.center,
-                style: OgText.body(13, height: 1.45, color: c.textMuted),
+                style: context.type.caption.copyWith(height: 1.45),
               ),
             ], 14),
           ),
@@ -1113,7 +1099,6 @@ class CancelCourtBookingScreen extends ConsumerStatefulWidget {
 
 class _CancelCourtBookingScreenState
     extends ConsumerState<CancelCourtBookingScreen> {
-  bool _toWallet = true;
   bool _understood = false;
   bool _busy = false;
   int? _refunded;
@@ -1121,14 +1106,12 @@ class _CancelCourtBookingScreenState
   Future<void> _cancel(CourtBooking b) async {
     setState(() => _busy = true);
     try {
-      final refund = await ref
-          .read(venueRepositoryProvider)
-          .cancel(b.id, toWallet: _toWallet);
+      final refund = await ref.read(venueRepositoryProvider).cancel(b.id);
       HapticFeedback.mediumImpact();
       ref.invalidate(courtBookingProvider(b.id));
       ref.invalidate(myCourtBookingsProvider);
       ref.invalidate(courtSlotsProvider);
-      ref.invalidate(walletSummaryProvider);
+      ref.invalidate(pointsSummaryProvider);
       if (mounted) setState(() => _refunded = refund);
     } on AuthFailure catch (e) {
       if (mounted) showOgToast(context, e.message, error: true);
@@ -1139,7 +1122,6 @@ class _CancelCourtBookingScreenState
 
   @override
   Widget build(BuildContext context) {
-    final c = context.og;
     final t = context.tones;
     final b = ref.watch(courtBookingProvider(widget.id)).value;
     if (b == null) {
@@ -1168,16 +1150,16 @@ class _CancelCourtBookingScreenState
               children: [
                 Text(
                   refunded > 0 ? 'S\$${money(refunded)} refunded' : 'No refund',
-                  style: OgText.heading(26),
+                  style: context.type.title,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   refunded == 0
                       ? 'It was inside 24 hours, so the venue keeps the fee. '
                             'The court is free for others to book.'
-                      : 'It goes to ${_toWallet ? 'your Wallet, now' : 'your card, in 3 to 5 working days'}. '
-                            'The court is free for others to book.',
-                  style: OgText.body(15, height: 1.45, color: c.textMuted),
+                      : 'It goes back to how you paid. The court is free for '
+                            'others to book.',
+                  style: context.type.secondary.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -1228,35 +1210,16 @@ class _CancelCourtBookingScreenState
           ],
         ),
         if (free)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Where should the refund go?', style: OgText.heading(22)),
-              const SizedBox(height: 8),
-              KitChoiceRow(
-                title: 'Wallet',
-                subtitle: 'All S\$${money(b.paidCents)} · instant',
-                selected: _toWallet,
-                onTap: () => setState(() => _toWallet = true),
-              ),
-              KitChoiceRow(
-                title: 'Card',
-                subtitle:
-                    'S\$${money(b.courtCents)} · the S\$${money(b.feeCents)} platform fee stays · 3 to 5 working days',
-                selected: !_toWallet,
-                onTap: () => setState(() => _toWallet = false),
-              ),
-            ],
+          Text(
+            'The S\$${money(b.feeCents)} platform fee is not returned.',
+            style: context.type.secondary.copyWith(height: 1.45),
           )
         else
           KitNote(
             'It is less than 24 hours before, so the venue keeps the fee.',
             tone: KitTone.warn,
           ),
-        KitKeyValue(
-          'You get back',
-          'S\$${money(b.refundTo(wallet: _toWallet))}',
-        ),
+        KitKeyValue('You get back', 'S\$${money(b.refundDueCents)}'),
         KitConfirmBox(
           label: 'I understand the court is released to other players',
           checked: _understood,
