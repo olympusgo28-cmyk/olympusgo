@@ -18,6 +18,8 @@ import '../../discover/presentation/coming_screens.dart';
 import '../application/fitness_providers.dart';
 import '../domain/fitness_calc.dart';
 import '../domain/fitness_models.dart';
+import '../domain/muscle_regions.dart';
+import 'body_map.dart';
 import 'steps_screen.dart';
 
 /// A loading or failed screen, or null once [v] has a value.
@@ -246,6 +248,7 @@ class FitnessHomeScreen extends ConsumerWidget {
                 '${minutesFor(day.items)} minutes · at your own pace',
             button: 'Start workout',
             onTap: () => _start(context, ref, program, day),
+            items: day.items,
           ),
         // Steps today, between the workout and the stats (owner, 17 Nov 2026).
         const StepsCard(),
@@ -333,6 +336,7 @@ class _Hero extends StatelessWidget {
     required this.line,
     required this.button,
     required this.onTap,
+    this.items = const [],
   });
 
   final String eyebrow;
@@ -340,6 +344,9 @@ class _Hero extends StatelessWidget {
   final String line;
   final String button;
   final VoidCallback onTap;
+
+  /// The day's exercises, for the small map of the muscles it works.
+  final List<ProgramItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -358,14 +365,55 @@ class _Hero extends StatelessWidget {
             style: context.type.caption.copyWith(color: c.highlight),
           ),
           const SizedBox(height: 10),
-          Text(
-            title,
-            style: context.type.display.copyWith(color: c.onInverseCard),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            line,
-            style: context.type.body.copyWith(color: c.onInverseCardMuted),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: context.type.display.copyWith(
+                        color: c.onInverseCard,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      line,
+                      style: context.type.body.copyWith(
+                        color: c.onInverseCardMuted,
+                      ),
+                    ),
+                    // The muscles in words, so the picture is never the only
+                    // way to know them.
+                    if (items.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: WorkedMusclesText(
+                          items: items,
+                          style: context.type.caption.copyWith(
+                            color: c.onInverseCardMuted,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Which muscles the day works, at a glance (owner, 17 Nov 2026).
+              // With large text the words keep the room.
+              if (items.isNotEmpty &&
+                  MediaQuery.textScalerOf(context).scale(1) <= 1.3) ...[
+                const SizedBox(width: 12),
+                WorkedMuscles(
+                  items: items,
+                  height: 72,
+                  onDark: true,
+                  names: false,
+                  announce: false,
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 14),
           KitButton(label: button, onPressed: onTap),
@@ -487,6 +535,9 @@ class ExerciseDetailScreen extends ConsumerWidget {
           runSpacing: 8,
           children: [for (final m in e.muscles) KitTag(m), KitTag(e.equipment)],
         ),
+        // The tags above name the muscles; this shows where they are.
+        if (knownMuscles(e.muscles).isNotEmpty)
+          Center(child: BodyMap(muscles: e.muscles, height: 180)),
         const KitSection('How to do it'),
         for (final (i, step) in e.steps.indexed)
           Text(

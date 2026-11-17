@@ -8,6 +8,7 @@ import 'core/config/session_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/og_theme.dart';
 import 'core/theme/og_type.dart';
+import 'features/fitness/presentation/body_map.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,9 @@ Future<void> main() async {
   // Load Inter's two weights before the first frame so nothing reflows (Q257).
   GoogleFonts.config.allowRuntimeFetching = true;
   await waitForFonts(OgType.preload());
+  // The body outline is MIT-licensed: its notices are registered with the
+  // app's licences. No page shows them yet (Q277 g).
+  registerBodyMapLicence();
   runApp(const ProviderScope(child: OlympusGoApp()));
 }
 

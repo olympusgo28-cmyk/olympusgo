@@ -14,6 +14,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/fitness_providers.dart';
 import '../domain/fitness_calc.dart';
 import '../domain/fitness_models.dart';
+import 'body_map.dart';
 import 'fitness_screens.dart';
 
 class ProgramsScreen extends ConsumerWidget {
@@ -286,6 +287,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
               ? 'Day ${_day + 1}'
               : 'Day ${_day + 1} · ${_days[_day].name}',
         ),
+        if (items.isNotEmpty) WorkedMuscles(items: items),
         if (items.isNotEmpty)
           ReorderableListView.builder(
             shrinkWrap: true,

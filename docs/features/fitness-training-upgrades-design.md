@@ -1,6 +1,6 @@
 # Fitness: four training upgrades (design)
 
-Status: slice 1 (the workout screen) is built and tested, 17 Nov 2026; it has not been checked on a phone. Slices 2 to 5 are design only. The owner chose these four on 17 Nov 2026 (`docs/OPEN_QUESTIONS.md` Q277). Open points are numbered there as Q277 (a) to (p).
+Status: slice 1 (the workout screen) and slice 2 (the body map on an exercise, a program day and the workout card) are built and tested, 17 Nov 2026; neither has been checked on a phone. Slices 3 to 5 are design only. The owner chose these four on 17 Nov 2026 (`docs/OPEN_QUESTIONS.md` Q277). Open points are numbered there as Q277 (a) to (p).
 
 ## Where this comes from
 
@@ -104,7 +104,7 @@ The owner asked for features like those in the openGym project. openGym's code, 
 **What the player sees:** a front and a back body outline with the worked muscles filled in the brand colour, the rest pale grey, and the muscle names as text beside it.
 
 - **3a. Exercise detail:** the muscles that exercise works.
-- **3a. Program day and the workout hero on My workouts:** the muscles that day works, small (about 56 points high), so "Leg day" reads as legs at a glance.
+- **3a. Program day and the workout hero on My workouts:** the muscles that day works, small (56 points high on a program day, 72 on the workout card), so "Leg day" reads as legs at a glance.
 - **3b. My workouts, "This week":** the muscles trained in the last 7 days. One tone only: trained or not.
 
 There is no "recovering", "untrained" or "balance" view: those read as health advice (R-FIT-3).
@@ -113,22 +113,35 @@ There is no "recovering", "untrained" or "balance" view: those read as health ad
 
 | Front | Back |
 | --- | --- |
-| Shoulders, Chest, Biceps, Forearms, Core, Obliques, Quads, Inner thighs, Calves | Shoulders, Back, Triceps, Forearms, Lower back, Glutes, Hamstrings, Calves |
+| Shoulders, Chest, Biceps, Triceps, Forearms, Core, Obliques, Quads, Inner thighs, Calves | Shoulders, Back, Triceps, Forearms, Lower back, Glutes, Inner thighs, Hamstrings, Calves |
 
 A test fails if the catalogue gains a muscle name with no region.
 
-**The outline:** two options, Q277 (g).
+**The outline:** the owner chose MuscleMap on 17 Nov 2026, Q277 (g). The two options were:
 
 - Proposed: the path data from the **MuscleMap** project by Melih Colpan, which is MIT-licensed (checked at its own repository, `github.com/melihcolpan/MuscleMap`, 17 Nov 2026). Taken from that repository, not from openGym's converted copy, converted to Dart path constants, with its MIT notice added to the app's licences page and a `NOTICE` file.
 - Or: our own simpler outline drawn for OlympusGO. No notice needed, but it is design work.
 
 **How it works**
 
-- A `BodyMap` widget (`CustomPainter`) taking a set of muscle names. Tokens only for colour.
+- A `BodyMap` widget taking a set of muscle names, drawn as an SVG with `flutter_svg`. Tokens only for colour.
 - 3a needs no migration: exercises already carry their muscles.
 - 3b needs the muscles of the last 7 days' sets. `workout_summary` gains a `muscles_week` field (muscle name to number of sets). A small migration with its pgTAP test.
 
-**Accessibility:** the picture is hidden from screen readers; the text list beside it says the same thing, so colour is never the only carrier. With large text the list wraps under the picture.
+**As built (3a)**
+
+- `lib/features/fitness/domain/muscle_regions.dart`: the 14 muscle names and their parts of the outline, the muscles of a list of exercises (most-used first), and the phrase "Quads, glutes and core".
+- `lib/features/fitness/presentation/body_map_paths.dart`: the outline's path data, front and back, from MuscleMap's male front and back files. Its sub-group shapes are left out.
+- `lib/features/fitness/presentation/body_map.dart`: `BodyMap` (the picture) and `WorkedMuscles` (the picture with "Works quads, glutes and core"), drawn with `flutter_svg`, which the app already uses. No new package.
+- Where it shows: the exercise page, under its muscle tags; each day in the program builder; and the dark workout card on My workouts, with the words "Works quads, calves and glutes" under the card's line. With text larger than 130% the card keeps the words and drops the picture.
+- The picture is left out while the exercise list can't be read, and when none of the muscles is known.
+- Where the artwork comes from: MuscleMap, at a pinned commit. Comparing files showed that most of its paths are the artwork of an older MIT project, react-native-body-highlighter by ELABBASSI Hicham (89 front and 70 back paths identical), which MuscleMap's repository does not mention. Both copyright notices are carried.
+- Our copy was checked against MuscleMap's files by script: 175 paths, the same content in the same order, and the same viewBoxes.
+- The notices: `NOTICE.md` at the repository root, the header of the path data file, and `registerBodyMapLicence()`, called at start. The app has no licences page a player can open yet, Q277 (g).
+- The outline is the male figure for every player. MuscleMap also has a female figure; which to show, or whether to offer a choice, is Q277 (q).
+- Parts not worked are the border grey on a page, and a step lighter than the card on the dark card. Pictures are kept once built.
+
+**Accessibility:** the picture is hidden from screen readers; the text list beside it says the same thing, so colour is never the only carrier. On a program day the words sit beside the picture and wrap there.
 
 **States:** nothing trained this week ("No workouts in the last 7 days", outline all pale); loading (pale outline); error (the card is left out).
 
