@@ -64,6 +64,7 @@ abstract final class OgIcons {
   static const location =
       '<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>';
   static const plus = '<path d="M12 5v14M5 12h14"/>';
+  static const minus = '<path d="M5 12h14"/>';
   static const cart =
       '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2.5l2.2 11h10.3l2-8H6.5"/>';
   static const star =

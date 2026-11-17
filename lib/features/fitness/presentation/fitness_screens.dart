@@ -18,6 +18,7 @@ import '../../discover/presentation/coming_screens.dart';
 import '../application/fitness_providers.dart';
 import '../domain/fitness_calc.dart';
 import '../domain/fitness_models.dart';
+import 'steps_screen.dart';
 
 /// A loading or failed screen, or null once [v] has a value.
 Widget? fitnessWaiting(
@@ -246,6 +247,8 @@ class FitnessHomeScreen extends ConsumerWidget {
             button: 'Start workout',
             onTap: () => _start(context, ref, program, day),
           ),
+        // Steps today, between the workout and the stats (owner, 17 Nov 2026).
+        const StepsCard(),
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,

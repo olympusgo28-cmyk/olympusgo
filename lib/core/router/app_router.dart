@@ -3,6 +3,7 @@ import '../../features/feed/presentation/feed_screens.dart';
 import '../../features/fitness/presentation/ai_plan_screen.dart';
 import '../../features/fitness/presentation/fitness_screens.dart';
 import '../../features/fitness/presentation/program_screens.dart';
+import '../../features/fitness/presentation/steps_screen.dart';
 import '../../features/fitness/presentation/train_screen.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -222,6 +223,7 @@ GoRouter appRouter(Ref ref) {
       page(Routes.fitnessLog, (_) => const WorkoutLogScreen()),
       page(Routes.fitnessCalculators, (_) => const CalculatorsScreen()),
       page(Routes.fitnessAiPlan, (_) => const AiPlanScreen()),
+      page(Routes.fitnessSteps, (_) => const StepsScreen()),
       page(Routes.videos, (_) => const FeedScreen()),
       page(Routes.addPost, (_) => const AddPostScreen()),
       page(Routes.myPosts, (_) => const MyPostsScreen()),
