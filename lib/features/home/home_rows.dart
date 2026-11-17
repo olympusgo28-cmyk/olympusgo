@@ -20,7 +20,7 @@ import '../clubs/data/club_repository.dart';
 import '../clubs/domain/club_models.dart';
 import '../play/application/play_providers.dart';
 import '../play/domain/activity.dart';
-import '../play/presentation/play_card.dart';
+import '../play/presentation/play_card/play_card.dart';
 import '../shop/application/shop_providers.dart';
 import '../shop/domain/shop_models.dart';
 import '../social/application/social_providers.dart';
@@ -322,7 +322,10 @@ class ActivityShelf extends ConsumerWidget {
       home: home,
       onSeeAll: () => context.push(Routes.playKind(kind)),
       child: Shelf(
-        stretch: false,
+        // Meet cards share the tallest one's height, measured by the row
+        // itself, with no fixed number (owner, 15 Nov 2026). Tournament and
+        // event cards keep their own: a cover on one would leave a gap.
+        stretch: kind == ActivityKind.meet,
         children: [
           for (final a in list)
             SizedBox(

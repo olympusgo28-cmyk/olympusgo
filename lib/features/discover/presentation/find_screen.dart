@@ -17,7 +17,7 @@ import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
-import '../../play/presentation/play_card.dart';
+import '../../play/presentation/play_card/play_card.dart';
 import '../application/discover_providers.dart';
 import '../domain/discover_models.dart';
 

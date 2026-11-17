@@ -117,6 +117,9 @@ abstract class Activity with _$Activity {
     /// Seats kept for the host's own invites.
     @Default(0) int reservedSlots,
     @Default(false) bool courtBooked,
+
+    /// How many courts the host booked; null when not given.
+    int? courts,
     @Default(0) int feeCents,
     @Default(false) bool allowGuests,
     @Default(false) bool approvalRequired,
@@ -156,6 +159,9 @@ abstract class Activity with _$Activity {
     /// Events streaming now, and events also shown online.
     @Default(false) bool live,
     @Default(false) bool online,
+
+    /// A paid placement: the event card shows a "Sponsored" pill.
+    @Default(false) bool sponsored,
     @Default(0) int watching,
 
     /// "All ages" on event cards.

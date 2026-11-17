@@ -20,7 +20,7 @@ import '../application/play_providers.dart';
 import '../domain/activity.dart';
 import 'create_screens.dart';
 import '../domain/hub.dart';
-import 'play_card.dart';
+import 'play_card/play_card.dart';
 
 /// The v2 icon for a Play sport.
 String sportIcon(Sport s) => ClubSport.values

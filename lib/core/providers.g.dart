@@ -1019,7 +1019,7 @@ final class CurrentUserIdProvider
   }
 }
 
-String _$currentUserIdHash() => r'89856a4ae630534fc2f43007c0ef5642ef27b2e9';
+String _$currentUserIdHash() => r'37cfdf77e47c672e2e7c48ec22626dc25a90e90d';
 
 /// The signed-in player's profile; null when signed out.
 

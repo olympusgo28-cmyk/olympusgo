@@ -143,6 +143,10 @@ abstract final class OgIcons {
   static const bookmarkTall = '<path d="M6 3.5h12v17l-6-4.2-6 4.2z"/>';
   static const calendarBox =
       '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>';
+
+  /// A court seen from above, with the net across the middle.
+  static const court =
+      '<rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M12 4v16M7.5 5.5v13M16.5 5.5v13M7.5 12h9"/>';
   static const trophyCup =
       '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>';
   static const trophyTeam =

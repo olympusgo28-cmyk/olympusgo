@@ -189,6 +189,7 @@ class SupabasePlayRepository implements PlayRepository {
       genderMix: r['gender_mix'] as String? ?? 'any',
       reservedSlots: r['reserved_slots'] as int? ?? 0,
       courtBooked: r['court_booked'] as bool? ?? false,
+      courts: r['courts'] as int?,
       feeCents: r['fee_cents'] as int,
       allowGuests: r['allow_guests'] as bool,
       approvalRequired: r['approval_required'] as bool,
@@ -227,6 +228,7 @@ class SupabasePlayRepository implements PlayRepository {
       tier: r['tier'] as String?,
       live: r['live'] as bool? ?? false,
       online: r['online'] as bool? ?? false,
+      sponsored: r['sponsored'] as bool? ?? false,
       watching: r['watching'] as int? ?? 0,
       audience: r['audience'] as String?,
     );
@@ -1107,6 +1109,7 @@ class DemoPlayRepository implements PlayRepository {
       String? clubId,
       int waitlist = 0,
       PlayerSummary? host,
+      int? courts,
     }) => Activity(
       id: id,
       kind: ActivityKind.meet,
@@ -1120,6 +1123,8 @@ class DemoPlayRepository implements PlayRepository {
       endsAt: starts.add(Duration(minutes: minutes)),
       venue: _venues[venue],
       court: 'Courts 3 – 5',
+      courtBooked: courts != null,
+      courts: courts,
       capacity: cap,
       spotsTaken: taken,
       waitlistCount: waitlist,
@@ -1156,6 +1161,7 @@ class DemoPlayRepository implements PlayRepository {
         proof: priya,
         my: MyStatus.joined,
         clubId: 'c-ts',
+        courts: 3,
       ),
       meet(
         id: 'ts-singles',
@@ -1178,6 +1184,7 @@ class DemoPlayRepository implements PlayRepository {
           playerId: 'cp-mei',
         ),
         clubId: 'c-ts',
+        courts: 1,
       ),
       meet(
         id: 'ts-rotation',
@@ -1283,7 +1290,9 @@ class DemoPlayRepository implements PlayRepository {
         sports: const [Sport.badminton],
         format: ActivityFormat.festival,
         startsAt: _next(DateTime.sunday, 9, 0, 1),
-        endsAt: _next(DateTime.sunday, 18, 0, 1),
+        // Nine hours on, so the event never ends a week before it starts when
+        // the demo runs on a Sunday afternoon.
+        endsAt: _next(DateTime.sunday, 9, 0, 1).add(const Duration(hours: 9)),
         venue: _venues[0],
         capacity: 2000,
         spotsTaken: 1284,
@@ -1294,6 +1303,7 @@ class DemoPlayRepository implements PlayRepository {
         going: going,
         coverTitle: 'Finals Day',
         coverColor: 0xFF2F3A5F,
+        sponsored: true,
         live: true,
         online: true,
         watching: 1284,
@@ -1324,6 +1334,7 @@ class DemoPlayRepository implements PlayRepository {
         going: going,
         coverTitle: 'Sports Festival',
         coverColor: 0xFF0E6B4E,
+        sponsored: true,
         audience: 'All ages',
         subtitle: 'Try-outs, clinics and gear booths',
         description: 'A free day of racquet sports for all levels, with try-outs, clinics and gear booths.',

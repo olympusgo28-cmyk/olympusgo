@@ -20,7 +20,7 @@ import '../../../core/widgets/og_toast.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../play/domain/activity.dart';
-import '../../play/presentation/play_card.dart';
+import '../../play/presentation/play_card/play_card.dart';
 import '../application/club_providers.dart';
 import '../domain/club_models.dart';
 import '../domain/club_sport.dart';
