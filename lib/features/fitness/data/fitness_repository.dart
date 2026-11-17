@@ -426,6 +426,16 @@ class DemoFitnessRepository implements FitnessRepository {
       times: mine.map((s) => s.workout).toSet().length,
       best: of(best),
       recent: [for (final s in mine.take(30)) of(s)],
+      // The numbers the server's config starts with (Q277 c).
+      progress: const ProgressRules(
+        stepG: 2500,
+        stallSessions: 3,
+        deloadPct: 10,
+        repStep: 1,
+        repCap: 20,
+        secondsStep: 5,
+        secondsCap: 120,
+      ),
     );
   }
 

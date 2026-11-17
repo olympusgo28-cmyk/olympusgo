@@ -16,6 +16,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/fitness_providers.dart';
 import '../domain/fitness_calc.dart';
 import '../domain/fitness_models.dart';
+import '../domain/progression.dart';
 import '../domain/workout_progress.dart';
 
 /// The set in progress and the rest timer. Each finished set goes to the
@@ -232,6 +233,14 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
     };
     final here = item == null ? null : histories[item.exerciseId];
     _prefill(w, here?.value);
+    // A suggestion only before the exercise's first set, and only from a
+    // history that was read. Under-18s get none: the server sends no numbers.
+    // A history that failed to refresh may still hold an old value: like
+    // "last time", the suggestion is left out then.
+    final hereValue = here == null || here.hasError ? null : here.value;
+    final suggestion = item != null && setsDoneHere == 0 && hereValue != null
+        ? suggestNext(item, hereValue)
+        : null;
     final bests = newBests(w.done, known);
     String nameOf(String id) =>
         w.plan.where((i) => i.exerciseId == id).firstOrNull?.exercise ?? '';
@@ -300,6 +309,19 @@ class _TrainScreenState extends ConsumerState<TrainScreen> {
           ),
           Text(item.exercise, style: context.type.display),
           if (here != null) _LastTime(history: here),
+          if (suggestion != null)
+            _Suggest(
+              suggestion: suggestion,
+              onUse: () => ref
+                  .read(activeSessionProvider.notifier)
+                  .applySuggestion(
+                    w.item,
+                    from: item,
+                    weightG: suggestion.weightG,
+                    reps: suggestion.reps,
+                    seconds: suggestion.seconds,
+                  ),
+            ),
           Row(
             children: [
               if (item.weighted)
@@ -420,6 +442,51 @@ class _LastTime extends StatelessWidget {
     return Text(
       text == null ? 'First time doing this.' : 'Last time: $text',
       style: context.type.caption,
+    );
+  }
+}
+
+/// A suggested next weight, reps or time, with its reason. "Use" takes it for
+/// this workout only. It is a suggestion: nothing changes without the tap.
+class _Suggest extends StatelessWidget {
+  const _Suggest({required this.suggestion, required this.onUse});
+
+  final Suggestion suggestion;
+  final VoidCallback onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+        decoration: BoxDecoration(
+          color: context.tones.soft,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                suggestion.text,
+                style: context.type.caption.copyWith(
+                  color: context.og.text,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            if (suggestion.usable) ...[
+              const SizedBox(width: 10),
+              KitButton(
+                label: 'Use',
+                style: KitButtonStyle.outline,
+                height: 44,
+                expand: false,
+                onPressed: onUse,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

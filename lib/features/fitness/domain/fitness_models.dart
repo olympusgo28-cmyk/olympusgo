@@ -551,8 +551,68 @@ class WorkoutSummary {
   final List<PersonalBest> bests;
 }
 
+/// The numbers a progression suggestion is worked out from. They come from
+/// the server's config, never from the app (Q277 c).
+class ProgressRules {
+  const ProgressRules({
+    required this.stepG,
+    required this.stallSessions,
+    required this.deloadPct,
+    required this.repStep,
+    required this.repCap,
+    required this.secondsStep,
+    required this.secondsCap,
+  });
+
+  /// Null unless every number is there: half a rule is no rule.
+  static ProgressRules? fromJson(Object? r) {
+    if (r is! Map) return null;
+    int? n(String key) => switch (r[key]) {
+      final int v => v,
+      _ => null,
+    };
+    final values = [
+      n('step_g'),
+      n('stall_sessions'),
+      n('deload_pct'),
+      n('rep_step'),
+      n('rep_cap'),
+      n('seconds_step'),
+      n('seconds_cap'),
+    ];
+    if (values.contains(null)) return null;
+    return ProgressRules(
+      stepG: values[0]!,
+      stallSessions: values[1]!,
+      deloadPct: values[2]!,
+      repStep: values[3]!,
+      repCap: values[4]!,
+      secondsStep: values[5]!,
+      secondsCap: values[6]!,
+    );
+  }
+
+  /// Weight to add when every set hit its reps, in grams.
+  final int stepG;
+
+  /// Sessions in a row of missed reps before less weight is suggested.
+  final int stallSessions;
+
+  /// How much less, in percent.
+  final int deloadPct;
+  final int repStep;
+  final int repCap;
+  final int secondsStep;
+  final int secondsCap;
+}
+
 class ExerciseHistory {
-  const ExerciseHistory({this.times = 0, this.best, this.recent = const []});
+  const ExerciseHistory({
+    this.times = 0,
+    this.best,
+    this.recent = const [],
+    this.progress,
+  });
 
   factory ExerciseHistory.fromJson(Map<String, dynamic> r) => ExerciseHistory(
     times: (r['times'] as num).toInt(),
@@ -563,9 +623,14 @@ class ExerciseHistory {
       for (final s in r['recent'] as List)
         PersonalBest.fromJson(s as Map<String, dynamic>),
     ],
+    progress: ProgressRules.fromJson(r['progress']),
   );
 
   final int times;
   final PersonalBest? best;
   final List<PersonalBest> recent;
+
+  /// Null for an under-18, and when the server has no numbers to give: then
+  /// there are no suggestions.
+  final ProgressRules? progress;
 }

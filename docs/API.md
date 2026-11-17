@@ -221,7 +221,7 @@ All are for signed-in players, and refuse restricted and suspended accounts. The
 | `workout_save(p_client_key text, p_workout jsonb)` | Saves a finished workout once per key. 20 a day, in `fitness.daily_workouts` | 60 |
 | `workout_delete(p_workout uuid)` | Deletes the caller's workout | 60 |
 | `workout_summary(p_days int default 30)` | Totals, streak, recent workouts and personal bests. Null means all time. Lists at most 100 workouts | 300 |
-| `exercise_history(p_exercise uuid)` | The caller's best set, times done and last 30 sets | 300 |
+| `exercise_history(p_exercise uuid)` | The caller's best set, times done and last 30 sets, and `progress`: the seven progression numbers from `app_settings` (`fitness.progress_*`) for an adult, or null for an under-18 or when a number is missing (R-FIT-11) | 300 |
 
 ### AI plans, as built in Phase 5b
 

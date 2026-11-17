@@ -1,6 +1,6 @@
 # Fitness: four training upgrades (design)
 
-Status: slice 1 (the workout screen) and slice 2 (the body map on an exercise, a program day and the workout card) are built and tested, 17 Nov 2026; neither has been checked on a phone. Slices 3 to 5 are design only. The owner chose these four on 17 Nov 2026 (`docs/OPEN_QUESTIONS.md` Q277). Open points are numbered there as Q277 (a) to (p).
+Status: slices 1 (the workout screen), 2 (the body map) and 3 (progression suggestions) are built and tested, 17 Nov 2026; none has been checked on a phone. Slices 4 and 5 are design only. The owner chose these four on 17 Nov 2026 (`docs/OPEN_QUESTIONS.md` Q277). Open points are numbered there as Q277 (a) to (p).
 
 ## Where this comes from
 
@@ -76,7 +76,7 @@ The owner asked for features like those in the openGym project. openGym's code, 
 
 "Use" changes the rest of this workout only (the screen's existing "change" path). It never changes the saved program, and nothing is applied without the tap. With no history there is no suggestion.
 
-**The rule (proposed, every number is the owner's to confirm):**
+**The rule (the owner confirmed these numbers on 17 Nov 2026; R-FIT-11):**
 
 | Case, from the last session of this exercise | Suggestion | Proposed number | Config key |
 | --- | --- | --- | --- |
@@ -91,11 +91,25 @@ The owner asked for features like those in the openGym project. openGym's code, 
 - A pure function in `lib/features/fitness/domain/` over `exercise_history.recent`, grouped by workout date. One unit test per row of the table above, plus the edges (no history, one set, a session with mixed weights).
 - The numbers must come from config, not from the app (AGENTS rule 7). The app has no reader for `app_settings`, so the smallest honest way is for `exercise_history` to return them beside the history. That is a small migration with its pgTAP test. Q277 (e).
 
-**Under 18:** proposed: no suggestions at all for under-18s. Their exercises carry no weight (Q168), and telling a growing player to do more each session is a call for a coach. Q277 (d).
+**Under 18:** no suggestions at all (owner, 17 Nov 2026, Q277 d). Their exercises carry no weight (Q168), and telling a growing player to do more each session is a call for a coach. `exercise_history` sends an under-18 no numbers, so the app shows them no suggestion. The numbers are config and not secret; this decides what the app shows, it does not hide anything.
 
 **Wording:** a suggestion, never an instruction or a health claim. No "you should", no "safe", no "optimal".
 
-**Open:** (c) every number in the table; (d) under-18s; (e) where the numbers live; (f) whether to offer "update the program too" after a workout (not in this slice).
+**As built**
+
+- Migration `20261118100000_fitness_progression.sql`: seven `app_settings` rows and `exercise_history` returning them as `progress`, for adults only. A missing or unreadable number gives no numbers and never a failed history.
+- `lib/features/fitness/domain/progression.dart`: the rule, as a pure function of the planned exercise and the history.
+- How "reached the planned reps" is judged: the history holds what was done, not what was planned, so the last session is measured against this workout's plan. It must have at least as many sets as planned now, all at one weight, and that weight must be the one planned now. Otherwise there is no suggestion: one set before an abandoned workout never earns "add weight".
+- The 3 missed sessions must be the last three in a row, all at that weight. The oldest session in a full history (30 sets) may be cut short, so it is never judged.
+- A suggestion is refused when a step is zero or the result would pass the database's limits.
+- Shown only before the exercise's first set. "Use" goes through the workout session, which checks again when its turn comes and changes only the suggested number.
+- A missed set on an exercise with no weight, or a timed one, gives no line at all.
+- The history does not store what was planned at the time. A session where no set reached today's reps may have been done to a lower target, so it is not counted as a miss: no "Stay at", and it never counts towards "less weight" (Q277 r).
+- A timed exercise that also carries weight (the farmer carry) gets no suggestion until the owner decides whether it goes up in time or in load (Q277 s).
+- The server sends no numbers when one is missing, is not a whole number, or is outside what a set can hold. A limit below 1 means no suggestion.
+- Also the builder's choices, for the owner to confirm (Q277 t): a weighted exercise done with no weight is judged on reps; sets beyond the planned number must also reach the reps; demo mode carries its own copy of the seven numbers.
+
+**Open:** (f) whether to offer "update the program too" after a workout (not in this slice).
 
 ---
 

@@ -416,6 +416,89 @@ select lives_ok($$ select public.workout_save('earn-key-1', t.workout()) $$, 'a 
 select lives_ok($$ select public.program_save(t.program()) $$, 'and a program');
 select t.back();
 select is(t.earned(), (select n from earned_before), 'saving a workout moves no points, voucher, badge or rating');
+
+-- ─── Progression numbers (Q277, slice 3) ───────────────────────────────────
+
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress',
+  jsonb_build_object('step_g', 2500, 'stall_sessions', 3, 'deload_pct', 10, 'rep_step', 1, 'rep_cap', 20,
+    'seconds_step', 5, 'seconds_cap', 120),
+  'an adult gets the seven progression numbers');
+select is(public.exercise_history(gen_random_uuid()) #>> '{progress,step_g}', '2500',
+  'with or without a history for that exercise');
+select t.back();
+
+update public.app_settings set value = '5000' where key = 'fitness.progress_step_g';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) #>> '{progress,step_g}', '5000',
+  'a changed setting changes the answer, with no new app');
+select t.back();
+
+select t.who('e1000000-0000-0000-0000-000000000003');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a linked teen gets no progression numbers');
+select is(public.exercise_history(t.ex('back-squat')) ->> 'times', '1', 'and still gets their history');
+select t.back();
+
+delete from public.app_settings where key = 'fitness.progress_rep_cap';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a missing setting means no numbers');
+select is((public.exercise_history(t.ex('back-squat')) ->> 'times')::int >= 1, true,
+  'and the history still answers');
+select t.back();
+
+insert into public.app_settings (key, value) values ('fitness.progress_rep_cap', '"twenty"');
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a setting that is not a number means no numbers');
+select isnt(public.exercise_history(t.ex('back-squat')) -> 'recent', null, 'and the history still answers');
+select t.back();
+
+-- A typo in config must not become a wild suggestion.
+update public.app_settings set value = '20' where key = 'fitness.progress_rep_cap';
+update public.app_settings set value = '400000000' where key = 'fitness.progress_step_g';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a number past what a set can hold means no numbers');
+select t.back();
+update public.app_settings set value = '0' where key = 'fitness.progress_step_g';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a zero step means no numbers');
+select t.back();
+update public.app_settings set value = '2500' where key = 'fitness.progress_step_g';
+update public.app_settings set value = '100' where key = 'fitness.progress_deload_pct';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) -> 'progress', 'null'::jsonb,
+  'a percent of 100 means no numbers');
+select t.back();
+update public.app_settings set value = '10' where key = 'fitness.progress_deload_pct';
+select t.who('e1000000-0000-0000-0000-000000000008');
+select is(public.exercise_history(t.ex('back-squat')) #>> '{progress,step_g}', '2500',
+  'and sane numbers come back once config is right again');
+select t.back();
+
+select t.who('e1000000-0000-0000-0000-000000000005');
+select throws_ok($$ select public.exercise_history(gen_random_uuid()) $$, 'P0001',
+  'Ask a parent to link your account first.', 'a restricted child still gets nothing');
+select t.back();
+select t.who('e1000000-0000-0000-0000-000000000006');
+select throws_ok($$ select public.exercise_history(gen_random_uuid()) $$, 'P0001',
+  'Your account is suspended.', 'a suspended player still gets nothing');
+select t.back();
+
+select is((select p.provolatile from pg_proc p where p.oid = 'public.exercise_history(uuid)'::regprocedure),
+  'v', 'the history stays volatile, so its rate limit can record the call');
+select is((select p.prosecdef from pg_proc p where p.oid = 'public.exercise_history(uuid)'::regprocedure),
+  true, 'it is still a definer function');
+select is((select p.proconfig from pg_proc p where p.oid = 'public.exercise_history(uuid)'::regprocedure),
+  array['search_path=""'], 'with an empty search path');
+select is(has_function_privilege('anon', 'public.exercise_history(uuid)', 'execute'), false,
+  'signed-out callers still can''t run it');
+select is(has_function_privilege('authenticated', 'public.exercise_history(uuid)', 'execute'), true,
+  'signed-in callers still can');
+
 select is_empty($$ select t.tgname from pg_trigger t join pg_class c on c.oid = t.tgrelid
   where c.relname in ('workouts', 'workout_sets') and not t.tgisinternal $$,
   'nothing fires when a workout is saved');

@@ -139,10 +139,41 @@ void main() {
     final h = await repo.history(squat.id);
     expect(h.times, 1);
     expect(h.best?.weightG, 72500);
+    // An adult gets the progression numbers from config (R-FIT-11).
+    final rules = h.progress!;
+    expect(rules.stepG, 2500);
+    expect(rules.stallSessions, 3);
+    expect(rules.deloadPct, 10);
+    expect(rules.repStep, 1);
+    expect(rules.repCap, 20);
+    expect(rules.secondsStep, 5);
+    expect(rules.secondsCap, 120);
 
     await repo.deleteWorkout(s.recent.single.id);
     expect((await repo.summary()).workouts, 0);
   }, skip: skip);
+
+  test(
+    'a linked teen gets their history, with no progression numbers',
+    () async {
+      final parent = await player('mum', '1985-01-01');
+      final teen = await player('teen', '2011-06-01');
+      await admin.from('guardian_links').insert({
+        'parent_id': parent.auth.currentUser!.id,
+        'child_id': teen.auth.currentUser!.id,
+        'status': 'approved',
+      });
+      final repo = SupabaseFitnessRepository(teen);
+      final list = await repo.exercises();
+      expect(list, isNotEmpty);
+      expect((await repo.summary()).minor, isTrue);
+      final h = await repo.history(list.first.id);
+      expect(h.times, 0);
+      // The server sends an under-18 no numbers, so no suggestion can be made.
+      expect(h.progress, isNull);
+    },
+    skip: skip,
+  );
 
   test('a child with no parent is refused at the gate', () async {
     final c = await player('kid', '2015-01-01');

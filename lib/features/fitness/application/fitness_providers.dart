@@ -175,6 +175,43 @@ class ActiveSession extends _$ActiveSession {
     await _set(w.adjusted(item.change(weightG: grams)));
   });
 
+  /// Takes a suggestion for the exercise at [index]: sets its weight, reps
+  /// or seconds, whichever is given, and nothing else. Only before its first
+  /// set, and only if the number it was worked out from ([from]) is still
+  /// the plan when its turn comes, so it never overwrites a later change.
+  Future<void> applySuggestion(
+    int index, {
+    required ProgramItem from,
+    int? weightG,
+    int? reps,
+    int? seconds,
+  }) => _inOrder(() async {
+    final w = await future;
+    if (w == null || w.complete || w.finished || w.item != index) return;
+    if (w.setsDone > 0) return;
+    final item = w.plan[index];
+    if (item.exerciseId != from.exerciseId ||
+        item.sets != from.sets ||
+        item.weightG != from.weightG ||
+        item.reps != from.reps ||
+        item.seconds != from.seconds) {
+      return;
+    }
+    // Only numbers the database would take.
+    bool within(int? v, int most) => v != null && v >= 1 && v <= most;
+    final ProgramItem next;
+    if (within(weightG, 500000) && item.weighted && !item.timed) {
+      next = item.change(weightG: weightG);
+    } else if (within(reps, 200) && weightG == null && !item.timed) {
+      next = item.change(reps: reps);
+    } else if (within(seconds, 3600) && weightG == null && item.timed) {
+      next = item.change(seconds: seconds);
+    } else {
+      return;
+    }
+    await _set(w.adjusted(next));
+  });
+
   /// Ends the rest under way.
   Future<void> skipRest() => _inOrder(() async {
     final w = await future;
