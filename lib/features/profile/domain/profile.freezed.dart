@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Profile {
 
- String get id; String? get username;@JsonKey(name: 'full_name') String? get fullName; String? get bio;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'onboarding_completed') bool get onboardingCompleted;
+ String get id; String? get username;@JsonKey(name: 'full_name') String? get fullName; String? get bio;/// Links on Profile (owner, 16 Nov 2026). The server has no column for
+/// them yet, so a live profile has none (Q274).
+ List<String> get links;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'onboarding_completed') bool get onboardingCompleted;
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +32,20 @@ $ProfileCopyWith<Profile> get copyWith => _$ProfileCopyWithImpl<Profile>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Profile;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.fullName, _this.fullName) || other.fullName == _this.fullName)&&(identical(other.bio, _this.bio) || other.bio == _this.bio)&&(identical(other.avatarUrl, _this.avatarUrl) || other.avatarUrl == _this.avatarUrl)&&(identical(other.onboardingCompleted, _this.onboardingCompleted) || other.onboardingCompleted == _this.onboardingCompleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.fullName, _this.fullName) || other.fullName == _this.fullName)&&(identical(other.bio, _this.bio) || other.bio == _this.bio)&&const DeepCollectionEquality().equals(other.links, _this.links)&&(identical(other.avatarUrl, _this.avatarUrl) || other.avatarUrl == _this.avatarUrl)&&(identical(other.onboardingCompleted, _this.onboardingCompleted) || other.onboardingCompleted == _this.onboardingCompleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Profile;
-  return Object.hash(runtimeType,_this.id,_this.username,_this.fullName,_this.bio,_this.avatarUrl,_this.onboardingCompleted);
+  return Object.hash(runtimeType,_this.id,_this.username,_this.fullName,_this.bio,const DeepCollectionEquality().hash(_this.links),_this.avatarUrl,_this.onboardingCompleted);
 }
 
 @override
 String toString() {
   final _this = this as Profile;
-  return 'Profile(id: ${_this.id}, username: ${_this.username}, fullName: ${_this.fullName}, bio: ${_this.bio}, avatarUrl: ${_this.avatarUrl}, onboardingCompleted: ${_this.onboardingCompleted})';
+  return 'Profile(id: ${_this.id}, username: ${_this.username}, fullName: ${_this.fullName}, bio: ${_this.bio}, links: ${_this.links}, avatarUrl: ${_this.avatarUrl}, onboardingCompleted: ${_this.onboardingCompleted})';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $ProfileCopyWith<$Res>  {
   factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) = _$ProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
+ String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
 });
 
 
@@ -71,13 +73,14 @@ class _$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
   return _then(Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
-as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,links: null == links ? _self.links : links // ignore: cast_nullable_to_non_nullable
+as List<String>,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -164,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
   return orElse();
 
 }
@@ -185,10 +188,10 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)  $default,) {final _that = this;
 switch (_that) {
 case _Profile():
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +208,10 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? username, @JsonKey(name: 'full_name')  String? fullName,  String? bio,  List<String> links, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'onboarding_completed')  bool onboardingCompleted)?  $default,) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl,_that.onboardingCompleted);case _:
+return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.links,_that.avatarUrl,_that.onboardingCompleted);case _:
   return null;
 
 }
@@ -220,13 +223,24 @@ return $default(_that.id,_that.username,_that.fullName,_that.bio,_that.avatarUrl
 @JsonSerializable()
 
 class _Profile extends Profile {
-  const _Profile({required this.id, this.username, @JsonKey(name: 'full_name') this.fullName, this.bio, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'onboarding_completed') this.onboardingCompleted = false}): super._();
+  const _Profile({required this.id, this.username, @JsonKey(name: 'full_name') this.fullName, this.bio,  List<String> links = const <String>[], @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'onboarding_completed') this.onboardingCompleted = false}): _links = links,super._();
   factory _Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
 
 @override final  String id;
 @override final  String? username;
 @override@JsonKey(name: 'full_name') final  String? fullName;
 @override final  String? bio;
+/// Links on Profile (owner, 16 Nov 2026). The server has no column for
+/// them yet, so a live profile has none (Q274).
+ final  List<String> _links;
+/// Links on Profile (owner, 16 Nov 2026). The server has no column for
+/// them yet, so a live profile has none (Q274).
+@override@JsonKey() List<String> get links {
+  if (_links is EqualUnmodifiableListView) return _links;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_links);
+}
+
 @override@JsonKey(name: 'avatar_url') final  String? avatarUrl;
 @override@JsonKey(name: 'onboarding_completed') final  bool onboardingCompleted;
 
@@ -243,18 +257,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.bio, bio) || other.bio == bio)&&const DeepCollectionEquality().equals(other.links, _links)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,username,fullName,bio,avatarUrl,onboardingCompleted);
+    return Object.hash(runtimeType,id,username,fullName,bio,const DeepCollectionEquality().hash(_links),avatarUrl,onboardingCompleted);
 }
 
 @override
 String toString() {
-    return 'Profile(id: $id, username: $username, fullName: $fullName, bio: $bio, avatarUrl: $avatarUrl, onboardingCompleted: $onboardingCompleted)';
+    return 'Profile(id: $id, username: $username, fullName: $fullName, bio: $bio, links: $links, avatarUrl: $avatarUrl, onboardingCompleted: $onboardingCompleted)';
 }
 
 
@@ -265,7 +279,7 @@ abstract mixin class _$ProfileCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   factory _$ProfileCopyWith(_Profile value, $Res Function(_Profile) _then) = __$ProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
+ String id, String? username,@JsonKey(name: 'full_name') String? fullName, String? bio, List<String> links,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'onboarding_completed') bool onboardingCompleted
 });
 
 
@@ -282,13 +296,14 @@ class __$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = freezed,Object? fullName = freezed,Object? bio = freezed,Object? links = null,Object? avatarUrl = freezed,Object? onboardingCompleted = null,}) {
   return _then(_Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
-as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,links: null == links ? _self._links : links // ignore: cast_nullable_to_non_nullable
+as List<String>,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

@@ -17,6 +17,8 @@ import '../../../core/widgets/og_icon.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/og_kit.dart';
 import '../../../core/format.dart';
+import '../../clubs/application/club_providers.dart';
+import '../../clubs/data/club_repository.dart';
 import '../../onboarding/domain/sport.dart';
 import '../../play/application/play_providers.dart';
 import '../../play/domain/activity.dart';
@@ -24,6 +26,7 @@ import '../../settings/application/settings_providers.dart';
 import '../../social/application/social_providers.dart';
 import '../domain/passport.dart';
 import '../domain/profile.dart';
+import 'passport_card.dart';
 import 'passport_history_screen.dart';
 
 /// The player's Passport: hero card, sport switcher and four tabs.
@@ -210,8 +213,24 @@ class _PassportScreenState extends ConsumerState<PassportScreen> {
     bool demo,
   ) {
     final c = context.og;
+    final summary = ref.watch(mySummaryProvider).value;
+    final mine = ref.watch(mySportsProvider).value ?? const <PlayerSport>[];
+    final clubs = ref.watch(clubListProvider(ClubTab.mine)).value ?? const [];
     return [
       const SizedBox(height: 12),
+      // The Passport card moved here from Profile (owner, 16 Nov 2026).
+      if (level != null) ...[
+        PassportCard(
+          sport: level,
+          sessions: summary?.sessions ?? 0,
+          clubRank: summary?.clubRank,
+          clubs: clubs.length,
+          localRank: summary?.localRank,
+          area: summary?.area,
+          isMainSport: mine.isNotEmpty && mine.first.sport == level.sport,
+        ),
+        const SizedBox(height: 12),
+      ],
       KitCard(
         children: [
           KitNavTile(

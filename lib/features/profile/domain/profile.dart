@@ -11,6 +11,10 @@ abstract class Profile with _$Profile {
     String? username,
     @JsonKey(name: 'full_name') String? fullName,
     String? bio,
+
+    /// Links on Profile (owner, 16 Nov 2026). The server has no column for
+    /// them yet, so a live profile has none (Q274).
+    @Default(<String>[]) List<String> links,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     @JsonKey(name: 'onboarding_completed')
     @Default(false)

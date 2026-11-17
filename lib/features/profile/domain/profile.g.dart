@@ -11,6 +11,9 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   username: json['username'] as String?,
   fullName: json['full_name'] as String?,
   bio: json['bio'] as String?,
+  links:
+      (json['links'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const <String>[],
   avatarUrl: json['avatar_url'] as String?,
   onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
 );
@@ -20,6 +23,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'username': instance.username,
   'full_name': instance.fullName,
   'bio': instance.bio,
+  'links': instance.links,
   'avatar_url': instance.avatarUrl,
   'onboarding_completed': instance.onboardingCompleted,
 };

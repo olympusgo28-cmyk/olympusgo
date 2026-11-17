@@ -201,6 +201,7 @@ class DemoProfileRepository implements ProfileRepository {
           username: 'aaronng',
           fullName: 'Aaron Ng',
           bio: 'Doubles on weeknights. Happy to rotate with beginners.',
+          links: ['olympusgo.example/aaronng'],
           onboardingCompleted: true,
         )
       : null;
